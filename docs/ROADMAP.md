@@ -1,21 +1,18 @@
 # 3D Physics Engine - Roadmap
 
-Based on [winter](https://winter.dev/articles/physics-engine#:~:text=struct%20Object%20,vec3%20Force%3B%20float%20Mass%3B) and [Project Chrono](https://github.com/projectchrono/chrono)
-
 ---
 
 ## Phase 1: Setup and General Architecture
 
 - [x] Initialize GitHub repository
-- [ ] Define project structure
-- [ ] Build all the project repositories (inspired by Project Chrono)
+- [x] Define project structure
+- [x] Build all the project repositories (inspired by Project Chrono)
 - [ ] Configure CMake for cross-platform compilation
 
 ---
 
 ## Phase 2: Setup & Math Foundations  
 
-- [ ] **Project Skeleton :** Create a Git repository and initialize the project (set up a `main.cpp`, `CMakeLists.txt` or your build system).  
 - [ ] **Math Library :** Implement or integrate 3D math types: `vec3` for 3D vectors, matrices, and quaternion for rotation.  
 - [ ] **Utility Types :** Define data structures like `Transform` and bounding volumes (AABB, sphere).  
 - [ ] **Documentation :** Document your math types and utilities.

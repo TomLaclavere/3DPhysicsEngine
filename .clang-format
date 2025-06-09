@@ -9,7 +9,8 @@ AlignConsecutiveAssignments: Consecutive
 AlignConsecutiveDeclarations: Consecutive
 AlignEscapedNewlines: Left
 
-AllowShortFunctionsOnASingleLine: InlineOnly
+AllowShortFunctionsOnASingleLine: All
+AllowShortLambdasOnASingleLine: true
 BreakConstructorInitializers: BeforeComma
 AllowAllConstructorInitializersOnNextLine: true
 ConstructorInitializerAllOnOneLineOrOnePerLine: false

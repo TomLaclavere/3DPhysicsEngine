@@ -16,7 +16,7 @@ static void EXPECT_DECIMAL_EQ(decimal a, decimal b, decimal eps = PRECISION_MACH
 TEST(Vector3D_Test, DefaultConstructorZeroes)
 {
     Vector3D v;
-    EXPECT_DECIMAL_EQ(v.getX(), 1.0);
+    EXPECT_DECIMAL_EQ(v.getX(), 0.0);
     EXPECT_DECIMAL_EQ(v.getY(), 0.0);
     EXPECT_DECIMAL_EQ(v.getZ(), 0.0);
 }
@@ -206,4 +206,15 @@ TEST(Vector3D_Test, ScalarDivisionAndVectorDivision)
     Vector3D v(8, 6, 4);
     EXPECT_EQ(v / 2.0, Vector3D(4, 3, 2));
     EXPECT_EQ(v / Vector3D(2, 2, 2), Vector3D(4, 3, 2));
+}
+
+// ——————————————————————————————————————————————————————————————————————————
+// 11) stream output
+// ——————————————————————————————————————————————————————————————————————————
+TEST(Vector3D_Test, StreamOutput)
+{
+    Vector3D          v(1, 2, 3);
+    std::stringstream ss;
+    ss << v;
+    EXPECT_EQ(ss.str(), "(1, 2, 3)");
 }

@@ -43,7 +43,7 @@ A modular 3D physics engine built in modern C++, designed to combine scientific 
 
 ## Tech Stack
 
-- Language: C++17/20/23
+- Language: C++23
 
 - Build System: CMake
 

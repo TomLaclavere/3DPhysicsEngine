@@ -70,7 +70,43 @@ TEST(Vector3D_Test, NormalizeProducesUnit)
 }
 
 // ——————————————————————————————————————————————————————————————————————————
-// 5) isZero, isUnit, isLengthEqual, isFinite
+// 5) setX, setY, setZ, setAllValues, setToZero
+// ——————————————————————————————————————————————————————————————————————————
+TEST(Vector3D_Test, Mutators)
+{
+    Vector3D v(1, 2, 3);
+    v.setX(4);
+    v.setY(5);
+    v.setZ(6);
+    EXPECT_DECIMAL_EQ(v.getX(), 4);
+    EXPECT_DECIMAL_EQ(v.getY(), 5);
+    EXPECT_DECIMAL_EQ(v.getZ(), 6);
+}
+
+TEST(Vector3D_Test, SetAllValues)
+{
+    Vector3D v(1, 2, 3);
+    v.setAllValues(4);
+    EXPECT_DECIMAL_EQ(v.getX(), 4);
+    EXPECT_DECIMAL_EQ(v.getY(), 4);
+    EXPECT_DECIMAL_EQ(v.getZ(), 4);
+    v.setAllValues(1, 2, 3);
+    EXPECT_DECIMAL_EQ(v.getX(), 1);
+    EXPECT_DECIMAL_EQ(v.getY(), 2);
+    EXPECT_DECIMAL_EQ(v.getZ(), 3);
+}
+
+TEST(Vector3D_Test, SetToZero)
+{
+    Vector3D v(1, 2, 3);
+    v.setToZero();
+    EXPECT_DECIMAL_EQ(v.getX(), 0);
+    EXPECT_DECIMAL_EQ(v.getY(), 0);
+    EXPECT_DECIMAL_EQ(v.getZ(), 0);
+}
+
+// ——————————————————————————————————————————————————————————————————————————
+// 6) isZero, isUnit, isLengthEqual, isFinite
 // ——————————————————————————————————————————————————————————————————————————
 TEST(Vector3D_Test, IsZeroAndIsLengthEqual)
 {
@@ -88,7 +124,7 @@ TEST(Vector3D_Test, IsFiniteDetectsInfNaN)
 }
 
 // ——————————————————————————————————————————————————————————————————————————
-// 6) dotProduct and crossProduct
+// 7) dotProduct and crossProduct
 // ——————————————————————————————————————————————————————————————————————————
 TEST(Vector3D_Test, DotProductOrthogonal)
 {
@@ -107,7 +143,7 @@ TEST(Vector3D_Test, CrossProductRightHanded)
 }
 
 // ——————————————————————————————————————————————————————————————————————————
-// 7) operators ==, !=, <, approxEqual
+// 8) operators ==, !=, <, approxEqual
 // ——————————————————————————————————————————————————————————————————————————
 TEST(Vector3D_Test, EqualityAndInequality)
 {
@@ -134,7 +170,7 @@ TEST(Vector3D_Test, ApproxEqualWithPrecision)
 }
 
 // ——————————————————————————————————————————————————————————————————————————
-// 8) operator[] and exception on bad index
+// 9) operator[] and exception on bad index
 // ——————————————————————————————————————————————————————————————————————————
 TEST(Vector3D_Test, BracketOperatorReadWrite)
 {
@@ -154,7 +190,7 @@ TEST(Vector3D_Test, BracketOperatorThrowsOnInvalid)
 }
 
 // ——————————————————————————————————————————————————————————————————————————
-// 9) operators +=, -=, *=, /= and functions min/max
+// 10) operators +=, -=, *=, /= and functions min/max
 // ——————————————————————————————————————————————————————————————————————————
 TEST(Vector3D_Test, CompoundOperators)
 {
@@ -179,7 +215,7 @@ TEST(Vector3D_Test, StaticMinMaxFunctions)
 }
 
 // ——————————————————————————————————————————————————————————————————————————
-// 10) scalar operators +, -, * and /
+// 11) scalar operators +, -, * and /
 // ——————————————————————————————————————————————————————————————————————————
 TEST(Vector3D_Test, ScalarAdditionMultiplication)
 {
@@ -209,7 +245,7 @@ TEST(Vector3D_Test, ScalarDivisionAndVectorDivision)
 }
 
 // ——————————————————————————————————————————————————————————————————————————
-// 11) stream output
+// 12) stream output
 // ——————————————————————————————————————————————————————————————————————————
 TEST(Vector3D_Test, StreamOutput)
 {

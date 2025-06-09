@@ -29,6 +29,7 @@ void Vector3D::setX(decimal val) { x = val; }
 void Vector3D::setY(decimal val) { y = val; }
 void Vector3D::setZ(decimal val) { z = val; }
 void Vector3D::setToZero() { x = y = z = 0.0; }
+void Vector3D::setAllValues(decimal value) { x = y = z = value; }
 void Vector3D::setAllValues(decimal newx, decimal newy, decimal newz)
 {
     x = newx;

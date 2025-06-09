@@ -54,6 +54,7 @@ public:
     // Set all components to zero
     void setToZero();
     // Set all components to the given values
+    void setAllValues(decimal value);
     void setAllValues(decimal newx, decimal newy, decimal newz);
     // Normalize the vector (make it unit length, does nothing if zero)
     void normalize();

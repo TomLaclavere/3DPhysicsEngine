@@ -7,13 +7,19 @@
 - [x] Initialize GitHub repository
 - [x] Define project structure
 - [x] Build all the project repositories (inspired by Project Chrono)
-- [ ] Configure CMake for cross-platform compilation
+- [x] Configure CMake
 
 ---
 
 ## Phase 2: Setup & Math Foundations  
 
 - [ ] **Math Library :** Implement or integrate 3D math types: `vec3` for 3D vectors, matrices, and quaternion for rotation.  
+  - [x] **Vector3D :** Implement basic vector operations (addition, subtraction, scalar multiplication, dot product, cross product).
+  - [ ] **Vector3D Tests :** Write unit tests to verify vector operations.
+  - [ ] **Matrix3x3 :** Implement matrix operations (multiplication, transpose, inverse).
+  - [ ] **Matrix3x3 Tests :** Write unit tests to verify matrix operations.
+  - [ ] **Quaternion :** Implement quaternion operations (multiplication, normalization, slerp).
+  - [ ] ***Quaternion Tests :** Write unit tests to verify quaternion operations.
 - [ ] **Utility Types :** Define data structures like `Transform` and bounding volumes (AABB, sphere).  
 - [ ] **Documentation :** Document your math types and utilities.
 - [ ] **Test Math :** Write tests or small applications to validate math operations.

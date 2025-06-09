@@ -1,3 +1,12 @@
+/**
+ * @brief Represents a 3-dimensional vector with x, y, and z components
+ *
+ * This class provides a comprehensive implementation of a 3D vector with
+ * various mathematical operations, including construction, access, mutation,
+ * comparison, and vector arithmetic.
+ *
+ * @note Uses decimal type for component storage, allowing for flexible precision
+ */
 #pragma once
 
 #include "config.hpp"

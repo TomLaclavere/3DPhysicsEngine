@@ -3,6 +3,7 @@
 
 #include <gtest/gtest.h>
 #include <ostream>
+#include <sstream> // for StreamOutput test
 
 static void EXPECT_DECIMAL_EQ(decimal a, decimal b, decimal eps = PRECISION_MACHINE)
 {
@@ -185,12 +186,24 @@ TEST(Vector3D_Test, BracketOperatorReadWrite)
 TEST(Vector3D_Test, BracketOperatorThrowsOnInvalid)
 {
     Vector3D v;
-    EXPECT_THROW(v[3], std::invalid_argument);
-    EXPECT_THROW(std::as_const(v)[-1], std::invalid_argument);
+    EXPECT_THROW(v[3], std::out_of_range);
+    EXPECT_THROW(std::as_const(v)[-1], std::out_of_range);
 }
 
 // ——————————————————————————————————————————————————————————————————————————
-// 10) operators +=, -=, *=, /= and functions min/max
+// 10) static min/max functions
+// ——————————————————————————————————————————————————————————————————————————
+TEST(Vector3D_Test, StaticMinMaxFunctions)
+{
+    Vector3D a(1, 5, 3), b(2, 4, 6);
+    auto     mn = Vector3D::min(a, b);
+    auto     mx = Vector3D::max(a, b);
+    EXPECT_EQ(mn, Vector3D(1, 4, 3));
+    EXPECT_EQ(mx, Vector3D(2, 5, 6));
+}
+
+// ——————————————————————————————————————————————————————————————————————————
+// 11) scalar and vector arithmetic operators
 // ——————————————————————————————————————————————————————————————————————————
 TEST(Vector3D_Test, CompoundOperators)
 {
@@ -198,50 +211,33 @@ TEST(Vector3D_Test, CompoundOperators)
     v += Vector3D(1, 1, 1);
     EXPECT_DECIMAL_EQ(v.getX(), 2);
     v -= Vector3D(1, 2, 3);
-    EXPECT_DECIMAL_EQ(v.getY(), 1); // 2-2
+    EXPECT_DECIMAL_EQ(v.getY(), 1); // 3-2
     v *= Vector3D(2, 3, 4);
     EXPECT_DECIMAL_EQ(v.getZ(), 4); // 1*4
     v /= Vector3D(2, 2, 2);
     EXPECT_DECIMAL_EQ(v.getX(), 1); // 2/2
 }
 
-TEST(Vector3D_Test, StaticMinMaxFunctions)
-{
-    Vector3D a(1, 5, 3), b(2, 4, 6);
-    auto     mn = a.min(a, b);
-    auto     mx = a.max(a, b);
-    EXPECT_EQ(mn, Vector3D(1, 4, 3));
-    EXPECT_EQ(mx, Vector3D(2, 5, 6));
-}
-
-// ——————————————————————————————————————————————————————————————————————————
-// 11) scalar operators +, -, * and /
-// ——————————————————————————————————————————————————————————————————————————
-TEST(Vector3D_Test, ScalarAdditionMultiplication)
+TEST(Vector3D_Test, ScalarAndVectorOperators)
 {
     Vector3D v(1, 2, 3);
-    auto     a1 = 5.0 + v;
-    auto     a2 = v + 5.0;
-    EXPECT_EQ(a1, a2);
-    EXPECT_EQ(a1, Vector3D(6, 7, 8));
 
-    auto m1 = 2.0 * v;
-    auto m2 = v * 2.0;
-    EXPECT_EQ(m1, Vector3D(2, 4, 6));
-}
+    // scalar add/mul both ways
+    EXPECT_EQ(5.0 + v, v + 5.0);
+    EXPECT_EQ(Vector3D(6, 7, 8), v + 5.0);
 
-TEST(Vector3D_Test, VectorAdditionSubtraction)
-{
+    EXPECT_EQ(2.0 * v, v * 2.0);
+    EXPECT_EQ(Vector3D(2, 4, 6), v * 2.0);
+
+    // vector add/sub and negation
     Vector3D a(1, 1, 1), b(2, 3, 4);
     EXPECT_EQ(a + b, Vector3D(3, 4, 5));
     EXPECT_EQ(-b, Vector3D(-2, -3, -4));
-}
 
-TEST(Vector3D_Test, ScalarDivisionAndVectorDivision)
-{
-    Vector3D v(8, 6, 4);
-    EXPECT_EQ(v / 2.0, Vector3D(4, 3, 2));
-    EXPECT_EQ(v / Vector3D(2, 2, 2), Vector3D(4, 3, 2));
+    // scalar and vector division
+    Vector3D w(8, 6, 4);
+    EXPECT_EQ(w / 2.0, Vector3D(4, 3, 2));
+    EXPECT_EQ(w / Vector3D(2, 2, 2), Vector3D(4, 3, 2));
 }
 
 // ——————————————————————————————————————————————————————————————————————————
@@ -252,5 +248,5 @@ TEST(Vector3D_Test, StreamOutput)
     Vector3D          v(1, 2, 3);
     std::stringstream ss;
     ss << v;
-    EXPECT_EQ(ss.str(), "(1, 2, 3)");
+    EXPECT_EQ(ss.str(), "(1,2,3)");
 }

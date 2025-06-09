@@ -11,6 +11,8 @@
 
 #include "config.hpp"
 
+#include <ostream>
+
 class Vector3D
 {
 private:
@@ -108,4 +110,7 @@ public:
     friend Vector3D operator*(const Vector3D& lhs, const Vector3D& rhs);
     friend Vector3D operator/(const Vector3D& vector, const decimal& value);
     friend Vector3D operator/(const Vector3D& lhs, const Vector3D& rhs);
+
+    // ===== Printing function =====
+    friend std::ostream& operator<<(std::ostream& os, const Vector3D& v);
 };

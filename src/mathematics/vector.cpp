@@ -3,7 +3,6 @@
 #include "mathematics/common.hpp"
 
 #include <cmath>
-#include <stdexcept>
 
 Vector3D::Vector3D()
     : x(0.0)
@@ -175,4 +174,10 @@ Vector3D operator/(const Vector3D& vector, const decimal& value)
 Vector3D operator/(const Vector3D& lhs, const Vector3D& rhs)
 {
     return Vector3D(lhs.x / rhs.x, lhs.y / rhs.y, lhs.z / rhs.z);
+}
+
+std::ostream& operator<<(std::ostream& os, const Vector3D& v)
+{
+    os << "(" << v.x << ", " << v.y << ", " << v.z << ")";
+    return os;
 }

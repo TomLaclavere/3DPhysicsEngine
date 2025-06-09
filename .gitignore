@@ -1,4 +1,4 @@
-build/
+/build/
 .vscode/
 
 *.exe
@@ -6,3 +6,4 @@ build/
 *.pdb
 *.ilk
 *.o
+*.log

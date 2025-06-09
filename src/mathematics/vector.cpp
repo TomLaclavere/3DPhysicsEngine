@@ -1,6 +1,6 @@
-#include "lib/mathematics/vector.hpp"
+#include "mathematics/vector.hpp"
 
-#include "lib/mathematics/common.hpp"
+#include "mathematics/common.hpp"
 
 #include <cmath>
 #include <stdexcept>
@@ -23,7 +23,8 @@ decimal  Vector3D::getNorm() const { return sqrt(x * x + y * y + z * z); }
 decimal  Vector3D::getNormSquare() const { return x * x + y * y + z * z; }
 decimal  Vector3D::getMinValue() const { return std::min(x, std::min(y, z)); }
 decimal  Vector3D::getMaxValue() const { return std::max(x, std::max(y, z)); }
-Vector3D Vector3D::getAbsoluteVector() const { Vector3D(std::abs(x), std::abs(y), std::abs(z)); }
+Vector3D Vector3D::getAbsoluteVector() const { return Vector3D(std::abs(x), std::abs(y), std::abs(z)); }
+Vector3D Vector3D::getNormalizedVector() const { return *this / getNorm(); }
 
 void Vector3D::setX(decimal val) { x = val; }
 void Vector3D::setY(decimal val) { y = val; }
@@ -47,7 +48,7 @@ void Vector3D::normalize()
 
 bool Vector3D::isZero() { return commonMaths::approxEqual(Vector3D::getNormSquare(), decimal(0.0)); }
 bool Vector3D::isUnit() { return commonMaths::approxEqual(Vector3D::getNormSquare(), decimal(1.0)); }
-bool Vector3D::isLenghtEqual(decimal value)
+bool Vector3D::isLengthEqual(decimal value)
 {
     return commonMaths::approxEqual(Vector3D::getNormSquare(), value);
 }
@@ -68,7 +69,7 @@ bool Vector3D::operator<(const Vector3D& vector) const
 {
     return (x == vector.x ? (y == vector.y ? z < vector.z : y < vector.y) : x < vector.x);
 }
-bool Vector3D::approxEqual(const Vector3D& vector, decimal precision = PRECISION_MACHINE) const
+bool Vector3D::approxEqual(const Vector3D& vector, decimal precision) const
 {
     return (commonMaths::approxEqual(x, vector.x, precision) &&
             commonMaths::approxEqual(y, vector.y, precision) &&

@@ -41,19 +41,18 @@ public:
     decimal getMaxValue() const;
     // Get a vector with the absolute values of each component
     Vector3D getAbsoluteVector() const;
+    // Get normalized vector
+    Vector3D getNormalizedVector() const;
 
     // ===== Mutators =====
     // Set the value of each component
     void setX(decimal x);
     void setY(decimal y);
     void setZ(decimal z);
-
     // Set all components to zero
     void setToZero();
-
     // Set all components to the given values
     void setAllValues(decimal newx, decimal newy, decimal newz);
-
     // Normalize the vector (make it unit length, does nothing if zero)
     void normalize();
 
@@ -63,7 +62,7 @@ public:
     // Returns true if the vector is a unit vector (length == 1)
     bool isUnit();
     // Returns true if the squared length is approximately equal to a value
-    bool isLenghtEqual(decimal value);
+    bool isLengthEqual(decimal value);
     // Returns true if all components are finite numbers
     bool isFinite();
 

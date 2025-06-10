@@ -16,9 +16,11 @@ option(BUILD_TESTS "Build unit tests" ON)
 add_library(3DPhysicsEngine
     # Source files
     src/mathematics/vector.cpp
+    src/mathematics/matrix.cpp
     
     # Header files
     lib/mathematics/vector.hpp
+    lib/mathematics/matrix.hpp
     lib/mathematics/common.hpp
     lib/precision.hpp
     lib/config.hpp

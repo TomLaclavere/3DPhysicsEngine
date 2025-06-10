@@ -1,8 +1,8 @@
 #include "mathematics/matrix.hpp"
 
 #include <cmath>
-#include <functional>
 #include <ostream>
+#include <stdexcept>
 
 // ===== Utilities =====
 decimal Matrix3x3::getMinValue() const
@@ -22,9 +22,9 @@ decimal   Matrix3x3::getTrace() const { return m[0][0] + m[1][1] + m[2][2]; }
 Matrix3x3 Matrix3x3::getInverse() const
 {
     decimal det = getDeterminant();
-    if (det == 0)
+    if (commonMaths::approxEqual(det, decimal(0)))
     {
-        return Matrix3x3();
+        throw std::runtime_error("Matrix is singular and cannot be inverted");
     }
     return Matrix3x3(m[1][1] * m[2][2] - m[1][2] * m[2][1], m[0][2] * m[2][1] - m[0][1] * m[2][2],
                      m[0][1] * m[1][2] - m[0][2] * m[1][1], m[1][2] * m[2][0] - m[1][0] * m[2][2],
@@ -52,9 +52,7 @@ void Matrix3x3::setColumn(int index, const Vector3D& column)
 void Matrix3x3::setDiagonal(const Vector3D& diagonal)
 {
     for (int i = 0; i < 3; ++i)
-    {
         m[i][i] = diagonal[i];
-    }
 }
 void Matrix3x3::setToIdentity()
 {
@@ -95,36 +93,28 @@ bool Matrix3x3::isIdentity() const
         for (int j = 0; j < 3; ++j)
             if (i == j)
             {
-                if (commonMaths::approxEqual(m[i][j], decimal(1)))
-                {
+                if (!commonMaths::approxEqual(m[i][j], decimal(1)))
                     return false;
-                }
             }
             else
             {
-                if (commonMaths::approxEqual(m[i][j], decimal(0)))
-                {
+                if (!commonMaths::approxEqual(m[i][j], decimal(0)))
                     return false;
-                }
             }
     return true;
 }
 bool Matrix3x3::isZero() const
 {
     for (int i = 0; i < 3; ++i)
-        if (!(m[i].isZero()))
-        {
+        if (!m[i].isZero())
             return false;
-        }
     return true;
 }
 bool Matrix3x3::isFinite() const
 {
     for (int i = 0; i < 3; ++i)
-        if (!(m[i].isFinite()))
-        {
+        if (!m[i].isFinite())
             return false;
-        }
     return true;
 }
 bool Matrix3x3::isDiagonal() const
@@ -138,54 +128,86 @@ bool Matrix3x3::isDiagonal() const
 bool Matrix3x3::isSymmetric() const
 {
     for (int i = 1; i < 3; ++i)
-        for (int j = 0; i < (j - 1); ++j)
+        for (int j = 0; j < i; ++j)
             if (!commonMaths::approxEqual(m[i][j], m[j][i]))
-            {
                 return false;
-            }
     return true;
 }
-bool Matrix3x3::isInvertible() const
+bool Matrix3x3::isInvertible() const { return !commonMaths::approxEqual(getDeterminant(), decimal(0)); }
+bool Matrix3x3::isOrthogonal() const { return (getTranspose().matrixProduct(*this)).isIdentity(); }
+
+// ===== Matrix Operations =====
+Matrix3x3 Matrix3x3::matrixProduct(const Matrix3x3& matrix) const
 {
-    return !commonMaths::approxEqual(Matrix3x3::getDeterminant(), decimal(0));
+    Matrix3x3 result;
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+            result.m[i][j] = m[i].dotProduct(matrix.getColumn(j));
+    return result;
 }
-bool Matrix3x3::isOrthogonal() const { return (getTranspose() * (*this)).isIdentity(); }
+Vector3D Matrix3x3::matrixVectorProduct(const Vector3D& vector) const
+{
+    Vector3D result;
+    for (int i = 0; i < 3; ++i)
+        result[i] = m[i].dotProduct(vector);
+    return result;
+}
+Vector3D Matrix3x3::vectorMatrixProduct(const Vector3D& vector) const
+{
+    Vector3D result;
+    for (int i = 0; i < 3; ++i)
+        result[i] = vector.dotProduct(m[i]);
+    return result;
+}
 
 // ===== Comparison Operators =====
 bool Matrix3x3::operator==(const Matrix3x3& matrix) const
 {
     for (int i = 0; i < 3; ++i)
         if (!(m[i] == matrix.m[i]))
-        {
             return false;
-        }
     return true;
 }
 bool Matrix3x3::operator!=(const Matrix3x3& matrix) const
 {
     for (int i = 0; i < 3; ++i)
-        if (!(m[i] != matrix.m[i]))
-        {
-            return false;
-        }
-    return true;
+        if (m[i] != matrix.m[i])
+            return true;
+    return false;
 }
 bool Matrix3x3::operator<(const Matrix3x3& matrix) const
 {
     for (int i = 0; i < 3; ++i)
         if (!(m[i] < matrix.m[i]))
-        {
             return false;
-        }
+    return true;
+}
+bool Matrix3x3::operator<=(const Matrix3x3& matrix) const
+{
+    for (int i = 0; i < 3; ++i)
+        if (!(m[i] <= matrix.m[i]))
+            return false;
+    return true;
+}
+bool Matrix3x3::operator>(const Matrix3x3& matrix) const
+{
+    for (int i = 0; i < 3; ++i)
+        if (!(m[i] > matrix.m[i]))
+            return false;
+    return true;
+}
+bool Matrix3x3::operator>=(const Matrix3x3& matrix) const
+{
+    for (int i = 0; i < 3; ++i)
+        if (!(m[i] >= matrix.m[i]))
+            return false;
     return true;
 }
 bool Matrix3x3::approxEqual(const Matrix3x3& matrix, decimal tolerance) const
 {
     for (int i = 0; i < 3; ++i)
-        if (!(m[i].approxEqual(matrix.m[i], tolerance)))
-        {
+        if (!m[i].approxEqual(matrix.m[i], tolerance))
             return false;
-        }
     return true;
 }
 
@@ -206,7 +228,13 @@ Matrix3x3& Matrix3x3::operator+=(const Matrix3x3& matrix)
     m[2] += matrix[2];
     return *this;
 }
-Matrix3x3& Matrix3x3::operator-=(const Matrix3x3& matrix) { return *this += (-matrix); }
+Matrix3x3& Matrix3x3::operator-=(const Matrix3x3& matrix)
+{
+    m[0] -= matrix[0];
+    m[1] -= matrix[1];
+    m[2] -= matrix[2];
+    return *this;
+}
 Matrix3x3& Matrix3x3::operator*=(const Matrix3x3& matrix)
 {
     m[0] *= matrix[0];
@@ -214,7 +242,41 @@ Matrix3x3& Matrix3x3::operator*=(const Matrix3x3& matrix)
     m[2] *= matrix[2];
     return *this;
 }
-Matrix3x3& Matrix3x3::operator/=(const Matrix3x3& matrix) { return *this *= matrix.getInverse(); }
+Matrix3x3& Matrix3x3::operator/=(const Matrix3x3& matrix)
+{
+    m[0] /= matrix[0];
+    m[1] /= matrix[1];
+    m[2] /= matrix[2];
+    return *this;
+}
+Matrix3x3& Matrix3x3::operator+=(const Vector3D& vector)
+{
+    m[0] += vector;
+    m[1] += vector;
+    m[2] += vector;
+    return *this;
+}
+Matrix3x3& Matrix3x3::operator-=(const Vector3D& vector)
+{
+    m[0] -= vector;
+    m[1] -= vector;
+    m[2] -= vector;
+    return *this;
+}
+Matrix3x3& Matrix3x3::operator*=(const Vector3D& vector)
+{
+    m[0] *= vector;
+    m[1] *= vector;
+    m[2] *= vector;
+    return *this;
+}
+Matrix3x3& Matrix3x3::operator/=(const Vector3D& vector)
+{
+    m[0] /= vector;
+    m[1] /= vector;
+    m[2] /= vector;
+    return *this;
+}
 Matrix3x3& Matrix3x3::operator+=(decimal scalar)
 {
     m[0] += scalar;
@@ -222,7 +284,13 @@ Matrix3x3& Matrix3x3::operator+=(decimal scalar)
     m[2] += scalar;
     return *this;
 }
-Matrix3x3& Matrix3x3::operator-=(decimal scalar) { return *this += -scalar; }
+Matrix3x3& Matrix3x3::operator-=(decimal scalar)
+{
+    m[0] -= scalar;
+    m[1] -= scalar;
+    m[2] -= scalar;
+    return *this;
+}
 Matrix3x3& Matrix3x3::operator*=(decimal scalar)
 {
     m[0] *= scalar;
@@ -230,11 +298,19 @@ Matrix3x3& Matrix3x3::operator*=(decimal scalar)
     m[2] *= scalar;
     return *this;
 }
-Matrix3x3& Matrix3x3::operator/=(decimal scalar) { return *this *= decimal(1) / scalar; }
+Matrix3x3& Matrix3x3::operator/=(decimal scalar)
+{
+    if (scalar == 0)
+        throw std::invalid_argument("Division by zero");
+    m[0] /= scalar;
+    m[1] /= scalar;
+    m[2] /= scalar;
+    return *this;
+}
 
 // ===== Helper for Free Arithmetic Operators =====
 template <class F>
-Matrix3x3 Matrix3x3::apply(const Matrix3x3& A, const Matrix3x3& B, F&& func)
+Matrix3x3 Matrix3x3::applyMatrix(const Matrix3x3& A, const Matrix3x3& B, F&& func)
 {
     Matrix3x3 result;
     for (int i = 0; i < 3; ++i)
@@ -242,7 +318,7 @@ Matrix3x3 Matrix3x3::apply(const Matrix3x3& A, const Matrix3x3& B, F&& func)
     return result;
 }
 template <class F>
-Matrix3x3 Matrix3x3::apply(const Matrix3x3& A, const Vector3D& B, F&& func)
+Matrix3x3 Matrix3x3::applyVector(const Matrix3x3& A, const Vector3D& B, F&& func)
 {
     Matrix3x3 result;
     for (int i = 0; i < 3; ++i)
@@ -250,15 +326,7 @@ Matrix3x3 Matrix3x3::apply(const Matrix3x3& A, const Vector3D& B, F&& func)
     return result;
 }
 template <class F>
-Vector3D Matrix3x3::apply(const Matrix3x3& A, const Vector3D& B, F&& func)
-{
-    Vector3D result;
-    for (int i = 0; i < 3; ++i)
-        result[i] = func(A[i], B);
-    return result;
-}
-template <class F>
-Matrix3x3 Matrix3x3::apply(const Matrix3x3& A, decimal B, F&& func)
+Matrix3x3 Matrix3x3::applyDecimal(const Matrix3x3& A, decimal B, F&& func)
 {
     Matrix3x3 result;
     for (int i = 0; i < 3; ++i)
@@ -270,93 +338,104 @@ Matrix3x3 Matrix3x3::apply(const Matrix3x3& A, decimal B, F&& func)
 // ===== Matrix3x3 op Matrix3x3 (element-wise) =====
 Matrix3x3 operator+(const Matrix3x3& A, const Matrix3x3& B)
 {
-    return Matrix3x3::apply(A, B, std::plus<Vector3D>());
+    return Matrix3x3::applyMatrix(A, B, [](const Vector3D& a, const Vector3D& b) { return a + b; });
 }
 Matrix3x3 operator-(const Matrix3x3& A, const Matrix3x3& B)
 {
-    return Matrix3x3::apply(A, B, std::minus<Vector3D>());
+    return Matrix3x3::applyMatrix(A, B, [](const Vector3D& a, const Vector3D& b) { return a - b; });
 }
 Matrix3x3 operator*(const Matrix3x3& A, const Matrix3x3& B)
 {
-    return Matrix3x3::apply(A, B, std::multiplies<Vector3D>());
+    return Matrix3x3::applyMatrix(A, B, [](const Vector3D& a, const Vector3D& b) { return a * b; });
 }
 Matrix3x3 operator/(const Matrix3x3& A, const Matrix3x3& B)
 {
-    return Matrix3x3::apply(A, B, std::divides<Vector3D>());
+    return Matrix3x3::applyMatrix(A, B, [](const Vector3D& a, const Vector3D& b) { return a / b; });
 }
 
 // ===== Matrix3x3 op Vector3D (element-wise, vector applied to each row) =====
 Matrix3x3 operator+(const Matrix3x3& A, const Vector3D& B)
 {
-    return Matrix3x3::apply(A, B, std::plus<Vector3D>());
+    return Matrix3x3::applyVector(A, B, [](const Vector3D& a, const Vector3D& b) { return a + b; });
 }
 Matrix3x3 operator-(const Matrix3x3& A, const Vector3D& B)
 {
-    return Matrix3x3::apply(A, B, std::minus<Vector3D>());
+    return Matrix3x3::applyVector(A, B, [](const Vector3D& a, const Vector3D& b) { return a - b; });
 }
 Matrix3x3 operator*(const Matrix3x3& A, const Vector3D& B)
 {
-    return Matrix3x3::apply(A, B, std::multiplies<Vector3D>());
+    return Matrix3x3::applyVector(A, B, [](const Vector3D& a, const Vector3D& b) { return a * b; });
 }
 Matrix3x3 operator/(const Matrix3x3& A, const Vector3D& B)
 {
-    return Matrix3x3::apply(A, B, std::divides<Vector3D>());
+    return Matrix3x3::applyVector(A, B, [](const Vector3D& a, const Vector3D& b) { return a / b; });
 }
 
 // ===== Vector3D op Matrix3x3 (element-wise, vector applied to each row) =====
 Matrix3x3 operator+(const Vector3D& A, const Matrix3x3& B)
 {
-    return Matrix3x3::apply(B, A, std::plus<Vector3D>());
+    return Matrix3x3::applyVector(B, A, [](const Vector3D& a, const Vector3D& b) { return b + a; });
 }
 Matrix3x3 operator-(const Vector3D& A, const Matrix3x3& B)
 {
-    // (vector - matrix) element-wise: each row of matrix subtracted from vector
-    return Matrix3x3::apply(B, A, [](const Vector3D& row, const Vector3D& vec) { return vec - row; });
+    return Matrix3x3::applyVector(B, A, [](const Vector3D& a, const Vector3D& b) { return b - a; });
 }
 Matrix3x3 operator*(const Vector3D& A, const Matrix3x3& B)
 {
-    return Matrix3x3::apply(B, A, std::multiplies<Vector3D>());
+    return Matrix3x3::applyVector(B, A, [](const Vector3D& a, const Vector3D& b) { return b * a; });
 }
 Matrix3x3 operator/(const Vector3D& A, const Matrix3x3& B)
 {
-    // (vector / matrix) element-wise: each row of matrix divides vector
-    return Matrix3x3::apply(B, A, [](const Vector3D& row, const Vector3D& vec) { return vec / row; });
+    return Matrix3x3::applyVector(B, A, [](const Vector3D& a, const Vector3D& b) { return b / a; });
 }
 
 // ===== Matrix3x3 op decimal =====
-Matrix3x3 operator+(const Matrix3x3& A, decimal s) { return Matrix3x3::apply(A, s, std::plus<decimal>()); }
-Matrix3x3 operator-(const Matrix3x3& A, decimal s) { return Matrix3x3::apply(A, s, std::minus<decimal>()); }
+Matrix3x3 operator+(const Matrix3x3& A, decimal s)
+{
+    return Matrix3x3::applyDecimal(A, s, [](const Vector3D& a, decimal s) { return a + s; });
+}
+Matrix3x3 operator-(const Matrix3x3& A, decimal s)
+{
+    return Matrix3x3::applyDecimal(A, s, [](const Vector3D& a, decimal s) { return a - s; });
+}
 Matrix3x3 operator*(const Matrix3x3& A, decimal s)
 {
-    return Matrix3x3::apply(A, s, std::multiplies<decimal>());
+    return Matrix3x3::applyDecimal(A, s, [](const Vector3D& a, decimal s) { return a * s; });
 }
-Matrix3x3 operator/(const Matrix3x3& A, decimal s) { return Matrix3x3::apply(A, s, std::divides<decimal>()); }
+Matrix3x3 operator/(const Matrix3x3& A, decimal s)
+{
+    if (s == 0)
+        throw std::invalid_argument("Division by zero");
+    return Matrix3x3::applyDecimal(A, s, [](const Vector3D& a, decimal s) { return a / s; });
+}
 
 // ===== decimal op Matrix3x3 =====
-Matrix3x3 operator+(decimal s, const Matrix3x3& A) { return Matrix3x3::apply(A, s, std::plus<decimal>()); }
+Matrix3x3 operator+(decimal s, const Matrix3x3& A)
+{
+    return Matrix3x3::applyDecimal(A, s, [](const Vector3D& a, decimal s) { return a + s; });
+}
 Matrix3x3 operator-(decimal s, const Matrix3x3& A)
 {
-    return Matrix3x3::apply(A, s, [](decimal a, decimal b) { return b - a; });
+    return Matrix3x3::applyDecimal(A, s, [](const Vector3D& a, decimal b) { return b - a; });
 }
 Matrix3x3 operator*(decimal s, const Matrix3x3& A)
 {
-    return Matrix3x3::apply(A, s, std::multiplies<decimal>());
+    return Matrix3x3::applyDecimal(A, s, [](const Vector3D& a, decimal s) { return a * s; });
 }
 Matrix3x3 operator/(decimal s, const Matrix3x3& A)
 {
-    return Matrix3x3::apply(A, s, [](decimal a, decimal b) { return b / a; });
+    return Matrix3x3::applyDecimal(A, s,
+                                   [](const Vector3D& a, decimal b)
+                                   {
+                                       if (a == 0)
+                                           throw std::invalid_argument("Division by zero");
+                                       return b / a;
+                                   });
 }
 
-// ===== Matrix-vector product (true matrix-vector multiplication) =====
-Vector3D operator*(const Matrix3x3& M, const Vector3D& v)
+// ===== Printing =====
+std::ostream& operator<<(std::ostream& os, const Matrix3x3& m)
 {
-    // Each row dot v
-    return Vector3D(M.getRow(0).dotProduct(v), M.getRow(1).dotProduct(v), M.getRow(2).dotProduct(v));
-}
-
-// ===== Vector-matrix product (row vector times matrix) =====
-Vector3D operator*(const Vector3D& v, const Matrix3x3& M)
-{
-    // Each column dot v
-    return Vector3D(v.dotProduct(M.getColumn(0)), v.dotProduct(M.getColumn(1)), v.dotProduct(M.getColumn(2)));
+    os << "Matrix3x3(" << m[0] << ", " << m[1] << ", " << m[2] << ")";
+    return os;
 }

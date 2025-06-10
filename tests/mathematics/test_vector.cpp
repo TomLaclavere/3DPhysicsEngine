@@ -22,7 +22,15 @@ TEST(Vector3D_Test, DefaultConstructorZeroes)
     EXPECT_DECIMAL_EQ(v.getZ(), 0.0);
 }
 
-TEST(Vector3D_Test, ValueConstructor)
+TEST(Vector3D_Test, OneValueConstructor)
+{
+    Vector3D v(1.0);
+    EXPECT_DECIMAL_EQ(v.getX(), 1.0);
+    EXPECT_DECIMAL_EQ(v.getY(), 1.0);
+    EXPECT_DECIMAL_EQ(v.getZ(), 1.0);
+}
+
+TEST(Vector3D_Test, ValuesConstructor)
 {
     Vector3D v(1.1, -2.2, 3.3);
     EXPECT_DECIMAL_EQ(v.getX(), 1.1);

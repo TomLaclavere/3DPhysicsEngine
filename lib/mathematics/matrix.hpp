@@ -4,34 +4,38 @@
 
 #include <array>
 
-class Matrix3x3
+struct Matrix3x3
 {
 private:
     std::array<Vector3D, 3> m { Vector3D(), Vector3D(), Vector3D() };
 
 public:
     // ===== Constructors =====
-    Matrix3x3(decimal m11, decimal m12, decimal m13, decimal m21, decimal m22, decimal m23, decimal m31,
-              decimal m32, decimal m33);
     Matrix3x3() = default;
-    Matrix3x3(decimal value);
-    Matrix3x3(const Vector3D& row1, const Vector3D& row2, const Vector3D& row3);
+    Matrix3x3(decimal m11, decimal m12, decimal m13, decimal m21, decimal m22, decimal m23, decimal m31,
+              decimal m32, decimal m33)
+        : m { Vector3D(m11, m12, m13), Vector3D(m21, m22, m23), Vector3D(m31, m32, m33) }
+    {}
+    Matrix3x3(decimal value)
+        : m { Vector3D(value, value, value), Vector3D(value, value, value), Vector3D(value, value, value) }
+    {}
+    Matrix3x3(const Vector3D& row1, const Vector3D& row2, const Vector3D& row3)
+        : m { row1, row2, row3 }
+    {}
 
     // ===== Accessors =====
-    Vector3D getRow(int index) const;
-    Vector3D getColumn(int index) const;
-    Vector3D getDiagonal() const;
+    Vector3D getRow(int index) const { return m[index]; }
+    Vector3D getColumn(int index) const { return Vector3D(m[0][index], m[1][index], m[2][index]); }
+    Vector3D getDiagonal() const { return Vector3D(m[0][0], m[1][1], m[2][2]); }
 
     // ===== Utilities =====
     decimal   getMinValue() const;
     decimal   getMaxValue() const;
     decimal   getDeterminant() const;
+    decimal   getTrace() const;
     Matrix3x3 getInverse() const;
     Matrix3x3 getTranspose() const;
-    decimal   getTrace() const;
     Matrix3x3 getAbsolute() const;
-    Matrix3x3 min(const Matrix3x3& matrix1, const Matrix3x3& matrix2) const;
-    Matrix3x3 max(const Matrix3x3& matrix1, const Matrix3x3& matrix2) const;
 
     // ===== Setters =====
     void setRow(int index, const Vector3D& row);

@@ -3,7 +3,7 @@
 
 #include <gtest/gtest.h>
 #include <ostream>
-#include <sstream> // for StreamOutput test
+#include <sstream>
 
 static void EXPECT_DECIMAL_EQ(decimal a, decimal b, decimal eps = PRECISION_MACHINE)
 {

@@ -73,6 +73,30 @@ bool Vector3D::operator<(const Vector3D& other) const
         return v[1] < other[1];
     return v[2] < other[2];
 }
+bool Vector3D::operator<=(const Vector3D& other) const
+{
+    if (v[0] != other[0])
+        return v[0] < other[0];
+    if (v[1] != other[1])
+        return v[1] < other[1];
+    return v[2] <= other[2];
+}
+bool Vector3D::operator>(const Vector3D& other) const
+{
+    if (v[0] != other[0])
+        return v[0] > other[0];
+    if (v[1] != other[1])
+        return v[1] > other[1];
+    return v[2] > other[2];
+}
+bool Vector3D::operator>=(const Vector3D& other) const
+{
+    if (v[0] != other[0])
+        return v[0] > other[0];
+    if (v[1] != other[1])
+        return v[1] > other[1];
+    return v[2] >= other[2];
+}
 bool Vector3D::approxEqual(const Vector3D& other, decimal p) const
 {
     return commonMaths::approxEqual(v[0], other[0], p) && commonMaths::approxEqual(v[1], other[1], p) &&

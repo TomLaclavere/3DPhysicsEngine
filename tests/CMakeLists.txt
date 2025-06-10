@@ -2,19 +2,20 @@
 include(GoogleTest)
 
 # Add test executable
-add_executable(vector_tests 
+add_executable(mathematics_test 
     mathematics/test_vector.cpp
+    mathematics/test_matrix.cpp
 )
 
 # Link against library and GTest
-target_link_libraries(vector_tests
+target_link_libraries(mathematics_test
     PRIVATE 
         3DPhysicsEngine
         GTest::gtest_main
 )
 
 # Enable test discovery
-gtest_discover_tests(vector_tests
+gtest_discover_tests(mathematics_test
     PROPERTIES
         LABELS "unit"
         TIMEOUT 10

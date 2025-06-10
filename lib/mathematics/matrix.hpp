@@ -22,6 +22,9 @@ public:
     Matrix3x3(const Vector3D& row1, const Vector3D& row2, const Vector3D& row3)
         : m { row1, row2, row3 }
     {}
+    Matrix3x3(const Matrix3x3& m)
+        : m { m.m }
+    {}
 
     // ===== Accessors =====
     Vector3D getRow(int index) const { return m[index]; }
@@ -51,10 +54,10 @@ public:
     bool isIdentity() const;
     bool isZero() const;
     bool isFinite() const;
-    bool isInvertible() const;
-    bool isOrthogonal() const;
     bool isDiagonal() const;
     bool isSymmetric() const;
+    bool isInvertible() const;
+    bool isOrthogonal() const;
 
     // ===== Comparison Operators =====
     bool operator==(const Matrix3x3& matrix) const;
@@ -63,9 +66,12 @@ public:
     bool approxEqual(const Matrix3x3& matrix, decimal precision = PRECISION_MACHINE) const;
 
     // ===== Element Access =====
-    decimal& operator()(int row, int column);
-    decimal  operator()(int row, int column) const;
-    Vector3D operator[](int index) const;
+    decimal&  operator()(int row, int column);
+    decimal   operator()(int row, int column) const;
+    Vector3D& operator()(int row);
+    Vector3D  operator()(int row) const;
+    Vector3D& operator[](int row);
+    Vector3D  operator[](int row) const;
 
     // ===== In-Place Arithmetic Operators =====
     Matrix3x3  operator-() const;
@@ -93,25 +99,25 @@ public:
     static Matrix3x3 apply(const Matrix3x3& A, decimal s, F&& f);
 };
 
-// ===== Free Arithmetic Operators =====
-Matrix3x3 operator+(const Matrix3x3&, const Matrix3x3&);
-Matrix3x3 operator-(const Matrix3x3&, const Matrix3x3&);
+// // ===== Free Arithmetic Operators =====
+// Matrix3x3 operator+(const Matrix3x3&, const Matrix3x3&);
+// Matrix3x3 operator-(const Matrix3x3&, const Matrix3x3&);
 
-Matrix3x3 operator+(const Matrix3x3&, const Vector3D&);
-Matrix3x3 operator-(const Matrix3x3&, const Vector3D&);
+// Matrix3x3 operator+(const Matrix3x3&, const Vector3D&);
+// Matrix3x3 operator-(const Matrix3x3&, const Vector3D&);
 
-Matrix3x3 operator+(const Vector3D&, const Matrix3x3&);
-Matrix3x3 operator-(const Vector3D&, const Matrix3x3&);
+// Matrix3x3 operator+(const Vector3D&, const Matrix3x3&);
+// Matrix3x3 operator-(const Vector3D&, const Matrix3x3&);
 
-Vector3D operator*(const Matrix3x3&, const Vector3D&);
-Vector3D operator*(const Vector3D&, const Matrix3x3&);
+// Vector3D operator*(const Matrix3x3&, const Vector3D&);
+// Vector3D operator*(const Vector3D&, const Matrix3x3&);
 
-Matrix3x3 operator+(const Matrix3x3&, decimal);
-Matrix3x3 operator-(const Matrix3x3&, decimal);
-Matrix3x3 operator*(const Matrix3x3&, decimal);
-Matrix3x3 operator/(const Matrix3x3&, decimal);
+// Matrix3x3 operator+(const Matrix3x3&, decimal);
+// Matrix3x3 operator-(const Matrix3x3&, decimal);
+// Matrix3x3 operator*(const Matrix3x3&, decimal);
+// Matrix3x3 operator/(const Matrix3x3&, decimal);
 
-Matrix3x3 operator+(decimal, const Matrix3x3&);
-Matrix3x3 operator-(decimal, const Matrix3x3&);
-Matrix3x3 operator*(decimal, const Matrix3x3&);
-Matrix3x3 operator/(decimal, const Matrix3x3&);
+// Matrix3x3 operator+(decimal, const Matrix3x3&);
+// Matrix3x3 operator-(decimal, const Matrix3x3&);
+// Matrix3x3 operator*(decimal, const Matrix3x3&);
+// Matrix3x3 operator/(decimal, const Matrix3x3&);

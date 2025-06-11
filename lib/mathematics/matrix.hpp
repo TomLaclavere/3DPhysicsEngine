@@ -10,7 +10,9 @@ private:
     std::array<Vector3D, 3> m { Vector3D(), Vector3D(), Vector3D() };
 
 public:
-    // ===== Constructors =====
+    // ============================================================================
+    //  Constructors
+    // ============================================================================
     Matrix3x3() = default;
     Matrix3x3(decimal m11, decimal m12, decimal m13, decimal m21, decimal m22, decimal m23, decimal m31,
               decimal m32, decimal m33)
@@ -26,12 +28,16 @@ public:
         : m { m.m }
     {}
 
-    // ===== Accessors =====
+    // ============================================================================
+    //  Getters
+    // ============================================================================
     Vector3D getRow(int index) const { return m[index]; }
     Vector3D getColumn(int index) const { return Vector3D(m[0][index], m[1][index], m[2][index]); }
     Vector3D getDiagonal() const { return Vector3D(m[0][0], m[1][1], m[2][2]); }
 
-    // ===== Utilities =====
+    // ============================================================================
+    //  Utilities
+    // ============================================================================
     decimal   getMinValue() const;
     decimal   getMaxValue() const;
     decimal   getDeterminant() const;
@@ -40,7 +46,9 @@ public:
     Matrix3x3 getTranspose() const;
     Matrix3x3 getAbsolute() const;
 
-    // ===== Setters =====
+    // ============================================================================
+    //  Setters
+    // ============================================================================
     void setRow(int index, const Vector3D& row);
     void setColumn(int index, const Vector3D& column);
     void setDiagonal(const Vector3D& diagonal);
@@ -50,7 +58,9 @@ public:
     void setAllValues(decimal m11, decimal m12, decimal m13, decimal m21, decimal m22, decimal m23,
                       decimal m31, decimal m32, decimal m33);
 
-    // ===== Property Checks =====
+    // ============================================================================
+    //  Property Checks
+    // ============================================================================
     bool isIdentity() const;
     bool isZero() const;
     bool isFinite() const;
@@ -59,12 +69,19 @@ public:
     bool isInvertible() const;
     bool isOrthogonal() const;
 
-    // ===== Matrix Operations =====
-    Matrix3x3 matrixProduct(const Matrix3x3& matrix) const;
-    Vector3D  matrixVectorProduct(const Vector3D& vector) const;
-    Vector3D  vectorMatrixProduct(const Vector3D& vector) const;
+    // ============================================================================
+    //  Matrix Operations
+    // ============================================================================
+    Matrix3x3        matrixProduct(const Matrix3x3& matrix) const;
+    Vector3D         matrixVectorProduct(const Vector3D& vector) const;
+    Vector3D         vectorMatrixProduct(const Vector3D& vector) const;
+    static Vector3D  matrixVectorProduct(const Matrix3x3& matrix, const Vector3D& vector);
+    static Matrix3x3 matrixProduct(const Matrix3x3& matrix1, const Matrix3x3& matrix2);
+    static Vector3D  vectorMatrixProduct(const Vector3D& vector, const Matrix3x3& matrix);
 
-    // ===== Comparison Operators =====
+    // ============================================================================
+    //  Comparisons Operators
+    // ============================================================================
     bool operator==(const Matrix3x3& matrix) const;
     bool operator!=(const Matrix3x3& matrix) const;
     bool operator<(const Matrix3x3& matrix) const;
@@ -73,7 +90,9 @@ public:
     bool operator>=(const Matrix3x3& matrix) const;
     bool approxEqual(const Matrix3x3& matrix, decimal precision = PRECISION_MACHINE) const;
 
-    // ===== Element Access =====
+    // ============================================================================
+    //  Element Access Operators
+    // ============================================================================
     decimal&  operator()(int row, int column);
     decimal   operator()(int row, int column) const;
     Vector3D& operator()(int row);
@@ -81,7 +100,9 @@ public:
     Vector3D& operator[](int row);
     Vector3D  operator[](int row) const;
 
-    // ===== In-Place Arithmetic Operators =====
+    // ============================================================================
+    //  In-Place Arithmetic Operators
+    // ============================================================================
     Matrix3x3  operator-() const;
     Matrix3x3& operator+=(const Matrix3x3& matrix);
     Matrix3x3& operator-=(const Matrix3x3& matrix);
@@ -96,7 +117,9 @@ public:
     Matrix3x3& operator*=(decimal value);
     Matrix3x3& operator/=(decimal value);
 
-    // ===== Helper for Free Arithmetic Operators =====
+    // ============================================================================
+    //  Helper for Free Arithmetic Operators
+    // ============================================================================
     template <class F>
     static Matrix3x3 applyMatrix(const Matrix3x3& A, const Matrix3x3& B, F&& f);
     template <class F>
@@ -104,8 +127,16 @@ public:
     template <class F>
     static Matrix3x3 applyDecimal(const Matrix3x3& A, decimal s, F&& f);
 };
+// ============================================================================
+//  Static Matrix Operators
+// ============================================================================
+Vector3D  matrixVectorProduct(const Matrix3x3& matrix, const Vector3D& vector);
+Matrix3x3 matrixProduct(const Matrix3x3& matrix1, const Matrix3x3& matrix2);
+Vector3D  vectorMatrixProduct(const Vector3D& vector, const Matrix3x3& matrix);
 
-/// ===== Free Arithmetic Operators =====
+// ============================================================================
+//  Free Arithmetic Operators
+// ============================================================================
 Matrix3x3 operator+(const Matrix3x3&, const Matrix3x3&);
 Matrix3x3 operator-(const Matrix3x3&, const Matrix3x3&);
 Matrix3x3 operator*(const Matrix3x3&, const Matrix3x3&);
@@ -131,5 +162,7 @@ Matrix3x3 operator-(decimal, const Matrix3x3&);
 Matrix3x3 operator*(decimal, const Matrix3x3&);
 Matrix3x3 operator/(decimal, const Matrix3x3&);
 
-// ===== Printing =====
+// ============================================================================
+//  Printing
+// ============================================================================
 std::ostream& operator<<(std::ostream&, const Matrix3x3&);

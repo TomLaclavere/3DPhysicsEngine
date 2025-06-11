@@ -34,9 +34,14 @@ TEST(Matrix3x3_Test, FullValuesConstructor)
 {
     Matrix3x3 m(1, 2, 3, 4, 5, 6, 7, 8, 9);
     EXPECT_DECIMAL_EQ(m(0, 0), 1);
+    EXPECT_DECIMAL_EQ(m(0, 1), 2);
+    EXPECT_DECIMAL_EQ(m(0, 2), 3);
+    EXPECT_DECIMAL_EQ(m(1, 0), 4);
     EXPECT_DECIMAL_EQ(m(1, 1), 5);
-    EXPECT_DECIMAL_EQ(m(2, 2), 9);
+    EXPECT_DECIMAL_EQ(m(1, 2), 6);
     EXPECT_DECIMAL_EQ(m(2, 0), 7);
+    EXPECT_DECIMAL_EQ(m(2, 1), 8);
+    EXPECT_DECIMAL_EQ(m(2, 2), 9);
 }
 
 TEST(Matrix3x3_Test, RowConstructor)
@@ -94,6 +99,13 @@ TEST(Matrix3x3_Test, SetAllValues)
 
     m.setAllValues(1, 2, 3, 4, 5, 6, 7, 8, 9);
     EXPECT_DECIMAL_EQ(m(0, 0), 1);
+    EXPECT_DECIMAL_EQ(m(0, 1), 2);
+    EXPECT_DECIMAL_EQ(m(0, 2), 3);
+    EXPECT_DECIMAL_EQ(m(1, 0), 4);
+    EXPECT_DECIMAL_EQ(m(1, 1), 5);
+    EXPECT_DECIMAL_EQ(m(1, 2), 6);
+    EXPECT_DECIMAL_EQ(m(2, 0), 7);
+    EXPECT_DECIMAL_EQ(m(2, 1), 8);
     EXPECT_DECIMAL_EQ(m(2, 2), 9);
 }
 
@@ -154,36 +166,54 @@ TEST(Matrix3x3_Test, MatrixProduct)
 {
     Matrix3x3 a(1, 2, 3, 4, 5, 6, 7, 8, 9);
     Matrix3x3 b(9, 8, 7, 6, 5, 4, 3, 2, 1);
-    Matrix3x3 prod = a.matrixProduct(b);
+    Matrix3x3 prod     = a.matrixProduct(b);
+    Matrix3x3 prod_alt = matrixProduct(a, b);
     EXPECT_DECIMAL_EQ(prod(0, 0), 30);
+    EXPECT_DECIMAL_EQ(prod_alt(0, 0), 30);
     EXPECT_DECIMAL_EQ(prod(0, 1), 24);
+    EXPECT_DECIMAL_EQ(prod_alt(0, 1), 24);
     EXPECT_DECIMAL_EQ(prod(0, 2), 18);
+    EXPECT_DECIMAL_EQ(prod_alt(0, 2), 18);
     EXPECT_DECIMAL_EQ(prod(1, 0), 84);
+    EXPECT_DECIMAL_EQ(prod_alt(1, 0), 84);
     EXPECT_DECIMAL_EQ(prod(1, 1), 69);
+    EXPECT_DECIMAL_EQ(prod_alt(1, 1), 69);
     EXPECT_DECIMAL_EQ(prod(1, 2), 54);
+    EXPECT_DECIMAL_EQ(prod_alt(1, 2), 54);
     EXPECT_DECIMAL_EQ(prod(2, 0), 138);
+    EXPECT_DECIMAL_EQ(prod_alt(2, 0), 138);
     EXPECT_DECIMAL_EQ(prod(2, 1), 114);
+    EXPECT_DECIMAL_EQ(prod_alt(2, 1), 114);
     EXPECT_DECIMAL_EQ(prod(2, 2), 90);
+    EXPECT_DECIMAL_EQ(prod_alt(2, 2), 90);
 }
 
 TEST(Matrix3x3_Test, MatrixVectorProduct)
 {
     Matrix3x3 a(1, 2, 3, 4, 5, 6, 7, 8, 9);
     Vector3D  v(1, 2, 3);
-    Vector3D  prod = a.matrixVectorProduct(v);
+    Vector3D  prod     = a.matrixVectorProduct(v);
+    Vector3D  prod_alt = matrixVectorProduct(a, v);
     EXPECT_DECIMAL_EQ(prod[0], 14);
+    EXPECT_DECIMAL_EQ(prod_alt[0], 14);
     EXPECT_DECIMAL_EQ(prod[1], 32);
+    EXPECT_DECIMAL_EQ(prod_alt[1], 32);
     EXPECT_DECIMAL_EQ(prod[2], 50);
+    EXPECT_DECIMAL_EQ(prod_alt[2], 50);
 }
 
 TEST(Matrix3x3_Test, VectorMatrixProduct)
 {
     Matrix3x3 a(1, 2, 3, 4, 5, 6, 7, 8, 9);
     Vector3D  v(1, 2, 3);
-    Vector3D  prod = a.vectorMatrixProduct(v);
-    EXPECT_DECIMAL_EQ(prod[0], 14);
-    EXPECT_DECIMAL_EQ(prod[1], 32);
-    EXPECT_DECIMAL_EQ(prod[2], 50);
+    Vector3D  prod     = a.vectorMatrixProduct(v);
+    Vector3D  prod_alt = vectorMatrixProduct(v, a);
+    EXPECT_DECIMAL_EQ(prod[0], 30);
+    EXPECT_DECIMAL_EQ(prod_alt[0], 30);
+    EXPECT_DECIMAL_EQ(prod[1], 36);
+    EXPECT_DECIMAL_EQ(prod_alt[1], 36);
+    EXPECT_DECIMAL_EQ(prod[2], 42);
+    EXPECT_DECIMAL_EQ(prod_alt[2], 42);
 }
 
 // ——————————————————————————————————————————————————————————————————————————

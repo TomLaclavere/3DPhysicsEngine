@@ -5,24 +5,23 @@
 #include <stdexcept>
 
 // ===== Utilities =====
+void Vector3D::normalize()
+{
+    decimal n = getNorm();
+    if (n < PRECISION_MACHINE)
+        *this = Vector3D(0, 0, 0);
+    else
+        *this /= n;
+}
 Vector3D Vector3D::getAbsoluteVector() const
 {
     return Vector3D { std::fabs(v[0]), std::fabs(v[1]), std::fabs(v[2]) };
 }
 Vector3D Vector3D::getNormalizedVector() const
 {
-    decimal n = getNorm();
-    return (n < PRECISION_MACHINE) ? Vector3D { 0, 0, 0 } : *this / n;
-}
-void Vector3D::normalize()
-{
-    decimal n2 = getNormSquare();
-    if (n2 < PRECISION_MACHINE)
-        return;
-    decimal inv = 1.0L / std::sqrt(n2);
-    v[0] *= inv;
-    v[1] *= inv;
-    v[2] *= inv;
+    Vector3D normalizedV = Vector3D((*this));
+    normalizedV.normalize();
+    return normalizedV;
 }
 Vector3D Vector3D::min(const Vector3D& a, const Vector3D& b)
 {

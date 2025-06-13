@@ -61,7 +61,60 @@ TEST(Matrix3x3_Test, CopyConstructor)
 }
 
 // ——————————————————————————————————————————————————————————————————————————
-// 2) Accessors and Mutators
+// 2) Utilities
+// ——————————————————————————————————————————————————————————————————————————
+TEST(Matrix3x3_Test, GetMinMaxValue)
+{
+    Matrix3x3 m(-1, 2, 3, 4, -5, 6, 7, 8, 0);
+    EXPECT_EQ(m.getMinValue(), -5);
+    EXPECT_EQ(m.getMaxValue(), 8);
+}
+
+TEST(Matrix3x3_Test, GetDeterminant)
+{
+    Matrix3x3 m(1, 2, 3, 0, 1, 4, 5, 6, 0);
+    EXPECT_DECIMAL_EQ(m.getDeterminant(), 1 * (1 * 0 - 4 * 6) - 2 * (0 * 0 - 4 * 5) + 3 * (0 * 6 - 1 * 5));
+    // Or: -1*6 + 2*20 - 3*5 = -6 + 40 - 15 = 19
+}
+
+TEST(Matrix3x3_Test, GetTrace)
+{
+    Matrix3x3 m(1, 2, 3, 4, 5, 6, 7, 8, 9);
+    EXPECT_EQ(m.getTrace(), 1 + 5 + 9);
+}
+
+TEST(Matrix3x3_Test, GetInverse)
+{
+    Matrix3x3 m(4, 7, 2, 3, 6, 1, 2, 5, 1);
+    Matrix3x3 inv = m.getInverse();
+    Matrix3x3 identity = m.matrixProduct(inv);
+    EXPECT_TRUE(identity.approxEqual(Matrix3x3().getIdentity(), 1e-6));
+}
+
+TEST(Matrix3x3_Test, NormalizeProducesUnit)
+{
+    Matrix3x3 m(1, 2, 3, 4, 5, 6, 7, 8, 10);
+    m.normalize();
+    for (int i = 0; i < 3; ++i)
+        EXPECT_NEAR(m.getRow(i).getNorm(), 1.0, 1e-6);
+}
+
+TEST(Matrix3x3_Test, GetTranspose)
+{
+    Matrix3x3 m(1, 2, 3, 4, 5, 6, 7, 8, 9);
+    Matrix3x3 t = m.getTranspose();
+    EXPECT_EQ(t, Matrix3x3(1, 4, 7, 2, 5, 8, 3, 6, 9));
+}
+
+TEST(Matrix3x3_Test, GetAbsolute)
+{
+    Matrix3x3 m(-1, 2, -3, 4, -5, 6, -7, 8, -9);
+    Matrix3x3 absM = m.getAbsolute();
+    EXPECT_EQ(absM, Matrix3x3(1, 2, 3, 4, 5, 6, 7, 8, 9));
+}
+
+// ——————————————————————————————————————————————————————————————————————————
+// 3) Accessors and Mutators
 // ——————————————————————————————————————————————————————————————————————————
 TEST(Matrix3x3_Test, SetAndGetRowColumnDiagonal)
 {
@@ -109,8 +162,34 @@ TEST(Matrix3x3_Test, SetAllValues)
     EXPECT_DECIMAL_EQ(m(2, 2), 9);
 }
 
+TEST(Matrix3x3_Test, SetAllValuesVector)
+{
+    int       cpt = 0;
+    Matrix3x3 m;
+    m.setAllValues(Vector3D(0, 1, 2), Vector3D(3, 4, 5), Vector3D(6, 7, 8));
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+        {
+            EXPECT_DECIMAL_EQ(m(i, j), cpt);
+            ++cpt;
+        }
+}
+
+TEST(Matrix3x3_Test, SetAllValuesMatrix)
+{
+    int       cpt = 0;
+    Matrix3x3 m;
+    m.setAllValues(Matrix3x3(0, 1, 2, 3, 4, 5, 6, 7, 8));
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+        {
+            EXPECT_DECIMAL_EQ(m(i, j), cpt);
+            ++cpt;
+        }
+}
+
 // ——————————————————————————————————————————————————————————————————————————
-// 3) Property Checks
+// 4) Property Checks
 // ——————————————————————————————————————————————————————————————————————————
 TEST(Matrix3x3_Test, IsIdentity)
 {
@@ -159,7 +238,7 @@ TEST(Matrix3x3_Test, IsFinite)
 }
 
 // ——————————————————————————————————————————————————————————————————————————
-// 4) Matrix Operations
+// 5) Matrix Operations
 // ——————————————————————————————————————————————————————————————————————————
 
 TEST(Matrix3x3_Test, MatrixProduct)
@@ -217,7 +296,7 @@ TEST(Matrix3x3_Test, VectorMatrixProduct)
 }
 
 // ——————————————————————————————————————————————————————————————————————————
-// 5) Comparison Operators
+// 6) Comparison Operators
 // ——————————————————————————————————————————————————————————————————————————
 TEST(Matrix3x3_Test, EqualityAndApproxEqual)
 {
@@ -276,7 +355,7 @@ TEST(Matrix3x3_Test, MoreThanOrEqual)
 }
 
 // ——————————————————————————————————————————————————————————————————————————
-// 6) Element Access
+// 7) Element Access
 // ——————————————————————————————————————————————————————————————————————————
 TEST(Matrix3x3_Test, ElementAccessAtChecked)
 {
@@ -331,7 +410,7 @@ TEST(Matrix3x3_Test, ElementAccessBracketsUnchecked)
 }
 
 // ——————————————————————————————————————————————————————————————————————————
-// 7) In-Place Arithmetic Operators (element-wise and scalar)
+// 8) In-Place Arithmetic Operators (element-wise and scalar)
 // ——————————————————————————————————————————————————————————————————————————
 TEST(Matrix3x3_Test, InPlaceArithmeticOperators_Matrix)
 {
@@ -399,7 +478,7 @@ TEST(Matrix3x3_Test, InPlaceArithmeticOperators_Scalar)
 }
 
 // ——————————————————————————————————————————————————————————————————————————
-// 8) Free Arithmetic Operators (element-wise and scalar)
+// 9) Free Arithmetic Operators (element-wise and scalar)
 // ——————————————————————————————————————————————————————————————————————————
 TEST(Matrix3x3_Test, FreeArithmeticOperators_Matrix)
 {
@@ -457,7 +536,7 @@ TEST(Matrix3x3_Test, FreeArithmeticOperators_ScalarMatrix)
 }
 
 // ——————————————————————————————————————————————————————————————————————————
-// 9) Stream Output
+// 10) Stream Output
 // ——————————————————————————————————————————————————————————————————————————
 TEST(Matrix3x3_Test, StreamOutput)
 {

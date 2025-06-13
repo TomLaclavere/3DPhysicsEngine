@@ -38,10 +38,14 @@ public:
     // ============================================================================
     //  Utilities
     // ============================================================================
+    // Normalization of a rotation matrix : Gram-Schmidt othonormalisation
+    void      normalize();
     decimal   getMinValue() const;
     decimal   getMaxValue() const;
     decimal   getDeterminant() const;
     decimal   getTrace() const;
+    Matrix3x3 getIdentity() const;
+    Matrix3x3 getNormalizedMatrix() const;
     Matrix3x3 getInverse() const;
     Matrix3x3 getTranspose() const;
     Matrix3x3 getAbsolute() const;
@@ -55,8 +59,10 @@ public:
     void setToIdentity();
     void setToZero();
     void setAllValues(decimal value);
+    void setAllValues(const Vector3D& v1, const Vector3D& v2, const Vector3D& v3);
     void setAllValues(decimal m11, decimal m12, decimal m13, decimal m21, decimal m22, decimal m23,
                       decimal m31, decimal m32, decimal m33);
+    void setAllValues(const Matrix3x3& m);
 
     // ============================================================================
     //  Property Checks

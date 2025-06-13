@@ -7,6 +7,30 @@
 // ============================================================================
 //  Utilities
 // ============================================================================
+void Matrix3x3::normalize()
+{
+    // Copy rows
+    Vector3D r0 = m[0];
+    Vector3D r1 = m[1];
+    Vector3D r2 = m[2];
+
+    // Gram-Schmidt process (rows)
+    // 1. Normalize first row
+    r0.normalize();
+
+    // 2. Make r1 orthogonal to r0, then normalize
+    r1 = r1 - r0 * r1.dotProduct(r0);
+    r1.normalize();
+
+    // 3. Make r2 orthogonal to r0 and r1, then normalize
+    r2 = r2 - r0 * r2.dotProduct(r0) - r1 * r2.dotProduct(r1);
+    r2.normalize();
+
+    // Modify matrix rows
+    m[0] = r0;
+    m[1] = r1;
+    m[2] = r2;
+}
 decimal Matrix3x3::getMinValue() const
 {
     return std::min({ m[0].getMinValue(), m[1].getMinValue(), m[2].getMinValue() });
@@ -21,18 +45,33 @@ decimal Matrix3x3::getDeterminant() const
            m[0][2] * m[1][1] * m[2][0] - m[0][1] * m[1][0] * m[2][2] - m[0][0] * m[1][2] * m[2][1];
 }
 decimal   Matrix3x3::getTrace() const { return m[0][0] + m[1][1] + m[2][2]; }
+Matrix3x3 Matrix3x3::getIdentity() const
+{
+    Matrix3x3 I = { Matrix3x3(*this) };
+    I.setToIdentity();
+    return I;
+}
+Matrix3x3 Matrix3x3::getNormalizedMatrix() const
+{
+    Matrix3x3 normalizedM { Matrix3x3((*this)) };
+    normalizedM.normalize();
+    return normalizedM;
+}
 Matrix3x3 Matrix3x3::getInverse() const
 {
     decimal det = getDeterminant();
     if (commonMaths::approxEqual(det, decimal(0)))
-    {
         throw std::runtime_error("Matrix is singular and cannot be inverted");
-    }
     decimal invDet = decimal(1) / det;
+
     return Matrix3x3(
+        // Row 0
         (m[1][1] * m[2][2] - m[1][2] * m[2][1]) * invDet, (m[0][2] * m[2][1] - m[0][1] * m[2][2]) * invDet,
-        (m[0][1] * m[1][2] - m[0][2] * m[1][1]) * invDet, (m[1][2] * m[2][0] - m[1][0] * m[2][2]) * invDet,
-        (m[0][0] * m[2][2] - m[0][2] * m[2][0]) * invDet, (m[0][2] * m[1][0] - m[0][0] * m[1][2]) * invDet,
+        (m[0][1] * m[1][2] - m[0][2] * m[1][1]) * invDet,
+        // Row 1
+        (m[1][2] * m[2][0] - m[1][0] * m[2][2]) * invDet, (m[0][0] * m[2][2] - m[0][2] * m[2][0]) * invDet,
+        (m[0][2] * m[1][0] - m[0][0] * m[1][2]) * invDet,
+        // Row 2
         (m[1][0] * m[2][1] - m[1][1] * m[2][0]) * invDet, (m[0][1] * m[2][0] - m[0][0] * m[2][1]) * invDet,
         (m[0][0] * m[1][1] - m[0][1] * m[1][0]) * invDet);
 }
@@ -77,6 +116,12 @@ void Matrix3x3::setAllValues(decimal value)
         for (int j = 0; j < 3; ++j)
             m[i][j] = value;
 }
+void Matrix3x3::setAllValues(const Vector3D& v1, const Vector3D& v2, const Vector3D& v3)
+{
+    (*this).setRow(0, v1);
+    (*this).setRow(1, v2);
+    (*this).setRow(2, v3);
+}
 void Matrix3x3::setAllValues(decimal m11, decimal m12, decimal m13, decimal m21, decimal m22, decimal m23,
                              decimal m31, decimal m32, decimal m33)
 {
@@ -89,6 +134,11 @@ void Matrix3x3::setAllValues(decimal m11, decimal m12, decimal m13, decimal m21,
     m[2][0] = m31;
     m[2][1] = m32;
     m[2][2] = m33;
+}
+void Matrix3x3::setAllValues(const Matrix3x3& m)
+{
+    for (int i = 0; i < 3; ++i)
+        (*this).setRow(i, m[i]);
 }
 
 // ============================================================================

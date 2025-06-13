@@ -276,34 +276,56 @@ TEST(Matrix3x3_Test, MoreThanOrEqual)
 }
 
 // ——————————————————————————————————————————————————————————————————————————
-// 6) Eleement Access
+// 6) Element Access
 // ——————————————————————————————————————————————————————————————————————————
-TEST(Matrix3x3_Test, ElementAccessParentheses)
+TEST(Matrix3x3_Test, ElementAccessAtChecked)
 {
     Matrix3x3 m(1, 2, 3, 4, 5, 6, 7, 8, 9);
 
-    // Test const and non-const access
-    EXPECT_DECIMAL_EQ(m(0, 0), 1);
-    EXPECT_DECIMAL_EQ(m(1, 2), 6);
+    // at(row, col) const and non-const
+    EXPECT_DECIMAL_EQ(m.at(0, 0), 1);
+    EXPECT_DECIMAL_EQ(m.at(2, 1), 8);
 
-    m(2, 1) = 42.0;
-    EXPECT_DECIMAL_EQ(m(2, 1), 42.0);
+    m.at(1, 2) = 42.0;
+    EXPECT_DECIMAL_EQ(m.at(1, 2), 42.0);
 
-    // Test row access
-    Vector3D row = m(1);
-    EXPECT_EQ(row, Vector3D(4, 5, 6));
-    m(1) = Vector3D(10, 11, 12);
-    EXPECT_EQ(m.getRow(1), Vector3D(10, 11, 12));
+    // at(row) const and non-const
+    Vector3D row = m.at(2);
+    EXPECT_EQ(row, Vector3D(7, 8, 9));
+    m.at(2) = Vector3D(10, 11, 12);
+    EXPECT_EQ(m.getRow(2), Vector3D(10, 11, 12));
+
+    // Out-of-range checks
+    EXPECT_THROW(m.at(-1, 0), std::out_of_range);
+    EXPECT_THROW(m.at(3, 0), std::out_of_range);
+    EXPECT_THROW(m.at(0, -1), std::out_of_range);
+    EXPECT_THROW(m.at(0, 3), std::out_of_range);
+    EXPECT_THROW(m.at(-1), std::out_of_range);
+    EXPECT_THROW(m.at(3), std::out_of_range);
 }
 
-TEST(Matrix3x3_Test, ElementAccessBrackets)
+TEST(Matrix3x3_Test, ElementAccessParenthesesUnchecked)
 {
     Matrix3x3 m(1, 2, 3, 4, 5, 6, 7, 8, 9);
 
-    // Test const and non-const access
-    EXPECT_EQ(m[0], Vector3D(1, 2, 3));
-    EXPECT_EQ(m[2], Vector3D(7, 8, 9));
+    // operator()(row, col) const and non-const
+    EXPECT_DECIMAL_EQ(m(0, 1), 2);
+    m(1, 0) = 99.0;
+    EXPECT_DECIMAL_EQ(m(1, 0), 99.0);
 
+    // operator()(row) const and non-const
+    Vector3D row = m(0);
+    EXPECT_EQ(row, Vector3D(1, 2, 3));
+    m(0) = Vector3D(13, 14, 15);
+    EXPECT_EQ(m.getRow(0), Vector3D(13, 14, 15));
+}
+
+TEST(Matrix3x3_Test, ElementAccessBracketsUnchecked)
+{
+    Matrix3x3 m(1, 2, 3, 4, 5, 6, 7, 8, 9);
+
+    // operator[](row) const and non-const
+    EXPECT_EQ(m[1], Vector3D(4, 5, 6));
     m[1] = Vector3D(20, 21, 22);
     EXPECT_EQ(m.getRow(1), Vector3D(20, 21, 22));
 }

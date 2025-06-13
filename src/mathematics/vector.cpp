@@ -104,18 +104,20 @@ bool Vector3D::approxEqual(const Vector3D& other, decimal p) const
 }
 
 // ===== Element Access =====
-decimal& Vector3D::operator[](int i)
+decimal& Vector3D::operator()(int i)
 {
     if (i < 0 || i >= 3)
         throw std::out_of_range("Vector3D index out of range");
     return v[i];
 }
-decimal Vector3D::operator[](int i) const
+decimal Vector3D::operator()(int i) const
 {
     if (i < 0 || i >= 3)
         throw std::out_of_range("Vector3D index out of range");
     return v[i];
 }
+decimal& Vector3D::operator[](int i) { return v[i]; }
+decimal Vector3D::operator[](int i) const { return v[i]; }
 
 // ===== In-Place Arithmetic Operators =====
 Vector3D Vector3D::operator-() const { return Vector3D(-v[0], -v[1], -v[2]); }

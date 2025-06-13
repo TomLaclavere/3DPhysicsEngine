@@ -72,12 +72,9 @@ public:
     // ============================================================================
     //  Matrix Operations
     // ============================================================================
-    Matrix3x3        matrixProduct(const Matrix3x3& matrix) const;
-    Vector3D         matrixVectorProduct(const Vector3D& vector) const;
-    Vector3D         vectorMatrixProduct(const Vector3D& vector) const;
-    static Vector3D  matrixVectorProduct(const Matrix3x3& matrix, const Vector3D& vector);
-    static Matrix3x3 matrixProduct(const Matrix3x3& matrix1, const Matrix3x3& matrix2);
-    static Vector3D  vectorMatrixProduct(const Vector3D& vector, const Matrix3x3& matrix);
+    Matrix3x3 matrixProduct(const Matrix3x3& matrix) const;
+    Vector3D  matrixVectorProduct(const Vector3D& vector) const;
+    Vector3D  vectorMatrixProduct(const Vector3D& vector) const;
 
     // ============================================================================
     //  Comparisons Operators
@@ -93,6 +90,12 @@ public:
     // ============================================================================
     //  Element Access Operators
     // ============================================================================
+    // Element access with index checking
+    decimal&  at(int row, int column);
+    decimal   at(int row, int column) const;
+    Vector3D& at(int row);
+    Vector3D  at(int row) const;
+    // Element access without index checking
     decimal&  operator()(int row, int column);
     decimal   operator()(int row, int column) const;
     Vector3D& operator()(int row);
@@ -128,10 +131,10 @@ public:
     static Matrix3x3 applyDecimal(const Matrix3x3& A, decimal s, F&& f);
 };
 // ============================================================================
-//  Static Matrix Operators
+//  Matrix Operations
 // ============================================================================
-Vector3D  matrixVectorProduct(const Matrix3x3& matrix, const Vector3D& vector);
 Matrix3x3 matrixProduct(const Matrix3x3& matrix1, const Matrix3x3& matrix2);
+Vector3D  matrixVectorProduct(const Matrix3x3& matrix, const Vector3D& vector);
 Vector3D  vectorMatrixProduct(const Vector3D& vector, const Matrix3x3& matrix);
 
 // ============================================================================

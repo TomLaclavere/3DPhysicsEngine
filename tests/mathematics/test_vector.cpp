@@ -179,23 +179,48 @@ TEST(Vector3D_Test, ApproxEqualWithPrecision)
 }
 
 // ——————————————————————————————————————————————————————————————————————————
-// 9) operator[] and exception on bad index
+// 9) Element Access
 // ——————————————————————————————————————————————————————————————————————————
-TEST(Vector3D_Test, BracketOperatorReadWrite)
+TEST(Vector3D_Test, ElementAccessChecked)
 {
-    Vector3D v(7, 8, 9);
-    EXPECT_DECIMAL_EQ(v[0], 7);
-    EXPECT_DECIMAL_EQ(v[1], 8);
-    EXPECT_DECIMAL_EQ(v[2], 9);
-    v[1] = 42;
-    EXPECT_DECIMAL_EQ(v.getY(), 42);
+    Vector3D v(1, 2, 3);
+
+    // operator()(int) const and non-const
+    EXPECT_DECIMAL_EQ(v(0), 1);
+    EXPECT_DECIMAL_EQ(v(1), 2);
+    EXPECT_DECIMAL_EQ(v(2), 3);
+
+    v(1) = 42.0;
+    EXPECT_DECIMAL_EQ(v(1), 42.0);
+
+    // Out-of-range checks
+    EXPECT_THROW(v(-1), std::out_of_range);
+    EXPECT_THROW(v(3), std::out_of_range);
+
+    const Vector3D cv(4, 5, 6);
+    EXPECT_DECIMAL_EQ(cv(0), 4);
+    EXPECT_DECIMAL_EQ(cv(1), 5);
+    EXPECT_DECIMAL_EQ(cv(2), 6);
+    EXPECT_THROW(cv(-1), std::out_of_range);
+    EXPECT_THROW(cv(3), std::out_of_range);
 }
 
-TEST(Vector3D_Test, BracketOperatorThrowsOnInvalid)
+TEST(Vector3D_Test, ElementAccessUnchecked)
 {
-    Vector3D v;
-    EXPECT_THROW(v[3], std::out_of_range);
-    EXPECT_THROW(std::as_const(v)[-1], std::out_of_range);
+    Vector3D v(1, 2, 3);
+
+    // operator[](int) const and non-const
+    EXPECT_DECIMAL_EQ(v[0], 1);
+    EXPECT_DECIMAL_EQ(v[1], 2);
+    EXPECT_DECIMAL_EQ(v[2], 3);
+
+    v[2] = 99.0;
+    EXPECT_DECIMAL_EQ(v[2], 99.0);
+
+    const Vector3D cv(7, 8, 9);
+    EXPECT_DECIMAL_EQ(cv[0], 7);
+    EXPECT_DECIMAL_EQ(cv[1], 8);
+    EXPECT_DECIMAL_EQ(cv[2], 9);
 }
 
 // ——————————————————————————————————————————————————————————————————————————

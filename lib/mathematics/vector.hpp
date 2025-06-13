@@ -66,6 +66,10 @@ public:
     bool approxEqual(const Vector3D&, decimal) const;
 
     // ===== Element Access =====
+    // Element access with index checking
+    decimal& operator()(int);
+    decimal  operator()(int) const;
+    // Element acces without index checking
     decimal& operator[](int);
     decimal  operator[](int) const;
 

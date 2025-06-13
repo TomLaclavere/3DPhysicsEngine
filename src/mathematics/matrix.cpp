@@ -28,12 +28,13 @@ Matrix3x3 Matrix3x3::getInverse() const
     {
         throw std::runtime_error("Matrix is singular and cannot be inverted");
     }
-    return Matrix3x3(m[1][1] * m[2][2] - m[1][2] * m[2][1], m[0][2] * m[2][1] - m[0][1] * m[2][2],
-                     m[0][1] * m[1][2] - m[0][2] * m[1][1], m[1][2] * m[2][0] - m[1][0] * m[2][2],
-                     m[0][0] * m[2][2] - m[0][2] * m[2][0], m[0][2] * m[1][0] - m[0][0] * m[1][2],
-                     m[1][0] * m[2][1] - m[1][1] * m[2][0], m[0][1] * m[2][0] - m[0][0] * m[2][1],
-                     m[0][0] * m[1][1] - m[0][1] * m[1][0]) /
-           det;
+    decimal invDet = decimal(1) / det;
+    return Matrix3x3(
+        (m[1][1] * m[2][2] - m[1][2] * m[2][1]) * invDet, (m[0][2] * m[2][1] - m[0][1] * m[2][2]) * invDet,
+        (m[0][1] * m[1][2] - m[0][2] * m[1][1]) * invDet, (m[1][2] * m[2][0] - m[1][0] * m[2][2]) * invDet,
+        (m[0][0] * m[2][2] - m[0][2] * m[2][0]) * invDet, (m[0][2] * m[1][0] - m[0][0] * m[1][2]) * invDet,
+        (m[1][0] * m[2][1] - m[1][1] * m[2][0]) * invDet, (m[0][1] * m[2][0] - m[0][0] * m[2][1]) * invDet,
+        (m[0][0] * m[1][1] - m[0][1] * m[1][0]) * invDet);
 }
 Matrix3x3 Matrix3x3::getTranspose() const
 {
@@ -246,6 +247,30 @@ bool Matrix3x3::approxEqual(const Matrix3x3& matrix, decimal tolerance) const
 // ============================================================================
 //  Element Access Operators
 // ============================================================================
+decimal& Matrix3x3::at(int row, int column)
+{
+    if (row < 0 || row >= 3)
+        throw std::out_of_range("Matrix3x3 row index out of range");
+    return m[row](column);
+}
+decimal Matrix3x3::at(int row, int column) const
+{
+    if (row < 0 || row >= 3)
+        throw std::out_of_range("Matrix3x3 row index out of range");
+    return m[row](column);
+}
+Vector3D& Matrix3x3::at(int row)
+{
+    if (row < 0 || row >= 3)
+        throw std::out_of_range("Matrix3x3 row index out of range");
+    return m[row];
+}
+Vector3D Matrix3x3::at(int row) const
+{
+    if (row < 0 || row >= 3)
+        throw std::out_of_range("Matrix3x3 row index out of range");
+    return m[row];
+}
 decimal& Matrix3x3::operator()(int row, int column) { return m[row][column]; }
 decimal Matrix3x3::operator()(int row, int column) const { return m[row][column]; }
 Vector3D& Matrix3x3::operator()(int row) { return m[row]; }

@@ -23,6 +23,7 @@
 - [ ] **Utility Types :** Define data structures like `Transform` and bounding volumes (AABB, sphere).  
 - [ ] **Documentation :** Document your math types and utilities.
 - [ ] **Test Math :** Write tests or small applications to validate math operations.
+- [ ] **Test CI :** Integration of tests procedure in GitHub
 
 ---
 

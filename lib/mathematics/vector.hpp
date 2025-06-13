@@ -28,21 +28,19 @@ public:
     decimal getZ() const { return v[2]; }
 
     // ===== Utilities =====
-    decimal         getNormSquare() const { return v[0] * v[0] + v[1] * v[1] + v[2] * v[2]; }
-    decimal         getNorm() const { return std::sqrt(getNormSquare()); }
-    decimal         getMinValue() const { return std::min({ v[0], v[1], v[2] }); }
-    decimal         getMaxValue() const { return std::max({ v[0], v[1], v[2] }); }
-    Vector3D        getAbsoluteVector() const;
-    Vector3D        getNormalizedVector() const;
-    void            normalize();
-    static Vector3D min(const Vector3D& a, const Vector3D& b);
-    static Vector3D max(const Vector3D& a, const Vector3D& b);
+    decimal  getNormSquare() const { return v[0] * v[0] + v[1] * v[1] + v[2] * v[2]; }
+    decimal  getNorm() const { return std::sqrt(getNormSquare()); }
+    decimal  getMinValue() const { return std::min({ v[0], v[1], v[2] }); }
+    decimal  getMaxValue() const { return std::max({ v[0], v[1], v[2] }); }
+    Vector3D getAbsoluteVector() const;
+    Vector3D getNormalize() const;
 
     // ===== Setters =====
     void setX(decimal);
     void setY(decimal);
     void setZ(decimal);
     void setToZero();
+    void normalize();
     void setAllValues(decimal);
     void setAllValues(decimal, decimal, decimal);
 
@@ -90,6 +88,9 @@ public:
     template <class F>
     static Vector3D apply(const Vector3D& A, decimal s, F&& f);
 };
+// ===== Utilities =====
+Vector3D min(const Vector3D& a, const Vector3D& b);
+Vector3D max(const Vector3D& a, const Vector3D& b);
 
 // ===== Free Arithmetic Operators =====
 Vector3D operator+(const Vector3D&, const Vector3D&);

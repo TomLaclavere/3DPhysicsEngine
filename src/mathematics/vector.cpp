@@ -17,17 +17,17 @@ Vector3D Vector3D::getAbsoluteVector() const
 {
     return Vector3D { std::fabs(v[0]), std::fabs(v[1]), std::fabs(v[2]) };
 }
-Vector3D Vector3D::getNormalizedVector() const
+Vector3D Vector3D::getNormalize() const
 {
     Vector3D normalizedV = Vector3D((*this));
     normalizedV.normalize();
     return normalizedV;
 }
-Vector3D Vector3D::min(const Vector3D& a, const Vector3D& b)
+Vector3D min(const Vector3D& a, const Vector3D& b)
 {
     return Vector3D { std::min(a[0], b[0]), std::min(a[1], b[1]), std::min(a[2], b[2]) };
 }
-Vector3D Vector3D::max(const Vector3D& a, const Vector3D& b)
+Vector3D max(const Vector3D& a, const Vector3D& b)
 {
     return Vector3D { std::max(a[0], b[0]), std::max(a[1], b[1]), std::max(a[2], b[2]) };
 }

@@ -51,7 +51,7 @@ Matrix3x3 Matrix3x3::getIdentity() const
     I.setToIdentity();
     return I;
 }
-Matrix3x3 Matrix3x3::getNormalizedMatrix() const
+Matrix3x3 Matrix3x3::getNormalize() const
 {
     Matrix3x3 normalizedM { Matrix3x3((*this)) };
     normalizedM.normalize();

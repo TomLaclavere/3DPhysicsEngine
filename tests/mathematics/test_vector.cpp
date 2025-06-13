@@ -229,8 +229,8 @@ TEST(Vector3D_Test, ElementAccessUnchecked)
 TEST(Vector3D_Test, StaticMinMaxFunctions)
 {
     Vector3D a(1, 5, 3), b(2, 4, 6);
-    auto     mn = Vector3D::min(a, b);
-    auto     mx = Vector3D::max(a, b);
+    auto     mn = min(a, b);
+    auto     mx = max(a, b);
     EXPECT_EQ(mn, Vector3D(1, 4, 3));
     EXPECT_EQ(mx, Vector3D(2, 5, 6));
 }

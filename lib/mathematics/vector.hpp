@@ -49,6 +49,7 @@ public:
     bool isUnit() const;
     bool isLengthEqual(decimal) const;
     bool isFinite() const;
+    bool isNormalize() const;
 
     // ===== Vector Operations =====
     decimal  dotProduct(const Vector3D&) const;

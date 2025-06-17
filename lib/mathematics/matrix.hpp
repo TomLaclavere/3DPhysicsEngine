@@ -58,6 +58,7 @@ public:
     void setToIdentity();
     void setToZero();
     void normalize();
+    void inverse();
     void setAllValues(decimal value);
     void setAllValues(const Vector3D& v1, const Vector3D& v2, const Vector3D& v3);
     void setAllValues(decimal m11, decimal m12, decimal m13, decimal m21, decimal m22, decimal m23,
@@ -74,6 +75,7 @@ public:
     bool isSymmetric() const;
     bool isInvertible() const;
     bool isOrthogonal() const;
+    bool isNormalize() const;
 
     // ============================================================================
     //  Matrix Operations

@@ -37,6 +37,9 @@ public:
         , w { w }
     {}
     Quaternion(const Matrix3x3& m);
+    // From Euler Angles
+    Quaternion(decimal angleX, decimal angleY, decimal angleZ);
+    Quaternion(const Vector3D& eulerAngles);
 
     // ============================================================================
     //  Getters
@@ -52,6 +55,8 @@ public:
     decimal    getLength() const;
     decimal    getLengthSquare() const;
     Matrix3x3  getMatrix() const;
+    Quaternion getIdentity() const;
+    Quaternion getZero() const;
     Quaternion getUnit() const;
     Quaternion getConjugate() const;
     Quaternion getInverse() const;
@@ -60,10 +65,31 @@ public:
     // ============================================================================
     //  Setters
     // ============================================================================
+    void setRealPart(decimal value);
+    void setImaginaryPart(decimal newx, decimal newy, decimal newz);
+    void setImaginaryPart(Vector3D& v);
+    void setToIdentity();
+    void setToZero();
+    void normalize();
+    void inverse();
+    void setAllValues(decimal newx, decimal newy, decimal newz, decimal neww);
+    void setAllValues(const Vector3D& v, decimal w);
+    void setAllValues(decimal w, const Vector3D& v);
+    void setAllValues(const Matrix3x3& m);
+    // From Euler Angles
+    void setAllValues(decimal angleX, decimal angleY, decimal angleZ);
+    void setAllValues(const Vector3D& eulerAngles);
 
     // ============================================================================
     //  Property Checks
     // ============================================================================
+    void isValid() const;
+    bool isIdentity() const;
+    bool isZero() const;
+    bool isFinite() const;
+    bool isInvertible() const;
+    bool isOrthogonal() const;
+    bool isNormalize() const;
 
     // ============================================================================
     //  Quaternion Operations

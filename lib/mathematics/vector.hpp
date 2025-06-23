@@ -34,6 +34,8 @@ public:
     // ============================================================================
     //  Utilities
     // ============================================================================
+    void     absolute();
+    void     normalize();
     decimal  getNormSquare() const { return v[0] * v[0] + v[1] * v[1] + v[2] * v[2]; }
     decimal  getNorm() const { return std::sqrt(getNormSquare()); }
     decimal  getMinValue() const { return std::min({ v[0], v[1], v[2] }); }
@@ -48,7 +50,6 @@ public:
     void setY(decimal);
     void setZ(decimal);
     void setToZero();
-    void normalize();
     void setAllValues(decimal);
     void setAllValues(decimal, decimal, decimal);
 
@@ -56,10 +57,9 @@ public:
     //  Property Checks
     // ============================================================================
     bool isZero() const;
-    bool isUnit() const;
     bool isLengthEqual(decimal) const;
     bool isFinite() const;
-    bool isNormalize() const;
+    bool isNormalized() const;
 
     // ============================================================================
     //  Vector Operations

@@ -5,6 +5,12 @@
 #include <stdexcept>
 
 // ===== Utilities =====
+void Vector3D::absolute()
+{
+    v[0] = std::fabs(v[0]);
+    v[1] = std::fabs(v[1]);
+    v[2] = std::fabs(v[2]);
+}
 void Vector3D::normalize()
 {
     decimal n = getNorm();
@@ -15,7 +21,9 @@ void Vector3D::normalize()
 }
 Vector3D Vector3D::getAbsoluteVector() const
 {
-    return Vector3D { std::fabs(v[0]), std::fabs(v[1]), std::fabs(v[2]) };
+    Vector3D absV = Vector3D((*this));
+    absV.absolute();
+    return absV;
 }
 Vector3D Vector3D::getNormalize() const
 {
@@ -42,9 +50,9 @@ void Vector3D::setAllValues(decimal x_, decimal y_, decimal z_) { v = { x_, y_, 
 
 // ===== Property Checks =====
 bool Vector3D::isZero() const { return commonMaths::approxEqual(getNormSquare(), decimal(0)); }
-bool Vector3D::isUnit() const { return commonMaths::approxEqual(getNormSquare(), decimal(1)); }
 bool Vector3D::isLengthEqual(decimal val) const { return commonMaths::approxEqual(getNormSquare(), val); }
 bool Vector3D::isFinite() const { return std::isfinite(v[0]) && std::isfinite(v[1]) && std::isfinite(v[2]); }
+bool Vector3D::isNormalized() const { return commonMaths::approxEqual(getNorm(), decimal(1)); }
 
 // ===== Vector Operations =====
 decimal Vector3D::dotProduct(const Vector3D& other) const

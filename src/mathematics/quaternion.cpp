@@ -65,6 +65,49 @@ Quaternion::Quaternion(const Vector3D& eulerAngles)
     Quaternion(eulerAngles[0], eulerAngles[1], eulerAngles[2]);
 }
 
+// ============================================================================
+//  Getters
+// ============================================================================
+Matrix3x3 Quaternion::getRotationMatrix() const
+{
+    decimal x = v[0];
+    decimal y = v[1];
+    decimal z = v[2];
+
+    decimal xx = x * x;
+    decimal yy = y * y;
+    decimal zz = z * z;
+    decimal xy = x * y;
+    decimal xz = x * z;
+    decimal yz = y * z;
+    decimal wx = w * x;
+    decimal wy = w * y;
+    decimal wz = w * z;
+
+    return Matrix3x3(1 - 2 * (yy + zz), 2 * (xy - wz), 2 * (xz + wy), 2 * (xy + wz), 1 - 2 * (xx + zz),
+                     2 * (yz - wx), 2 * (xz - wy), 2 * (yz + wx), 1 - 2 * (xx + yy));
+}
+
+// ============================================================================
+//  Setters
+// ============================================================================
+void Quaternion::conjugate() { v = -v; }
+void Quaternion::normalize()
+{
+    decimal norm = getNorm();
+    if (norm < PRECISION_MACHINE)
+        *this = Quaternion();
+    else
+    {
+        w /= norm;
+        v /= norm;
+    }
+}
+void Quaternion::inverse()
+{
+    (*this).conjugate();
+    (*this).normalize();
+}
 // // ===== Basic Operations =====
 // Quaternion Quaternion::conjugate() const { return Quaternion(w, -x, -y, -z); }
 

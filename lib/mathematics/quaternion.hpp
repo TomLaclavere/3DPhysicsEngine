@@ -52,26 +52,40 @@ public:
     // ============================================================================
     //  Utilities
     // ============================================================================
-    decimal    getLength() const;
-    decimal    getLengthSquare() const;
-    Matrix3x3  getMatrix() const;
-    Quaternion getIdentity() const;
-    Quaternion getZero() const;
-    Quaternion getUnit() const;
-    Quaternion getConjugate() const;
-    Quaternion getInverse() const;
-    Quaternion getNormalize() const;
+    void       setToZero();
+    void       conjugate();
+    void       normalize();
+    void       inverse();
+    decimal    getNormSquare() const { return w * w + v.getNormSquare(); }
+    decimal    getNorm() const { return std::sqrt(getNormSquare()); }
+    Quaternion getIdentity() const { return Quaternion(1, Vector3D()); }
+    Quaternion getZero() const { return Quaternion(); }
+    Quaternion getConjugate() const
+    {
+        Quaternion conjugatedQ = Quaternion((*this));
+        conjugatedQ.conjugate();
+        return conjugatedQ;
+    }
+    Quaternion getNormalize() const
+    {
+        Quaternion normalizedQ = Quaternion((*this));
+        normalizedQ.normalize();
+        return normalizedQ;
+    }
+    Quaternion getInverse() const
+    {
+        Quaternion inverseQ = Quaternion((*this));
+        inverseQ.inverse();
+        return inverseQ;
+    }
 
     // ============================================================================
     //  Setters
     // ============================================================================
-    void setRealPart(decimal value);
+    void setRealPart(decimal value) { w = value; }
     void setImaginaryPart(decimal newx, decimal newy, decimal newz);
     void setImaginaryPart(Vector3D& v);
     void setToIdentity();
-    void setToZero();
-    void normalize();
-    void inverse();
     void setAllValues(decimal newx, decimal newy, decimal newz, decimal neww);
     void setAllValues(const Vector3D& v, decimal w);
     void setAllValues(decimal w, const Vector3D& v);

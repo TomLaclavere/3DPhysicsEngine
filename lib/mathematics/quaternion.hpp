@@ -94,20 +94,75 @@ public:
     // ============================================================================
     //  Quaternion Operations
     // ============================================================================
+    decimal dotProduct(const Quaternion& q);
 
     // ============================================================================
     //  Comparisons Operators
     // ============================================================================
+    bool operator==(const Quaternion&) const;
+    bool operator!=(const Quaternion&) const;
+    bool operator<(const Quaternion&) const;
+    bool operator<=(const Quaternion&) const;
+    bool operator>(const Quaternion&) const;
+    bool operator>=(const Quaternion&) const;
+    bool approxEqual(const Quaternion&, decimal) const;
 
     // ============================================================================
     //  Element Access Operators
     // ============================================================================
+    // Element access with index checking
+    decimal& operator()(int);
+    decimal  operator()(int) const;
+    // Element acces without index checking
+    decimal& operator[](int);
+    decimal  operator[](int) const;
 
     // ============================================================================
     //  In-Place Arithmetic Operators
     // ============================================================================
+    Quaternion  operator-() const;
+    Quaternion& operator+=(const Quaternion&);
+    Quaternion& operator-=(const Quaternion&);
+    Quaternion& operator*=(const Quaternion&);
+    Quaternion& operator/=(const Quaternion&);
+    Quaternion& operator+=(decimal);
+    Quaternion& operator-=(decimal);
+    Quaternion& operator*=(decimal);
+    Quaternion& operator/=(decimal);
 
     // ============================================================================
     //  Helper for Free Arithmetic Operators
     // ============================================================================
+    template <class F>
+    static Quaternion apply(const Quaternion& A, const Quaternion& B, F&& f);
+    template <class F>
+    static Quaternion apply(const Quaternion& A, decimal s, F&& f);
 };
+// ============================================================================
+//  Utilities
+// ============================================================================
+Quaternion min(const Quaternion& a, const Quaternion& b);
+Quaternion max(const Vector3D& a, const Quaternion& b);
+
+// ============================================================================
+//  Free Arithmetic Operators
+// ============================================================================
+Quaternion operator+(const Quaternion&, const Quaternion&);
+Quaternion operator-(const Quaternion&, const Quaternion&);
+Quaternion operator*(const Quaternion&, const Quaternion&);
+Quaternion operator/(const Quaternion&, const Quaternion&);
+
+Quaternion operator+(const Quaternion&, decimal);
+Quaternion operator-(const Quaternion&, decimal);
+Quaternion operator*(const Quaternion&, decimal);
+Quaternion operator/(const Quaternion&, decimal);
+
+Quaternion operator+(decimal, const Quaternion&);
+Quaternion operator-(decimal, const Quaternion&);
+Quaternion operator*(decimal, const Quaternion&);
+Quaternion operator/(decimal, const Quaternion&);
+
+// ============================================================================
+//  Printing
+// ============================================================================
+std::ostream& operator<<(std::ostream&, const Quaternion&);

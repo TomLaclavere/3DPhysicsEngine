@@ -63,30 +63,51 @@ TEST(Matrix3x3_Test, CopyConstructor)
 // ——————————————————————————————————————————————————————————————————————————
 // 2) Utilities
 // ——————————————————————————————————————————————————————————————————————————
+TEST(Matrix3x3_Test, InPlaceAbsolute)
+{
+    Matrix3x3 m(-1, 2, -3, 4, -5, 6, -7, 8, -9);
+    m.absolute();
+    EXPECT_EQ(m, Matrix3x3(1, 2, 3, 4, 5, 6, 7, 8, 9));
+}
+TEST(Matrix3x3_Test, InPlaceNormalize)
+{
+    Matrix3x3 m(1, 2, 3, 4, 5, 6, 7, 8, 9);
+    m.normalize();
+    for (int i = 0; i < 3; ++i)
+        EXPECT_NEAR(m.getRow(i).getNorm(), 1.0, 1e-6);
+}
+TEST(Matrix3x3_Test, InPlaceTranspose)
+{
+    Matrix3x3 m(1, 2, 3, 4, 5, 6, 7, 8, 9);
+    m.transpose();
+    EXPECT_EQ(m, Matrix3x3(1, 4, 7, 2, 5, 8, 3, 6, 9));
+}
+TEST(Matrix3x3_Test, InverseThrowsOnSingular)
+{
+    Matrix3x3 singular(1, 2, 3, 2, 4, 6, 3, 6, 9);
+    EXPECT_THROW(singular.inverse(), std::runtime_error);
+}
 TEST(Matrix3x3_Test, GetMinMaxValue)
 {
     Matrix3x3 m(-1, 2, 3, 4, -5, 6, 7, 8, 0);
     EXPECT_EQ(m.getMinValue(), -5);
     EXPECT_EQ(m.getMaxValue(), 8);
 }
-
 TEST(Matrix3x3_Test, GetDeterminant)
 {
     Matrix3x3 m(1, 2, 3, 0, 1, 4, 5, 6, 0);
     EXPECT_DECIMAL_EQ(m.getDeterminant(), 1 * (1 * 0 - 4 * 6) - 2 * (0 * 0 - 4 * 5) + 3 * (0 * 6 - 1 * 5));
     // Or: -1*6 + 2*20 - 3*5 = -6 + 40 - 15 = 19
 }
-
 TEST(Matrix3x3_Test, GetTrace)
 {
     Matrix3x3 m(1, 2, 3, 4, 5, 6, 7, 8, 9);
     EXPECT_EQ(m.getTrace(), 1 + 5 + 9);
 }
-
 TEST(Matrix3x3_Test, GetInverse)
 {
     Matrix3x3 m(4, 7, 2, 3, 6, 1, 2, 5, 1);
-    Matrix3x3 inv = m.getInverse();
+    Matrix3x3 inv      = m.getInverse();
     Matrix3x3 identity = m.matrixProduct(inv);
     EXPECT_TRUE(identity.approxEqual(Matrix3x3().getIdentity(), 1e-6));
 }
@@ -209,6 +230,14 @@ TEST(Matrix3x3_Test, IsZero)
     EXPECT_FALSE(m.isZero());
 }
 
+TEST(Matrix3x3_Test, IsFinite)
+{
+    Matrix3x3 m(1, 2, 3, 4, 5, 6, 7, 8, 9);
+    EXPECT_TRUE(m.isFinite());
+    m(1, 1) = std::numeric_limits<decimal>::infinity();
+    EXPECT_FALSE(m.isFinite());
+}
+
 TEST(Matrix3x3_Test, IsDiagonal)
 {
     Matrix3x3 m;
@@ -229,12 +258,30 @@ TEST(Matrix3x3_Test, IsSymmetric)
     EXPECT_FALSE(m.isSymmetric());
 }
 
-TEST(Matrix3x3_Test, IsFinite)
+TEST(Matrix3x3_Test, IsInvertible)
 {
-    Matrix3x3 m(1, 2, 3, 4, 5, 6, 7, 8, 9);
-    EXPECT_TRUE(m.isFinite());
-    m(1, 1) = std::numeric_limits<decimal>::infinity();
-    EXPECT_FALSE(m.isFinite());
+    Matrix3x3 m(1, 2, 3, 0, 1, 4, 5, 6, 0);
+    EXPECT_TRUE(m.isInvertible());
+    Matrix3x3 singular(1, 2, 3, 2, 4, 6, 3, 6, 9); // rank 1
+    EXPECT_FALSE(singular.isInvertible());
+}
+
+TEST(Matrix3x3_Test, IsOrthogonal)
+{
+    Matrix3x3 m;
+    m.setToIdentity();
+    EXPECT_TRUE(m.isOrthogonal());
+    m(0, 1) = 1.0;
+    EXPECT_FALSE(m.isOrthogonal());
+}
+
+TEST(Matrix3x3_Test, IsNormalized)
+{
+    Matrix3x3 m;
+    m.setToIdentity();
+    EXPECT_TRUE(m.isNormalized());
+    m(0, 0) = 2.0;
+    EXPECT_FALSE(m.isNormalized());
 }
 
 // ——————————————————————————————————————————————————————————————————————————
@@ -412,6 +459,13 @@ TEST(Matrix3x3_Test, ElementAccessBracketsUnchecked)
 // ——————————————————————————————————————————————————————————————————————————
 // 8) In-Place Arithmetic Operators (element-wise and scalar)
 // ——————————————————————————————————————————————————————————————————————————
+TEST(Matrix3x3_Test, UnaryMinus)
+{
+    Matrix3x3 m(1, -2, 3, -4, 5, -6, 7, -8, 9);
+    Matrix3x3 neg = -m;
+    EXPECT_EQ(neg, Matrix3x3(-1, 2, -3, 4, -5, 6, -7, 8, -9));
+}
+
 TEST(Matrix3x3_Test, InPlaceArithmeticOperators_Matrix)
 {
     Matrix3x3 a(1, 2, 3, 4, 5, 6, 7, 8, 9);

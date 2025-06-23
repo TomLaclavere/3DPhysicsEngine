@@ -7,6 +7,15 @@
 // ============================================================================
 //  Utilities
 // ============================================================================
+void Matrix3x3::absolute()
+{
+    for (auto& row : m)
+    {
+        row[0] = std::abs(row[0]);
+        row[1] = std::abs(row[1]);
+        row[2] = std::abs(row[2]);
+    }
+}
 void Matrix3x3::normalize()
 {
     // Copy rows
@@ -30,6 +39,34 @@ void Matrix3x3::normalize()
     m[0] = r0;
     m[1] = r1;
     m[2] = r2;
+}
+void Matrix3x3::transpose()
+{
+    std::swap(m[0][1], m[1][0]);
+    std::swap(m[0][2], m[2][0]);
+    std::swap(m[1][2], m[2][1]);
+}
+void Matrix3x3::inverse()
+{
+    decimal det = getDeterminant();
+    if (commonMaths::approxEqual(det, decimal(0)))
+        throw std::runtime_error("Matrix is singular and cannot be inverted");
+    decimal invDet = decimal(1) / det;
+
+    Matrix3x3 inv;
+    inv(0, 0) = (m[1][1] * m[2][2] - m[1][2] * m[2][1]) * invDet;
+    inv(0, 1) = (m[0][2] * m[2][1] - m[0][1] * m[2][2]) * invDet;
+    inv(0, 2) = (m[0][1] * m[1][2] - m[0][2] * m[1][1]) * invDet;
+
+    inv(1, 0) = (m[1][2] * m[2][0] - m[1][0] * m[2][2]) * invDet;
+    inv(1, 1) = (m[0][0] * m[2][2] - m[0][2] * m[2][0]) * invDet;
+    inv(1, 2) = (m[0][2] * m[1][0] - m[0][0] * m[1][2]) * invDet;
+
+    inv(2, 0) = (m[1][0] * m[2][1] - m[1][1] * m[2][0]) * invDet;
+    inv(2, 1) = (m[0][1] * m[2][0] - m[0][0] * m[2][1]) * invDet;
+    inv(2, 2) = (m[0][0] * m[1][1] - m[0][1] * m[1][0]) * invDet;
+
+    *this = inv;
 }
 decimal Matrix3x3::getMinValue() const
 {
@@ -59,25 +96,15 @@ Matrix3x3 Matrix3x3::getNormalize() const
 }
 Matrix3x3 Matrix3x3::getInverse() const
 {
-    decimal det = getDeterminant();
-    if (commonMaths::approxEqual(det, decimal(0)))
-        throw std::runtime_error("Matrix is singular and cannot be inverted");
-    decimal invDet = decimal(1) / det;
-
-    return Matrix3x3(
-        // Row 0
-        (m[1][1] * m[2][2] - m[1][2] * m[2][1]) * invDet, (m[0][2] * m[2][1] - m[0][1] * m[2][2]) * invDet,
-        (m[0][1] * m[1][2] - m[0][2] * m[1][1]) * invDet,
-        // Row 1
-        (m[1][2] * m[2][0] - m[1][0] * m[2][2]) * invDet, (m[0][0] * m[2][2] - m[0][2] * m[2][0]) * invDet,
-        (m[0][2] * m[1][0] - m[0][0] * m[1][2]) * invDet,
-        // Row 2
-        (m[1][0] * m[2][1] - m[1][1] * m[2][0]) * invDet, (m[0][1] * m[2][0] - m[0][0] * m[2][1]) * invDet,
-        (m[0][0] * m[1][1] - m[0][1] * m[1][0]) * invDet);
+    Matrix3x3 inverseM = Matrix3x3((*this));
+    inverseM.inverse();
+    return inverseM;
 }
 Matrix3x3 Matrix3x3::getTranspose() const
 {
-    return Matrix3x3(m[0][0], m[1][0], m[2][0], m[0][1], m[1][1], m[2][1], m[0][2], m[1][2], m[2][2]);
+    Matrix3x3 transposeM = Matrix3x3((*this));
+    transposeM.transpose();
+    return transposeM;
 }
 Matrix3x3 Matrix3x3::getAbsolute() const
 {
@@ -192,7 +219,31 @@ bool Matrix3x3::isSymmetric() const
 }
 bool Matrix3x3::isInvertible() const { return !commonMaths::approxEqual(getDeterminant(), decimal(0)); }
 bool Matrix3x3::isOrthogonal() const { return (getTranspose().matrixProduct(*this)).isIdentity(); }
+bool Matrix3x3::isNormalized() const
+{
+    // Verify norm of columns
+    for (int i = 0; i < 3; ++i)
+    {
+        if (!commonMaths::approxEqual(getColumn(i).getNormSquare(), decimal(1)))
+            return false;
+    }
 
+    // Verify orthogonality of columns
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = i + 1; j < 3; ++j)
+        {
+            if (std::abs(getColumn(i).dotProduct(getColumn(j))) > PRECISION_MACHINE)
+                return false;
+        }
+    }
+
+    // Verify determinant
+    if (!commonMaths::approxEqual(getDeterminant(), decimal(1)))
+        return false;
+
+    return true;
+}
 // ============================================================================
 //  Matrix Operations
 // ============================================================================

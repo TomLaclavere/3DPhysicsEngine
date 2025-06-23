@@ -22,8 +22,11 @@
   - [ ] **Quaternion Tests :** Write unit tests to verify quaternion operations.
 - [ ] **Utility Types :** Define data structures like `Transform` and bounding volumes (AABB, sphere).  
 - [ ] **Documentation :** Document your math types and utilities.
-- [ ] **Test Math :** Write tests or small applications to validate math operations.
-- [ ] **Test CI :** Integration of tests procedure in GitHub
+- [ ] **Testing :** Develop Unit Testing
+  - [ ] **Test Math :** Write tests or small applications to validate math operations -> In particular, rethink all the tests written during the process 
+  - [ ] **Test CI :** Integration of tests procedure in GitHub
+  - [ ] **Output :** Improve unit testing outputs
+  - [ ] **Coverage :** Compute and improve the coverage (= Number of lines tested)
 
 ---
 
@@ -33,7 +36,7 @@
 - [ ] **Render Basic Shapes :** Render spheres, boxes, planes for physics bodies
 - [ ] **3D Camera Control :** Implement orbit/trackball or WASD-style camera
 - [ ] **Sync Physics & Render Loops :** Use fixed time steps with interpolation if needed
-- [ ] **Overlay Data :** Integrate ImGui for debugging (FPS, object states, toggles)
+- [ ] **Overlay Data :** Integrate ImGui (or other) for debugging (FPS, object states, toggles)
 - [ ] **Input Handling :** Add simple controls to spawn/move bodies for testing
 - [ ] **Create Test Scenes :** Towers, balls, pendulums — visual regression tests
 

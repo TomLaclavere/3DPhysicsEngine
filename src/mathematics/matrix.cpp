@@ -382,7 +382,12 @@ Vector3D Matrix3x3::operator[](int row) const { return m[row]; }
 // ============================================================================
 //  In-Place Arithmetic Operators
 // ============================================================================
-Matrix3x3 Matrix3x3::operator-() const { return Matrix3x3(-m[0], -m[1], -m[2]); }
+Matrix3x3& Matrix3x3::operator-()
+{
+    for (auto& row : m)
+        row = -row;
+    return *this;
+}
 Matrix3x3& Matrix3x3::operator+=(const Matrix3x3& matrix)
 {
     m[0] += matrix[0];

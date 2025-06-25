@@ -116,7 +116,7 @@ public:
     // ============================================================================
     //  In-Place Arithmetic Operators
     // ============================================================================
-    Matrix3x3  operator-() const;
+    Matrix3x3& operator-();
     Matrix3x3& operator+=(const Matrix3x3& matrix);
     Matrix3x3& operator-=(const Matrix3x3& matrix);
     Matrix3x3& operator*=(const Matrix3x3& matrix);

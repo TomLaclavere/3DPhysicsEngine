@@ -52,7 +52,6 @@ public:
     // ============================================================================
     //  Utilities
     // ============================================================================
-    void       setToZero();
     void       conjugate();
     void       normalize();
     void       inverse();
@@ -83,32 +82,34 @@ public:
     //  Setters
     // ============================================================================
     void setRealPart(decimal value) { w = value; }
-    void setImaginaryPart(decimal newx, decimal newy, decimal newz);
-    void setImaginaryPart(Vector3D& v);
+    void setImaginaryPart(decimal, decimal, decimal);
+    void setImaginaryPart(Vector3D& newv) { v = newv; }
+    void setToZero();
     void setToIdentity();
-    void setAllValues(decimal newx, decimal newy, decimal newz, decimal neww);
-    void setAllValues(const Vector3D& v, decimal w);
-    void setAllValues(decimal w, const Vector3D& v);
-    void setAllValues(const Matrix3x3& m);
+    void setAllValues(decimal, decimal, decimal, decimal);
+    void setAllValues(const Vector3D&, decimal);
+    void setAllValues(decimal, const Vector3D&);
+    void setAllValues(const Matrix3x3&);
     // From Euler Angles
-    void setAllValues(decimal angleX, decimal angleY, decimal angleZ);
-    void setAllValues(const Vector3D& eulerAngles);
+    void setAllValues(decimal, decimal, decimal);
+    void setAllValues(const Vector3D&);
 
     // ============================================================================
     //  Property Checks
     // ============================================================================
-    void isValid() const;
-    bool isIdentity() const;
-    bool isZero() const;
     bool isFinite() const;
+    bool isZero() const;
+    bool isUnit() const;
+    bool isIdentity() const;
     bool isInvertible() const;
     bool isOrthogonal() const;
-    bool isNormalize() const;
+    bool isNormalized() const;
 
     // ============================================================================
     //  Quaternion Operations
     // ============================================================================
-    decimal dotProduct(const Quaternion& q);
+    decimal    dotProduct(const Quaternion&) const;
+    Quaternion crossProduct(const Quaternion&) const;
 
     // ============================================================================
     //  Comparisons Operators
@@ -134,7 +135,7 @@ public:
     // ============================================================================
     //  In-Place Arithmetic Operators
     // ============================================================================
-    Quaternion  operator-() const;
+    Quaternion& operator-();
     Quaternion& operator+=(const Quaternion&);
     Quaternion& operator-=(const Quaternion&);
     Quaternion& operator*=(const Quaternion&);
@@ -153,10 +154,16 @@ public:
     static Quaternion apply(const Quaternion& A, decimal s, F&& f);
 };
 // ============================================================================
+//  Quaternions Operations
+// ============================================================================
+decimal    dotProduct(const Quaternion&, const Quaternion&);
+Quaternion crossProduct(const Quaternion&, const Quaternion&);
+
+// ============================================================================
 //  Utilities
 // ============================================================================
-Quaternion min(const Quaternion& a, const Quaternion& b);
-Quaternion max(const Vector3D& a, const Quaternion& b);
+Quaternion min(const Quaternion&, const Quaternion&);
+Quaternion max(const Vector3D&, const Quaternion&);
 
 // ============================================================================
 //  Free Arithmetic Operators

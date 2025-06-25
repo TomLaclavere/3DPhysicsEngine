@@ -91,7 +91,7 @@ public:
     // ============================================================================
     //  In-Place Arithmetic Operators
     // ============================================================================
-    Vector3D  operator-() const;
+    Vector3D& operator-();
     Vector3D& operator+=(const Vector3D&);
     Vector3D& operator-=(const Vector3D&);
     Vector3D& operator*=(const Vector3D&);

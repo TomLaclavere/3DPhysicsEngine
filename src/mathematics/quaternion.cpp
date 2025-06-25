@@ -89,7 +89,7 @@ Matrix3x3 Quaternion::getRotationMatrix() const
 }
 
 // ============================================================================
-//  Setters
+//  Utilities
 // ============================================================================
 void Quaternion::conjugate() { v = -v; }
 void Quaternion::normalize()
@@ -107,6 +107,154 @@ void Quaternion::inverse()
 {
     (*this).conjugate();
     (*this).normalize();
+}
+
+// ============================================================================
+//  Setters
+// ============================================================================
+void Quaternion::setToZero()
+{
+    w = 0;
+    v.setToZero();
+}
+void Quaternion::setToIdentity()
+{
+    w    = 1;
+    v[0] = 0;
+    v[1] = 0;
+    v[2] = 0;
+}
+void Quaternion::setAllValues(decimal neww, decimal newx, decimal newy, decimal newz)
+{
+    w    = neww;
+    v[0] = newx;
+    v[1] = newy;
+    v[2] = newz;
+}
+void Quaternion::setAllValues(const Vector3D& newv, decimal neww)
+{
+    w = neww;
+    v = newv;
+}
+void Quaternion::setAllValues(decimal neww, const Vector3D& newv)
+{
+    w = neww;
+    v = newv;
+}
+// From Euler Angles
+void Quaternion::setAllValues(decimal newangleX, decimal newangleY, decimal newangleZ)
+{
+    decimal cosX = std::cos(newangleX * decimal(0.5));
+    decimal sinX = std::sin(newangleX * decimal(0.5));
+    decimal cosY = std::cos(newangleY * decimal(0.5));
+    decimal sinY = std::sin(newangleY * decimal(0.5));
+    decimal cosZ = std::cos(newangleZ * decimal(0.5));
+    decimal sinZ = std::sin(newangleZ * decimal(0.5));
+
+    w    = cosX * cosY * cosZ + sinX * sinY * sinZ;
+    v[0] = sinX * cosY * cosZ - cosX * sinY * sinZ;
+    v[1] = cosX * sinY * cosZ + sinX * cosY * sinZ;
+    v[2] = cosX * cosY * sinZ - sinX * sinY * sinZ;
+}
+void Quaternion::setAllValues(const Vector3D& newangles)
+{
+    decimal newangleX = newangles[0];
+    decimal newangleY = newangles[1];
+    decimal newangleZ = newangles[2];
+
+    decimal cosX = std::cos(newangleX * decimal(0.5));
+    decimal sinX = std::sin(newangleX * decimal(0.5));
+    decimal cosY = std::cos(newangleY * decimal(0.5));
+    decimal sinY = std::sin(newangleY * decimal(0.5));
+    decimal cosZ = std::cos(newangleZ * decimal(0.5));
+    decimal sinZ = std::sin(newangleZ * decimal(0.5));
+
+    w    = cosX * cosY * cosZ + sinX * sinY * sinZ;
+    v[0] = sinX * cosY * cosZ - cosX * sinY * sinZ;
+    v[1] = cosX * sinY * cosZ + sinX * cosY * sinZ;
+    v[2] = cosX * cosY * sinZ - sinX * sinY * sinZ;
+}
+
+// ============================================================================
+//  Property Checks
+// ============================================================================
+bool Quaternion::isFinite() const { return (std::isfinite(w) && v.isFinite()); }
+bool Quaternion::isZero() const { return (commonMaths::approxEqual(w, decimal(0)) && v.isZero()); }
+bool Quaternion::isUnit() const { return (commonMaths::approxEqual(getNorm(), decimal(1))); }
+bool Quaternion::isIdentity() const { return (commonMaths::approxEqual(w, decimal(1)) && v.isZero()); }
+bool Quaternion::isInvertible() const { return (commonMaths::approxEqual(getNorm(), decimal(0))); }
+bool Quaternion::isOrthogonal() const { return isUnit(); }
+bool Quaternion::isNormalized() const { return isUnit(); }
+
+// ============================================================================
+//  Quaternion Operations
+// ============================================================================
+decimal Quaternion::dotProduct(const Quaternion& other) const { return w * other.w + v.dotProduct(other.v); }
+Quaternion Quaternion::crossProduct(const Quaternion& other) const
+{
+    return Quaternion(v.crossProduct(other.v), w * other.w - v.dotProduct(other.v));
+}
+
+// ============================================================================
+//  Comparisons Operators
+// ============================================================================
+Quaternion& Quaternion::operator-()
+{
+    w = -w;
+    v = -v;
+    return (*this);
+}
+Quaternion& Quaternion::operator+=(const Quaternion& other)
+{
+    w += other.w;
+    v += other.v;
+    return (*this);
+}
+Quaternion& Quaternion::operator-=(const Quaternion& other)
+{
+    w -= other.w;
+    v -= other.v;
+    return (*this);
+}
+Quaternion& Quaternion::operator*=(const Quaternion& other)
+{
+    w *= other.w;
+    v *= other.v;
+    return (*this);
+}
+Quaternion& Quaternion::operator/=(const Quaternion& other)
+{
+    if (other.isZero())
+        throw std::runtime_error("Division by zero");
+    w /= other.w;
+    v /= other.v;
+    return (*this);
+}
+Quaternion& Quaternion::operator+=(decimal scalar)
+{
+    w += scalar;
+    v += scalar;
+    return (*this);
+}
+Quaternion& Quaternion::operator-=(decimal scalar)
+{
+    w -= scalar;
+    v -= scalar;
+    return (*this);
+}
+Quaternion& Quaternion::operator*=(decimal scalar)
+{
+    w *= scalar;
+    v *= scalar;
+    return (*this);
+}
+Quaternion& Quaternion::operator/=(decimal scalar)
+{
+    if (commonMaths::approxEqual(scalar, decimal(0)))
+        throw std::runtime_error("Division by zero");
+    w /= scalar;
+    v /= scalar;
+    return (*this);
 }
 // // ===== Basic Operations =====
 // Quaternion Quaternion::conjugate() const { return Quaternion(w, -x, -y, -z); }
@@ -211,7 +359,8 @@ void Quaternion::inverse()
 
 // bool Quaternion::approxEqual(const Quaternion& q, decimal epsilon) const
 // {
-//     return std::fabs(w - q.w) < epsilon && std::fabs(x - q.x) < epsilon && std::fabs(y - q.y) < epsilon &&
+//     return std::fabs(w - q.w) < epsilon && std::fabs(x - q.x) < epsilon && std::fabs(y - q.y) < epsilon
+//     &&
 //            std::fabs(z - q.z) < epsilon;
 // }
 

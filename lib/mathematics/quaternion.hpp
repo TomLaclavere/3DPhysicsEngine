@@ -149,9 +149,9 @@ public:
     //  Helper for Free Arithmetic Operators
     // ============================================================================
     template <class F>
-    static Quaternion apply(const Quaternion& A, const Quaternion& B, F&& f);
+    static Quaternion apply(const Quaternion& A, const Quaternion& B, F&& func);
     template <class F>
-    static Quaternion apply(const Quaternion& A, decimal s, F&& f);
+    static Quaternion apply(const Quaternion& A, decimal s, F&& func);
 };
 // ============================================================================
 //  Quaternions Operations

@@ -90,15 +90,11 @@
     "cmake.generator": "Unix Makefiles",
     "cmake.configureOnOpen": true,
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
-    // Ne pas reconstruire avant
     "cmake.buildBeforeRunTests": false,
-    // Si ctest est dans votre PATH, inutile de le préciser
     "cmake.testing.ctestPath": "ctest",
-    // Arguments à passer à ctest
     "cmake.testing.ctestArgs": [
         "--output-on-failure"
     ],
-    // **Travaille toujours depuis build/**
     "cmake.testing.workingDirectory": "${workspaceFolder}/build",
     "cmake.ctestDefaultArgs": [
         "--output-on-failure",
@@ -112,8 +108,10 @@
     "[cpp]": {
         "editor.defaultFormatter": "xaver.clang-format"
     },
-    "clang-format.executable": "clang-format",
+    "clang-format.executable": "/usr/bin/clang-format",
+    "C_Cpp.clang_format_path": "/usr/bin/clang-format",
     "clang-format.style": "file",
+    "C_Cpp.clang_format_style": "file",
     "workbench.colorCustomizations": {
         "activityBar.activeBackground": "#65c89b",
         "activityBar.background": "#65c89b",
@@ -137,5 +135,6 @@
         "titleBar.inactiveBackground": "#42b88399",
         "titleBar.inactiveForeground": "#15202b99"
     },
-    "peacock.color": "#42b883" // utilise .clang-format s'il existe
+    "peacock.color": "#42b883",
+    "python.terminal.activateEnvironment": false 
 }

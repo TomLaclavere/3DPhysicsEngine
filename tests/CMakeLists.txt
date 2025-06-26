@@ -3,9 +3,13 @@ include(GoogleTest)
 
 # Add test executable
 add_executable(mathematics_test 
+    test_functions.hpp
     mathematics/test_vector.cpp
     mathematics/test_matrix.cpp
+    mathematics/test_quaternion.cpp
 )
+
+target_include_directories(mathematics_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Link against library and GTest
 target_link_libraries(mathematics_test

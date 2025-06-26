@@ -100,15 +100,20 @@ public:
     Vector3D& operator-=(decimal);
     Vector3D& operator*=(decimal);
     Vector3D& operator/=(decimal);
-
-    // ============================================================================
-    //  Helper for Free Arithmetic Operators
-    // ============================================================================
-    template <class F>
-    static Vector3D apply(const Vector3D& A, const Vector3D& B, F&& f);
-    template <class F>
-    static Vector3D apply(const Vector3D& A, decimal s, F&& f);
 };
+// ============================================================================
+//  Helper for Free Arithmetic Operators
+// ============================================================================
+template <class F>
+inline Vector3D applyVector(const Vector3D& A, const Vector3D& B, F&& f)
+{
+    return Vector3D { f(A[0], B[0]), f(A[1], B[1]), f(A[2], B[2]) };
+}
+template <class F>
+inline Vector3D applyVector(const Vector3D& A, decimal s, F&& f)
+{
+    return Vector3D { f(A[0], s), f(A[1], s), f(A[2], s) };
+}
 // ============================================================================
 //  Utilities
 // ============================================================================

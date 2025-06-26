@@ -17,10 +17,12 @@ add_library(3DPhysicsEngine
     # Source files
     src/mathematics/vector.cpp
     src/mathematics/matrix.cpp
+    src/mathematics/quaternion.cpp
     
     # Header files
     lib/mathematics/vector.hpp
     lib/mathematics/matrix.hpp
+    lib/mathematics/quaternion.hpp
     lib/mathematics/common.hpp
     lib/precision.hpp
     lib/config.hpp

@@ -124,7 +124,7 @@ void Quaternion::setToIdentity()
     v[1] = 0;
     v[2] = 0;
 }
-void Quaternion::setAllValues(decimal neww, decimal newx, decimal newy, decimal newz)
+void Quaternion::setAllValues(decimal newx, decimal newy, decimal newz, decimal neww)
 {
     w    = neww;
     v[0] = newx;
@@ -198,10 +198,32 @@ Quaternion Quaternion::crossProduct(const Quaternion& other) const
 // ============================================================================
 //  Comparisons Operators
 // ============================================================================
+bool Quaternion::operator==(const Quaternion& other) const
+{
+    return commonMaths::approxEqual(w, other.w) && v == other.v;
+}
+bool Quaternion::operator!=(const Quaternion& other) const
+{
+    return !commonMaths::approxEqual(w, other.w) || v != other.v;
+}
+bool Quaternion::operator<(const Quaternion& other) const { return (w < other.w && v < other.v); }
+bool Quaternion::operator<=(const Quaternion& other) const { return (w <= other.w && v <= other.v); }
+bool Quaternion::operator>(const Quaternion& other) const { return (w > other.w && v > other.v); }
+bool Quaternion::operator>=(const Quaternion& other) const { return (w >= other.w && v >= other.v); }
+bool             Quaternion::approxEqual(const Quaternion& other, decimal p) const
+{
+    return (commonMaths::approxEqual(w, other.w, p) && v.approxEqual(other.v, p));
+}
 
 // ============================================================================
 //  Element Access Operators
 // ============================================================================
+// Element access with index checking
+decimal& Quaternion::operator()(int i) { return v(i); }
+decimal Quaternion::operator()(int i) const { return v(i); }
+// Element access with index checking
+decimal& Quaternion::operator[](int i) { return v[i]; }
+decimal Quaternion::operator[](int i) const { return v[i]; }
 
 // ============================================================================
 //  In-Place Arithmetic Operators
@@ -263,6 +285,90 @@ Quaternion& Quaternion::operator/=(decimal scalar)
     w /= scalar;
     v /= scalar;
     return (*this);
+}
+
+// ============================================================================
+//  Helper for Free Arithmetic Operators
+// ============================================================================
+template <class F>
+Quaternion Quaternion::apply(const Quaternion& A, const Quaternion& B, F&& func)
+{
+    return Quaternion(func(A.w, B.w), applyVector(A.v, B.v, func));
+}
+template <class F>
+Quaternion Quaternion::apply(const Quaternion& A, decimal s, F&& func)
+{
+    return Quaternion(func(A.w, s), applyVector(A.v, s, func));
+}
+// ============================================================================
+//  Quaternions Operations
+// ============================================================================
+decimal dotProduct(const Quaternion& lhs, const Quaternion& rhs)
+{
+    return lhs.getRealPart() * rhs.getRealPart() + dotProduct(lhs.getImaginaryPart(), rhs.getImaginaryPart());
+}
+Quaternion crossProduct(const Quaternion& lhs, const Quaternion& rhs)
+{
+    return Quaternion(lhs.getImaginaryPart().crossProduct(rhs.getImaginaryPart()),
+                      lhs.getRealPart() * rhs.getRealPart() -
+                          lhs.getImaginaryPart().dotProduct(rhs.getImaginaryPart()));
+}
+//     return Quaternion(v.crossProduct(other.v), w * other.w - v.dotProduct(other.v));
+// ============================================================================
+//  Utilities
+// ============================================================================
+Quaternion min(const Quaternion&, const Quaternion&);
+Quaternion max(const Vector3D&, const Quaternion&);
+
+// ============================================================================
+//  Free Arithmetic Operators
+// ============================================================================
+// Quaternion op Quaternion
+Quaternion operator+(const Quaternion& lhs, const Quaternion& rhs)
+{
+    return Quaternion::apply(lhs, rhs, std::plus<decimal>());
+}
+Quaternion operator-(const Quaternion& lhs, const Quaternion& rhs)
+{
+    return Quaternion::apply(lhs, rhs, std::minus<decimal>());
+}
+Quaternion operator*(const Quaternion& lhs, const Quaternion& rhs)
+{
+    return Quaternion::apply(lhs, rhs, std::multiplies<decimal>());
+}
+Quaternion operator/(const Quaternion& lhs, const Quaternion& rhs)
+{
+    return Quaternion::apply(lhs, rhs, std::divides<decimal>());
+}
+// Quaternion op decimal
+Quaternion operator+(const Quaternion& lhs, decimal rhs)
+{
+    return Quaternion::apply(lhs, rhs, std::plus<decimal>());
+}
+Quaternion operator-(const Quaternion& lhs, decimal rhs)
+{
+    return Quaternion::apply(lhs, rhs, std::minus<decimal>());
+}
+Quaternion operator*(const Quaternion& lhs, decimal rhs)
+{
+    return Quaternion::apply(lhs, rhs, std::multiplies<decimal>());
+}
+Quaternion operator/(const Quaternion& lhs, decimal rhs)
+{
+    return Quaternion::apply(lhs, rhs, std::divides<decimal>());
+}
+// decimal op Quaternion
+Quaternion operator+(decimal lhs, const Quaternion& rhs) { return rhs + lhs; }
+Quaternion operator-(decimal lhs, const Quaternion& rhs) { return rhs - lhs; }
+Quaternion operator*(decimal lhs, const Quaternion& rhs) { return rhs * lhs; }
+Quaternion operator/(decimal lhs, const Quaternion& rhs) { return rhs / lhs; }
+
+// ============================================================================
+//  Printing
+// ============================================================================
+std::ostream& operator<<(std::ostream& os, const Quaternion& q)
+{
+    return os << "(" << q.getRealPart() << "," << q.getImaginaryPart() << ")";
 }
 // // ===== Basic Operations =====
 // Quaternion Quaternion::conjugate() const { return Quaternion(w, -x, -y, -z); }

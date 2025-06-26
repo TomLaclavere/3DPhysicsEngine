@@ -1,15 +1,10 @@
 #include "mathematics/common.hpp"
 #include "mathematics/vector.hpp"
+#include "test_functions.hpp"
 
 #include <gtest/gtest.h>
 #include <ostream>
 #include <sstream>
-
-static void EXPECT_DECIMAL_EQ(decimal a, decimal b, decimal eps = PRECISION_MACHINE)
-{
-    EXPECT_TRUE(commonMaths::approxEqual(a, b, eps))
-        << "Expected " << a << " ≈ " << b << "\nDifference: " << std::abs(a - b) << "\nPrecision: " << eps;
-}
 
 // ——————————————————————————————————————————————————————————————————————————
 // 1) Constructors and getters

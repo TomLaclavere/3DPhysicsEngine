@@ -129,17 +129,35 @@ public:
     Matrix3x3& operator-=(decimal value);
     Matrix3x3& operator*=(decimal value);
     Matrix3x3& operator/=(decimal value);
-
-    // ============================================================================
-    //  Helper for Free Arithmetic Operators
-    // ============================================================================
-    template <class F>
-    static Matrix3x3 applyMatrix(const Matrix3x3& A, const Matrix3x3& B, F&& f);
-    template <class F>
-    static Matrix3x3 applyVector(const Matrix3x3& A, const Vector3D& B, F&& f);
-    template <class F>
-    static Matrix3x3 applyDecimal(const Matrix3x3& A, decimal s, F&& f);
 };
+// ============================================================================
+//  Helper for Free Arithmetic Operators
+// ============================================================================
+template <class F>
+inline Matrix3x3 applyMatrix(const Matrix3x3& A, const Matrix3x3& B, F&& func)
+{
+    Matrix3x3 result;
+    for (int i = 0; i < 3; ++i)
+        result[i] = func(A[i], B[i]);
+    return result;
+}
+template <class F>
+inline Matrix3x3 applyMatrix(const Matrix3x3& A, const Vector3D& B, F&& func)
+{
+    Matrix3x3 result;
+    for (int i = 0; i < 3; ++i)
+        result[i] = func(A[i], B);
+    return result;
+}
+template <class F>
+inline Matrix3x3 applyMatrix(const Matrix3x3& A, decimal B, F&& func)
+{
+    Matrix3x3 result;
+    for (int i = 0; i < 3; ++i)
+        result[i] = func(A[i], B);
+    return result;
+}
+
 // ============================================================================
 //  Matrix Operations
 // ============================================================================

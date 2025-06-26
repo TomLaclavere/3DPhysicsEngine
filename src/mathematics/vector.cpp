@@ -192,64 +192,40 @@ Vector3D& Vector3D::operator/=(decimal s)
     return *this *= decimal(1) / s;
 }
 
-// ===== Helper for Free Arithmetic Operators =====
-template <class F>
-Vector3D Vector3D::apply(const Vector3D& A, const Vector3D& B, F&& f)
-{
-    return Vector3D { f(A.v[0], B.v[0]), f(A.v[1], B.v[1]), f(A.v[2], B.v[2]) };
-}
-template <class F>
-Vector3D Vector3D::apply(const Vector3D& A, decimal s, F&& f)
-{
-    return Vector3D { f(A.v[0], s), f(A.v[1], s), f(A.v[2], s) };
-}
-
 // ===== Free Arithmetic Operators =====
 // Vector3D op Vector3D
 Vector3D operator+(const Vector3D& lhs, const Vector3D& rhs)
 {
-    return Vector3D::apply(lhs, rhs, std::plus<decimal>());
+    return applyVector(lhs, rhs, std::plus<decimal>());
 }
 Vector3D operator-(const Vector3D& lhs, const Vector3D& rhs)
 {
-    return Vector3D::apply(lhs, rhs, std::minus<decimal>());
+    return applyVector(lhs, rhs, std::minus<decimal>());
 }
 Vector3D operator*(const Vector3D& lhs, const Vector3D& rhs)
 {
-    return Vector3D::apply(lhs, rhs, std::multiplies<decimal>());
+    return applyVector(lhs, rhs, std::multiplies<decimal>());
 }
 Vector3D operator/(const Vector3D& lhs, const Vector3D& rhs)
 {
-    return Vector3D::apply(lhs, rhs, std::divides<decimal>());
+    return applyVector(lhs, rhs, std::divides<decimal>());
 }
 // Vector3D op decimal
-Vector3D operator+(const Vector3D& lhs, decimal rhs)
-{
-    return Vector3D::apply(lhs, rhs, std::plus<decimal>());
-}
-Vector3D operator-(const Vector3D& lhs, decimal rhs)
-{
-    return Vector3D::apply(lhs, rhs, std::minus<decimal>());
-}
+Vector3D operator+(const Vector3D& lhs, decimal rhs) { return applyVector(lhs, rhs, std::plus<decimal>()); }
+Vector3D operator-(const Vector3D& lhs, decimal rhs) { return applyVector(lhs, rhs, std::minus<decimal>()); }
 Vector3D operator*(const Vector3D& lhs, decimal rhs)
 {
-    return Vector3D::apply(lhs, rhs, std::multiplies<decimal>());
+    return applyVector(lhs, rhs, std::multiplies<decimal>());
 }
 Vector3D operator/(const Vector3D& lhs, decimal rhs)
 {
-    return Vector3D::apply(lhs, rhs, std::divides<decimal>());
+    return applyVector(lhs, rhs, std::divides<decimal>());
 }
-// decimal op Vector3D
+// Decimal op Vector3D
 Vector3D operator+(decimal lhs, const Vector3D& rhs) { return rhs + lhs; }
-Vector3D operator-(decimal lhs, const Vector3D& rhs)
-{
-    return Vector3D(lhs - rhs.getX(), lhs - rhs.getY(), lhs - rhs.getZ());
-}
+Vector3D operator-(decimal lhs, const Vector3D& rhs) { return rhs - lhs; }
 Vector3D operator*(decimal lhs, const Vector3D& rhs) { return rhs * lhs; }
-Vector3D operator/(decimal lhs, const Vector3D& rhs)
-{
-    return Vector3D(lhs / rhs.getX(), lhs / rhs.getY(), lhs / rhs.getZ());
-}
+Vector3D operator/(decimal lhs, const Vector3D& rhs) { return rhs / lhs; }
 
 // ===== Printing =====
 std::ostream& operator<<(std::ostream& os, const Vector3D& v)

@@ -121,6 +121,12 @@ Vector3D min(const Vector3D& a, const Vector3D& b);
 Vector3D max(const Vector3D& a, const Vector3D& b);
 
 // ============================================================================
+//  Vector Operations
+// ============================================================================
+decimal  dotProduct(const Vector3D&, const Vector3D&);
+Vector3D crossProduct(const Vector3D&, const Vector3D&);
+
+// ============================================================================
 //  Free Arithmetic Operators
 // ============================================================================
 Vector3D operator+(const Vector3D&, const Vector3D&);

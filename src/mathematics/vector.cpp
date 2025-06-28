@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <functional>
+#include <iostream>
 #include <stdexcept>
 
 // ===== Utilities =====
@@ -59,11 +60,13 @@ decimal Vector3D::dotProduct(const Vector3D& other) const
 {
     return v[0] * other[0] + v[1] * other[1] + v[2] * other[2];
 }
+decimal  dotProduct(const Vector3D& lhs, const Vector3D& rhs) { return lhs.dotProduct(rhs); }
 Vector3D Vector3D::crossProduct(const Vector3D& other) const
 {
     return Vector3D { v[1] * other[2] - v[2] * other[1], v[2] * other[0] - v[0] * other[2],
                       v[0] * other[1] - v[1] * other[0] };
 }
+Vector3D crossProduct(const Vector3D& lhs, const Vector3D& rhs) { return lhs.crossProduct(rhs); }
 
 // ===== Comparison Operators =====
 bool Vector3D::operator==(const Vector3D& other) const

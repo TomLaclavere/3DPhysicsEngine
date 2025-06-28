@@ -1,9 +1,12 @@
 #include "mathematics/quaternion.hpp"
 
+#include <array>
 #include <cmath>
 
 // ============================================================================
+// ============================================================================
 //  Constructors
+// ============================================================================
 // ============================================================================
 Quaternion::Quaternion(const Matrix3x3& m)
 {
@@ -47,18 +50,10 @@ Quaternion::Quaternion(const Matrix3x3& m)
 }
 Quaternion::Quaternion(decimal angleX, decimal angleY, decimal angleZ)
 {
-    decimal cosX = std::cos(angleX * decimal(0.5));
-    decimal sinX = std::sin(angleX * decimal(0.5));
-    decimal cosY = std::cos(angleY * decimal(0.5));
-    decimal sinY = std::sin(angleY * decimal(0.5));
-    decimal cosZ = std::cos(angleZ * decimal(0.5));
-    decimal sinZ = std::sin(angleZ * decimal(0.5));
+    std::array<decimal, 4> quaternionElements = eulerAngles_to_Quaternion(angleX, angleY, angleZ);
 
-    w         = cosX * cosY * cosZ + sinX * sinY * sinZ;
-    decimal x = sinX * cosY * cosZ - cosX * sinY * sinZ;
-    decimal y = cosX * sinY * cosZ + sinX * cosY * sinZ;
-    decimal z = cosX * cosY * sinZ - sinX * sinY * sinZ;
-    v         = Vector3D(x, y, z);
+    w = quaternionElements[0];
+    v = Vector3D(quaternionElements[1], quaternionElements[2], quaternionElements[3]);
 }
 Quaternion::Quaternion(const Vector3D& eulerAngles)
 {
@@ -66,7 +61,9 @@ Quaternion::Quaternion(const Vector3D& eulerAngles)
 }
 
 // ============================================================================
+// ============================================================================
 //  Getters
+// ============================================================================
 // ============================================================================
 Matrix3x3 Quaternion::getRotationMatrix() const
 {
@@ -89,7 +86,9 @@ Matrix3x3 Quaternion::getRotationMatrix() const
 }
 
 // ============================================================================
+// ============================================================================
 //  Utilities
+// ============================================================================
 // ============================================================================
 void Quaternion::conjugate() { v = -v; }
 void Quaternion::normalize()
@@ -110,7 +109,9 @@ void Quaternion::inverse()
 }
 
 // ============================================================================
+// ============================================================================
 //  Setters
+// ============================================================================
 // ============================================================================
 void Quaternion::setToZero()
 {
@@ -144,59 +145,47 @@ void Quaternion::setAllValues(decimal neww, const Vector3D& newv)
 // From Euler Angles
 void Quaternion::setAllValues(decimal newangleX, decimal newangleY, decimal newangleZ)
 {
-    decimal cosX = std::cos(newangleX * decimal(0.5));
-    decimal sinX = std::sin(newangleX * decimal(0.5));
-    decimal cosY = std::cos(newangleY * decimal(0.5));
-    decimal sinY = std::sin(newangleY * decimal(0.5));
-    decimal cosZ = std::cos(newangleZ * decimal(0.5));
-    decimal sinZ = std::sin(newangleZ * decimal(0.5));
+    std::array<decimal, 4> quaternionElements = eulerAngles_to_Quaternion(newangleX, newangleY, newangleZ);
 
-    w    = cosX * cosY * cosZ + sinX * sinY * sinZ;
-    v[0] = sinX * cosY * cosZ - cosX * sinY * sinZ;
-    v[1] = cosX * sinY * cosZ + sinX * cosY * sinZ;
-    v[2] = cosX * cosY * sinZ - sinX * sinY * sinZ;
+    w    = quaternionElements[0];
+    v[0] = quaternionElements[1];
+    v[1] = quaternionElements[2];
+    v[2] = quaternionElements[3];
 }
 void Quaternion::setAllValues(const Vector3D& newangles)
 {
-    decimal newangleX = newangles[0];
-    decimal newangleY = newangles[1];
-    decimal newangleZ = newangles[2];
-
-    decimal cosX = std::cos(newangleX * decimal(0.5));
-    decimal sinX = std::sin(newangleX * decimal(0.5));
-    decimal cosY = std::cos(newangleY * decimal(0.5));
-    decimal sinY = std::sin(newangleY * decimal(0.5));
-    decimal cosZ = std::cos(newangleZ * decimal(0.5));
-    decimal sinZ = std::sin(newangleZ * decimal(0.5));
-
-    w    = cosX * cosY * cosZ + sinX * sinY * sinZ;
-    v[0] = sinX * cosY * cosZ - cosX * sinY * sinZ;
-    v[1] = cosX * sinY * cosZ + sinX * cosY * sinZ;
-    v[2] = cosX * cosY * sinZ - sinX * sinY * sinZ;
+    setAllValues(newangles[0], newangles[1], newangles[2]);
 }
 
 // ============================================================================
+// ============================================================================
 //  Property Checks
+// ============================================================================
 // ============================================================================
 bool Quaternion::isFinite() const { return (std::isfinite(w) && v.isFinite()); }
 bool Quaternion::isZero() const { return (commonMaths::approxEqual(w, decimal(0)) && v.isZero()); }
 bool Quaternion::isUnit() const { return (commonMaths::approxEqual(getNorm(), decimal(1))); }
 bool Quaternion::isIdentity() const { return (commonMaths::approxEqual(w, decimal(1)) && v.isZero()); }
-bool Quaternion::isInvertible() const { return (commonMaths::approxEqual(getNorm(), decimal(0))); }
+bool Quaternion::isInvertible() const { return !(commonMaths::approxEqual(getNorm(), decimal(0))); }
 bool Quaternion::isOrthogonal() const { return isUnit(); }
 bool Quaternion::isNormalized() const { return isUnit(); }
 
 // ============================================================================
+// ============================================================================
 //  Quaternion Operations
+// ============================================================================
 // ============================================================================
 decimal Quaternion::dotProduct(const Quaternion& other) const { return w * other.w + v.dotProduct(other.v); }
 Quaternion Quaternion::crossProduct(const Quaternion& other) const
 {
-    return Quaternion(v.crossProduct(other.v), w * other.w - v.dotProduct(other.v));
+    return Quaternion(w * other.v + other.w * v + v.crossProduct(other.v),
+                      w * other.w - v.dotProduct(other.v));
 }
 
 // ============================================================================
+// ============================================================================
 //  Comparisons Operators
+// ============================================================================
 // ============================================================================
 bool Quaternion::operator==(const Quaternion& other) const
 {
@@ -216,7 +205,9 @@ bool             Quaternion::approxEqual(const Quaternion& other, decimal p) con
 }
 
 // ============================================================================
+// ============================================================================
 //  Element Access Operators
+// ============================================================================
 // ============================================================================
 // Element access with index checking
 decimal& Quaternion::operator()(int i) { return v(i); }
@@ -226,7 +217,9 @@ decimal& Quaternion::operator[](int i) { return v[i]; }
 decimal Quaternion::operator[](int i) const { return v[i]; }
 
 // ============================================================================
+// ============================================================================
 //  In-Place Arithmetic Operators
+// ============================================================================
 // ============================================================================
 Quaternion& Quaternion::operator-()
 {
@@ -288,7 +281,9 @@ Quaternion& Quaternion::operator/=(decimal scalar)
 }
 
 // ============================================================================
+// ============================================================================
 //  Helper for Free Arithmetic Operators
+// ============================================================================
 // ============================================================================
 template <class F>
 Quaternion Quaternion::apply(const Quaternion& A, const Quaternion& B, F&& func)
@@ -301,7 +296,9 @@ Quaternion Quaternion::apply(const Quaternion& A, decimal s, F&& func)
     return Quaternion(func(A.w, s), applyVector(A.v, s, func));
 }
 // ============================================================================
+// ============================================================================
 //  Quaternions Operations
+// ============================================================================
 // ============================================================================
 decimal dotProduct(const Quaternion& lhs, const Quaternion& rhs)
 {
@@ -309,19 +306,48 @@ decimal dotProduct(const Quaternion& lhs, const Quaternion& rhs)
 }
 Quaternion crossProduct(const Quaternion& lhs, const Quaternion& rhs)
 {
-    return Quaternion(lhs.getImaginaryPart().crossProduct(rhs.getImaginaryPart()),
-                      lhs.getRealPart() * rhs.getRealPart() -
-                          lhs.getImaginaryPart().dotProduct(rhs.getImaginaryPart()));
+    decimal real =
+        lhs.getRealPart() * rhs.getRealPart() - lhs.getImaginaryPart().dotProduct(rhs.getImaginaryPart());
+    Vector3D img = lhs.getRealPart() * rhs.getImaginaryPart() + rhs.getRealPart() * lhs.getImaginaryPart() +
+                   lhs.getImaginaryPart().crossProduct(rhs.getImaginaryPart());
+    return Quaternion(img, real);
 }
-//     return Quaternion(v.crossProduct(other.v), w * other.w - v.dotProduct(other.v));
+
+// ============================================================================
 // ============================================================================
 //  Utilities
 // ============================================================================
-Quaternion min(const Quaternion&, const Quaternion&);
-Quaternion max(const Vector3D&, const Quaternion&);
+// ============================================================================
+Quaternion             min(const Quaternion&, const Quaternion&);
+Quaternion             max(const Quaternion&, const Quaternion&);
+std::array<decimal, 4> eulerAngles_to_Quaternion(decimal angleX, decimal angleY, decimal angleZ)
+{
+    std::array<decimal, 4> quaternionElements;
+
+    decimal cosX = std::cos(angleX * decimal(0.5));
+    decimal sinX = std::sin(angleX * decimal(0.5));
+    decimal cosY = std::cos(angleY * decimal(0.5));
+    decimal sinY = std::sin(angleY * decimal(0.5));
+    decimal cosZ = std::cos(angleZ * decimal(0.5));
+    decimal sinZ = std::sin(angleZ * decimal(0.5));
+
+    decimal w = cosX * cosY * cosZ + sinX * sinY * sinZ;
+    decimal x = sinX * cosY * cosZ - cosX * sinY * sinZ;
+    decimal y = cosX * sinY * cosZ + sinX * cosY * sinZ;
+    decimal z = cosX * cosY * sinZ - sinX * sinY * sinZ;
+
+    quaternionElements[0] = w;
+    quaternionElements[1] = x;
+    quaternionElements[2] = y;
+    quaternionElements[3] = z;
+
+    return quaternionElements;
+}
 
 // ============================================================================
+// ============================================================================
 //  Free Arithmetic Operators
+// ============================================================================
 // ============================================================================
 // Quaternion op Quaternion
 Quaternion operator+(const Quaternion& lhs, const Quaternion& rhs)
@@ -364,7 +390,9 @@ Quaternion operator*(decimal lhs, const Quaternion& rhs) { return rhs * lhs; }
 Quaternion operator/(decimal lhs, const Quaternion& rhs) { return rhs / lhs; }
 
 // ============================================================================
+// ============================================================================
 //  Printing
+// ============================================================================
 // ============================================================================
 std::ostream& operator<<(std::ostream& os, const Quaternion& q)
 {

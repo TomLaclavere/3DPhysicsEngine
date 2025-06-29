@@ -21,16 +21,16 @@
   - [x] **Matrix3x3 :** Implement matrix operations (multiplication, transpose, inverse).
   - [x] **Matrix3x3 Tests :** Write unit tests to verify matrix operations.
   - [x] **Quaternion :** Implement quaternion operations (multiplication, normalization, slerp).
-    - [ ] Verify that all quaternion fonctions are correctly implemented
-    - [ ] **Euler angle :** avoid code duplication, in particular with euler angle
+    - [x] Verify that all quaternion fonctions are correctly implemented
+    - [x] **Euler angle :** avoid code duplication, in particular with euler angle
   - [x] **Quaternion Tests :** Write unit tests to verify quaternion operations.
-- [ ] **Utility Types :** Define data structures like `Transform` and bounding volumes (AABB, sphere).  
-- [ ] **Documentation :** Document your math types and utilities.
 - [ ] **Testing :** Develop Unit Testing
   - [ ] **Test Math :** Write tests or small applications to validate math operations -> In particular, rethink all the tests written during the process 
   - [ ] **Test CI :** Integration of tests procedure in GitHub
   - [ ] **Output :** Improve unit testing outputs
   - [ ] **Coverage :** Compute and improve the coverage (= Number of lines tested)
+- [ ] **Utility Types :** Define data structures like `Transform` and bounding volumes (AABB, sphere).  
+- [ ] **Documentation :** Document your math types and utilities.
 
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------

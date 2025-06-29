@@ -7,217 +7,194 @@
 #include <sstream>
 
 // ——————————————————————————————————————————————————————————————————————————
-// 1) Constructors and getters
 // ——————————————————————————————————————————————————————————————————————————
-TEST(Vector3D_Test, DefaultConstructorZeroes)
-{
-    Vector3D v;
-    EXPECT_DECIMAL_EQ(v.getX(), decimal(0));
-    EXPECT_DECIMAL_EQ(v.getY(), decimal(0));
-    EXPECT_DECIMAL_EQ(v.getZ(), decimal(0));
-}
-
-TEST(Vector3D_Test, OneValueConstructor)
-{
-    Vector3D v(decimal(1));
-    EXPECT_DECIMAL_EQ(v.getX(), decimal(1));
-    EXPECT_DECIMAL_EQ(v.getY(), decimal(1));
-    EXPECT_DECIMAL_EQ(v.getZ(), decimal(1));
-}
-
-TEST(Vector3D_Test, ValuesConstructor)
-{
-    Vector3D v(decimal(1.1), decimal(-2.2), decimal(3.3));
-    EXPECT_DECIMAL_EQ(v.getX(), decimal(1.1));
-    EXPECT_DECIMAL_EQ(v.getY(), decimal(-2.2));
-    EXPECT_DECIMAL_EQ(v.getZ(), decimal(3.3));
-}
-
+//  Constructors and getters
 // ——————————————————————————————————————————————————————————————————————————
-// 2) Norm
 // ——————————————————————————————————————————————————————————————————————————
-TEST(Vector3D_Test, NormAndSquare)
+TEST(Vector3D_Test, Constructor)
 {
-    Vector3D v(decimal(1), decimal(2), decimal(2));
-    EXPECT_DECIMAL_EQ(v.getNormSquare(), decimal(9));
-    EXPECT_DECIMAL_EQ(v.getNorm(), decimal(3)); // sqrt(9)
+    // Zero
+    Vector3D v0;
+    EXPECT_DECIMAL_EQ(v0.getX(), decimal(0));
+    EXPECT_DECIMAL_EQ(v0.getY(), decimal(0));
+    EXPECT_DECIMAL_EQ(v0.getZ(), decimal(0));
+
+    // One Value
+    Vector3D v1(decimal(1));
+    EXPECT_DECIMAL_EQ(v1.getX(), decimal(1));
+    EXPECT_DECIMAL_EQ(v1.getY(), decimal(1));
+    EXPECT_DECIMAL_EQ(v1.getZ(), decimal(1));
+
+    // Three Values
+    Vector3D v2(decimal(1.1), decimal(-2.2), decimal(3.3));
+    EXPECT_DECIMAL_EQ(v2.getX(), decimal(1.1));
+    EXPECT_DECIMAL_EQ(v2.getY(), decimal(-2.2));
+    EXPECT_DECIMAL_EQ(v2.getZ(), decimal(3.3));
 }
 
 // ——————————————————————————————————————————————————————————————————————————
-// 3) Min/Max
 // ——————————————————————————————————————————————————————————————————————————
-TEST(Vector3D_Test, MinMaxValue)
+//  Utilities
+// ——————————————————————————————————————————————————————————————————————————
+// ——————————————————————————————————————————————————————————————————————————
+TEST(Vector3D_Test, Utilies)
 {
-    Vector3D v(decimal(-5), decimal(7), decimal(2));
-    EXPECT_DECIMAL_EQ(v.getMinValue(), decimal(-5));
-    EXPECT_DECIMAL_EQ(v.getMaxValue(), decimal(7));
+    Vector3D v0(decimal(1), decimal(2), decimal(-2));
+
+    // Norm
+    EXPECT_DECIMAL_EQ(v0.getNormSquare(), decimal(9));
+    EXPECT_DECIMAL_EQ(v0.getNorm(), decimal(3));
+
+    // Min & Max
+    EXPECT_DECIMAL_EQ(v0.getMinValue(), decimal(-2));
+    EXPECT_DECIMAL_EQ(v0.getMaxValue(), decimal(2));
+
+    // Absolute
+    Vector3D absV = v0.getAbsoluteVector();
+    EXPECT_EQ(absV, Vector3D(decimal(1), decimal(2), decimal(2)));
+    v0.absolute();
+    EXPECT_EQ(absV, v0);
+
+    // Normalize
+    Vector3D normV   = v0.getNormalized();
+    decimal  invNorm = 1 / v0.getNorm();
+    EXPECT_EQ(normV, invNorm * v0);
+    v0.normalize();
+    EXPECT_EQ(normV, v0);
 }
 
 // ——————————————————————————————————————————————————————————————————————————
-// 4) Absolute and normalize
 // ——————————————————————————————————————————————————————————————————————————
-TEST(Vector3D_Test, AbsoluteVector)
-{
-    Vector3D v(decimal(-1), decimal(-2), decimal(3));
-    auto     absV = v.getAbsoluteVector();
-    EXPECT_DECIMAL_EQ(absV.getX(), decimal(1));
-    EXPECT_DECIMAL_EQ(absV.getY(), decimal(2));
-    EXPECT_DECIMAL_EQ(absV.getZ(), decimal(3));
-}
-
-TEST(Vector3D_Test, NormalizeProducesNormalized)
-{
-    Vector3D v(decimal(0), decimal(3), decimal(4));
-    v.normalize();
-    EXPECT_DECIMAL_EQ(v.getNorm(), decimal(1));
-    EXPECT_TRUE(v.isNormalized());
-}
-
+//  Setters
 // ——————————————————————————————————————————————————————————————————————————
-// 5) setX, setY, setZ, setAllValues, setToZero
 // ——————————————————————————————————————————————————————————————————————————
-TEST(Vector3D_Test, Mutators)
+TEST(Vector3D_Test, Setters)
 {
     Vector3D v(decimal(1), decimal(2), decimal(3));
     v.setX(decimal(4));
     v.setY(decimal(5));
     v.setZ(decimal(6));
-    EXPECT_DECIMAL_EQ(v.getX(), decimal(4));
-    EXPECT_DECIMAL_EQ(v.getY(), decimal(5));
-    EXPECT_DECIMAL_EQ(v.getZ(), decimal(6));
-}
+    EXPECT_EQ(v, Vector3D(decimal(4), decimal(5), decimal(6)));
 
-TEST(Vector3D_Test, SetAllValues)
-{
-    Vector3D v(decimal(1), decimal(2), decimal(3));
-    v.setAllValues(decimal(4));
-    EXPECT_DECIMAL_EQ(v.getX(), decimal(4));
-    EXPECT_DECIMAL_EQ(v.getY(), decimal(4));
-    EXPECT_DECIMAL_EQ(v.getZ(), decimal(4));
-    v.setAllValues(decimal(1), decimal(2), decimal(3));
-    EXPECT_DECIMAL_EQ(v.getX(), decimal(1));
-    EXPECT_DECIMAL_EQ(v.getY(), decimal(2));
-    EXPECT_DECIMAL_EQ(v.getZ(), decimal(3));
-}
-
-TEST(Vector3D_Test, SetToZero)
-{
-    Vector3D v(decimal(1), decimal(2), decimal(3));
     v.setToZero();
-    EXPECT_DECIMAL_EQ(v.getX(), decimal(0));
-    EXPECT_DECIMAL_EQ(v.getY(), decimal(0));
-    EXPECT_DECIMAL_EQ(v.getZ(), decimal(0));
+    EXPECT_EQ(v, Vector3D());
+
+    v.setAllValues(4);
+    EXPECT_EQ(v, Vector3D(decimal(4)));
+
+    v.setAllValues(decimal(0), decimal(5), decimal(-3));
+    EXPECT_EQ(v, Vector3D(decimal(0), decimal(5), decimal(-3)));
 }
 
 // ——————————————————————————————————————————————————————————————————————————
-// 6) isZero, isUnit, isLengthEqual, isFinite
 // ——————————————————————————————————————————————————————————————————————————
-TEST(Vector3D_Test, IsZeroAndIsLengthEqual)
+//  Property Checks
+// ——————————————————————————————————————————————————————————————————————————
+// ——————————————————————————————————————————————————————————————————————————
+TEST(Vector3_Test, PropertyCheck)
 {
-    Vector3D z;
-    EXPECT_TRUE(z.isZero());
-    EXPECT_TRUE(z.isLengthEqual(decimal(0)));
-    EXPECT_FALSE(z.isNormalized());
-}
+    Vector3D v;
+    EXPECT_TRUE(v.isZero());
+    EXPECT_TRUE(v.isLengthEqual(decimal(0)));
+    EXPECT_FALSE(v.isNormalized());
 
-TEST(Vector3D_Test, IsFiniteDetectsInfNaN)
-{
+    v.setAllValues(decimal(4), decimal(0), decimal(-3));
+    EXPECT_TRUE(v.isLengthEqual(decimal(25)));
+    EXPECT_FALSE(v.isNormalized());
+    v.normalize();
+    EXPECT_TRUE(v.isNormalized());
+    EXPECT_TRUE(v.isFinite());
+
     decimal  inf = std::numeric_limits<decimal>::infinity();
-    Vector3D v(inf, decimal(0), decimal(0));
-    EXPECT_FALSE(v.isFinite());
+    Vector3D infV(0, -3, inf);
+    EXPECT_FALSE(infV.isFinite());
 }
 
 // ——————————————————————————————————————————————————————————————————————————
-// 7) dotProduct and crossProduct
 // ——————————————————————————————————————————————————————————————————————————
-TEST(Vector3D_Test, DotProductOrthogonal)
-{
-    Vector3D x(decimal(1), decimal(0), decimal(0)), y(decimal(0), decimal(1), decimal(0));
-    EXPECT_DECIMAL_EQ(x.dotProduct(y), decimal(0));
-    EXPECT_DECIMAL_EQ(x.dotProduct(x), decimal(1));
-}
-
-TEST(Vector3D_Test, CrossProductRightHanded)
-{
-    Vector3D x(decimal(1), decimal(0), decimal(0)), y(decimal(0), decimal(1), decimal(0));
-    auto     z = x.crossProduct(y);
-    EXPECT_DECIMAL_EQ(z.getX(), decimal(0));
-    EXPECT_DECIMAL_EQ(z.getY(), decimal(0));
-    EXPECT_DECIMAL_EQ(z.getZ(), decimal(1));
-}
-
+//  Vector Operations
 // ——————————————————————————————————————————————————————————————————————————
-// 8) operators ==, !=, <, approxEqual
 // ——————————————————————————————————————————————————————————————————————————
-TEST(Vector3D_Test, EqualityAndInequality)
+TEST(Vector3D_Test, VectorOperations)
 {
-    Vector3D a(decimal(1), decimal(2), decimal(3)), b(decimal(1), decimal(2), decimal(3)),
-        c(decimal(3), decimal(2), decimal(1));
-    EXPECT_TRUE(a == b);
-    EXPECT_FALSE(a != b);
-    EXPECT_TRUE(a != c);
-}
+    Vector3D x(decimal(3), decimal(-7), decimal(5));
+    Vector3D y(decimal(0), decimal(-2), decimal(-10));
 
-TEST(Vector3D_Test, ApproxEqualWithPrecision)
-{
-    Vector3D a(decimal(1.001), decimal(2.0001), decimal(3.0001));
-    Vector3D b(decimal(1.002), decimal(2.0002), decimal(3.0002));
-    EXPECT_TRUE(a.approxEqual(b, decimal(0.01)));
-    EXPECT_FALSE(a.approxEqual(b, decimal(1e-5)));
-}
+    // Dot Product
+    EXPECT_DECIMAL_EQ(y.dotProduct(y), decimal(104));
+    EXPECT_DECIMAL_EQ(x.dotProduct(y), decimal(-36));
+    EXPECT_EQ(x.dotProduct(y), y.dotProduct(x));
+    EXPECT_DECIMAL_EQ(x.dotProduct(y), dotProduct(x, y));
 
-TEST(Vector3D_Test, AllComparisonOperators)
-{
-    Vector3D a(1, 2, 3), b(1, 2, 4), c(2, 2, 3), d(1, 3, 3);
-
-    // <
-    EXPECT_TRUE(a < b);
-    EXPECT_FALSE(b < a);
-
-    // <=
-    EXPECT_TRUE(a <= b);
-    EXPECT_TRUE(a <= a);
-    EXPECT_FALSE(b <= a);
-
-    // >
-    EXPECT_TRUE(b > a);
-    EXPECT_FALSE(a > b);
-
-    // >=
-    EXPECT_TRUE(b >= a);
-    EXPECT_TRUE(a >= a);
-    EXPECT_FALSE(a >= b);
-}
-
-TEST(Vector3D_Test, UnaryMinus)
-{
-    Vector3D v(1, -2, 3);
-    Vector3D neg = -v;
-    EXPECT_DECIMAL_EQ(neg.getX(), -1);
-    EXPECT_DECIMAL_EQ(neg.getY(), 2);
-    EXPECT_DECIMAL_EQ(neg.getZ(), -3);
-}
-
-TEST(Vector3D_Test, DivideAssignScalar)
-{
-    Vector3D v(2, 4, 8);
-    v /= 2;
-    EXPECT_DECIMAL_EQ(v.getX(), 1);
-    EXPECT_DECIMAL_EQ(v.getY(), 2);
-    EXPECT_DECIMAL_EQ(v.getZ(), 4);
+    // Cross Product
+    EXPECT_EQ(x.crossProduct(y), Vector3D(decimal(80), decimal(30), decimal(-6)));
+    EXPECT_EQ(x.crossProduct(y), crossProduct(x, y));
 }
 
 // ——————————————————————————————————————————————————————————————————————————
-// 9) Element Access
+// ——————————————————————————————————————————————————————————————————————————
+//  Comparison Operations
+// ——————————————————————————————————————————————————————————————————————————
+// ——————————————————————————————————————————————————————————————————————————
+TEST(Vector3D_Test, ComparisonOperators)
+{
+    Vector3D u(decimal(-3), decimal(0), decimal(2));
+    Vector3D v(decimal(5), decimal(2), decimal(-1));
+    Vector3D w(decimal(-3), decimal(0), decimal(2));
+
+    // Equality & Inequality
+    EXPECT_TRUE(u == w);
+    EXPECT_FALSE(u != w);
+    EXPECT_TRUE(u != v);
+
+    // ApproxEqual
+    u.setAllValues(decimal(1.001), decimal(2.0001), decimal(3.0001));
+    v.setAllValues(decimal(1.002), decimal(2.0002), decimal(3.0002));
+    EXPECT_TRUE(u.approxEqual(v, decimal(0.01)));
+    EXPECT_FALSE(u.approxEqual(v, decimal(1e-5)));
+
+    // Higher & Smaller
+    EXPECT_TRUE(u < v);
+    EXPECT_FALSE(v < u);
+
+    EXPECT_TRUE(u <= v);
+    EXPECT_TRUE(u <= u);
+    EXPECT_FALSE(v <= u);
+
+    EXPECT_TRUE(v > u);
+    EXPECT_FALSE(u > v);
+
+    EXPECT_TRUE(v >= u);
+    EXPECT_TRUE(u >= u);
+    EXPECT_FALSE(u >= v);
+}
+
+// ——————————————————————————————————————————————————————————————————————————
+// ——————————————————————————————————————————————————————————————————————————
+//  Element Access Operations
+// ——————————————————————————————————————————————————————————————————————————
 // ——————————————————————————————————————————————————————————————————————————
 TEST(Vector3D_Test, ElementAccessChecked)
 {
-    Vector3D v(decimal(1), decimal(2), decimal(3));
+    Vector3D       v(decimal(1), decimal(2), decimal(3));
+    const Vector3D u(decimal(4), decimal(5), decimal(6));
 
     // operator()(int) const and non-const
     EXPECT_DECIMAL_EQ(v(decimal(0)), decimal(1));
     EXPECT_DECIMAL_EQ(v(decimal(1)), decimal(2));
     EXPECT_DECIMAL_EQ(v(decimal(2)), decimal(3));
+
+    EXPECT_DECIMAL_EQ(v[decimal(0)], decimal(1));
+    EXPECT_DECIMAL_EQ(v[decimal(1)], decimal(2));
+    EXPECT_DECIMAL_EQ(v[decimal(2)], decimal(3));
+
+    EXPECT_DECIMAL_EQ(u(decimal(0)), decimal(4));
+    EXPECT_DECIMAL_EQ(u(decimal(1)), decimal(5));
+    EXPECT_DECIMAL_EQ(u(decimal(2)), decimal(6));
+
+    EXPECT_DECIMAL_EQ(u[decimal(0)], decimal(4));
+    EXPECT_DECIMAL_EQ(u[decimal(1)], decimal(5));
+    EXPECT_DECIMAL_EQ(u[decimal(2)], decimal(6));
 
     v(decimal(1)) = decimal(42.0);
     EXPECT_DECIMAL_EQ(v(decimal(1)), decimal(42.0));
@@ -225,62 +202,48 @@ TEST(Vector3D_Test, ElementAccessChecked)
     // Out-of-range checks
     EXPECT_THROW(v(decimal(-1)), std::out_of_range);
     EXPECT_THROW(v(decimal(3)), std::out_of_range);
+    EXPECT_THROW(u(decimal(-1)), std::out_of_range);
+    EXPECT_THROW(u(decimal(3)), std::out_of_range);
 
-    const Vector3D cv(decimal(4), decimal(5), decimal(6));
-    EXPECT_DECIMAL_EQ(cv(decimal(0)), decimal(4));
-    EXPECT_DECIMAL_EQ(cv(decimal(1)), decimal(5));
-    EXPECT_DECIMAL_EQ(cv(decimal(2)), decimal(6));
-    EXPECT_THROW(cv(decimal(-1)), std::out_of_range);
-    EXPECT_THROW(cv(decimal(3)), std::out_of_range);
+    // operator[] does not check the index, so I can't check out of range indices
 }
-
-TEST(Vector3D_Test, ElementAccessUnchecked)
-{
-    Vector3D v(decimal(1), decimal(2), decimal(3));
-
-    // operator[](int) const and non-const
-    EXPECT_DECIMAL_EQ(v[decimal(0)], decimal(1));
-    EXPECT_DECIMAL_EQ(v[decimal(1)], decimal(2));
-    EXPECT_DECIMAL_EQ(v[decimal(2)], decimal(3));
-
-    v[decimal(2)] = decimal(99.0);
-    EXPECT_DECIMAL_EQ(v[decimal(2)], decimal(99.0));
-
-    const Vector3D cv(decimal(7), decimal(8), decimal(9));
-    EXPECT_DECIMAL_EQ(cv[decimal(0)], decimal(7));
-    EXPECT_DECIMAL_EQ(cv[decimal(1)], decimal(8));
-    EXPECT_DECIMAL_EQ(cv[decimal(2)], decimal(9));
-}
-
-// ——————————————————————————————————————————————————————————————————————————
-// 10) static min/max functions
-// ——————————————————————————————————————————————————————————————————————————
 TEST(Vector3D_Test, StaticMinMaxFunctions)
 {
     Vector3D a(decimal(1), decimal(5), decimal(3)), b(decimal(2), decimal(4), decimal(6));
-    auto     mn = min(a, b);
-    auto     mx = max(a, b);
+    Vector3D mn = min(a, b);
+    Vector3D mx = max(a, b);
     EXPECT_EQ(mn, Vector3D(decimal(1), decimal(4), decimal(3)));
     EXPECT_EQ(mx, Vector3D(decimal(2), decimal(5), decimal(6)));
 }
 
 // ——————————————————————————————————————————————————————————————————————————
+// ——————————————————————————————————————————————————————————————————————————
+//  Arithmetic Operators
+// ——————————————————————————————————————————————————————————————————————————
+// ——————————————————————————————————————————————————————————————————————————
+
+// ——————————————————————————————————————————————————————————————————————————
 // 11) scalar and vector arithmetic operators
 // ——————————————————————————————————————————————————————————————————————————
-TEST(Vector3D_Test, CompoundOperators)
+TEST(Vector3D_Test, InPlace)
 {
     Vector3D v(decimal(1), decimal(2), decimal(3));
-    v += Vector3D(decimal(1), decimal(1), decimal(1));
-    EXPECT_DECIMAL_EQ(v.getX(), decimal(2));
-    v -= Vector3D(decimal(1), decimal(2), decimal(3));
-    EXPECT_DECIMAL_EQ(v.getY(), decimal(1)); // 3-2
-    v *= Vector3D(decimal(2), decimal(3), decimal(4));
-    EXPECT_DECIMAL_EQ(v.getZ(), decimal(4)); // 1*4
-    v /= Vector3D(decimal(2), decimal(2), decimal(2));
-    EXPECT_DECIMAL_EQ(v.getX(), decimal(1)); // 2/2
+    v += Vector3D(decimal(0), decimal(-1), decimal(1));
+    EXPECT_EQ(v, Vector3D(decimal(1), decimal(1), decimal(4)));
+    v -= Vector3D(decimal(2), decimal(-2), decimal(3));
+    EXPECT_EQ(v, Vector3D(decimal(-1), decimal(3), decimal(1)));
+    v *= Vector3D(decimal(2), decimal(-1), decimal(0));
+    EXPECT_EQ(v, Vector3D(decimal(-2), decimal(-3), decimal(0)));
+    v /= Vector3D(decimal(-2), decimal(1), decimal(2));
+    EXPECT_EQ(v, Vector3D(decimal(1), decimal(-3), decimal(0)));
+    v = -v;
+    EXPECT_EQ(v, Vector3D(decimal(-1), decimal(3), decimal(0)));
+
+    // Check division by zero
+    EXPECT_THROW(v /= Vector3D(decimal(0)), std::invalid_argument);
 }
 
-TEST(Vector3D_Test, ScalarAndVectorOperators)
+TEST(Vector3D_Test, Free)
 {
     Vector3D v(decimal(1), decimal(2), decimal(3));
 
@@ -298,14 +261,20 @@ TEST(Vector3D_Test, ScalarAndVectorOperators)
 
     // scalar and vector division
     Vector3D w(decimal(8), decimal(6), decimal(4));
-    EXPECT_EQ(w / decimal(2.0), Vector3D(decimal(4), decimal(3), decimal(2)));
+    EXPECT_EQ(w / decimal(2), Vector3D(decimal(4), decimal(3), decimal(2)));
     EXPECT_EQ(w / Vector3D(decimal(2), decimal(2), decimal(2)), Vector3D(decimal(4), decimal(3), decimal(2)));
+
+    // division by zero
+    EXPECT_THROW({ auto result = w / decimal(0); }, std::invalid_argument);
+    EXPECT_THROW({ auto result = w / Vector3D(); }, std::invalid_argument);
 }
 
 // ——————————————————————————————————————————————————————————————————————————
-// 12) stream output
 // ——————————————————————————————————————————————————————————————————————————
-TEST(Vector3D_Test, StreamOutput)
+//  Printing
+// ——————————————————————————————————————————————————————————————————————————
+// ——————————————————————————————————————————————————————————————————————————
+TEST(Vector3D_Test, Printing)
 {
     Vector3D          v(decimal(1), decimal(2), decimal(3));
     std::stringstream ss;

@@ -15,46 +15,46 @@
 TEST(Quaternion_Test, DefaultConstructorZeroes)
 {
     Quaternion q;
-    EXPECT_DECIMAL_EQ(q.getRealPart(), decimal(0));
+    EXPECT_DECIMAL_EQ(q.getRealPart(), 0_d);
     EXPECT_TRUE(q.getImaginaryPart() == Vector3D());
 }
 TEST(Quaternion_Test, ValueConstructor)
 {
-    Quaternion q(decimal(1), decimal(2), decimal(3), decimal(4));
-    EXPECT_DECIMAL_EQ(q.getRealPart(), decimal(4));
-    EXPECT_EQ(q.getImaginaryPart(), Vector3D(decimal(1), decimal(2), decimal(3)));
+    Quaternion q(1_d, 2_d, 3_d, 4_d);
+    EXPECT_DECIMAL_EQ(q.getRealPart(), 4_d);
+    EXPECT_EQ(q.getImaginaryPart(), Vector3D(1_d, 2_d, 3_d));
 }
 TEST(Quaternion_Test, VectorAndScalarConstructor)
 {
     // Vector scalar
-    Vector3D   v(decimal(1), decimal(2), decimal(3));
-    Quaternion q(v, decimal(4));
+    Vector3D   v(1_d, 2_d, 3_d);
+    Quaternion q(v, 4_d);
     EXPECT_EQ(q.getImaginaryPart(), v);
-    EXPECT_DECIMAL_EQ(q.getRealPart(), decimal(4));
+    EXPECT_DECIMAL_EQ(q.getRealPart(), 4_d);
     // Scalar vector
-    Vector3D   v_bis(decimal(1), decimal(2), decimal(3));
-    Quaternion q_bis(decimal(4), v_bis);
+    Vector3D   v_bis(1_d, 2_d, 3_d);
+    Quaternion q_bis(4_d, v_bis);
     EXPECT_EQ(q_bis.getImaginaryPart(), v_bis);
-    EXPECT_DECIMAL_EQ(q_bis.getRealPart(), decimal(4));
+    EXPECT_DECIMAL_EQ(q_bis.getRealPart(), 4_d);
 }
 TEST(Quaternion_Test, FromEulerAngles_ProducesExpectedRotation)
 {
     // 90 degrees (pi/2) rotation about X axis
-    decimal    angleX = decimal(M_PI) / 2;
-    decimal    angleY = 0;
-    decimal    angleZ = 0;
+    decimal    angleX = decimal(M_PI) / 2_d;
+    decimal    angleY = 0_d;
+    decimal    angleZ = 0_d;
     Quaternion q(angleX, angleY, angleZ);
 
     // The expected quaternion for 90deg about X is (sqrt(0.5), 0, 0, sqrt(0.5))
-    decimal s = std::sin(angleX / 2);
-    decimal c = std::cos(angleX / 2);
-    EXPECT_TRUE(q.approxEqual(Quaternion(s, 0, 0, c), PRECISION_MACHINE));
+    decimal s = std::sin(angleX / 2_d);
+    decimal c = std::cos(angleX / 2_d);
+    EXPECT_TRUE(q.approxEqual(Quaternion(s, 0_d, 0_d, c), PRECISION_MACHINE));
 
     // Check normalization
-    EXPECT_NEAR(q.getNorm(), decimal(1), PRECISION_MACHINE);
+    EXPECT_NEAR(q.getNorm(), 1_d, PRECISION_MACHINE);
 
     // Check rotation matrix matches expected
-    Matrix3x3 expected(1, 0, 0, 0, 0, -1, 0, 1, 0);
+    Matrix3x3 expected(1_d, 0_d, 0_d, 0_d, 0_d, -1_d, 0_d, 1_d, 0_d);
     Matrix3x3 rot = q.getRotationMatrix();
     for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
@@ -63,19 +63,19 @@ TEST(Quaternion_Test, FromEulerAngles_ProducesExpectedRotation)
 TEST(Quaternion_Test, FromMatrix_ProducesExpectedQuaternion)
 {
     // 90 degrees (pi/2) rotation about X axis
-    decimal    angle = decimal(M_PI) / 2;
-    Matrix3x3  m(1, 0, 0, 0, std::cos(angle), -std::sin(angle), 0, std::sin(angle), std::cos(angle));
+    decimal   angle = decimal(M_PI) / 2;
+    Matrix3x3 m(1_d, 0_d, 0_d, 0_d, std::cos(angle), -std::sin(angle), 0_d, std::sin(angle), std::cos(angle));
     Quaternion q(m);
 
     // The expected quaternion for 90deg about X is (sqrt(0.5), 0, 0, sqrt(0.5))
     decimal    s = std::sin(angle / 2);
     decimal    c = std::cos(angle / 2);
-    Quaternion expected(s, 0, 0, c);
+    Quaternion expected(s, 0_d, 0_d, c);
 
     EXPECT_TRUE(q.approxEqual(expected, PRECISION_MACHINE));
 
     // Check normalization
-    EXPECT_NEAR(q.getNorm(), decimal(1), PRECISION_MACHINE);
+    EXPECT_NEAR(q.getNorm(), 1_d, PRECISION_MACHINE);
 
     // Check that converting back to matrix gives the original
     Matrix3x3 rot = q.getRotationMatrix();
@@ -91,19 +91,19 @@ TEST(Quaternion_Test, FromMatrix_ProducesExpectedQuaternion)
 // ——————————————————————————————————————————————————————————————————————————
 TEST(Quaternion_Test, ConjugateAndNormalize)
 {
-    Quaternion q(decimal(1), decimal(2), decimal(3), decimal(4));
+    Quaternion q(1_d, 2_d, 3_d, 4_d);
     Quaternion conjugateQ = q.getConjugate();
     Quaternion normalizeQ = conjugateQ.getNormalize();
     q.conjugate();
-    EXPECT_EQ(q.getImaginaryPart(), Vector3D(decimal(-1), decimal(-2), decimal(-3)));
-    EXPECT_EQ(conjugateQ.getImaginaryPart(), Vector3D(decimal(-1), decimal(-2), decimal(-3)));
+    EXPECT_EQ(q.getImaginaryPart(), Vector3D(-1_d, -2_d, -3_d));
+    EXPECT_EQ(conjugateQ.getImaginaryPart(), Vector3D(-1_d, -2_d, -3_d));
     q.normalize();
     EXPECT_TRUE(q.isUnit());
     EXPECT_TRUE(normalizeQ.isUnit());
 }
 TEST(Quaternion_Test, Inverse)
 {
-    Quaternion q(decimal(1), decimal(2), decimal(3), decimal(4));
+    Quaternion q(1_d, 2_d, 3_d, 4_d);
     q.normalize();
     Quaternion orig = q;
 
@@ -118,20 +118,14 @@ TEST(Quaternion_Test, Inverse)
 }
 TEST(Quaternion_Test, Getters)
 {
-    Quaternion q(decimal(1), decimal(2), decimal(3), decimal(4));
-    EXPECT_NEAR(q.getNormSquare(),
-                decimal(1) * decimal(1) + decimal(2) * decimal(2) + decimal(3) * decimal(3) +
-                    decimal(4) * decimal(4),
-                PRECISION_MACHINE);
-    EXPECT_NEAR(q.getNorm(),
-                std::sqrt(decimal(1) * decimal(1) + decimal(2) * decimal(2) + decimal(3) * decimal(3) +
-                          decimal(4) * decimal(4)),
-                PRECISION_MACHINE);
+    Quaternion q(1_d, 2_d, 3_d, 4_d);
+    EXPECT_NEAR(q.getNormSquare(), 1_d * 1_d + 2_d * 2_d + 3_d * 3_d + 4_d * 4_d, PRECISION_MACHINE);
+    EXPECT_NEAR(q.getNorm(), std::sqrt(1_d * 1_d + 2_d * 2_d + 3_d * 3_d + 4_d * 4_d), PRECISION_MACHINE);
     Quaternion idenity = q.getIdentity();
-    EXPECT_DECIMAL_EQ(idenity.getRealPart(), decimal(1));
+    EXPECT_DECIMAL_EQ(idenity.getRealPart(), 1_d);
     EXPECT_TRUE(idenity.getImaginaryPart() == Vector3D());
     Quaternion zero = q.getZero();
-    EXPECT_DECIMAL_EQ(zero.getRealPart(), decimal(0));
+    EXPECT_DECIMAL_EQ(zero.getRealPart(), 0_d);
     EXPECT_TRUE(zero.getImaginaryPart() == Vector3D());
 }
 
@@ -143,18 +137,18 @@ TEST(Quaternion_Test, Getters)
 TEST(Quaternion_Test, Setters)
 {
     Quaternion q;
-    q.setAllValues(decimal(1), decimal(2), decimal(3), decimal(4));
-    EXPECT_EQ(q.getImaginaryPart(), Vector3D(decimal(1), decimal(2), decimal(3)));
-    EXPECT_DECIMAL_EQ(q.getRealPart(), decimal(4));
+    q.setAllValues(1_d, 2_d, 3_d, 4_d);
+    EXPECT_EQ(q.getImaginaryPart(), Vector3D(1_d, 2_d, 3_d));
+    EXPECT_DECIMAL_EQ(q.getRealPart(), 4_d);
 
-    Vector3D v(decimal(5), decimal(6), decimal(7));
-    q.setAllValues(v, decimal(8));
+    Vector3D v(5_d, 6_d, 7_d);
+    q.setAllValues(v, 8_d);
     EXPECT_EQ(q.getImaginaryPart(), v);
-    EXPECT_DECIMAL_EQ(q.getRealPart(), decimal(8));
+    EXPECT_DECIMAL_EQ(q.getRealPart(), 8_d);
 
-    q.setAllValues(decimal(9), v);
+    q.setAllValues(9_d, v);
     EXPECT_EQ(q.getImaginaryPart(), v);
-    EXPECT_DECIMAL_EQ(q.getRealPart(), decimal(9));
+    EXPECT_DECIMAL_EQ(q.getRealPart(), 9_d);
 
     q.setToZero();
     EXPECT_TRUE(q.isZero());
@@ -180,57 +174,43 @@ TEST(Quaternion_Test, PropertyChecks)
     EXPECT_TRUE(q.isFinite());
     EXPECT_TRUE(q.isOrthogonal());
     EXPECT_TRUE(q.isInvertible()); // isInvertible returns true if norm==0
-}
-TEST(Quaternion_Test, IsUnit)
-{
-    Quaternion q(decimal(1), decimal(0), decimal(0), decimal(0));
+
+    // Unitary
+    q.setAllValues(1_d, 0_d, 0_d, 0_d);
     EXPECT_TRUE(q.isUnit());
-
-    q.setAllValues(decimal(1), decimal(2), decimal(3), decimal(4));
+    q.setAllValues(1_d, 2_d, 3_d, 4_d);
     EXPECT_FALSE(q.isUnit());
-}
-TEST(Quaternion_Test, IsFinite)
-{
-    Quaternion q(decimal(1), decimal(2), decimal(3), decimal(4));
+
+    // Finite
     EXPECT_TRUE(q.isFinite());
-
     // Test with NaN
-    Quaternion q_nan(decimal(NAN), decimal(2), decimal(3), decimal(4));
+    Quaternion q_nan(NAN, 2_d, 3_d, 4_d);
     EXPECT_FALSE(q_nan.isFinite());
-
     // Test with Inf
-    Quaternion q_inf(decimal(INFINITY), decimal(2), decimal(3), decimal(4));
+    Quaternion q_inf(INFINITY, 2_d, 3_d, 4_d);
     EXPECT_FALSE(q_inf.isFinite());
-}
-TEST(Quaternion_Test, isInvertible)
-{
-    Quaternion q(decimal(1), decimal(2), decimal(3), decimal(4));
-    EXPECT_TRUE(q.isInvertible()); // Non-zero norm means it's invertible
 
+    // Invertible
+    EXPECT_TRUE(q.isInvertible()); // Non-zero norm means it's invertible
     q.setToZero();
     EXPECT_FALSE(q.isInvertible()); // Zero norm means it's not invertible
-}
-TEST(Quaternion_Test, IsOrthogonal)
-{
-    Quaternion q(decimal(1), decimal(0), decimal(0), decimal(0));
-    EXPECT_TRUE(q.isOrthogonal()); // Identity quaternion is orthogonal
 
+    // Orthogonal
+    q.setAllValues(1_d, 0_d, 0_d, 0_d);
+    EXPECT_TRUE(q.isOrthogonal()); // Identity quaternion is orthogonal
     // Non-identity quaternion is not orthogonal
-    q.setAllValues(decimal(1), decimal(2), decimal(3), decimal(4));
+    q.setAllValues(1_d, 2_d, 3_d, 4_d);
     EXPECT_FALSE(q.isOrthogonal());
     // Check with a known orthogonal quaternion
-    Quaternion orthogonalQ(decimal(0), decimal(1), decimal(0), decimal(0));
+    Quaternion orthogonalQ(0_d, 1_d, 0_d, 0_d);
     EXPECT_TRUE(orthogonalQ.isOrthogonal());
-}
-TEST(Quaternion_Test, IsNormalized)
-{
-    Quaternion q(decimal(1), decimal(0), decimal(0), decimal(0));
+
+    // Normalized
+    q.setAllValues(1_d, 0_d, 0_d, 0_d);
     EXPECT_TRUE(q.isNormalized()); // Identity quaternion is normalized
-
     // Non-identity quaternion is not normalized
-    q.setAllValues(decimal(1), decimal(2), decimal(3), decimal(4));
+    q.setAllValues(1_d, 2_d, 3_d, 4_d);
     EXPECT_FALSE(q.isNormalized());
-
     // Check with a normalized quaternion
     Quaternion normalizedQ = q.getNormalize();
     EXPECT_TRUE(normalizedQ.isNormalized());
@@ -243,15 +223,15 @@ TEST(Quaternion_Test, IsNormalized)
 // ——————————————————————————————————————————————————————————————————————————
 TEST(Quaternion_Test, DotAndCrossProduct)
 {
-    Quaternion q1(decimal(1), decimal(0), decimal(0), decimal(1));
-    Quaternion q2(decimal(0), decimal(1), decimal(0), decimal(1));
+    Quaternion q1(1_d, 0_d, 0_d, 1_d);
+    Quaternion q2(0_d, 1_d, 0_d, 1_d);
     decimal    dot = q1.dotProduct(q2);
-    EXPECT_DECIMAL_EQ(dot, decimal(1)); // 1*0 + 0*1 + 0*0 + 1*1 = 1
+    EXPECT_DECIMAL_EQ(dot, 1_d); // 1*0 + 0*1 + 0*0 + 1*1 = 1
     decimal dot_alt = dotProduct(q1, q2);
     EXPECT_EQ(dotProduct(q1, q2), dot);
 
     Quaternion cross = q1.crossProduct(q2);
-    EXPECT_EQ(cross, Quaternion(decimal(1), decimal(1), decimal(1), decimal(1)));
+    EXPECT_EQ(cross, Quaternion(1_d, 1_d, 1_d, 1_d));
     EXPECT_EQ(crossProduct(q1, q2), cross);
 }
 
@@ -262,8 +242,7 @@ TEST(Quaternion_Test, DotAndCrossProduct)
 // ——————————————————————————————————————————————————————————————————————————
 TEST(Quaternion_Test, ComparisonOperators)
 {
-    Quaternion a(decimal(1), decimal(2), decimal(3), decimal(4)),
-        b(decimal(1), decimal(2), decimal(3), decimal(4)), c(decimal(2), decimal(3), decimal(4), decimal(5));
+    Quaternion a(1_d, 2_d, 3_d, 4_d), b(1_d, 2_d, 3_d, 4_d), c(2_d, 3_d, 4_d, 5_d);
 
     EXPECT_TRUE(a == b);
     EXPECT_FALSE(a != b);
@@ -285,18 +264,18 @@ TEST(Quaternion_Test, ComparisonOperators)
 // ——————————————————————————————————————————————————————————————————————————
 TEST(Quaternion_Test, ElementAccess)
 {
-    Quaternion q(decimal(1), decimal(2), decimal(3), decimal(4));
+    Quaternion q(1_d, 2_d, 3_d, 4_d);
 
-    EXPECT_DECIMAL_EQ(q(decimal(0)), decimal(1));
-    EXPECT_DECIMAL_EQ(q(decimal(1)), decimal(2));
-    EXPECT_DECIMAL_EQ(q(decimal(2)), decimal(3));
+    EXPECT_DECIMAL_EQ(q(0_d), 1_d);
+    EXPECT_DECIMAL_EQ(q(1_d), 2_d);
+    EXPECT_DECIMAL_EQ(q(2_d), 3_d);
 
-    q(decimal(0)) = decimal(10);
-    EXPECT_DECIMAL_EQ(q(decimal(0)), decimal(10));
+    q(0_d) = 10_d;
+    EXPECT_DECIMAL_EQ(q(0_d), 10_d);
 
-    EXPECT_DECIMAL_EQ(q[decimal(0)], decimal(10));
-    q[decimal(1)] = decimal(20);
-    EXPECT_DECIMAL_EQ(q[decimal(1)], decimal(20));
+    EXPECT_DECIMAL_EQ(q[0_d], 10_d);
+    q[1_d] = 20_d;
+    EXPECT_DECIMAL_EQ(q[1_d], 20_d);
 }
 
 // ——————————————————————————————————————————————————————————————————————————
@@ -306,31 +285,31 @@ TEST(Quaternion_Test, ElementAccess)
 // ——————————————————————————————————————————————————————————————————————————
 TEST(Quaternion_Test, InPlaceArithmeticOperators)
 {
-    Quaternion q(decimal(1), decimal(2), decimal(3), decimal(4));
+    Quaternion q(1_d, 2_d, 3_d, 4_d);
     Quaternion orig = q;
 
-    q += Quaternion(decimal(1), decimal(1), decimal(1), decimal(1));
-    EXPECT_EQ(q, Quaternion(decimal(2), decimal(3), decimal(4), decimal(5)));
+    q += Quaternion(1_d, 1_d, 1_d, 1_d);
+    EXPECT_EQ(q, Quaternion(2_d, 3_d, 4_d, 5_d));
 
-    q -= Quaternion(decimal(1), decimal(1), decimal(1), decimal(1));
+    q -= Quaternion(1_d, 1_d, 1_d, 1_d);
     EXPECT_EQ(q, orig);
 
-    q *= Quaternion(decimal(2), decimal(2), decimal(2), decimal(2));
-    EXPECT_EQ(q, Quaternion(decimal(2), decimal(4), decimal(6), decimal(8)));
+    q *= Quaternion(2_d, 2_d, 2_d, 2_d);
+    EXPECT_EQ(q, Quaternion(2_d, 4_d, 6_d, 8_d));
 
-    q /= Quaternion(decimal(2), decimal(2), decimal(2), decimal(2));
+    q /= Quaternion(2_d, 2_d, 2_d, 2_d);
     EXPECT_EQ(q, orig);
 
-    q += decimal(1);
-    EXPECT_EQ(q, Quaternion(decimal(2), decimal(3), decimal(4), decimal(5)));
+    q += 1_d;
+    EXPECT_EQ(q, Quaternion(2_d, 3_d, 4_d, 5_d));
 
-    q -= decimal(1);
+    q -= 1_d;
     EXPECT_EQ(q, orig);
 
-    q *= decimal(2);
-    EXPECT_EQ(q, Quaternion(decimal(2), decimal(4), decimal(6), decimal(8)));
+    q *= 2_d;
+    EXPECT_EQ(q, Quaternion(2_d, 4_d, 6_d, 8_d));
 
-    q /= decimal(2);
+    q /= 2_d;
     EXPECT_EQ(q, orig);
 }
 
@@ -341,32 +320,26 @@ TEST(Quaternion_Test, InPlaceArithmeticOperators)
 // ——————————————————————————————————————————————————————————————————————————
 TEST(Quaternion_Test, ArithmeticOperators)
 {
-    Quaternion q1(decimal(1), decimal(2), decimal(3), decimal(4));
-    Quaternion q2(decimal(4), decimal(5), decimal(6), decimal(7));
+    Quaternion q1(1_d, 2_d, 3_d, 4_d);
+    Quaternion q2(4_d, 5_d, 6_d, 7_d);
 
     Quaternion sum = q1 + q2;
-    EXPECT_EQ(sum, Quaternion(decimal(1) + decimal(4), decimal(2) + decimal(5), decimal(3) + decimal(6),
-                              decimal(4) + decimal(7)));
+    EXPECT_EQ(sum, Quaternion(1_d + 4_d, 2_d + 5_d, 3_d + 6_d, 4_d + 7_d));
 
     Quaternion diff = q1 - q2;
-    EXPECT_EQ(diff, Quaternion(decimal(1) - decimal(4), decimal(2) - decimal(5), decimal(3) - decimal(6),
-                               decimal(4) - decimal(7)));
+    EXPECT_EQ(diff, Quaternion(1_d - 4_d, 2_d - 5_d, 3_d - 6_d, 4_d - 7_d));
 
     Quaternion prod = q1 * q2;
-    EXPECT_EQ(prod, Quaternion(decimal(1) * decimal(4), decimal(2) * decimal(5), decimal(3) * decimal(6),
-                               decimal(4) * decimal(7)));
+    EXPECT_EQ(prod, Quaternion(1_d * 4_d, 2_d * 5_d, 3_d * 6_d, 4_d * 7_d));
 
     Quaternion quot = q2 / q1;
-    EXPECT_EQ(quot, Quaternion(decimal(4) / decimal(1), decimal(5) / decimal(2), decimal(6) / decimal(3),
-                               decimal(7) / decimal(4)));
+    EXPECT_EQ(quot, Quaternion(4_d / 1_d, 5_d / 2_d, 6_d / 3_d, 7_d / 4_d));
 
-    Quaternion scalarSum = q1 + decimal(2);
-    EXPECT_EQ(scalarSum, Quaternion(decimal(1) + decimal(2), decimal(2) + decimal(2), decimal(3) + decimal(2),
-                                    decimal(4) + decimal(2)));
+    Quaternion scalarSum = q1 + 2_d;
+    EXPECT_EQ(scalarSum, Quaternion(1_d + 2_d, 2_d + 2_d, 3_d + 2_d, 4_d + 2_d));
 
-    Quaternion scalarProd = q1 * decimal(2);
-    EXPECT_EQ(scalarProd, Quaternion(decimal(1) * decimal(2), decimal(2) * decimal(2),
-                                     decimal(3) * decimal(2), decimal(4) * decimal(2)));
+    Quaternion scalarProd = q1 * 2_d;
+    EXPECT_EQ(scalarProd, Quaternion(1_d * 2_d, 2_d * 2_d, 3_d * 2_d, 4_d * 2_d));
 }
 
 // ——————————————————————————————————————————————————————————————————————————
@@ -376,7 +349,7 @@ TEST(Quaternion_Test, ArithmeticOperators)
 // ——————————————————————————————————————————————————————————————————————————
 TEST(Quaternion_Test, StreamOutput)
 {
-    Quaternion        q(decimal(1), decimal(2), decimal(3), decimal(4));
+    Quaternion        q(1_d, 2_d, 3_d, 4_d);
     std::stringstream ss;
     ss << q;
     EXPECT_TRUE(ss.str().find("(") != std::string::npos);

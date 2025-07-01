@@ -5,7 +5,9 @@
 #include <stdexcept>
 
 // ============================================================================
+// ============================================================================
 //  Utilities
+// ============================================================================
 // ============================================================================
 void Matrix3x3::absolute()
 {
@@ -88,17 +90,15 @@ Matrix3x3 Matrix3x3::getIdentity() const
     I.setToIdentity();
     return I;
 }
-Matrix3x3 Matrix3x3::getNormalize() const
+Matrix3x3 Matrix3x3::getAbsolute() const
+{
+    return Matrix3x3(m[0].getAbsoluteVector(), m[1].getAbsoluteVector(), m[2].getAbsoluteVector());
+}
+Matrix3x3 Matrix3x3::getNormalized() const
 {
     Matrix3x3 normalizedM { Matrix3x3((*this)) };
     normalizedM.normalize();
     return normalizedM;
-}
-Matrix3x3 Matrix3x3::getInverse() const
-{
-    Matrix3x3 inverseM = Matrix3x3((*this));
-    inverseM.inverse();
-    return inverseM;
 }
 Matrix3x3 Matrix3x3::getTranspose() const
 {
@@ -106,13 +106,17 @@ Matrix3x3 Matrix3x3::getTranspose() const
     transposeM.transpose();
     return transposeM;
 }
-Matrix3x3 Matrix3x3::getAbsolute() const
+Matrix3x3 Matrix3x3::getInverse() const
 {
-    return Matrix3x3(m[0].getAbsoluteVector(), m[1].getAbsoluteVector(), m[2].getAbsoluteVector());
+    Matrix3x3 inverseM = Matrix3x3((*this));
+    inverseM.inverse();
+    return inverseM;
 }
 
 // ============================================================================
+// ============================================================================
 //  Setters
+// ============================================================================
 // ============================================================================
 void Matrix3x3::setRow(int index, const Vector3D& row) { m[index] = row; }
 void Matrix3x3::setColumn(int index, const Vector3D& column)
@@ -169,7 +173,9 @@ void Matrix3x3::setAllValues(const Matrix3x3& m)
 }
 
 // ============================================================================
+// ============================================================================
 //  Property Checks
+// ============================================================================
 // ============================================================================
 bool Matrix3x3::isIdentity() const
 {
@@ -245,7 +251,9 @@ bool Matrix3x3::isNormalized() const
     return true;
 }
 // ============================================================================
+// ============================================================================
 //  Matrix Operations
+// ============================================================================
 // ============================================================================
 Matrix3x3 Matrix3x3::matrixProduct(const Matrix3x3& matrix) const
 {
@@ -293,7 +301,9 @@ Vector3D vectorMatrixProduct(const Vector3D& vector, const Matrix3x3& matrix)
 }
 
 // ============================================================================
+// ============================================================================
 //  Comparison Operators
+// ============================================================================
 // ============================================================================
 bool Matrix3x3::operator==(const Matrix3x3& matrix) const
 {
@@ -346,7 +356,9 @@ bool Matrix3x3::approxEqual(const Matrix3x3& matrix, decimal tolerance) const
 }
 
 // ============================================================================
+// ============================================================================
 //  Element Access Operators
+// ============================================================================
 // ============================================================================
 decimal& Matrix3x3::at(int row, int column)
 {
@@ -372,15 +384,17 @@ Vector3D Matrix3x3::at(int row) const
         throw std::out_of_range("Matrix3x3 row index out of range");
     return m[row];
 }
-decimal& Matrix3x3::operator()(int row, int column) { return m[row][column]; }
-decimal Matrix3x3::operator()(int row, int column) const { return m[row][column]; }
+decimal&  Matrix3x3::operator()(int row, int column) { return m[row][column]; }
+decimal   Matrix3x3::operator()(int row, int column) const { return m[row][column]; }
 Vector3D& Matrix3x3::operator()(int row) { return m[row]; }
-Vector3D Matrix3x3::operator()(int row) const { return m[row]; }
+Vector3D  Matrix3x3::operator()(int row) const { return m[row]; }
 Vector3D& Matrix3x3::operator[](int row) { return m[row]; }
-Vector3D Matrix3x3::operator[](int row) const { return m[row]; }
+Vector3D  Matrix3x3::operator[](int row) const { return m[row]; }
 
 // ============================================================================
+// ============================================================================
 //  In-Place Arithmetic Operators
+// ============================================================================
 // ============================================================================
 Matrix3x3& Matrix3x3::operator-()
 {
@@ -476,7 +490,9 @@ Matrix3x3& Matrix3x3::operator/=(decimal scalar)
 }
 
 // ============================================================================
+// ============================================================================
 //  Free Arithmetic Operators
+// ============================================================================
 // ============================================================================
 // ===== Matrix3x3 op Matrix3x3 (element-wise) =====
 Matrix3x3 operator+(const Matrix3x3& A, const Matrix3x3& B)
@@ -496,41 +512,42 @@ Matrix3x3 operator/(const Matrix3x3& A, const Matrix3x3& B)
     return applyMatrix(A, B, [](const Vector3D& a, const Vector3D& b) { return a / b; });
 }
 
-// ===== Matrix3x3 op Vector3D (element-wise, vector applied to each row) =====
-Matrix3x3 operator+(const Matrix3x3& A, const Vector3D& B)
-{
-    return applyMatrix(A, B, [](const Vector3D& a, const Vector3D& b) { return a + b; });
-}
-Matrix3x3 operator-(const Matrix3x3& A, const Vector3D& B)
-{
-    return applyMatrix(A, B, [](const Vector3D& a, const Vector3D& b) { return a - b; });
-}
-Matrix3x3 operator*(const Matrix3x3& A, const Vector3D& B)
-{
-    return applyMatrix(A, B, [](const Vector3D& a, const Vector3D& b) { return a * b; });
-}
-Matrix3x3 operator/(const Matrix3x3& A, const Vector3D& B)
-{
-    return applyMatrix(A, B, [](const Vector3D& a, const Vector3D& b) { return a / b; });
-}
+//! Matrix3x3 Vector3D operations need to be redifiened if needed
+// // ===== Matrix3x3 op Vector3D (element-wise, vector applied to each row) =====
+// Matrix3x3 operator+(const Matrix3x3& A, const Vector3D& B)
+// {
+//     return applyMatrix(A, B, [](const Vector3D& a, const Vector3D& b) { return a + b; });
+// }
+// Matrix3x3 operator-(const Matrix3x3& A, const Vector3D& B)
+// {
+//     return applyMatrix(A, B, [](const Vector3D& a, const Vector3D& b) { return a - b; });
+// }
+// Matrix3x3 operator*(const Matrix3x3& A, const Vector3D& B)
+// {
+//     return applyMatrix(A, B, [](const Vector3D& a, const Vector3D& b) { return a * b; });
+// }
+// Matrix3x3 operator/(const Matrix3x3& A, const Vector3D& B)
+// {
+//     return applyMatrix(A, B, [](const Vector3D& a, const Vector3D& b) { return a / b; });
+// }
 
-// ===== Vector3D op Matrix3x3 (element-wise, vector applied to each row) =====
-Matrix3x3 operator+(const Vector3D& A, const Matrix3x3& B)
-{
-    return applyMatrix(B, A, [](const Vector3D& a, const Vector3D& b) { return b + a; });
-}
-Matrix3x3 operator-(const Vector3D& A, const Matrix3x3& B)
-{
-    return applyMatrix(B, A, [](const Vector3D& a, const Vector3D& b) { return b - a; });
-}
-Matrix3x3 operator*(const Vector3D& A, const Matrix3x3& B)
-{
-    return applyMatrix(B, A, [](const Vector3D& a, const Vector3D& b) { return b * a; });
-}
-Matrix3x3 operator/(const Vector3D& A, const Matrix3x3& B)
-{
-    return applyMatrix(B, A, [](const Vector3D& a, const Vector3D& b) { return b / a; });
-}
+// // ===== Vector3D op Matrix3x3 (element-wise, vector applied to each row) =====
+// Matrix3x3 operator+(const Vector3D& A, const Matrix3x3& B)
+// {
+//     return applyMatrix(B, A, [](const Vector3D& a, const Vector3D& b) { return b + a; });
+// }
+// Matrix3x3 operator-(const Vector3D& A, const Matrix3x3& B)
+// {
+//     return applyMatrix(B, A, [](const Vector3D& a, const Vector3D& b) { return b - a; });
+// }
+// Matrix3x3 operator*(const Vector3D& A, const Matrix3x3& B)
+// {
+//     return applyMatrix(B, A, [](const Vector3D& a, const Vector3D& b) { return b * a; });
+// }
+// Matrix3x3 operator/(const Vector3D& A, const Matrix3x3& B)
+// {
+//     return applyMatrix(B, A, [](const Vector3D& a, const Vector3D& b) { return b / a; });
+//}
 
 // ===== Matrix3x3 op decimal =====
 Matrix3x3 operator+(const Matrix3x3& A, decimal s)
@@ -572,7 +589,11 @@ Matrix3x3 operator/(decimal s, const Matrix3x3& A)
                        [s](const Vector3D& a, decimal) { return Vector3D(s / a[0], s / a[1], s / a[2]); });
 }
 
-// ===== Printing =====
+// ============================================================================
+// ============================================================================
+//  Printing =====
+// ============================================================================
+// ============================================================================
 std::ostream& operator<<(std::ostream& os, const Matrix3x3& m)
 {
     os << "Matrix3x3(" << m[0] << ", " << m[1] << ", " << m[2] << ")";

@@ -41,6 +41,16 @@ A modular 3D physics engine built in modern C++, designed to combine scientific 
 
     - Graphical reports and comparative analysis in the documentation.
 
+## How to run ?
+
+### CMake Parameters
+
+CMake takes multiple parameters to define different compilations :
+- `-DUSE_CLANG` : uses clang++ to compile. By default, CMake uses g++.
+- `-DUSE_DOUBLE_PRECISION` : uses double precision. By default, use simple float precision.
+- `-DBUILD_TESTS=ON` : compiles the unit testing repository. To run the test, you can use : `cd build && ctest -j$(nproc)`.
+- `-DCOVERAGE` : allows to perform coverage analysis. Two options are available : `make coverage` which will save the coverage report as HTML file at the following location : `build/coverage_report.html`; and `make coverage-console` which will show the report in the shell where the command is ran.
+
 ## Tech Stack
 
 - Language: C++23
@@ -49,7 +59,7 @@ A modular 3D physics engine built in modern C++, designed to combine scientific 
 
 - Math Library: 
 
-- Rendering: OpenGL
+- Rendering: 
 
 - Testing & CI: GoogleTest + GitHub Actions
 

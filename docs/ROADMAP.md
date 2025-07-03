@@ -15,7 +15,7 @@
 
 ## Phase 2: Setup & Math Foundations  
 
-- [ ] **Math Library :** Implement or integrate 3D math types: `vec3` for 3D vectors, matrices, and quaternion for rotation.  
+- [x] **Math Library :** Implement or integrate 3D math types: `vec3` for 3D vectors, matrices, and quaternion for rotation.  
   - [x] **Vector3D :** Implement basic vector operations (addition, subtraction, scalar multiplication, dot product, cross product).
   - [x] **Vector3D Tests :** Write unit tests to verify vector operations.
   - [x] **Matrix3x3 :** Implement matrix operations (multiplication, transpose, inverse).
@@ -24,198 +24,156 @@
     - [x] Verify that all quaternion fonctions are correctly implemented
     - [x] **Euler angle :** avoid code duplication, in particular with euler angle
   - [x] **Quaternion Tests :** Write unit tests to verify quaternion operations.
+- [ ] **Object Structs :**
+  - [ ] **Transform :** handle position and orientation of volumes
+  - [ ] **AABB :** Axis-Aligned Bounding Box = right block whose faces are parallel to the three axes of the reference frame
+  - [ ] **Bounding Sphere**
 - [ ] **Testing :** Develop Unit Testing
-  - [x] **Test Math :** Write tests or small applications to validate math operations -> In particular, rethink all the tests written during the process 
+  - [x] **Test Math**
+  - [ ] **Test Onjects**
+  - [ ] **Coverage :** Add converage computing option during compilation
   - [ ] **Test CI :** Integration of tests procedure in GitHub
-  - [x] **Output :** Improve unit testing outputs
-  - [ ] **Coverage :** Compute and improve the coverage (= Number of lines tested)
-- [ ] **Utility Types :** Define data structures like `Transform` and bounding volumes (AABB, sphere).  
 - [ ] **Documentation :** Document your math types and utilities.
 
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
 
-## Phase 3: Visualization & 3D Rendering
-
-- [ ] **Choose a Rendering Library :** SDL, OpenGL, Vulkan, or another 3D graphics API.
-- [ ] **Render Basic Shapes :** Render spheres, boxes, planes for physics bodies
-- [ ] **3D Camera Control :** Implement orbit/trackball or WASD-style camera
-- [ ] **Sync Physics & Render Loops :** Use fixed time steps with interpolation if needed
-- [ ] **Overlay Data :** Integrate ImGui (or other) for debugging (FPS, object states, toggles)
-- [ ] **Input Handling :** Add simple controls to spawn/move bodies for testing
-- [ ] **Create Test Scenes :** Towers, balls, pendulums — visual regression tests
-
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
-
-## Phase 4: Core Rigid-Body Dynamics  
-
-- [ ] **Physics Object Class :** Create a `Body` struct or class with position, velocity, force, and mass.  
-- [ ] **Physics World Loop :** Create a `PhysicsWorld` with a list of bodies and `Step(float dt)` method.  
-- [ ] **Apply Global Forces :** Apply forces like gravity each step.  
-- [ ] **Integrate Motion :** Use simple Euler or semi-implicit Euler integration.  
-- [ ] **Reset Forces :** Clear force accumulator each step.
-
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
-
-## Phase 5: Rotation & Angular Dynamics  
-
-- [ ] **Add Orientation :** Add quaternion or matrix rotation and inertia tensors.  
-- [ ] **Apply Torque :** Compute angular acceleration and update angular velocity.  
-- [ ] **Integrate Rotation :** Integrate orientation using quaternion derivative.  
-- [ ] **Reset Torques :** Clear torque accumulator after each update.
+## Phase 3: Rigib Body Dynamics
+- [ ] **Core Model :**
+  - [ ] **RigidBody :** mass, barycenter, inertia, torque, string, energy (kninetic and potential), hooke, damping
+  - [ ] **PhysicsWorld :** 
+    - [ ] **Time loop* 
+    - [ ] **External forces :** gravity, wind, ...
+- [ ] **Equation of motion**
+- [ ] **Rotation & Angular Dynamics** 
+  - [ ] **Add Orientation :** Add quaternion or matrix rotation and inertia tensors.  
+  - [ ] **Apply Torque :** Compute angular acceleration and update angular velocity.  
+- [ ] **Temporal Integration :** 
+  - [ ] **Semi-implicit Euler**
+  - [ ] **Verlet** ?
+- [ ] **Fundamental Test :** 
+  - [ ] **Free fall**
+  - [ ] **Projectile**
+  - [ ] **Pendulum**
+  - [ ] **Energy/momentum conservation**
+- [ ] **Configuration parameters :** yaml/json
+- [ ] **Performance Benchmark**
+- [ ] **Validation & Release :**
+  - [ ] **Standard testing :** reference scenes, physical validity, ...
+  - [ ] **Documentation :**
+    - [ ] *Doxygen & GitHub Pages*
+    - [ ] *Performance report*
+    - [ ] *Installation & Usage guides*
+    - [ ] *Github notes*
 
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
 
-## Phase 6: Collision Detection  
-
-- [ ] **Collider Classes :** Define collider types (Sphere, Plane, etc.) with tags.  
-- [ ] **Broad-Phase Culling :** Use bounding volumes or spatial partitioning to reduce pair tests.  
-- [ ] **Narrow-Phase Tests :** Implement `Sphere–Sphere`, `Sphere–Plane`, etc.  
-- [ ] **Collision Data :** Create `CollisionInfo` to store normal, penetration depth, etc.
-
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
-
-## Phase 7: Collision Response  
-
-- [ ] **Impulse Calculation :** Apply impulses based on relative velocity and restitution.  
-- [ ] **Angular Impulses :** Update angular velocity based on impulse and inertia.  
-- [ ] **Position Correction :** Correct small penetrations using push-back or split impulse.  
-- [ ] **Restitution & Friction :** Add coefficients for realistic collisions.  
-- [ ] **Verify Conservation :** Test simple interactions to validate behavior.
-
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
-
-## Phase 8: Constraints & Springs  
-
-- [ ] **Fixed & Hinge Joints :** Implement positional or rotational constraints between bodies.  
-- [ ] **Springs (Hooke's Law) :** Add force-based springs with damping.  
-- [ ] **Global Gravity :** Make gravity configurable.  
-- [ ] **Damping :** Add velocity damping for realism and stability.
-
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
-
-## Phase 9: Broad-Phase & Performance Optimization  
-
-- [ ] **Bounding Volume Hierarchy :** Use spatial trees (octree, BVH) for collision efficiency.  
-- [ ] **Profiling :** Add profiling to measure performance bottlenecks.  
-- [ ] **Parallelism :** Multithread independent operations safely.  
-- [ ] **Data Layout :** Use SoA or cache-optimized memory layouts.  
-- [ ] **Stress Testing :** Run benchmarks with varying object counts.
+## Phase 4: Collisions & Constraints
+ - [ ] **Collision Detection :**
+   - [ ] **Broad-Phase :** BVH (large N) | Uniform Grid (Small N) | Sweep-and-Prune (medium N) -> researches needed
+   - [ ] **Narrow Phase :**
+     - [ ] Sphere - Plan
+     - [ ] Sphere - Sphere
+     - [ ] AABB - AABB
+ - [ ] **Collision Response :**
+   - [ ] **Collider :** RigidBody reference, during broad phase. 
+   - [ ] **CollisionInfo :**  generating during narrow phase. Contact point, normal's contactn penetration...
+ - [ ] **Resolution :**
+   - [ ] **Impulsions :** restitution, friction
+   - [ ] **Position corrections**
+   - [ ] **Linear and angular speed corrections**
+ - [ ] **Constraints :**
+   - [ ] **Joints**
+   - [ ] **Energy conservation**
+   - [ ] **Pivot**
+ - [ ] **Tests, Valisation & CI :**
+   - [ ] **Bouncing balls ?**
+   - [ ] **Canon ball vs box ?**
+   - [ ] **Box tower ?**
+   - [ ] **Comparison with Chrono/ReactPhysics3D* ?*
+- [ ] **Validation & Release :**
+  - [ ] **Standard testing :** reference scenes, physical validity, ...
+  - [ ] **Documentation :**
+    - [ ] *Doxygen & GitHub Pages*
+    - [ ] *Performance report*
+    - [ ] *Installation & Usage guides*
+    - [ ] *Github notes*
 
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
 
-## Phase 10: GPU Acceleration & Benchmarking  
-
-- [ ] **GPU Prototyping :** Move physics steps to CUDA, OpenCL, or compute shaders.  
-- [ ] **Data Transfer :** Minimize and optimize CPU–GPU data flows.  
-- [ ] **Benchmark GPU vs CPU :** Compare performance across implementations.  
-- [ ] **Validate GPU Results :** Ensure accuracy is consistent with CPU version.  
-- [ ] **Tuning :** Optimize GPU threads, block sizes, and memory layout.
-
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
-
-## Phase 11: Testing, Documentation & Polishing  
-
-- [ ] **Unit Tests :** Create tests for math, collisions, forces, etc.  
-- [ ] **Integration Tests :** Create real-world scenarios (e.g. towers, ragdolls).  
-- [ ] **Documentation :** Comment your code and write README/API docs.  
-- [ ] **Performance Reports :** Record benchmarks and publish findings.  
-- [ ] **Polish & Release :** Clean code, tag release, and open-source if desired.
-
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
-
-## Phase 12: Basic Physics Engine
-
-- [ ] **Implement :** equations of motion for isolated rigid body
-- [ ] **Add :** gravity and external forces
-- [ ] **Basic :** time integrator (Explicit Euler or Verlet)
-- [ ] **Test cases :** free fall, projectile, simple pendulum
-- [ ] **Ensure :** numerical stability and conservation of physical quantities
-- [ ] **Automated :** tests to validate physical behavior
+## Phase 5: 3D Visualization
+ - [ ] **Choice of Graphics Layer :**
+   - [ ] *GLFW + OpenGL*
+   - [ ] *Vulkan*
+   - [ ] *?*
+ - [ ] **Rendering :**
+   - [ ] **Basic Geometry :** spheres, boxes, planes...
+   - [ ] **Basic Shaders**
+   - [ ] **Physics-Rendering Synchronisation :** synchronisation between simulation FPS and rendering FPS
+ - [ ] **Camera Control :** WASD/Mouse
+ - [ ] **Debuf Tools :**
+   - [ ] **Overlay Data :** FPS, objects state, ...
+   - [ ] **Runtime Parameters**
+   - [ ] **Test Scenes :** Towers, balls, pendulums — visual regression tests
+- [ ] **Validation & Release :**
+  - [ ] **Standard testing :** reference scenes, physical validity, ...
+  - [ ] **Documentation :**
+    - [ ] *Doxygen & GitHub Pages*
+    - [ ] *Performance report*
+    - [ ] *Installation & Usage guides*
+    - [ ] *Github notes*
 
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
 
-## Phase 13: 3D Rendering Integration
-
-- [ ] **Set up :** OpenGL window (GLFW/SDL)
-- [ ] **Develop :** simple vertex + fragment shaders
-- [ ] **3D camera :** system (WASD + mouse)
-- [ ] **Synchronize :** physics loop and render loop
-- [ ] **Display :** physical parameters via ImGui
-- [ ] **Test scenes :** stacking cubes, miniature solar system
-- [ ] **Compilation :** and execution documentation
-
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
-
-## Phase 14: Collisions and Constraints
-
-- [ ] **Implement :** broad-phase collision detection (grid, spatial trees)
-- [ ] **Narrow-phase :** collision tests (sphere-sphere, AABB, plane)
-- [ ] **Impulse-based :** collision resolution (restitution, friction)
-- [ ] **Rigid constraints :** fixed joints, pivots, springs
-- [ ] **Validate :** physics with stacking and joints
-- [ ] **Documentation :** and tests for collisions and constraints
+## Phase 6: First Optimisation (CPU & Memory)
+ - [ ] **CPU Optimisation**
+   - [ ] **Profiler :** Maqao
+   - [ ] **Vectorisation "home-made"**
+   - [ ] **External tools :** TBB, SYCL, OpenMP, Eve, ...
+ - [ ] **Memory Optimisation :**
+   - [ ] **Profiler :** Malt    
+   - [ ] **Structure of Arrays**
+   - [ ] **Optimisation :** caches, data splitting
+ - [ ] **Benchmarks :**
+   - [ ] **Scalability :** with the numbers of objects N
+   - [ ] **Comparison :** naive, vectorizised, paralle, ...
+   - [ ] **External Comparison :** **Comparison with Chrono/ReactPhysics3D* ?*
+- [ ] **Validation & Release :**
+  - [ ] **Standard testing :** reference scenes, physical validity, ...
+  - [ ] **Documentation :**
+    - [ ] *Doxygen & GitHub Pages*
+    - [ ] *Performance report*
+    - [ ] *Installation & Usage guides*
+    - [ ] *Github notes*
 
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
 
-## Phase 15: Optimization Modules (CPU/GPU/MPI)
-
-- [ ] **Multi-core :** optimization: std::thread, OpenMP
-- [ ] **Intel TBB :** experimentation
-- [ ] **Dedicated :** Git branches for each optimization strategy
-- [ ] **MPI :** distributed computing implementation (halo exchange)
-- [ ] **GPU :** acceleration (CUDA/OpenCL) for broad-phase
-- [ ] **Profiling :** tuning, reliability testing
-
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
-
-## Phase 16: Test Benches and Benchmarks
-
-- [ ] **Design :** representative test scenarios (falls, stacking, constraints)
-- [ ] **Automated :** benchmark framework
-- [ ] **Performance :** data collection and graphs
-- [ ] **Analysis :** and results publication
-
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
-
-## Phase 17: Documentation and Publication
-
-- [ ] **Complete :** README (installation, usage, contribution)
-- [ ] **API :** documentation (Doxygen)
-- [ ] **Usage :** examples and tutorials
-- [ ] **GitHub :** releases with version notes
-- [ ] **CI :** with GitHub Actions (build + tests)
-- [ ] **Issue/pull :** request templates, contribution guide
-
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
+## Phase 7: Second Optimisation (GPU)   
+ - [ ] **GPU Implementation** 
+   - [ ] **Software choice :** CUDA, SYCL, OpenCL,  ...
+   - [ ] **GPU Implementation**
+ - [ ] **Optimisation :**
+   - [ ] **Profiling :** NSight, ...
+   - [ ] **Data Transfer**
+   - [ ] **Tuning :** threads, block sizes, memory, ...
+ - [ ] **Hybrid CPU - GPU**
+ - [ ] **Benchmarks :**
+   - [ ] **CPU - GPU consistency**
+   - [ ] **CPU vs GPU**
+   - [ ] **High testing**
+- [ ] **Validation & Release :**
+  - [ ] **Standard testing :** reference scenes, physical validity, ...
+  - [ ] **Documentation :**
+    - [ ] *Doxygen & GitHub Pages*
+    - [ ] *Performance report*
+    - [ ] *Installation & Usage guides*
+    - [ ] *Github notes*

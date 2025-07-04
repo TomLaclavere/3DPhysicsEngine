@@ -57,8 +57,8 @@ target_include_directories(3DPhysicsEngine
 # =============================================
 # Precision Definition
 # =============================================
-if(USE_DOUBLE_PRECISION)
-    target_compile_definitions(3DPhysicsEngine PUBLIC IS_USE_DOUBLE_PRECISION)
+if(DOUBLE_PRECISION)
+    target_compile_definitions(3DPhysicsEngine PUBLIC IS_DOUBLE_PRECISION)
 endif()
 
 # =============================================
@@ -73,7 +73,7 @@ endif()
 # =============================================
 # Testing Configuration
 # =============================================
-if(BUILD_TESTS)
+if(TESTS)
     enable_testing()
 
     include(FetchContent)
@@ -90,7 +90,7 @@ endif()
 # =============================================
 # Coverage Analysis
 # =============================================
-if(COVERAGE AND BUILD_TESTS)
+if(COVERAGE AND TESTS)
     if(NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         message(WARNING "Code coverage is only supported for GCC and Clang compilers")
         return()
@@ -117,10 +117,13 @@ if(COVERAGE AND BUILD_TESTS)
 
     add_custom_target(coverage
         COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/coverage_report
         COMMAND ${GCOVR_PATH}
             ${GCOVR_COMMON_OPTS}
             --html
-            -o ${CMAKE_BINARY_DIR}/coverage_report.html
+            --html-details
+            --html-theme github.dark-green
+            -o ${CMAKE_BINARY_DIR}/coverage_report/coverage_report.html
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Running tests and generating HTML coverage report..."
         DEPENDS 3DPhysicsEngine mathematics_test

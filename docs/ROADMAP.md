@@ -110,6 +110,7 @@
  - [ ] **Choice of Graphics Layer :**
    - [ ] *GLFW + OpenGL*
    - [ ] *Vulkan*
+   - [ ] *VTK / ParaView*
    - [ ] *?*
  - [ ] **Rendering :**
    - [ ] **Basic Geometry :** spheres, boxes, planes...
@@ -134,9 +135,9 @@
 
 ## Phase 6: First Optimisation (CPU & Memory)
  - [ ] **CPU Optimisation**
-   - [ ] **Profiler :** Maqao
+   - [ ] **Profiler :** Maqao, IntelAdvisor, VTune
    - [ ] **Vectorisation "home-made"**
-   - [ ] **External tools :** TBB, SYCL, OpenMP, Eve, ...
+   - [ ] **External tools :** MKL, TBB, SYCL, OpenMP, Eve, ...
  - [ ] **Memory Optimisation :**
    - [ ] **Profiler :** Malt    
    - [ ] **Structure of Arrays**
@@ -177,3 +178,9 @@
     - [ ] *Performance report*
     - [ ] *Installation & Usage guides*
     - [ ] *GitHub notes*
+
+-----------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+
+## Phase 8: Portage Fortran ?

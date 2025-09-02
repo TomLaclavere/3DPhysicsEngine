@@ -135,7 +135,7 @@
 
 ## Phase 6: First Optimisation (CPU & Memory)
  - [ ] **CPU Optimisation**
-   - [ ] **Profiler :** Maqao, IntelAdvisor, VTune
+   - [ ] **Profiler :** Advisor, Maqao, IntelAdvisor, VTune
    - [ ] **Vectorisation "home-made"**
    - [ ] **External tools :** MKL, TBB, SYCL, OpenMP, Eve, ...
  - [ ] **Memory Optimisation :**
@@ -166,7 +166,7 @@
    - [ ] **Profiling :** NSight, ...
    - [ ] **Data Transfer**
    - [ ] **Tuning :** threads, block sizes, memory, ...
- - [ ] **Hybrid CPU - GPU**
+ - [ ] **Hybrid CPU - GPU :** *Star PU*
  - [ ] **Benchmarks :**
    - [ ] **CPU - GPU consistency**
    - [ ] **CPU vs GPU**

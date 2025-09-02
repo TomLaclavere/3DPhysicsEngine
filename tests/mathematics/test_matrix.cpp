@@ -17,7 +17,7 @@ TEST(Matrix3x3_Test, Constructors)
     Matrix3x3 m;
     for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
-            EXPECT_DECIMAL_EQ(m[i][j], 0_d);
+            EXPECT_DECIMAL_EQ(m(i, j), 0_d);
 
     // One Value
 
@@ -25,7 +25,7 @@ TEST(Matrix3x3_Test, Constructors)
     for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
 
-            EXPECT_DECIMAL_EQ(m[i][j], 1_d);
+            EXPECT_DECIMAL_EQ(m(i, j), 1_d);
 
     // Nine Values
 
@@ -33,22 +33,22 @@ TEST(Matrix3x3_Test, Constructors)
     for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
 
-            EXPECT_DECIMAL_EQ(m[i][j], decimal(i * 3 + j + 1));
+            EXPECT_DECIMAL_EQ(m(i, j), decimal(i * 3 + j + 1));
 
     // One Vector
 
     m.setAllValues(Vector3D(1_d, 2_d, 0_d));
     for (int i = 0; i < 3; ++i)
 
-        EXPECT_EQ(m(i), Vector3D(1_d, 2_d, 0_d));
+        EXPECT_EQ(m.getColumn(i), Vector3D(1_d, 2_d, 0_d));
 
     // Three Vectors
 
     Vector3D r1(1_d, 2_d, 3_d), r2(4_d, 5_d, 6_d), r3(7_d, 8_d, 9_d);
     m.setAllValues(r1, r2, r3);
-    EXPECT_EQ(m.getRow(1), r2);
-    EXPECT_EQ(m.getRow(2), r3);
-    EXPECT_EQ(m.getRow(0), r1);
+    EXPECT_EQ(m.getColumn(1), r2);
+    EXPECT_EQ(m.getColumn(2), r3);
+    EXPECT_EQ(m.getColumn(0), r1);
 
     // Copy constructor
     Matrix3x3 m_alt(m);
@@ -64,11 +64,6 @@ TEST(Matrix3x3_Test, Utilities)
 {
     Matrix3x3 m(-1, 2, -3, 4, -5, 6, -7, 8, -9);
 
-    // Min & Max
-
-    EXPECT_DECIMAL_EQ(m.getMinValue(), -9_d);
-    EXPECT_DECIMAL_EQ(m.getMaxValue(), 8_d);
-
     // Determinant & Trace
     EXPECT_DECIMAL_EQ(m.getDeterminant(), 0_d);
 
@@ -81,11 +76,11 @@ TEST(Matrix3x3_Test, Utilities)
             if (i == j)
             {
 
-                EXPECT_DECIMAL_EQ(idM[i][j], 1_d);
+                EXPECT_DECIMAL_EQ(idM(i, j), 1_d);
             }
             else
             {
-                EXPECT_DECIMAL_EQ(idM[i][j], 0_d);
+                EXPECT_DECIMAL_EQ(idM(i, j), 0_d);
             }
 
     // Absolute
@@ -93,7 +88,7 @@ TEST(Matrix3x3_Test, Utilities)
     for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
 
-            EXPECT_DECIMAL_EQ(absM[i][j], decimal(i * 3 + j + 1));
+            EXPECT_DECIMAL_EQ(absM(i, j), decimal(i * 3 + j + 1));
     m.absolute();
     EXPECT_EQ(absM, m);
 
@@ -102,7 +97,7 @@ TEST(Matrix3x3_Test, Utilities)
     for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
 
-            EXPECT_DECIMAL_EQ(transM[i][j], decimal(j * 3 + i + 1));
+            EXPECT_DECIMAL_EQ(transM(i, j), decimal(j * 3 + i + 1));
     m.transpose();
     EXPECT_EQ(transM, m);
 
@@ -124,11 +119,11 @@ TEST(Matrix3x3_Test, Utilities)
             if (i == j)
             {
 
-                EXPECT_DECIMAL_EQ(identity[i][j], 1_d);
+                EXPECT_DECIMAL_EQ(identity(i, j), 1_d);
             }
             else
             {
-                EXPECT_DECIMAL_EQ(identity[i][j], 0_d);
+                EXPECT_DECIMAL_EQ(identity(i, j), 0_d);
             }
     invM.inverse();
     EXPECT_EQ(invM, inv);
@@ -162,7 +157,7 @@ TEST(Matrix3x3_Test, Setters)
     m.setAllValues(-3.14_d);
     for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
-            EXPECT_DECIMAL_EQ(m[i][j], -3.14_d);
+            EXPECT_DECIMAL_EQ(m(i, j), -3.14_d);
 }
 
 // ——————————————————————————————————————————————————————————————————————————
@@ -333,7 +328,7 @@ TEST(Matrix3x3_Test, ElementAcess)
     // at(row) const and non-const
     Vector3D row = m.at(2);
     EXPECT_EQ(row, Vector3D(7_d, 8_d, 9_d));
-    m.at(2) = Vector3D(10_d, 11_d, 12_d);
+    m.setRow(2, Vector3D(10_d, 11_d, 12_d));
     EXPECT_EQ(m.getRow(2), Vector3D(10_d, 11_d, 12_d));
 
     Vector3D row_cm = cm.at(1);
@@ -410,6 +405,9 @@ TEST(Matrix3x3_Test, StreamOutput)
 {
     Matrix3x3         m(1, 2, 3, 4, 5, 6, 7, 8, 9);
     std::stringstream ss;
-    ss << m[0] << " " << m[1] << " " << m[2];
+    for (int i = 0; i < 3; ++i)
+    {
+        ss << m.getRow(i) << ' ';
+    }
     EXPECT_EQ(ss.str(), "(1,2,3) (4,5,6) (7,8,9)");
 }

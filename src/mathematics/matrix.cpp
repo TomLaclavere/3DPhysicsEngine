@@ -4,26 +4,28 @@
 #include <ostream>
 #include <stdexcept>
 
-// ============================================================================
-// ============================================================================
-//  Utilities
-// ============================================================================
-// ============================================================================
-void Matrix3x3::absolute()
+ATTENTION : BESOIN DE DEFINIR PROPREMENT SI LES VECTEURS DEFINISSENT LES COLONNES OU LES LIGNES DES
+                MATRICES !!UTILISER LE
+                MAPPING(x * 3 + y) !!!
+
+            // ============================================================================
+            // ============================================================================
+            //  Utilities
+            // ============================================================================
+            // ============================================================================
+            void Matrix3x3::absolute()
 {
-    for (auto& row : m)
+    for (int i = 0; i < 9; ++i)
     {
-        row[0] = std::abs(row[0]);
-        row[1] = std::abs(row[1]);
-        row[2] = std::abs(row[2]);
+        m[i] = std::abs(m[i]);
     }
 }
 void Matrix3x3::normalize()
 {
     // Copy rows
-    Vector3D r0 = m[0];
-    Vector3D r1 = m[1];
-    Vector3D r2 = m[2];
+    Vector3D r0(m[0], m[1], m[2]);
+    Vector3D r1(m[3], m[4], m[5]);
+    Vector3D r2(m[6], m[7], m[8]);
 
     // Gram-Schmidt process (rows)
     // 1. Normalize first row
@@ -38,15 +40,15 @@ void Matrix3x3::normalize()
     r2.normalize();
 
     // Modify matrix rows
-    m[0] = r0;
-    m[1] = r1;
-    m[2] = r2;
+    (*this).setRow(0, r0);
+    (*this).setRow(1, r1);
+    (*this).setRow(2, r2);
 }
 void Matrix3x3::transpose()
 {
-    std::swap(m[0][1], m[1][0]);
-    std::swap(m[0][2], m[2][0]);
-    std::swap(m[1][2], m[2][1]);
+    std::swap((*this)(0, 1), (*this)(1, 0));
+    std::swap((*this)(0, 2), (*this)(2, 0));
+    std::swap((*this)(1, 2), (*this)(2, 1));
 }
 void Matrix3x3::inverse()
 {
@@ -56,34 +58,27 @@ void Matrix3x3::inverse()
     decimal invDet = decimal(1) / det;
 
     Matrix3x3 inv;
-    inv(0, 0) = (m[1][1] * m[2][2] - m[1][2] * m[2][1]) * invDet;
-    inv(0, 1) = (m[0][2] * m[2][1] - m[0][1] * m[2][2]) * invDet;
-    inv(0, 2) = (m[0][1] * m[1][2] - m[0][2] * m[1][1]) * invDet;
+    inv(0, 0) = ((*this)(1, 1) * (*this)(2, 2) - (*this)(1, 2) * (*this)(2, 1)) * invDet;
+    inv(0, 1) = ((*this)(0, 2) * (*this)(2, 1) - (*this)(0, 1) * (*this)(2, 2)) * invDet;
+    inv(0, 2) = ((*this)(0, 1) * (*this)(1, 2) - (*this)(0, 2) * (*this)(1, 1)) * invDet;
 
-    inv(1, 0) = (m[1][2] * m[2][0] - m[1][0] * m[2][2]) * invDet;
-    inv(1, 1) = (m[0][0] * m[2][2] - m[0][2] * m[2][0]) * invDet;
-    inv(1, 2) = (m[0][2] * m[1][0] - m[0][0] * m[1][2]) * invDet;
+    inv(1, 0) = ((*this)(1, 2) * (*this)(2, 0) - (*this)(1, 0) * (*this)(2, 2)) * invDet;
+    inv(1, 1) = ((*this)(0, 0) * (*this)(2, 2) - (*this)(0, 2) * (*this)(2, 0)) * invDet;
+    inv(1, 2) = ((*this)(0, 2) * (*this)(1, 0) - (*this)(0, 0) * (*this)(1, 2)) * invDet;
 
-    inv(2, 0) = (m[1][0] * m[2][1] - m[1][1] * m[2][0]) * invDet;
-    inv(2, 1) = (m[0][1] * m[2][0] - m[0][0] * m[2][1]) * invDet;
-    inv(2, 2) = (m[0][0] * m[1][1] - m[0][1] * m[1][0]) * invDet;
+    inv(2, 0) = ((*this)(1, 0) * (*this)(2, 1) - (*this)(1, 1) * (*this)(2, 0)) * invDet;
+    inv(2, 1) = ((*this)(0, 1) * (*this)(2, 0) - (*this)(0, 0) * (*this)(2, 1)) * invDet;
+    inv(2, 2) = ((*this)(0, 0) * (*this)(1, 1) - (*this)(0, 1) * (*this)(1, 0)) * invDet;
 
     *this = inv;
 }
-decimal Matrix3x3::getMinValue() const
-{
-    return std::min({ m[0].getMinValue(), m[1].getMinValue(), m[2].getMinValue() });
-}
-decimal Matrix3x3::getMaxValue() const
-{
-    return std::max({ m[0].getMaxValue(), m[1].getMaxValue(), m[2].getMaxValue() });
-}
 decimal Matrix3x3::getDeterminant() const
 {
-    return m[0][0] * m[1][1] * m[2][2] + m[0][1] * m[1][2] * m[2][0] + m[0][2] * m[1][0] * m[2][1] -
-           m[0][2] * m[1][1] * m[2][0] - m[0][1] * m[1][0] * m[2][2] - m[0][0] * m[1][2] * m[2][1];
+    return (*this)(0, 0) * (*this)(1, 1) * (*this)(2, 2) + (*this)(0, 1) * (*this)(1, 2) * (*this)(2, 0) +
+           (*this)(0, 2) * (*this)(1, 0) * (*this)(2, 1) - (*this)(0, 2) * (*this)(1, 1) * (*this)(2, 0) -
+           (*this)(0, 1) * (*this)(1, 0) * (*this)(2, 2) - (*this)(0, 0) * (*this)(1, 2) * (*this)(2, 1);
 }
-decimal   Matrix3x3::getTrace() const { return m[0][0] + m[1][1] + m[2][2]; }
+decimal   Matrix3x3::getTrace() const { return (*this)(0, 0) + (*this)(1, 1) + (*this)(2, 2); }
 Matrix3x3 Matrix3x3::getIdentity() const
 {
     Matrix3x3 I = { Matrix3x3(*this) };
@@ -92,7 +87,9 @@ Matrix3x3 Matrix3x3::getIdentity() const
 }
 Matrix3x3 Matrix3x3::getAbsolute() const
 {
-    return Matrix3x3(m[0].getAbsoluteVector(), m[1].getAbsoluteVector(), m[2].getAbsoluteVector());
+    Matrix3x3 normalizedM = Matrix3x3((*this));
+    normalizedM.absolute();
+    return normalizedM;
 }
 Matrix3x3 Matrix3x3::getNormalized() const
 {
@@ -118,34 +115,42 @@ Matrix3x3 Matrix3x3::getInverse() const
 //  Setters
 // ============================================================================
 // ============================================================================
-void Matrix3x3::setRow(int index, const Vector3D& row) { m[index] = row; }
+void Matrix3x3::setRow(int index, const Vector3D& row)
+{
+    if (index < 0 || index >= 3)
+        throw std::out_of_range("Matrix3x3 row index out of range");
+    (*this)(index, 0) = row[0];
+    (*this)(index, 1) = row[1];
+    (*this)(index, 2) = row[2];
+}
 void Matrix3x3::setColumn(int index, const Vector3D& column)
 {
-    for (int i = 0; i < 3; ++i)
-        m[i][index] = column[i];
+    if (index < 0 || index >= 3)
+        throw std::out_of_range("Matrix3x3 column index out of range");
+    (*this)(0, index) = column[0];
+    (*this)(1, index) = column[1];
+    (*this)(2, index) = column[2];
 }
 void Matrix3x3::setDiagonal(const Vector3D& diagonal)
 {
     for (int i = 0; i < 3; ++i)
-        m[i][i] = diagonal[i];
+        (*this)(i, i) = diagonal[i];
 }
 void Matrix3x3::setToIdentity()
 {
     for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
-            m[i][j] = (i == j) ? 1 : 0;
+            (*this)(i, j) = (i == j) ? 1 : 0;
 }
 void Matrix3x3::setToZero()
 {
-    for (int i = 0; i < 3; ++i)
-        for (int j = 0; j < 3; ++j)
-            m[i][j] = 0;
+    for (int i = 0; i < 9; ++i)
+        (*this)(i) = 0;
 }
 void Matrix3x3::setAllValues(decimal value)
 {
-    for (int i = 0; i < 3; ++i)
-        for (int j = 0; j < 3; ++j)
-            m[i][j] = value;
+    for (int i = 0; i < 9; ++i)
+        (*this)(i) = value;
 }
 void Matrix3x3::setAllValues(const Vector3D& v1, const Vector3D& v2, const Vector3D& v3)
 {
@@ -156,15 +161,15 @@ void Matrix3x3::setAllValues(const Vector3D& v1, const Vector3D& v2, const Vecto
 void Matrix3x3::setAllValues(decimal m11, decimal m12, decimal m13, decimal m21, decimal m22, decimal m23,
                              decimal m31, decimal m32, decimal m33)
 {
-    m[0][0] = m11;
-    m[0][1] = m12;
-    m[0][2] = m13;
-    m[1][0] = m21;
-    m[1][1] = m22;
-    m[1][2] = m23;
-    m[2][0] = m31;
-    m[2][1] = m32;
-    m[2][2] = m33;
+    (*this)(0) = m11;
+    (*this)(1) = m12;
+    (*this)(2) = m13;
+    (*this)(3) = m21;
+    (*this)(4) = m22;
+    (*this)(5) = m23;
+    (*this)(6) = m31;
+    (*this)(7) = m32;
+    (*this)(8) = m33;
 }
 void Matrix3x3::setAllValues(const Matrix3x3& m)
 {
@@ -183,27 +188,27 @@ bool Matrix3x3::isIdentity() const
         for (int j = 0; j < 3; ++j)
             if (i == j)
             {
-                if (!commonMaths::approxEqual(m[i][j], decimal(1)))
+                if (!commonMaths::approxEqual((*this)(i, j), decimal(1)))
                     return false;
             }
             else
             {
-                if (!commonMaths::approxEqual(m[i][j], decimal(0)))
+                if (!commonMaths::approxEqual((*this)(i, j), decimal(0)))
                     return false;
             }
     return true;
 }
 bool Matrix3x3::isZero() const
 {
-    for (int i = 0; i < 3; ++i)
-        if (!m[i].isZero())
+    for (int i = 0; i < 9; ++i)
+        if (!(*this)(i) == 0)
             return false;
     return true;
 }
 bool Matrix3x3::isFinite() const
 {
-    for (int i = 0; i < 3; ++i)
-        if (!m[i].isFinite())
+    for (int i = 0; i < 9; ++i)
+        if (!std::isfinite((*this)(i)))
             return false;
     return true;
 }
@@ -211,7 +216,7 @@ bool Matrix3x3::isDiagonal() const
 {
     for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
-            if (i != j && !commonMaths::approxEqual(m[i][j], decimal(0)))
+            if (i != j && !commonMaths::approxEqual((*this)(i, j), decimal(0)))
                 return false;
     return true;
 }
@@ -219,7 +224,7 @@ bool Matrix3x3::isSymmetric() const
 {
     for (int i = 1; i < 3; ++i)
         for (int j = 0; j < i; ++j)
-            if (!commonMaths::approxEqual(m[i][j], m[j][i]))
+            if (!commonMaths::approxEqual((*this)(i, j), (*this)(j, i)))
                 return false;
     return true;
 }
@@ -260,14 +265,15 @@ Matrix3x3 Matrix3x3::matrixProduct(const Matrix3x3& matrix) const
     Matrix3x3 result;
     for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
-            result.m[i][j] = m[i].dotProduct(matrix.getColumn(j));
+            result(i, j) =
+                (*this)(i, 0) * matrix(0, j) + (*this)(i, 1) * matrix(1, j) + (*this)(i, 2) * matrix(2, j);
     return result;
 }
 Vector3D Matrix3x3::matrixVectorProduct(const Vector3D& vector) const
 {
     Vector3D result;
     for (int i = 0; i < 3; ++i)
-        result[i] = m[i].dotProduct(vector);
+        result[i] = (*this).getRow(i).dotProduct(vector);
     return result;
 }
 Vector3D Matrix3x3::vectorMatrixProduct(const Vector3D& vector) const
@@ -282,14 +288,14 @@ Matrix3x3 matrixProduct(const Matrix3x3& matrix1, const Matrix3x3& matrix2)
     Matrix3x3 result;
     for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
-            result[i][j] = matrix1[i].dotProduct(matrix2.getColumn(j));
+            result(i, j) = matrix1.getRow(i).dotProduct(matrix2.getColumn(j));
     return result;
 }
 Vector3D matrixVectorProduct(const Matrix3x3& matrix, const Vector3D& vector)
 {
     Vector3D result;
     for (int i = 0; i < 3; ++i)
-        result[i] = matrix[i].dotProduct(vector);
+        result[i] = matrix.getRow(i).dotProduct(vector);
     return result;
 }
 Vector3D vectorMatrixProduct(const Vector3D& vector, const Matrix3x3& matrix)
@@ -349,47 +355,11 @@ bool Matrix3x3::operator>=(const Matrix3x3& matrix) const
 }
 bool Matrix3x3::approxEqual(const Matrix3x3& matrix, decimal tolerance) const
 {
-    for (int i = 0; i < 3; ++i)
-        if (!m[i].approxEqual(matrix.m[i], tolerance))
+    for (int i = 0; i < 9; ++i)
+        if (!commonMaths::approxEqual(m[i], matrix[i], tolerance))
             return false;
     return true;
 }
-
-// ============================================================================
-// ============================================================================
-//  Element Access Operators
-// ============================================================================
-// ============================================================================
-decimal& Matrix3x3::at(int row, int column)
-{
-    if (row < 0 || row >= 3)
-        throw std::out_of_range("Matrix3x3 row index out of range");
-    return m[row](column);
-}
-decimal Matrix3x3::at(int row, int column) const
-{
-    if (row < 0 || row >= 3)
-        throw std::out_of_range("Matrix3x3 row index out of range");
-    return m[row](column);
-}
-Vector3D& Matrix3x3::at(int row)
-{
-    if (row < 0 || row >= 3)
-        throw std::out_of_range("Matrix3x3 row index out of range");
-    return m[row];
-}
-Vector3D Matrix3x3::at(int row) const
-{
-    if (row < 0 || row >= 3)
-        throw std::out_of_range("Matrix3x3 row index out of range");
-    return m[row];
-}
-decimal&  Matrix3x3::operator()(int row, int column) { return m[row][column]; }
-decimal   Matrix3x3::operator()(int row, int column) const { return m[row][column]; }
-Vector3D& Matrix3x3::operator()(int row) { return m[row]; }
-Vector3D  Matrix3x3::operator()(int row) const { return m[row]; }
-Vector3D& Matrix3x3::operator[](int row) { return m[row]; }
-Vector3D  Matrix3x3::operator[](int row) const { return m[row]; }
 
 // ============================================================================
 // ============================================================================
@@ -398,94 +368,59 @@ Vector3D  Matrix3x3::operator[](int row) const { return m[row]; }
 // ============================================================================
 Matrix3x3& Matrix3x3::operator-()
 {
-    for (auto& row : m)
-        row = -row;
+    for (int i = 0; i < 9; ++i)
+        m[i] = -m[i];
     return *this;
 }
-Matrix3x3& Matrix3x3::operator+=(const Matrix3x3& matrix)
+Matrix3x3& Matrix3x3::operator+=(const Matrix3x3& other)
 {
-    m[0] += matrix[0];
-    m[1] += matrix[1];
-    m[2] += matrix[2];
+    for (int i = 0; i < 9; ++i)
+        m[i] += other[i];
     return *this;
 }
-Matrix3x3& Matrix3x3::operator-=(const Matrix3x3& matrix)
+Matrix3x3& Matrix3x3::operator-=(const Matrix3x3& other)
 {
-    m[0] -= matrix[0];
-    m[1] -= matrix[1];
-    m[2] -= matrix[2];
+    for (int i = 0; i < 9; ++i)
+        m[i] -= other[i];
     return *this;
 }
-Matrix3x3& Matrix3x3::operator*=(const Matrix3x3& matrix)
+Matrix3x3& Matrix3x3::operator*=(const Matrix3x3& other)
 {
-    m[0] *= matrix[0];
-    m[1] *= matrix[1];
-    m[2] *= matrix[2];
+    for (int i = 0; i < 9; ++i)
+        m[i] *= other[i];
     return *this;
 }
-Matrix3x3& Matrix3x3::operator/=(const Matrix3x3& matrix)
+Matrix3x3& Matrix3x3::operator/=(const Matrix3x3& other)
 {
-    m[0] /= matrix[0];
-    m[1] /= matrix[1];
-    m[2] /= matrix[2];
-    return *this;
-}
-Matrix3x3& Matrix3x3::operator+=(const Vector3D& vector)
-{
-    m[0] += vector;
-    m[1] += vector;
-    m[2] += vector;
-    return *this;
-}
-Matrix3x3& Matrix3x3::operator-=(const Vector3D& vector)
-{
-    m[0] -= vector;
-    m[1] -= vector;
-    m[2] -= vector;
-    return *this;
-}
-Matrix3x3& Matrix3x3::operator*=(const Vector3D& vector)
-{
-    m[0] *= vector;
-    m[1] *= vector;
-    m[2] *= vector;
-    return *this;
-}
-Matrix3x3& Matrix3x3::operator/=(const Vector3D& vector)
-{
-    m[0] /= vector;
-    m[1] /= vector;
-    m[2] /= vector;
+    for (int i = 0; i < 9; ++i)
+        m[i] /= other[i];
     return *this;
 }
 Matrix3x3& Matrix3x3::operator+=(decimal scalar)
 {
-    m[0] += scalar;
-    m[1] += scalar;
-    m[2] += scalar;
+    for (int i = 0; i < 9; ++i)
+        m[i] += scalar;
     return *this;
 }
 Matrix3x3& Matrix3x3::operator-=(decimal scalar)
 {
-    m[0] -= scalar;
-    m[1] -= scalar;
-    m[2] -= scalar;
+    for (int i = 0; i < 9; ++i)
+        m[i] -= scalar;
     return *this;
 }
 Matrix3x3& Matrix3x3::operator*=(decimal scalar)
 {
-    m[0] *= scalar;
-    m[1] *= scalar;
-    m[2] *= scalar;
+    for (int i = 0; i < 9; ++i)
+        m[i] *= scalar;
     return *this;
 }
 Matrix3x3& Matrix3x3::operator/=(decimal scalar)
 {
     if (scalar == 0)
         throw std::invalid_argument("Division by zero");
-    m[0] /= scalar;
-    m[1] /= scalar;
-    m[2] /= scalar;
+    decimal inv = 1 / scalar;
+    for (int i = 0; i < 9; ++i)
+        m[i] *= inv;
     return *this;
 }
 
@@ -497,19 +432,23 @@ Matrix3x3& Matrix3x3::operator/=(decimal scalar)
 // ===== Matrix3x3 op Matrix3x3 (element-wise) =====
 Matrix3x3 operator+(const Matrix3x3& A, const Matrix3x3& B)
 {
-    return applyMatrix(A, B, [](const Vector3D& a, const Vector3D& b) { return a + b; });
+    Matrix3x3 m(A);
+    return m += B;
 }
 Matrix3x3 operator-(const Matrix3x3& A, const Matrix3x3& B)
 {
-    return applyMatrix(A, B, [](const Vector3D& a, const Vector3D& b) { return a - b; });
+    Matrix3x3 m(A);
+    return m -= B;
 }
 Matrix3x3 operator*(const Matrix3x3& A, const Matrix3x3& B)
 {
-    return applyMatrix(A, B, [](const Vector3D& a, const Vector3D& b) { return a * b; });
+    Matrix3x3 m(A);
+    return m *= B;
 }
 Matrix3x3 operator/(const Matrix3x3& A, const Matrix3x3& B)
 {
-    return applyMatrix(A, B, [](const Vector3D& a, const Vector3D& b) { return a / b; });
+    Matrix3x3 m(A);
+    return m /= B;
 }
 
 //! Matrix3x3 Vector3D operations need to be redifiened if needed
@@ -552,41 +491,43 @@ Matrix3x3 operator/(const Matrix3x3& A, const Matrix3x3& B)
 // ===== Matrix3x3 op decimal =====
 Matrix3x3 operator+(const Matrix3x3& A, decimal s)
 {
-    return applyMatrix(A, s, [](const Vector3D& a, decimal s) { return a + s; });
+    Matrix3x3 m(A);
+    return m += s;
 }
 Matrix3x3 operator-(const Matrix3x3& A, decimal s)
 {
-    return applyMatrix(A, s, [](const Vector3D& a, decimal s) { return a - s; });
+    Matrix3x3 m(A);
+    return m -= s;
 }
 Matrix3x3 operator*(const Matrix3x3& A, decimal s)
 {
-    return applyMatrix(A, s, [](const Vector3D& a, decimal s) { return a * s; });
+    Matrix3x3 m(A);
+    return m *= s;
 }
 Matrix3x3 operator/(const Matrix3x3& A, decimal s)
 {
     if (s == 0)
         throw std::invalid_argument("Division by zero");
-    return applyMatrix(A, s, [](const Vector3D& a, decimal s) { return a / s; });
+    decimal   inv = 1 / s;
+    Matrix3x3 m(A);
+    return m *= inv;
 }
 
 // ===== decimal op Matrix3x3 =====
-Matrix3x3 operator+(decimal s, const Matrix3x3& A)
-{
-    return applyMatrix(A, s, [](const Vector3D& a, decimal s) { return a + s; });
-}
-Matrix3x3 operator-(decimal s, const Matrix3x3& A)
-{
-    return applyMatrix(A, s,
-                       [s](const Vector3D& a, decimal) { return Vector3D(s - a[0], s - a[1], s - a[2]); });
-}
-Matrix3x3 operator*(decimal s, const Matrix3x3& A)
-{
-    return applyMatrix(A, s, [](const Vector3D& a, decimal s) { return a * s; });
-}
+Matrix3x3 operator+(decimal s, const Matrix3x3& A) { return A + s; }
+Matrix3x3 operator-(decimal s, const Matrix3x3& A) { return ((-1) * A) + s; }
+Matrix3x3 operator*(decimal s, const Matrix3x3& A) { return A * s; }
 Matrix3x3 operator/(decimal s, const Matrix3x3& A)
 {
-    return applyMatrix(A, s,
-                       [s](const Vector3D& a, decimal) { return Vector3D(s / a[0], s / a[1], s / a[2]); });
+    Matrix3x3 m;
+
+    for (int i = 0; i < 9; ++i)
+        if (A[i] == 0)
+        {
+            throw std::invalid_argument("Division by zero");
+            m[i] = s / m[i];
+        }
+    return m;
 }
 
 // ============================================================================

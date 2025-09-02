@@ -2,7 +2,7 @@
 #include "mathematics/vector.hpp"
 #include "precision.hpp"
 
-struct Objet
+struct Object
 {
 private:
     Vector3D position;
@@ -10,6 +10,6 @@ private:
     Vector3D scale;
 
 public:
-    Objet()  = default;
-    ~Objet() = default;
+    Object()  = default;
+    ~Object() = default;
 };

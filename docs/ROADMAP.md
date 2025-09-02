@@ -20,9 +20,9 @@
   - [x] **Vector3D Tests :** Write unit tests to verify vector operations.
   - [x] **Matrix3x3 :** Implement matrix operations (multiplication, transpose, inverse).
   - [x] **Matrix3x3 Tests :** Write unit tests to verify matrix operations.
-  - [x] **Quaternion :** Implement quaternion operations (multiplication, normalization, slerp).
-    - [x] Verify that all quaternion fonctions are correctly implemented
-    - [x] **Euler angle :** avoid code duplication, in particular with euler angle
+  - [x] **Quaternion :** Implement quaternion operations (multiplication, normalization, inverse).
+    - [x] Verify that all quaternion functions are correctly implemented
+    - [x] **Euler angle :** avoid code duplication, in particular with Euler angle
   - [x] **Quaternion Tests :** Write unit tests to verify quaternion operations.
 - [ ] **Object Structs :**
   - [ ] **Transform :** handle position and orientation of volumes
@@ -30,8 +30,8 @@
   - [ ] **Bounding Sphere**
 - [ ] **Testing :** Develop Unit Testing
   - [x] **Test Math**
-  - [ ] **Test Onjects**
-  - [ ] **Coverage :** Add converage computing option during compilation
+  - [ ] **Test Objects**
+  - [ ] **Coverage :** Add coverage computing option during compilation
   - [ ] **Test CI :** Integration of tests procedure in GitHub
 - [ ] **Documentation :** Document your math types and utilities.
 
@@ -39,9 +39,9 @@
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
 
-## Phase 3: Rigib Body Dynamics
+## Phase 3: Rigid Body Dynamics
 - [ ] **Core Model :**
-  - [ ] **RigidBody :** mass, barycenter, inertia, torque, string, energy (kninetic and potential), hooke, damping
+  - [ ] **RigidBody :** mass, barycentre, inertia, torque, string, energy (kinetic and potential), hook, damping
   - [ ] **PhysicsWorld :** 
     - [ ] **Time loop* 
     - [ ] **External forces :** gravity, wind, ...
@@ -65,7 +65,7 @@
     - [ ] *Doxygen & GitHub Pages*
     - [ ] *Performance report*
     - [ ] *Installation & Usage guides*
-    - [ ] *Github notes*
+    - [ ] *GitHub notes*
 
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
@@ -80,16 +80,16 @@
      - [ ] AABB - AABB
  - [ ] **Collision Response :**
    - [ ] **Collider :** RigidBody reference, during broad phase. 
-   - [ ] **CollisionInfo :**  generating during narrow phase. Contact point, normal's contactn penetration...
+   - [ ] **CollisionInfo :** generating during narrow phase. Contact point, normal's contact penetration...
  - [ ] **Resolution :**
-   - [ ] **Impulsions :** restitution, friction
+   - [ ] **Impulses :** restitution, friction
    - [ ] **Position corrections**
    - [ ] **Linear and angular speed corrections**
  - [ ] **Constraints :**
    - [ ] **Joints**
    - [ ] **Energy conservation**
    - [ ] **Pivot**
- - [ ] **Tests, Valisation & CI :**
+ - [ ] **Tests, Validation & CI :**
    - [ ] **Bouncing balls ?**
    - [ ] **Canon ball vs box ?**
    - [ ] **Box tower ?**
@@ -100,7 +100,7 @@
     - [ ] *Doxygen & GitHub Pages*
     - [ ] *Performance report*
     - [ ] *Installation & Usage guides*
-    - [ ] *Github notes*
+    - [ ] *GitHub notes*
 
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
@@ -116,7 +116,7 @@
    - [ ] **Basic Shaders**
    - [ ] **Physics-Rendering Synchronisation :** synchronisation between simulation FPS and rendering FPS
  - [ ] **Camera Control :** WASD/Mouse
- - [ ] **Debuf Tools :**
+ - [ ] **Debug Tools :**
    - [ ] **Overlay Data :** FPS, objects state, ...
    - [ ] **Runtime Parameters**
    - [ ] **Test Scenes :** Towers, balls, pendulums — visual regression tests
@@ -126,7 +126,7 @@
     - [ ] *Doxygen & GitHub Pages*
     - [ ] *Performance report*
     - [ ] *Installation & Usage guides*
-    - [ ] *Github notes*
+    - [ ] *GitHub notes*
 
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
@@ -143,7 +143,7 @@
    - [ ] **Optimisation :** caches, data splitting
  - [ ] **Benchmarks :**
    - [ ] **Scalability :** with the numbers of objects N
-   - [ ] **Comparison :** naive, vectorizised, paralle, ...
+   - [ ] **Comparison :** naive, vectorised, parallel, ...
    - [ ] **External Comparison :** **Comparison with Chrono/ReactPhysics3D* ?*
 - [ ] **Validation & Release :**
   - [ ] **Standard testing :** reference scenes, physical validity, ...
@@ -151,7 +151,7 @@
     - [ ] *Doxygen & GitHub Pages*
     - [ ] *Performance report*
     - [ ] *Installation & Usage guides*
-    - [ ] *Github notes*
+    - [ ] *GitHub notes*
 
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
@@ -176,4 +176,4 @@
     - [ ] *Doxygen & GitHub Pages*
     - [ ] *Performance report*
     - [ ] *Installation & Usage guides*
-    - [ ] *Github notes*
+    - [ ] *GitHub notes*

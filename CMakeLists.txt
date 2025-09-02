@@ -31,8 +31,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Project Options
 # =============================================
 option(USE_DOUBLE_PRECISION "Compile using double precision floating values" OFF)
-option(BUILD_TESTS            "Build unit tests"                             OFF)
-option(COVERAGE        "Enable coverage reporting"                    OFF)
+option(BUILD_TESTS          "Build unit tests"                               ON)
+option(COVERAGE             "Enable coverage reporting"                      OFF)
 
 # =============================================
 # Main Library Target

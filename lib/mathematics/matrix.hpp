@@ -7,7 +7,7 @@
 struct Matrix3x3
 {
 private:
-    std::array<Vector3D, 3> m { Vector3D(), Vector3D(), Vector3D() };
+    std::array<decimal, 9> m { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 public:
     // ============================================================================
@@ -18,16 +18,17 @@ public:
     Matrix3x3() = default;
     Matrix3x3(decimal m11, decimal m12, decimal m13, decimal m21, decimal m22, decimal m23, decimal m31,
               decimal m32, decimal m33)
-        : m { Vector3D(m11, m12, m13), Vector3D(m21, m22, m23), Vector3D(m31, m32, m33) }
+        : m { m11, m12, m13, m21, m22, m23, m31, m32, m33 }
     {}
     Matrix3x3(decimal value)
-        : m { Vector3D(value, value, value), Vector3D(value, value, value), Vector3D(value, value, value) }
+        : m { value, value, value, value, value, value, value, value, value }
     {}
-    Matrix3x3(const Vector3D& row)
-        : m { row, row, row }
+    Matrix3x3(const Vector3D& v)
+        : m { v.getX(), v.getY(), v.getZ(), v.getX(), v.getY(), v.getZ(), v.getX(), v.getY(), v.getZ() }
     {}
-    Matrix3x3(const Vector3D& row1, const Vector3D& row2, const Vector3D& row3)
-        : m { row1, row2, row3 }
+    Matrix3x3(const Vector3D& v1, const Vector3D& v2, const Vector3D& v3)
+        : m { v1.getX(), v1.getY(), v1.getZ(), v2.getX(), v2.getY(),
+              v2.getZ(), v3.getX(), v3.getY(), v3.getZ() }
     {}
     Matrix3x3(const Matrix3x3& m)
         : m { m.m }
@@ -35,12 +36,40 @@ public:
 
     // ============================================================================
     // ============================================================================
+    //  Element Access Operators
+    // ============================================================================
+    // ============================================================================
+    // Mapping from 2D indices to 1D index for a 3x3 matrix
+    int mapping(int ind_x, int ind_y) const;
+
+    // 2D element access
+    // Element access with index checking
+    decimal& at(int ind_x, int ind_y);
+    decimal  at(int ind_x, int ind_y) const;
+
+    // Element access without index checking
+    decimal& operator()(int ind_x, int ind_y);
+    decimal  operator()(int ind_x, int ind_y) const;
+
+    // 1D element access
+    // Element access with index checking
+    decimal& at(int ind);
+    decimal  at(int ind) const;
+
+    // Element access without index checking
+    decimal& operator()(int ind);
+    decimal  operator()(int ind) const;
+    decimal& operator[](int ind);
+    decimal  operator[](int ind) const;
+
+    // ============================================================================
+    // ============================================================================
     //  Getters
     // ============================================================================
     // ============================================================================
-    Vector3D getRow(int index) const { return m[index]; }
-    Vector3D getColumn(int index) const { return Vector3D(m[0][index], m[1][index], m[2][index]); }
-    Vector3D getDiagonal() const { return Vector3D(m[0][0], m[1][1], m[2][2]); }
+    Vector3D getRow(int index) const { return Vector3D(m[index * 3], m[index * 3 + 1], m[index * 3 + 2]); }
+    Vector3D getColumn(int index) const { return Vector3D(m[index], m[index + 3], m[index + 6]); }
+    Vector3D getDiagonal() const { return Vector3D(m[0], m[4], m[8]); }
 
     // ============================================================================
     // ============================================================================
@@ -115,24 +144,6 @@ public:
 
     // ============================================================================
     // ============================================================================
-    //  Element Access Operators
-    // ============================================================================
-    // ============================================================================
-    // Element access with index checking
-    decimal&  at(int row, int column);
-    decimal   at(int row, int column) const;
-    Vector3D& at(int row);
-    Vector3D  at(int row) const;
-    // Element access without index checking
-    decimal&  operator()(int row, int column);
-    decimal   operator()(int row, int column) const;
-    Vector3D& operator()(int row);
-    Vector3D  operator()(int row) const;
-    Vector3D& operator[](int row);
-    Vector3D  operator[](int row) const;
-
-    // ============================================================================
-    // ============================================================================
     //  In-Place Arithmetic Operators
     // ============================================================================
     // ============================================================================
@@ -152,33 +163,75 @@ public:
 };
 // ============================================================================
 // ============================================================================
-//  Helper for Free Arithmetic Operators
+//  Element Access Operators
 // ============================================================================
 // ============================================================================
-template <class F>
-inline Matrix3x3 applyMatrix(const Matrix3x3& A, const Matrix3x3& B, F&& func)
+inline int Matrix3x3::mapping(int ind_x, int ind_y) const { return ind_x * 3 + ind_y; }
+
+// 2D element access
+inline decimal& Matrix3x3::at(int ind_x, int ind_y)
 {
-    Matrix3x3 result;
-    for (int i = 0; i < 3; ++i)
-        result[i] = func(A[i], B[i]);
-    return result;
+    if (ind_x < 0 || ind_x >= 3 || ind_y < 0 || ind_y >= 3)
+        throw std::out_of_range("Matrix3x3 index out of range");
+    return m[mapping(ind_x, ind_y)];
 }
-template <class F>
-inline Matrix3x3 applyMatrix(const Matrix3x3& A, const Vector3D& B, F&& func)
+inline decimal Matrix3x3::at(int ind_x, int ind_y) const
 {
-    Matrix3x3 result;
-    for (int i = 0; i < 3; ++i)
-        result[i] = func(A[i], B);
-    return result;
+    if (ind_x < 0 || ind_x >= 3 || ind_y < 0 || ind_y >= 3)
+        throw std::out_of_range("Matrix3x3 index out of range");
+    return m[mapping(ind_x, ind_y)];
 }
-template <class F>
-inline Matrix3x3 applyMatrix(const Matrix3x3& A, decimal B, F&& func)
+inline decimal& Matrix3x3::operator()(int ind_x, int ind_y) { return m[mapping(ind_x, ind_y)]; }
+inline decimal  Matrix3x3::operator()(int ind_x, int ind_y) const { return m[mapping(ind_x, ind_y)]; }
+
+// 1D element access
+inline decimal& Matrix3x3::at(int ind)
 {
-    Matrix3x3 result;
-    for (int i = 0; i < 3; ++i)
-        result[i] = func(A[i], B);
-    return result;
+    if (ind < 0 || ind >= 9)
+        throw std::out_of_range("Matrix3x3 index out of range");
+    return m[ind];
 }
+inline decimal Matrix3x3::at(int ind) const
+{
+    if (ind < 0 || ind >= 9)
+        throw std::out_of_range("Matrix3x3 index out of range");
+    return m[ind];
+}
+inline decimal& Matrix3x3::operator()(int ind) { return m[ind]; }
+inline decimal  Matrix3x3::operator()(int ind) const { return m[ind]; }
+inline decimal& Matrix3x3::operator[](int ind) { return m[ind]; }
+inline decimal  Matrix3x3::operator[](int ind) const { return m[ind]; }
+
+// // ============================================================================
+// // ============================================================================
+// //  Helper for Free Arithmetic Operators
+// // ============================================================================
+// // ============================================================================
+// template <class F>
+// inline Matrix3x3 applyMatrix(const Matrix3x3& A, const Matrix3x3& B, F&& func)
+// {
+//     Matrix3x3 result;
+//     for (int i = 0; i < 9; ++i)
+//         result[i] = func(A[i], B[i]);
+//     return result;
+// }
+// template <class F>
+// inline Matrix3x3 applyMatrix(const Matrix3x3& A, const Vector3D& B, F&& func)
+// {
+//     Matrix3x3 result;
+//     for (int i = 0; i < 3; ++i)
+//         for (int j = 0; j < 3; ++j)
+//             result(i, j) = func(A(i, j), B[i]);
+//     return result;
+// }
+// template <class F>
+// inline Matrix3x3 applyMatrix(const Matrix3x3& A, decimal B, F&& func)
+// {
+//     Matrix3x3 result;
+//     for (int i = 0; i < 9; ++i)
+//         result[i] = func(A[i], B);
+//     return result;
+// }
 
 // ============================================================================
 // ============================================================================

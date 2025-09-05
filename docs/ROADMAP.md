@@ -13,9 +13,9 @@
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
 
-## Phase 2: Setup & Math Foundations  
+## Phase 2: Setup & Maths Foundations  
 
-- [x] **Math Library :** Implement or integrate 3D math types: `vec3` for 3D vectors, matrices, and quaternion for rotation.  
+- [x] **Maths Library :** Implement or integrate 3D maths types: `vec3` for 3D vectors, matrices, and quaternion for rotation.  
   - [x] **Vector3D :** Implement basic vector operations (addition, subtraction, scalar multiplication, dot product, cross product).
   - [x] **Vector3D Tests :** Write unit tests to verify vector operations.
   - [x] **Matrix3x3 :** Implement matrix operations (multiplication, transpose, inverse).
@@ -29,11 +29,11 @@
   - [ ] **AABB :** Axis-Aligned Bounding Box = right block whose faces are parallel to the three axes of the reference frame
   - [ ] **Bounding Sphere**
 - [ ] **Testing :** Develop Unit Testing
-  - [x] **Test Math**
+  - [x] **Test Maths**
   - [ ] **Test Objects**
   - [ ] **Coverage :** Add coverage computing option during compilation
   - [ ] **Test CI :** Integration of tests procedure in GitHub
-- [ ] **Documentation :** Document your math types and utilities.
+- [ ] **Documentation :** Document your maths types and utilities.
 
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
@@ -160,7 +160,7 @@
 
 ## Phase 7: Second Optimisation (GPU)   
  - [ ] **GPU Implementation** 
-   - [ ] **Software choice :** CUDA, SYCL, OpenCL,  ...
+   - [ ] **Software choice :** CUDA, SYCL, OpenCL,...
    - [ ] **GPU Implementation**
  - [ ] **Optimisation :**
    - [ ] **Profiling :** NSight, ...

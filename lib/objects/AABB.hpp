@@ -1,9 +1,9 @@
 #pragma once
-#include "AABB.hpp"
 #include "object.hpp"
 #include "precision.hpp"
+#include "sphere.hpp"
 
-struct Sphere : public Object
+struct AABB : public Object
 {
 private:
     Vector3D position;
@@ -21,10 +21,10 @@ public:
     //  Constructors / Destructors
     // ============================================================================
     // ============================================================================
-    Sphere(const Vector3D& position = Vector3D(), const Vector3D& rotation = Vector3D(),
-           const Vector3D& scale = Vector3D(1, 1, 1), const Vector3D& velocity = Vector3D(),
-           const Vector3D& acceleration = Vector3D(), const Vector3D& force = Vector3D(),
-           const Vector3D& torque = Vector3D(), decimal mass = 0.0)
+    AABB(const Vector3D& position = Vector3D(), const Vector3D& rotation = Vector3D(),
+         const Vector3D& scale = Vector3D(1, 1, 1), const Vector3D& velocity = Vector3D(),
+         const Vector3D& acceleration = Vector3D(), const Vector3D& force = Vector3D(),
+         const Vector3D& torque = Vector3D(), decimal mass = 0.0)
         : Object(position, rotation, scale, velocity, acceleration, force, torque, mass)
     {}
 
@@ -33,16 +33,16 @@ public:
     //  Getters
     // ============================================================================
     // ============================================================================
-    ObjectType get_type() const override { return ObjectType::Sphere; }
-    Vector3D   get_center() const { return get_position(); }
-    decimal    get_radius() const { return get_scale()[0] * 0.5; }
+    ObjectType get_type() const override { return ObjectType::AABB; }
+    Vector3D   get_min() const { return get_position() - get_scale() * 0.5; }
+    Vector3D   get_max() const { return get_position() + get_scale() * 0.5; }
 
     // ============================================================================
     // ============================================================================
     //  Collision
     // ============================================================================
     // ============================================================================
-    bool         sphere_collision(const Sphere& a, const Sphere& b);
-    static bool  AABB_sphere_collision(const Sphere& sphere, const AABB& aabb);
+    bool         aabb_collision(const AABB& a, const AABB& b);
+    bool         AABB_sphere_collision(const AABB& AABB, const Sphere& sphere);
     virtual bool check_collision(const Object& other) override;
 };

@@ -1,32 +1,33 @@
 #pragma once
-#include "AABB.hpp"
 #include "object.hpp"
 #include "precision.hpp"
+
+struct AABB; // Forward declaration
 
 struct Sphere : public Object
 {
 private:
-    Vector3D position;
-    Vector3D rotation;
-    Vector3D scale;
-    Vector3D velocity;
-    Vector3D acceleration;
-    Vector3D force;
-    Vector3D torque;
-    decimal  mass;
-
 public:
     // ============================================================================
     // ============================================================================
     //  Constructors / Destructors
     // ============================================================================
     // ============================================================================
-    Sphere(const Vector3D& position = Vector3D(), const Vector3D& rotation = Vector3D(),
-           const Vector3D& scale = Vector3D(1, 1, 1), const Vector3D& velocity = Vector3D(),
-           const Vector3D& acceleration = Vector3D(), const Vector3D& force = Vector3D(),
-           const Vector3D& torque = Vector3D(), decimal mass = 0.0)
-        : Object(position, rotation, scale, velocity, acceleration, force, torque, mass)
+    Sphere() = default;
+    Sphere(const Vector3D& position)
+        : Object(position)
     {}
+    Sphere(const Vector3D& position, const decimal& scale)
+        : Object(position, Vector3D(scale))
+    {}
+    Sphere(const Vector3D& position, const decimal& scale, decimal mass)
+        : Object(position, Vector3D(scale), mass)
+    {}
+    Sphere(const Vector3D& position, const Vector3D& rotation, const decimal& scale, const Vector3D& velocity,
+           const Vector3D& acceleration, const Vector3D& force, const Vector3D& torque, decimal mass)
+        : Object(position, rotation, Vector3D(scale), velocity, acceleration, force, torque, mass)
+    {}
+    virtual ~Sphere() = default;
 
     // ============================================================================
     // ============================================================================
@@ -35,7 +36,7 @@ public:
     // ============================================================================
     ObjectType get_type() const override { return ObjectType::Sphere; }
     Vector3D   get_center() const { return get_position(); }
-    decimal    get_radius() const { return get_scale()[0] * 0.5; }
+    decimal    get_radius() const { return get_scale()[0] * 0.5_d; }
 
     // ============================================================================
     // ============================================================================

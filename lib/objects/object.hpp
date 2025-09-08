@@ -13,14 +13,14 @@ enum class ObjectType
 struct Object
 {
 private:
-    Vector3D position;
-    Vector3D rotation;
-    Vector3D scale;
-    Vector3D velocity;
-    Vector3D acceleration;
-    Vector3D force;
-    Vector3D torque;
-    decimal  mass;
+    Vector3D position     = Vector3D();
+    Vector3D rotation     = Vector3D();
+    Vector3D scale        = Vector3D(1_d, 1_d, 1_d);
+    Vector3D velocity     = Vector3D();
+    Vector3D acceleration = Vector3D();
+    Vector3D force        = Vector3D();
+    Vector3D torque       = Vector3D();
+    decimal  mass         = 0.0_d;
 
 public:
     // ============================================================================
@@ -29,10 +29,24 @@ public:
     // ============================================================================
     // ============================================================================
     Object() = default;
-    Object(const Vector3D& position = Vector3D(), const Vector3D& rotation = Vector3D(),
-           const Vector3D& scale = Vector3D(), const Vector3D& velocity = Vector3D(),
-           const Vector3D& acceleration = Vector3D(), const Vector3D& force = Vector3D(),
-           const Vector3D& torque = Vector3D(), decimal mass = 0.0)
+    Object(decimal mass)
+        : mass { mass }
+    {}
+    Object(const Vector3D& position)
+        : position { position }
+    {}
+    Object(const Vector3D& position, const Vector3D& scale)
+        : position { position }
+        , scale { scale }
+    {}
+    Object(const Vector3D& position, const Vector3D& scale, decimal mass)
+        : position { position }
+        , scale { scale }
+        , mass { mass }
+    {}
+    Object(const Vector3D& position, const Vector3D& rotation, const Vector3D& scale,
+           const Vector3D& velocity, const Vector3D& acceleration, const Vector3D& force,
+           const Vector3D& torque, decimal mass)
         : position { position }
         , rotation { rotation }
         , scale { scale }
@@ -64,23 +78,23 @@ public:
     //  Setters
     // ============================================================================
     // ============================================================================
-    Vector3D set_position(const Vector3D& _position) { position = _position; }
-    Vector3D set_rotation(const Vector3D& _rotation) { rotation = _rotation; }
-    Vector3D set_scale(const Vector3D& _scale) { scale = _scale; }
-    Vector3D set_velocity(const Vector3D& _velocity) { velocity = _velocity; }
-    Vector3D set_acceleration(const Vector3D& _acceleration) { acceleration = _acceleration; }
-    Vector3D set_force(const Vector3D& _force) { force = _force; }
-    Vector3D set_torque(const Vector3D& _torque) { torque = _torque; }
-    decimal  set_mass(const decimal _mass) { mass = _mass; }
+    void set_position(const Vector3D& _position) { position = _position; }
+    void set_rotation(const Vector3D& _rotation) { rotation = _rotation; }
+    void set_scale(const Vector3D& _scale) { scale = _scale; }
+    void set_velocity(const Vector3D& _velocity) { velocity = _velocity; }
+    void set_acceleration(const Vector3D& _acceleration) { acceleration = _acceleration; }
+    void set_force(const Vector3D& _force) { force = _force; }
+    void set_torque(const Vector3D& _torque) { torque = _torque; }
+    void set_mass(const decimal _mass) { mass = _mass; }
 
     // ============================================================================
     // ============================================================================
     //  Transformations
     // ============================================================================
     // ============================================================================
-    void translation(const Vector3D& v_translation) { position += v_translation; }
-    void rotation(const Vector3D& v_rotation) { rotation += v_rotation; }
-    void scaling(const Vector3D& v_scaling) { scale += v_scaling; }
+    void apply_translation(const Vector3D& v_translation) { position += v_translation; }
+    void apply_rotation(const Vector3D& v_rotation) { rotation += v_rotation; }
+    void apply_scaling(const Vector3D& v_scaling) { scale += v_scaling; }
 
     // ============================================================================
     // ============================================================================

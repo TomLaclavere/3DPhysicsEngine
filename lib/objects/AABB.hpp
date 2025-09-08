@@ -6,27 +6,27 @@
 struct AABB : public Object
 {
 private:
-    Vector3D position;
-    Vector3D rotation;
-    Vector3D scale;
-    Vector3D velocity;
-    Vector3D acceleration;
-    Vector3D force;
-    Vector3D torque;
-    decimal  mass;
-
 public:
     // ============================================================================
     // ============================================================================
     //  Constructors / Destructors
     // ============================================================================
     // ============================================================================
-    AABB(const Vector3D& position = Vector3D(), const Vector3D& rotation = Vector3D(),
-         const Vector3D& scale = Vector3D(1, 1, 1), const Vector3D& velocity = Vector3D(),
-         const Vector3D& acceleration = Vector3D(), const Vector3D& force = Vector3D(),
-         const Vector3D& torque = Vector3D(), decimal mass = 0.0)
+    AABB() = default;
+    AABB(const Vector3D& position)
+        : Object(position)
+    {}
+    AABB(const Vector3D& position, const Vector3D& scale)
+        : Object(position, scale)
+    {}
+    AABB(const Vector3D& position, const Vector3D& scale, decimal mass)
+        : Object(position, scale, mass)
+    {}
+    AABB(const Vector3D& position, const Vector3D& rotation, const Vector3D& scale, const Vector3D& velocity,
+         const Vector3D& acceleration, const Vector3D& force, const Vector3D& torque, decimal mass)
         : Object(position, rotation, scale, velocity, acceleration, force, torque, mass)
     {}
+    virtual ~AABB() = default;
 
     // ============================================================================
     // ============================================================================

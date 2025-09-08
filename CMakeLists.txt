@@ -20,7 +20,7 @@ endif()
 # =============================================
 # Project Configuration
 # =============================================
-project(3DPhysicsEngine VERSION 0.2.1 LANGUAGES CXX)
+project(3DPhysicsEngine VERSION 0.2.3 LANGUAGES CXX)
 
 # C++ Standard Configuration
 set(CMAKE_CXX_STANDARD 23)
@@ -42,12 +42,9 @@ add_library(3DPhysicsEngine
     src/mathematics/matrix.cpp
     src/mathematics/quaternion.cpp
 
-    lib/mathematics/vector.hpp
-    lib/mathematics/matrix.hpp
-    lib/mathematics/quaternion.hpp
-    lib/mathematics/common.hpp
-    lib/precision.hpp
-    lib/config.hpp
+    src/objects/object.cpp
+    src/objects/AABB.cpp
+    src/objects/sphere.cpp
 )
 
 target_include_directories(3DPhysicsEngine
@@ -73,7 +70,7 @@ endif()
 # =============================================
 # Testing Configuration
 # =============================================
-if(TESTS)
+if(BUILD_TESTS)
     enable_testing()
 
     include(FetchContent)

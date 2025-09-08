@@ -98,15 +98,18 @@ TEST(AABB_Test, AABB_Sphere_Collision)
     // Basic cases
     Sphere sphere_inside(Vector3D(1_d, 1_d, 1_d), 0.5_d);
     Sphere sphere_outside(Vector3D(4_d, 4_d, 4_d), 1_d);
-    Sphere sphere_touching_face(Vector3D(3_d, 1_d, 1_d), 1_d);
+    Sphere sphere_touching_face(Vector3D(3_d, 1_d, 1_d), 4_d);
 
     EXPECT_TRUE(aabb.check_collision(sphere_inside));
     EXPECT_FALSE(aabb.check_collision(sphere_outside));
     EXPECT_TRUE(aabb.check_collision(sphere_touching_face));
 
     // Edge cases
-    Sphere sphere_touching_edge(Vector3D(3_d, 3_d, 1_d), 1.4143_d);   // sqrt(2) ≈ 1.4142
-    Sphere sphere_touching_corner(Vector3D(3_d, 3_d, 3_d), 1.7321_d); // sqrt(3) ≈ 1.7320
+    Sphere sphere_touching_edge(Vector3D(1_d + 1_d / std::sqrt(2.0_d), 1_d + 1_d / std::sqrt(2.0_d), 1_d),
+                                2_d);
+    Sphere sphere_touching_corner(
+        Vector3D(1_d + 1_d / std::sqrt(3.0_d), 1_d + 1_d / std::sqrt(3.0_d), 1_d + 1_d / std::sqrt(3.0_d)),
+        2_d);
 
     EXPECT_TRUE(aabb.check_collision(sphere_touching_edge));
     EXPECT_TRUE(aabb.check_collision(sphere_touching_corner));
@@ -114,7 +117,10 @@ TEST(AABB_Test, AABB_Sphere_Collision)
     // Special cases
     Sphere sphere_containing_aabb(Vector3D(1_d, 1_d, 1_d), 2_d);
     Sphere sphere_zero_radius(Vector3D(1_d, 1_d, 1_d), 0_d);
-    Sphere sphere_at_corner(Vector3D(2_d, 2_d, 2_d), 0.1_d);
+
+    decimal r      = 0.05_d;
+    decimal offset = r / std::sqrt(3.0_d);
+    Sphere  sphere_at_corner(Vector3D(1_d + offset, 1_d + offset, 1_d + offset), 0.1_d);
 
     EXPECT_TRUE(aabb.check_collision(sphere_containing_aabb));
     EXPECT_TRUE(aabb.check_collision(sphere_zero_radius));

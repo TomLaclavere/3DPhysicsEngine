@@ -3,39 +3,30 @@
 #include "objects/AABB.hpp"
 #include "precision.hpp"
 
+#include <algorithm>
+
 bool Sphere::sphere_collision(const Sphere& a, const Sphere& b)
 {
-    // Calculate squared distance between centers to avoid sqrt
-    Vector3D center_diff      = b.get_center() - a.get_center();
-    decimal  squared_distance = center_diff.getNorm();
-
-    // Calculate sum of radii
-    decimal sum_radii         = a.get_radius() + b.get_radius();
-    decimal squared_sum_radii = sum_radii * sum_radii;
-
-    // Check collision with tolerance
-    return (squared_distance <= squared_sum_radii + PRECISION_MACHINE);
+    Vector3D center_diff       = b.get_center() - a.get_center();
+    decimal  squared_distance  = center_diff.getNormSquare();
+    decimal  squared_sum_radii = (a.get_radius() + b.get_radius()) * (a.get_radius() + b.get_radius());
+    return squared_distance <= squared_sum_radii;
 }
 
 bool Sphere::AABB_sphere_collision(const Sphere& sphere, const AABB& aabb)
 {
-    Vector3D closest_point = sphere.get_center();
-    Vector3D aabb_min      = aabb.get_min();
-    Vector3D aabb_max      = aabb.get_max();
+    const Vector3D c    = sphere.get_center();
+    const Vector3D amin = aabb.get_min();
+    const Vector3D amax = aabb.get_max();
 
-    // Find the closest point on the AABB to the sphere center
-    closest_point[0] = std::max(aabb_min[0], std::min(closest_point[0], aabb_max[0]));
-    closest_point[1] = std::max(aabb_min[1], std::min(closest_point[1], aabb_max[1]));
-    closest_point[2] = std::max(aabb_min[2], std::min(closest_point[2], aabb_max[2]));
+    Vector3D closest;
+    closest[0] = std::clamp(c[0], amin[0], amax[0]);
+    closest[1] = std::clamp(c[1], amin[1], amax[1]);
+    closest[2] = std::clamp(c[2], amin[2], amax[2]);
 
-    // Calculate squared distance to avoid sqrt
-    Vector3D diff             = closest_point - sphere.get_center();
-    decimal  squared_distance = diff.getNorm();
-    decimal  radius           = sphere.get_radius();
-    decimal  squared_radius   = radius * radius;
-
-    // Check collision with tolerance
-    return (squared_distance <= squared_radius + PRECISION_MACHINE);
+    decimal dist = (closest - c).getNormSquare();
+    decimal r2   = sphere.get_radius() * sphere.get_radius();
+    return dist <= r2 + PRECISION_MACHINE;
 }
 
 bool Sphere::check_collision(const Object& other)

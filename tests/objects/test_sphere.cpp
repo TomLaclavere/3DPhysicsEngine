@@ -76,20 +76,22 @@ TEST(Sphere_Test, Integrate)
 
 TEST(Sphere_Test, Sphere_Collision)
 {
-    Sphere sphere1(Vector3D(0_d, 0_d, 0_d), 2_d);
-    Sphere sphere2(Vector3D(1_d, 1_d, 1_d), 2_d);
-    Sphere sphere3(Vector3D(5_d, 5_d, 5_d), 2_d);
+    Sphere sphere(Vector3D(0_d, 0_d, 0_d), 2_d);
+    Sphere sphere_inside(Vector3D(1_d, 1_d, 1_d), 2_d);
+    Sphere sphere_outside(Vector3D(5_d, 5_d, 5_d), 2_d);
+    Sphere sphere_touching(Vector3D(2_d, 0_d, 0_d), 2_d);
 
-    EXPECT_TRUE(sphere1.check_collision(sphere2));  // Overlapping
-    EXPECT_FALSE(sphere1.check_collision(sphere3)); // Not overlapping
+    EXPECT_TRUE(sphere.check_collision(sphere_inside));   // Overlapping
+    EXPECT_FALSE(sphere.check_collision(sphere_outside)); // Not overlapping
+    EXPECT_TRUE(sphere.check_collision(sphere_touching)); // Just touching
 }
 
 TEST(Sphere_Test, AABB_Sphere_Collision)
 {
-    AABB   aabb(Vector3D(0_d, 0_d, 0_d), Vector3D(2_d, 2_d, 2_d));
-    Sphere sphere_inside(Vector3D(1_d, 1_d, 1_d), 0.5_d);     // Center inside AABB
-    Sphere sphere_outside(Vector3D(3_d, 3_d, 3_d), 0.5_d);    // Completely outside
-    Sphere sphere_touching(Vector3D(2.5_d, 1_d, 1_d), 0.5_d); // Touching right face
+    AABB   aabb(Vector3D(0_d, 0_d, 0_d), Vector3D(4_d, 2_d, 2_d));
+    Sphere sphere_inside(Vector3D(1_d, 1_d, 1_d), 0.5_d);   // Center inside AABB
+    Sphere sphere_outside(Vector3D(3_d, 3_d, 3_d), 0.5_d);  // Completely outside
+    Sphere sphere_touching(Vector3D(2.5_d, 1_d, 1_d), 1_d); // Touching right face
 
     EXPECT_TRUE(sphere_inside.check_collision(aabb));   // Sphere inside AABB
     EXPECT_FALSE(sphere_outside.check_collision(aabb)); // Sphere outside AABB

@@ -24,15 +24,16 @@
     - [x] Verify that all quaternion functions are correctly implemented
     - [x] **Euler angle :** avoid code duplication, in particular with Euler angle
   - [x] **Quaternion Tests :** Write unit tests to verify quaternion operations.
-- [ ] **Object Structs :**
-  - [ ] **Transform :** handle position and orientation of volumes
-  - [ ] **AABB :** Axis-Aligned Bounding Box = right block whose faces are parallel to the three axes of the reference frame
-  - [ ] **Bounding Sphere**
+- [x] **Object Structs :**
+  - [x] **Transform :** handle position and orientation of volumes
+  - [x] **AABB :** Axis-Aligned Bounding Box = right block whose faces are parallel to the three axes of the reference frame
+  - [x] **Bounding Sphere**
 - [ ] **Testing :** Develop Unit Testing
   - [x] **Test Maths**
   - [ ] **Test Objects**
-  - [ ] **Coverage :** Add coverage computing option during compilation
-  - [ ] **Test CI :** Integration of tests procedure in GitHub
+  - [ ] **Coverage :** Add coverage computing option during compilation.
+  - [ ] **Test CI :** Integration of tests procedure in GitHub.
+- [ ] **Compilation Modularity :** Add modularity to compile and test specific parts of the repository, useful for development and debugging.
 - [ ] **Documentation :** Document your maths types and utilities.
 
 -----------------------------------------------------------------------------------------------------------

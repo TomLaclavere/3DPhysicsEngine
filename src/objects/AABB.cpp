@@ -1,6 +1,6 @@
-#include "lib/objects/AABB.hpp"
+#include "objects/AABB.hpp"
 
-#include "lib/objects/sphere.hpp"
+#include "objects/sphere.hpp"
 
 // ============================================================================
 // ============================================================================

@@ -4,16 +4,16 @@
 #include <ostream>
 #include <stdexcept>
 
-ATTENTION : BESOIN DE DEFINIR PROPREMENT SI LES VECTEURS DEFINISSENT LES COLONNES OU LES LIGNES DES
-                MATRICES !!UTILISER LE
-                MAPPING(x * 3 + y) !!!
+// Convention :
+// Matrices are stored in row-major order.
+// The element (i, j) (row i, column j) is at index [i * 3 + j] in the array m[9].
 
-            // ============================================================================
-            // ============================================================================
-            //  Utilities
-            // ============================================================================
-            // ============================================================================
-            void Matrix3x3::absolute()
+// ============================================================================
+// ============================================================================
+//  Utilities
+// ============================================================================
+// ============================================================================
+void Matrix3x3::absolute()
 {
     for (int i = 0; i < 9; ++i)
     {
@@ -171,10 +171,10 @@ void Matrix3x3::setAllValues(decimal m11, decimal m12, decimal m13, decimal m21,
     (*this)(7) = m32;
     (*this)(8) = m33;
 }
-void Matrix3x3::setAllValues(const Matrix3x3& m)
+void Matrix3x3::setAllValues(const Matrix3x3& other)
 {
-    for (int i = 0; i < 3; ++i)
-        (*this).setRow(i, m[i]);
+    for (int i = 0; i < 9; ++i)
+        m[i] = other.m[i];
 }
 
 // ============================================================================
@@ -313,42 +313,42 @@ Vector3D vectorMatrixProduct(const Vector3D& vector, const Matrix3x3& matrix)
 // ============================================================================
 bool Matrix3x3::operator==(const Matrix3x3& matrix) const
 {
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 9; ++i)
         if (!(m[i] == matrix.m[i]))
             return false;
     return true;
 }
 bool Matrix3x3::operator!=(const Matrix3x3& matrix) const
 {
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 9; ++i)
         if (m[i] != matrix.m[i])
             return true;
     return false;
 }
 bool Matrix3x3::operator<(const Matrix3x3& matrix) const
 {
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 9; ++i)
         if (!(m[i] < matrix.m[i]))
             return false;
     return true;
 }
 bool Matrix3x3::operator<=(const Matrix3x3& matrix) const
 {
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 9; ++i)
         if (!(m[i] <= matrix.m[i]))
             return false;
     return true;
 }
 bool Matrix3x3::operator>(const Matrix3x3& matrix) const
 {
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 9; ++i)
         if (!(m[i] > matrix.m[i]))
             return false;
     return true;
 }
 bool Matrix3x3::operator>=(const Matrix3x3& matrix) const
 {
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 9; ++i)
         if (!(m[i] >= matrix.m[i]))
             return false;
     return true;
@@ -392,8 +392,27 @@ Matrix3x3& Matrix3x3::operator*=(const Matrix3x3& other)
 }
 Matrix3x3& Matrix3x3::operator/=(const Matrix3x3& other)
 {
+    // Check if the divisor matrix is a zero matrix
+    bool isZeroMatrix = true;
     for (int i = 0; i < 9; ++i)
-        m[i] /= other[i];
+    {
+        if (other.m[i] != 0)
+        {
+            isZeroMatrix = false;
+            break;
+        }
+    }
+
+    if (isZeroMatrix)
+    {
+        throw std::invalid_argument("Division by zero matrix");
+    }
+
+    // Perform element-wise division
+    for (int i = 0; i < 9; ++i)
+    {
+        m[i] /= other.m[i];
+    }
     return *this;
 }
 Matrix3x3& Matrix3x3::operator+=(decimal scalar)
@@ -519,15 +538,14 @@ Matrix3x3 operator-(decimal s, const Matrix3x3& A) { return ((-1) * A) + s; }
 Matrix3x3 operator*(decimal s, const Matrix3x3& A) { return A * s; }
 Matrix3x3 operator/(decimal s, const Matrix3x3& A)
 {
-    Matrix3x3 m;
-
+    Matrix3x3 result;
     for (int i = 0; i < 9; ++i)
+    {
         if (A[i] == 0)
-        {
             throw std::invalid_argument("Division by zero");
-            m[i] = s / m[i];
-        }
-    return m;
+        result[i] = s / A[i];
+    }
+    return result;
 }
 
 // ============================================================================
@@ -537,6 +555,9 @@ Matrix3x3 operator/(decimal s, const Matrix3x3& A)
 // ============================================================================
 std::ostream& operator<<(std::ostream& os, const Matrix3x3& m)
 {
-    os << "Matrix3x3(" << m[0] << ", " << m[1] << ", " << m[2] << ")";
+    os << "Matrix3x3:\n";
+    os << m(0, 0) << ", " << m(0, 1) << ", " << m(0, 2) << "\n";
+    os << m(1, 0) << ", " << m(1, 1) << ", " << m(1, 2) << "\n";
+    os << m(2, 0) << ", " << m(2, 1) << ", " << m(2, 2);
     return os;
 }

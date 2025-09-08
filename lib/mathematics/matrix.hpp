@@ -166,7 +166,14 @@ public:
 //  Element Access Operators
 // ============================================================================
 // ============================================================================
-inline int Matrix3x3::mapping(int ind_x, int ind_y) const { return ind_x * 3 + ind_y; }
+inline int Matrix3x3::mapping(int ind_x, int ind_y) const
+{
+    if (ind_x < 0 || ind_x >= 3 || ind_y < 0 || ind_y >= 3)
+    {
+        throw std::out_of_range("Matrix3x3 indices out of range");
+    }
+    return ind_x * 3 + ind_y;
+}
 
 // 2D element access
 inline decimal& Matrix3x3::at(int ind_x, int ind_y)

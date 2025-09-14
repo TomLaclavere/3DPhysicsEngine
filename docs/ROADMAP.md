@@ -30,11 +30,11 @@
   - [x] **Bounding Sphere**
 - [ ] **Testing :** Develop Unit Testing
   - [x] **Test Maths**
-  - [ ] **Test Objects**
-  - [ ] **Coverage :** Add coverage computing option during compilation.
+  - [x] **Test Objects**
+  - [x] **Coverage :** Add coverage computing option during compilation.
   - [ ] **Test CI :** Integration of tests procedure in GitHub.
 - [ ] **Compilation Modularity :** Add modularity to compile and test specific parts of the repository, useful for development and debugging.
-- [ ] **Documentation :** Document your maths types and utilities.
+- [ ] **Documentation :** Document maths types and utilities.
 
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------

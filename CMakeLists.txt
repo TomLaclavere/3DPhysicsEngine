@@ -32,7 +32,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # =============================================
 option(USE_DOUBLE_PRECISION "Compile using double precision floating values" OFF)
 option(BUILD_TESTS          "Build unit tests"                               ON)
-option(COVERAGE             "Enable coverage reporting"                      OFF)
+option(COVERAGE             "Enable coverage reporting"                      ON)
 
 # =============================================
 # Main Library Target
@@ -87,7 +87,7 @@ endif()
 # =============================================
 # Coverage Analysis
 # =============================================
-if(COVERAGE AND TESTS)
+if(COVERAGE AND BUILD_TESTS)
     if(NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         message(WARNING "Code coverage is only supported for GCC and Clang compilers")
         return()

@@ -32,8 +32,9 @@
   - [x] **Test Maths**
   - [x] **Test Objects**
   - [x] **Coverage :** Add coverage computing option during compilation.
-  - [ ] **Test CI :** Integration of tests procedure in GitHub.
-- [ ] **Compilation Modularity :** Add modularity to compile and test specific parts of the repository, useful for development and debugging.
+  - [x] **Test CI :** Integration of tests procedure in GitHub.
+    - [x] **CI with GCC**
+    - [ ] **CI with Clang :**
 - [ ] **Documentation :** Document maths types and utilities.
 
 -----------------------------------------------------------------------------------------------------------

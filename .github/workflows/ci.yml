@@ -16,7 +16,21 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build ${{ matrix.compiler }} g++ clang gcovr
+          if [ "${{ matrix.compiler }}" = "gcc" ]; then
+            sudo apt-get install -y cmake ninja-build gcc g++ gcovr
+          else
+            sudo apt-get install -y cmake ninja-build clang llvm
+          fi
+
+      - name: Set environment variables
+        run: |
+          if [ "${{ matrix.compiler }}" = "gcc" ]; then
+            echo "CC=gcc" >> $GITHUB_ENV
+            echo "CXX=g++" >> $GITHUB_ENV
+          else
+            echo "CC=clang" >> $GITHUB_ENV
+            echo "CXX=clang++" >> $GITHUB_ENV
+          fi
 
       - name: Configure project
         run: |
@@ -24,14 +38,17 @@ jobs:
             -G Ninja \
             -DCMAKE_BUILD_TYPE=Debug \
             -DTESTS=ON \
-            -DCOVERAGE=ON \
-            -DUSE_CLANG=$([[ "${{ matrix.compiler }}" == "clang" ]] && echo ON || echo OFF)
+            -DCOVERAGE=ON
 
       - name: Build
         run: cmake --build build -- -j$(nproc)
 
-      - name: Run tests
-        run: ctest --test-dir build --output-on-failure
-
       - name: Generate coverage report
         run: cmake --build build --target coverage-console
+
+      - name: Upload coverage results
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-${{ matrix.compiler }}
+          path: build/coverage/
+          if-no-files-found: ignore

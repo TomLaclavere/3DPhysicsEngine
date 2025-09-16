@@ -43,8 +43,11 @@ jobs:
       - name: Build
         run: cmake --build build -- -j$(nproc)
 
+      - name: Run tests
+        run: ctest --test-dir build --output-on-failure -j$(nproc)
+
       - name: Generate coverage report
-        run: cmake --build build --target coverage-console
+        run: make coverage-console
 
       - name: Upload coverage results
         uses: actions/upload-artifact@v4

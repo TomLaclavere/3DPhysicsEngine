@@ -201,7 +201,7 @@ bool Matrix3x3::isIdentity() const
 bool Matrix3x3::isZero() const
 {
     for (int i = 0; i < 9; ++i)
-        if (!(*this)(i) == 0)
+        if ((*this)(i) != 0)
             return false;
     return true;
 }

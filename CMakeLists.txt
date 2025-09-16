@@ -101,7 +101,7 @@ if(COVERAGE AND TESTS)
         endif()
 
         target_compile_options(3DPhysicsEngine PRIVATE --coverage -fprofile-arcs -ftest-coverage)
-        target_link_libraries   (3DPhysicsEngine PRIVATE --coverage)
+        target_link_libraries(3DPhysicsEngine PRIVATE --coverage)
 
         set(GCOVR_COMMON_OPTS
             --exclude-unreachable-branches
@@ -134,44 +134,53 @@ if(COVERAGE AND TESTS)
             COMMENT "Running tests and generating console coverage report..."
             DEPENDS 3DPhysicsEngine mathematics_test
         )
-    endif()
+
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        # Clang-specific coverage flags
         target_compile_options(3DPhysicsEngine PRIVATE -fprofile-instr-generate -fcoverage-mapping)
         target_link_options(3DPhysicsEngine PRIVATE -fprofile-instr-generate)
 
-        set(LLVM_PROFDATA llvm-profdata)
-        set(LLVM_COV llvm-cov)
-        set(PROFRAW_FILE default.profraw)
-        set(PROFDATA_FILE coverage.profdata)
-        set(COVERAGE_REPORT_DIR ${CMAKE_BINARY_DIR}/coverage_report)
-        set(COVERAGE_HTML_FILE ${COVERAGE_REPORT_DIR}/coverage_report.html)
+        # Find LLVM tools with better error handling
+        find_program(LLVM_PROFDATA_PATH llvm-profdata
+            DOC "Path to llvm-profdata utility"
+            REQUIRED  # This will fail if not found
+        )
+        find_program(LLVM_COV_PATH llvm-cov
+            DOC "Path to llvm-cov utility"
+            REQUIRED  # This will fail if not found
+        )
+        
+        if(NOT LLVM_PROFDATA_PATH OR NOT LLVM_COV_PATH)
+            message(FATAL_ERROR "llvm-profdata or llvm-cov not found - please install LLVM coverage tools")
+        endif()
 
+        # HTML coverage report for Clang
         add_custom_target(coverage
             COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
-            COMMAND ${LLVM_PROFDATA} merge -sparse ${PROFRAW_FILE} -o ${PROFDATA_FILE}
-            COMMAND ${CMAKE_COMMAND} -E make_directory ${COVERAGE_REPORT_DIR}
-            COMMAND ${LLVM_COV} show
+            COMMAND ${LLVM_PROFDATA_PATH} merge -sparse default.profraw -o coverage.profdata
+            COMMAND ${LLVM_COV_PATH} show
                 $<TARGET_FILE:mathematics_test>
-                -instr-profile=${PROFDATA_FILE}
+                -instr-profile=coverage.profdata
                 -format=html
-                -output-dir=${COVERAGE_REPORT_DIR}
-                -Xdemangler c++filt
-                -Xreducer=none
-                -ignore-filename-regex='.*(test|external).*'
+                -output-dir=${CMAKE_BINARY_DIR}/coverage_report
+            COMMAND ${CMAKE_COMMAND} -E rename 
+                ${CMAKE_BINARY_DIR}/coverage_report/index.html
+                ${CMAKE_BINARY_DIR}/coverage_report/coverage_report.html
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-            COMMENT "Running tests and generating HTML coverage report with llvm-cov..."
+            COMMENT "Running tests and generating HTML coverage report for Clang..."
             DEPENDS 3DPhysicsEngine mathematics_test
         )
 
+        # Console coverage report for Clang
         add_custom_target(coverage-console
             COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
-            COMMAND ${LLVM_PROFDATA} merge -sparse ${PROFRAW_FILE} -o ${PROFDATA_FILE}
-            COMMAND ${LLVM_COV} report
+            COMMAND ${LLVM_PROFDATA_PATH} merge -sparse default.profraw -o coverage.profdata
+            COMMAND ${LLVM_COV_PATH} report
                 $<TARGET_FILE:mathematics_test>
-                -instr-profile=${PROFDATA_FILE}
+                -instr-profile=coverage.profdata
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-            COMMENT "Running tests and generating console coverage report with llvm-cov..."
+            COMMENT "Running tests and generating console coverage report for Clang..."
             DEPENDS 3DPhysicsEngine mathematics_test
         )
     endif()
-
+endif()

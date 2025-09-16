@@ -145,19 +145,15 @@ if(COVERAGE AND TESTS)
             return()
         endif()
 
-        # Set Clang coverage compilation flags - must be added to both compile and link
+        # Set Clang coverage compilation flags
         target_compile_options(3DPhysicsEngine PRIVATE -fprofile-instr-generate -fcoverage-mapping)
         target_link_libraries(3DPhysicsEngine PRIVATE -fprofile-instr-generate -fcoverage-mapping)
-
-        # Set environment variable for profiling output using set(ENV{VAR} VALUE) syntax
-        set(ENV{LLVM_PROFILE_FILE} "${CMAKE_BINARY_DIR}/coverage/3DPhysicsEngine_%p.profraw")
 
         # Common llvm-cov options 
         set(LLVM_COV_COMMON_OPTS
             --ignore-filename-regex=".*_test\\..*"
             --ignore-filename-regex=".*/tests?/.*"
             --compilation-dir=${CMAKE_BINARY_DIR}
-            --instr-profile=${CMAKE_BINARY_DIR}/coverage/merged.profdata
         )
 
         # HTML coverage report target
@@ -165,7 +161,7 @@ if(COVERAGE AND TESTS)
             # Create coverage directory first
             COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/coverage
             # Run tests with environment variable set
-            COMMAND env LLVM_PROFILE_FILE=${CMAKE_BINARY_DIR}/coverage/3DPhysicsEngine_%p.profraw ${CMAKE_CTEST_COMMAND} --output-on-failure
+            COMMAND env LLVM_PROFILE_FILE=${CMAKE_BINARY_DIR}/coverage/3DPhysicsEngine.profraw ${CMAKE_CTEST_COMMAND} --output-on-failure
             # Merge profiling data
             COMMAND ${LLVM_PROFDATA_PATH} merge -sparse ${CMAKE_BINARY_DIR}/coverage/*.profraw -o ${CMAKE_BINARY_DIR}/coverage/merged.profdata
             # Create report directory
@@ -173,6 +169,7 @@ if(COVERAGE AND TESTS)
             # Generate HTML report
             COMMAND ${LLVM_COV_PATH} show
                 ${LLVM_COV_COMMON_OPTS}
+                --instr-profile=${CMAKE_BINARY_DIR}/coverage/merged.profdata
                 --format=html
                 --output-dir=${CMAKE_BINARY_DIR}/coverage_report
                 $<TARGET_FILE:3DPhysicsEngine>
@@ -186,12 +183,13 @@ if(COVERAGE AND TESTS)
             # Create coverage directory first
             COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/coverage
             # Run tests with environment variable set
-            COMMAND env LLVM_PROFILE_FILE=${CMAKE_BINARY_DIR}/coverage/3DPhysicsEngine_%p.profraw ${CMAKE_CTEST_COMMAND} --output-on-failure
+            COMMAND env LLVM_PROFILE_FILE=${CMAKE_BINARY_DIR}/coverage/3DPhysicsEngine.profraw ${CMAKE_CTEST_COMMAND} --output-on-failure
             # Merge profiling data
             COMMAND ${LLVM_PROFDATA_PATH} merge -sparse ${CMAKE_BINARY_DIR}/coverage/*.profraw -o ${CMAKE_BINARY_DIR}/coverage/merged.profdata
             # Generate console report
             COMMAND ${LLVM_COV_PATH} report
                 ${LLVM_COV_COMMON_OPTS}
+                --instr-profile=${CMAKE_BINARY_DIR}/coverage/merged.profdata
                 $<TARGET_FILE:3DPhysicsEngine>
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
             COMMENT "Running tests and generating console coverage report..."

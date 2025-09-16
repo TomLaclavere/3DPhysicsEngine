@@ -1,4 +1,4 @@
-name: C++ CI
+name: 3DPhysicsEngine CI
 
 on: [push, pull_request]
 
@@ -39,15 +39,6 @@ jobs:
             -DCMAKE_BUILD_TYPE=Debug \
             -DTESTS=ON \
             -DCOVERAGE=ON
-
-      - name: List targets for debugging
-        run: ninja -C build -t targets | grep coverage || true
-
-      - name: Build dependencies first
-        run: cmake --build build --target 3DPhysicsEngine mathematics_test
-
-      - name: Generate coverage report
-        run: cmake --build build --target coverage-console
 
       - name: Build
         run: cmake --build build -- -j$(nproc)

@@ -93,44 +93,85 @@ if(COVERAGE AND TESTS)
         return()
     endif()
 
-    find_program(GCOVR_PATH gcovr)
-    if(NOT GCOVR_PATH)
-        message(WARNING "gcovr not found - coverage targets disabled")
-        return()
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        find_program(GCOVR_PATH gcovr)
+        if(NOT GCOVR_PATH)
+            message(WARNING "gcovr not found - coverage targets disabled")
+            return()
+        endif()
+
+        target_compile_options(3DPhysicsEngine PRIVATE --coverage -fprofile-arcs -ftest-coverage)
+        target_link_libraries   (3DPhysicsEngine PRIVATE --coverage)
+
+        set(GCOVR_COMMON_OPTS
+            --exclude-unreachable-branches
+            --exclude-throw-branches
+            --root=${CMAKE_SOURCE_DIR}
+            --object-directory=${CMAKE_BINARY_DIR}
+            --print-summary
+            --filter="${CMAKE_SOURCE_DIR}/src/.*"
+            --filter="${CMAKE_SOURCE_DIR}/lib/.*"
+        )
+
+        add_custom_target(coverage
+            COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/coverage_report
+            COMMAND ${GCOVR_PATH}
+                ${GCOVR_COMMON_OPTS}
+                --html
+                --html-details
+                --html-theme github.dark-green
+                -o ${CMAKE_BINARY_DIR}/coverage_report/coverage_report.html
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            COMMENT "Running tests and generating HTML coverage report..."
+            DEPENDS 3DPhysicsEngine mathematics_test
+        )
+
+        add_custom_target(coverage-console
+            COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
+            COMMAND ${GCOVR_PATH} ${GCOVR_COMMON_OPTS}
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            COMMENT "Running tests and generating console coverage report..."
+            DEPENDS 3DPhysicsEngine mathematics_test
+        )
+    endif()
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        target_compile_options(3DPhysicsEngine PRIVATE -fprofile-instr-generate -fcoverage-mapping)
+        target_link_options(3DPhysicsEngine PRIVATE -fprofile-instr-generate)
+
+        set(LLVM_PROFDATA llvm-profdata)
+        set(LLVM_COV llvm-cov)
+        set(PROFRAW_FILE default.profraw)
+        set(PROFDATA_FILE coverage.profdata)
+        set(COVERAGE_REPORT_DIR ${CMAKE_BINARY_DIR}/coverage_report)
+        set(COVERAGE_HTML_FILE ${COVERAGE_REPORT_DIR}/coverage_report.html)
+
+        add_custom_target(coverage
+            COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
+            COMMAND ${LLVM_PROFDATA} merge -sparse ${PROFRAW_FILE} -o ${PROFDATA_FILE}
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${COVERAGE_REPORT_DIR}
+            COMMAND ${LLVM_COV} show
+                $<TARGET_FILE:mathematics_test>
+                -instr-profile=${PROFDATA_FILE}
+                -format=html
+                -output-dir=${COVERAGE_REPORT_DIR}
+                -Xdemangler c++filt
+                -Xreducer=none
+                -ignore-filename-regex='.*(test|external).*'
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            COMMENT "Running tests and generating HTML coverage report with llvm-cov..."
+            DEPENDS 3DPhysicsEngine mathematics_test
+        )
+
+        add_custom_target(coverage-console
+            COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
+            COMMAND ${LLVM_PROFDATA} merge -sparse ${PROFRAW_FILE} -o ${PROFDATA_FILE}
+            COMMAND ${LLVM_COV} report
+                $<TARGET_FILE:mathematics_test>
+                -instr-profile=${PROFDATA_FILE}
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            COMMENT "Running tests and generating console coverage report with llvm-cov..."
+            DEPENDS 3DPhysicsEngine mathematics_test
+        )
     endif()
 
-    target_compile_options(3DPhysicsEngine PRIVATE --coverage -fprofile-arcs -ftest-coverage)
-    target_link_libraries   (3DPhysicsEngine PRIVATE --coverage)
-
-    set(GCOVR_COMMON_OPTS
-        --exclude-unreachable-branches
-        --exclude-throw-branches
-        --root=${CMAKE_SOURCE_DIR}
-        --object-directory=${CMAKE_BINARY_DIR}
-        --print-summary
-        --filter="${CMAKE_SOURCE_DIR}/src/.*"
-        --filter="${CMAKE_SOURCE_DIR}/lib/.*"
-    )
-
-    add_custom_target(coverage
-        COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/coverage_report
-        COMMAND ${GCOVR_PATH}
-            ${GCOVR_COMMON_OPTS}
-            --html
-            --html-details
-            --html-theme github.dark-green
-            -o ${CMAKE_BINARY_DIR}/coverage_report/coverage_report.html
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        COMMENT "Running tests and generating HTML coverage report..."
-        DEPENDS 3DPhysicsEngine mathematics_test
-    )
-
-    add_custom_target(coverage-console
-        COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
-        COMMAND ${GCOVR_PATH} ${GCOVR_COMMON_OPTS}
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        COMMENT "Running tests and generating console coverage report..."
-        DEPENDS 3DPhysicsEngine mathematics_test
-    )
-endif()

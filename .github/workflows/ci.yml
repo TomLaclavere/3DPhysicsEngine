@@ -41,7 +41,7 @@ jobs:
             -DCOVERAGE=ON
 
       - name: Build
-        run: make -j$(nproc)
+        run: cmake --build build -- -j$(nproc)
 
       - name: Run tests
         run: ctest --test-dir build --output-on-failure -j$(nproc)

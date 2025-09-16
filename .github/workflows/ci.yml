@@ -40,6 +40,15 @@ jobs:
             -DTESTS=ON \
             -DCOVERAGE=ON
 
+      - name: List targets for debugging
+        run: ninja -C build -t targets | grep coverage || true
+
+      - name: Build dependencies first
+        run: cmake --build build --target 3DPhysicsEngine mathematics_test
+
+      - name: Generate coverage report
+        run: cmake --build build --target coverage-console
+
       - name: Build
         run: cmake --build build -- -j$(nproc)
 

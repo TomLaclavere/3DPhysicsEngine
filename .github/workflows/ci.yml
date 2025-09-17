@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        compiler: [clang]
+        compiler: [gcc] # , clang]
 
     steps:
       - name: Checkout code
@@ -19,18 +19,8 @@ jobs:
           if [ "${{ matrix.compiler }}" = "gcc" ]; then
             sudo apt-get install -y cmake ninja-build gcc g++ gcovr
           else
-            sudo apt-get install -y cmake ninja-build clang llvm-14 llvm-14-tools
-            sudo ln -sf /usr/bin/llvm-cov-14 /usr/local/bin/llvm-cov
-            sudo ln -sf /usr/bin/llvm-profdata-14 /usr/local/bin/llvm-profdata
-            export PATH=/usr/local/bin:$PATH
+            sudo apt-get install -y cmake ninja-build clang llvm
           fi
-
-      - name: Check llvm tools
-        run: |
-          which llvm-cov
-          llvm-cov --version
-          which llvm-profdata
-          llvm-profdata help || true
 
       - name: Set environment variables
         run: |
@@ -48,20 +38,7 @@ jobs:
             -G Ninja \
             -DCMAKE_BUILD_TYPE=Debug \
             -DTESTS=ON \
-            -DCOVERAGE=ON \
-            -DLLVM_COV_PATH=/usr/bin/llvm-cov-14 \
-            -DLLVM_PROFDATA_PATH=/usr/bin/llvm-profdata-14
-
-      - name: Show CMake logs
-        run: |
-          cat build/CMakeFiles/CMakeOutput.log || true
-          cat build/CMakeFiles/CMakeError.log || true
-
-      - name: Inspect CMake logs
-        run: |
-          grep -i "coverage" build/CMakeCache.txt || true
-          grep -i "llvm" build/CMakeCache.txt || true
-
+            -DCOVERAGE=ON
 
       - name: Build
         run: cmake --build build -- -j$(nproc)

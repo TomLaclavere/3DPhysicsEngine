@@ -26,8 +26,10 @@ jobs:
 
       - name: Check llvm tools
         run: |
+          which llvm-cov
           llvm-cov --version
-          llvm-profdata --version
+          which llvm-profdata
+          llvm-profdata help || true
 
       - name: Set environment variables
         run: |

@@ -32,7 +32,7 @@ jobs:
           which llvm-cov
           llvm-cov --version
           which llvm-profdata
-          llvm-profdata --version
+          llvm-profdata 2>&1 | head -n 1 || true
 
       - name: Set environment variables
         run: |

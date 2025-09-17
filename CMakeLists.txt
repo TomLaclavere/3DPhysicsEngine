@@ -90,50 +90,46 @@ endif()
 if(COVERAGE AND TESTS)
     if(NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         message(WARNING "Code coverage is only supported for GCC and Clang compilers")
-        return()
-    endif()
-
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         find_program(GCOVR_PATH gcovr)
         if(NOT GCOVR_PATH)
             message(WARNING "gcovr not found - coverage targets disabled")
-            return()
+        else()
+            target_compile_options(3DPhysicsEngine PRIVATE --coverage -fprofile-arcs -ftest-coverage)
+            target_link_libraries(3DPhysicsEngine PRIVATE --coverage)
+
+            set(GCOVR_COMMON_OPTS
+                --exclude-unreachable-branches
+                --exclude-throw-branches
+                --root=${CMAKE_SOURCE_DIR}
+                --object-directory=${CMAKE_BINARY_DIR}
+                --print-summary
+                --filter="${CMAKE_SOURCE_DIR}/src/.*"
+                --filter="${CMAKE_SOURCE_DIR}/lib/.*"
+            )
+
+            add_custom_target(coverage
+                COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
+                COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/coverage_report
+                COMMAND ${GCOVR_PATH}
+                    ${GCOVR_COMMON_OPTS}
+                    --html
+                    --html-details
+                    --html-theme github.dark-green
+                    -o ${CMAKE_BINARY_DIR}/coverage_report/coverage_report.html
+                WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+                COMMENT "Running tests and generating HTML coverage report..."
+                DEPENDS 3DPhysicsEngine mathematics_test
+            )
+
+            add_custom_target(coverage-console
+                COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
+                COMMAND ${GCOVR_PATH} ${GCOVR_COMMON_OPTS}
+                WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+                COMMENT "Running tests and generating console coverage report..."
+                DEPENDS 3DPhysicsEngine mathematics_test
+            )
         endif()
-
-        target_compile_options(3DPhysicsEngine PRIVATE --coverage -fprofile-arcs -ftest-coverage)
-        target_link_libraries(3DPhysicsEngine PRIVATE --coverage)
-
-        set(GCOVR_COMMON_OPTS
-            --exclude-unreachable-branches
-            --exclude-throw-branches
-            --root=${CMAKE_SOURCE_DIR}
-            --object-directory=${CMAKE_BINARY_DIR}
-            --print-summary
-            --filter="${CMAKE_SOURCE_DIR}/src/.*"
-            --filter="${CMAKE_SOURCE_DIR}/lib/.*"
-        )
-
-        add_custom_target(coverage
-            COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
-            COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/coverage_report
-            COMMAND ${GCOVR_PATH}
-                ${GCOVR_COMMON_OPTS}
-                --html
-                --html-details
-                --html-theme github.dark-green
-                -o ${CMAKE_BINARY_DIR}/coverage_report/coverage_report.html
-            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-            COMMENT "Running tests and generating HTML coverage report..."
-            DEPENDS 3DPhysicsEngine mathematics_test
-        )
-
-        add_custom_target(coverage-console
-            COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
-            COMMAND ${GCOVR_PATH} ${GCOVR_COMMON_OPTS}
-            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-            COMMENT "Running tests and generating console coverage report..."
-            DEPENDS 3DPhysicsEngine mathematics_test
-        )
 
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         # Find LLVM coverage tools
@@ -142,60 +138,50 @@ if(COVERAGE AND TESTS)
         
         if(NOT LLVM_COV_PATH OR NOT LLVM_PROFDATA_PATH)
             message(WARNING "llvm-cov or llvm-profdata not found - coverage targets disabled")
-            return()
+        else()
+            # Set Clang coverage compilation flags - must be added to both compile and link
+            target_compile_options(3DPhysicsEngine PRIVATE -fprofile-instr-generate -fcoverage-mapping)
+            target_link_libraries(3DPhysicsEngine PRIVATE -fprofile-instr-generate -fcoverage-mapping)
+
+            # Set environment variable for profiling output
+            set(ENV{LLVM_PROFILE_FILE} "${CMAKE_BINARY_DIR}/coverage/3DPhysicsEngine_%p.profraw")
+
+            # Common llvm-cov options 
+            set(LLVM_COV_COMMON_OPTS
+                --ignore-filename-regex=".*_test\\..*"
+                --ignore-filename-regex=".*/tests?/.*"
+                --compilation-dir=${CMAKE_BINARY_DIR}
+                --instr-profile=${CMAKE_BINARY_DIR}/coverage/merged.profdata
+            )
+
+            # HTML coverage report target
+            add_custom_target(coverage
+                COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/coverage
+                COMMAND env LLVM_PROFILE_FILE=${CMAKE_BINARY_DIR}/coverage/3DPhysicsEngine_%p.profraw ${CMAKE_CTEST_COMMAND} --output-on-failure
+                COMMAND ${LLVM_PROFDATA_PATH} merge -sparse ${CMAKE_BINARY_DIR}/coverage/*.profraw -o ${CMAKE_BINARY_DIR}/coverage/merged.profdata
+                COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/coverage_report
+                COMMAND ${LLVM_COV_PATH} show
+                    ${LLVM_COV_COMMON_OPTS}
+                    --format=html
+                    --output-dir=${CMAKE_BINARY_DIR}/coverage_report
+                    $<TARGET_FILE:3DPhysicsEngine>
+                WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+                COMMENT "Running tests and generating HTML coverage report..."
+                DEPENDS 3DPhysicsEngine mathematics_test
+            )
+
+            # Console coverage report target
+            add_custom_target(coverage-console
+                COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/coverage
+                COMMAND env LLVM_PROFILE_FILE=${CMAKE_BINARY_DIR}/coverage/3DPhysicsEngine_%p.profraw ${CMAKE_CTEST_COMMAND} --output-on-failure
+                COMMAND ${LLVM_PROFDATA_PATH} merge -sparse ${CMAKE_BINARY_DIR}/coverage/*.profraw -o ${CMAKE_BINARY_DIR}/coverage/merged.profdata
+                COMMAND ${LLVM_COV_PATH} report
+                    ${LLVM_COV_COMMON_OPTS}
+                    $<TARGET_FILE:3DPhysicsEngine>
+                WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+                COMMENT "Running tests and generating console coverage report..."
+                DEPENDS 3DPhysicsEngine mathematics_test
+            )
         endif()
-
-        # Set Clang coverage compilation flags - must be added to both compile and link
-        target_compile_options(3DPhysicsEngine PRIVATE -fprofile-instr-generate -fcoverage-mapping)
-        target_link_libraries(3DPhysicsEngine PRIVATE -fprofile-instr-generate -fcoverage-mapping)
-
-        # Set environment variable for profiling output
-        set(ENV{LLVM_PROFILE_FILE} "${CMAKE_BINARY_DIR}/coverage/3DPhysicsEngine_%p.profraw")
-
-        # Common llvm-cov options 
-        set(LLVM_COV_COMMON_OPTS
-            --ignore-filename-regex=".*_test\\..*"
-            --ignore-filename-regex=".*/tests?/.*"
-            --compilation-dir=${CMAKE_BINARY_DIR}
-            --instr-profile=${CMAKE_BINARY_DIR}/coverage/merged.profdata
-        )
-
-        # HTML coverage report target
-        add_custom_target(coverage
-            # Create coverage directory first
-            COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/coverage
-            # Run tests with environment variable set
-            COMMAND env LLVM_PROFILE_FILE=${CMAKE_BINARY_DIR}/coverage/3DPhysicsEngine_%p.profraw ${CMAKE_CTEST_COMMAND} --output-on-failure
-            # Merge profiling data
-            COMMAND ${LLVM_PROFDATA_PATH} merge -sparse ${CMAKE_BINARY_DIR}/coverage/*.profraw -o ${CMAKE_BINARY_DIR}/coverage/merged.profdata
-            # Create report directory
-            COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/coverage_report
-            # Generate HTML report
-            COMMAND ${LLVM_COV_PATH} show
-                ${LLVM_COV_COMMON_OPTS}
-                --format=html
-                --output-dir=${CMAKE_BINARY_DIR}/coverage_report
-                $<TARGET_FILE:3DPhysicsEngine>
-            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-            COMMENT "Running tests and generating HTML coverage report..."
-            DEPENDS 3DPhysicsEngine mathematics_test
-        )
-
-        # Console coverage report target
-        add_custom_target(coverage-console
-            # Create coverage directory first
-            COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/coverage
-            # Run tests with environment variable set
-            COMMAND env LLVM_PROFILE_FILE=${CMAKE_BINARY_DIR}/coverage/3DPhysicsEngine_%p.profraw ${CMAKE_CTEST_COMMAND} --output-on-failure
-            # Merge profiling data
-            COMMAND ${LLVM_PROFDATA_PATH} merge -sparse ${CMAKE_BINARY_DIR}/coverage/*.profraw -o ${CMAKE_BINARY_DIR}/coverage/merged.profdata
-            # Generate console report
-            COMMAND ${LLVM_COV_PATH} report
-                ${LLVM_COV_COMMON_OPTS}
-                $<TARGET_FILE:3DPhysicsEngine>
-            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-            COMMENT "Running tests and generating console coverage report..."
-            DEPENDS 3DPhysicsEngine mathematics_test
-        )
     endif()
 endif()

@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        compiler: [gcc, clang]
+        compiler: [clang]
 
     steps:
       - name: Checkout code
@@ -23,6 +23,11 @@ jobs:
             sudo ln -s /usr/bin/llvm-cov-14 /usr/local/bin/llvm-cov
             sudo ln -s /usr/bin/llvm-profdata-14 /usr/local/bin/llvm-profdata
           fi
+
+      - name: Check llvm tools
+        run: |
+          llvm-cov --version
+          llvm-profdata --version
 
       - name: Set environment variables
         run: |

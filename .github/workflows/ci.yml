@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        compiler: [clang] # , clang]
+        compiler: [clang] #, gcc]
 
     steps:
       - name: Checkout code
@@ -20,10 +20,19 @@ jobs:
             sudo apt-get install -y cmake ninja-build gcc g++ gcovr
           else
             sudo apt-get install -y cmake ninja-build clang llvm
+            # Install LLVM 14 tools (llvm-cov + llvm-profdata)
             sudo apt-get install -y llvm-14 llvm-14-tools
+            # Point unversioned llvm-cov/llvm-profdata to version 14
             sudo update-alternatives --install /usr/bin/llvm-cov llvm-cov /usr/bin/llvm-cov-14 100
             sudo update-alternatives --install /usr/bin/llvm-profdata llvm-profdata /usr/bin/llvm-profdata-14 100
           fi
+
+      - name: Check LLVM tools
+        run: |
+          which llvm-cov
+          llvm-cov --version
+          which llvm-profdata
+          llvm-profdata --version
 
       - name: Set environment variables
         run: |
@@ -35,6 +44,7 @@ jobs:
             echo "CXX=clang++" >> $GITHUB_ENV
           fi
 
+      # Make sure configure step runs AFTER LLVM tools are installed
       - name: Configure project
         run: |
           cmake -S . -B build \

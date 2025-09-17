@@ -32,11 +32,6 @@ jobs:
           which llvm-profdata
           llvm-profdata help || true
 
-      - name: Inspect CMake logs
-        run: |
-          grep -i "coverage" build/CMakeCache.txt || true
-          grep -i "llvm" build/CMakeCache.txt || true
-
       - name: Set environment variables
         run: |
           if [ "${{ matrix.compiler }}" = "gcc" ]; then
@@ -56,6 +51,17 @@ jobs:
             -DCOVERAGE=ON \
             -DLLVM_COV_PATH=/usr/bin/llvm-cov-14 \
             -DLLVM_PROFDATA_PATH=/usr/bin/llvm-profdata-14
+
+      - name: Show CMake logs
+        run: |
+          cat build/CMakeFiles/CMakeOutput.log || true
+          cat build/CMakeFiles/CMakeError.log || true
+
+      - name: Inspect CMake logs
+        run: |
+          grep -i "coverage" build/CMakeCache.txt || true
+          grep -i "llvm" build/CMakeCache.txt || true
+
 
       - name: Build
         run: cmake --build build -- -j$(nproc)

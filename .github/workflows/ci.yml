@@ -24,11 +24,6 @@ jobs:
             sudo ln -s /usr/bin/llvm-profdata-14 /usr/local/bin/llvm-profdata
           fi
 
-      - name: Check llvm tools
-        run: |
-          llvm-cov --version
-          llvm-profdata --version
-
       - name: Set environment variables
         run: |
           if [ "${{ matrix.compiler }}" = "gcc" ]; then

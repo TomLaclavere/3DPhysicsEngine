@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        compiler: [gcc] # , clang]
+        compiler: [clang] # , clang]
 
     steps:
       - name: Checkout code
@@ -20,6 +20,9 @@ jobs:
             sudo apt-get install -y cmake ninja-build gcc g++ gcovr
           else
             sudo apt-get install -y cmake ninja-build clang llvm
+            sudo apt-get install -y llvm-14 llvm-14-tools
+            sudo update-alternatives --install /usr/bin/llvm-cov llvm-cov /usr/bin/llvm-cov-14 100
+            sudo update-alternatives --install /usr/bin/llvm-profdata llvm-profdata /usr/bin/llvm-profdata-14 100
           fi
 
       - name: Set environment variables

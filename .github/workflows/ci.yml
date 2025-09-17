@@ -20,8 +20,9 @@ jobs:
             sudo apt-get install -y cmake ninja-build gcc g++ gcovr
           else
             sudo apt-get install -y cmake ninja-build clang llvm-14 llvm-14-tools
-            sudo ln -s /usr/bin/llvm-cov-14 /usr/local/bin/llvm-cov
-            sudo ln -s /usr/bin/llvm-profdata-14 /usr/local/bin/llvm-profdata
+            sudo ln -sf /usr/bin/llvm-cov-14 /usr/local/bin/llvm-cov
+            sudo ln -sf /usr/bin/llvm-profdata-14 /usr/local/bin/llvm-profdata
+            export PATH=/usr/local/bin:$PATH
           fi
 
       - name: Check llvm tools
@@ -30,6 +31,11 @@ jobs:
           llvm-cov --version
           which llvm-profdata
           llvm-profdata help || true
+
+      - name: Inspect CMake logs
+        run: |
+          grep -i "coverage" build/CMakeCache.txt || true
+          grep -i "llvm" build/CMakeCache.txt || true
 
       - name: Set environment variables
         run: |
@@ -47,7 +53,9 @@ jobs:
             -G Ninja \
             -DCMAKE_BUILD_TYPE=Debug \
             -DTESTS=ON \
-            -DCOVERAGE=ON
+            -DCOVERAGE=ON \
+            -DLLVM_COV_PATH=/usr/bin/llvm-cov-14 \
+            -DLLVM_PROFDATA_PATH=/usr/bin/llvm-profdata-14
 
       - name: Build
         run: cmake --build build -- -j$(nproc)

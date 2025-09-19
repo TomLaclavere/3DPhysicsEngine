@@ -69,6 +69,9 @@ open docs/html/index.html          # macOS
 start docs/html/index.html         # Windows
 ```
 
+The documentation is generated at each commit on the main branch, and accessible at : [![Documentation](https://img.shields.io/badge/docs-online-brightgreen)](https://tomlaclavere.github.io/3DPhysicsEngine/)
+
+
 ## Tech Stack
 
 - Language: C++23

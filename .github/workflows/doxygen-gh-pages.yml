@@ -13,21 +13,20 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4  # Updated to v4
+      - name: Checkout repository
+        uses: actions/checkout@v4  # Use latest stable version
 
-      - name: Install Doxygen & Graphviz
+      - name: Install Doxygen and Graphviz
         run: sudo apt-get update && sudo apt-get install -y doxygen graphviz
 
-      - name: Generate documentation
-        run: doxygen Doxyfile
+      - name: Generate Doxygen documentation
+        run: doxygen Doxyfile  # Ensure your Doxyfile exists and is configured correctly
 
-      - name: Upload Pages Artifact
-        uses: actions/upload-pages-artifact@v2  # Updated to v2
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3  # Use v3 or later
         with:
-          path: docs/html  # Ensure this matches your Doxyfile OUTPUT_DIRECTORY
+          path: docs/html  # Adjust this path to match your Doxyfile's OUTPUT_DIRECTORY
 
   deploy:
     needs: build
@@ -35,8 +34,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2  # Updated to v2
+        uses: actions/deploy-pages@v4  # Use v4 or later

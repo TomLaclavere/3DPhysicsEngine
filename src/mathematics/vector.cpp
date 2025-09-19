@@ -151,20 +151,14 @@ decimal Vector3D::operator()(int i) const
     return v[i];
 }
 decimal& Vector3D::operator[](int i) { return v[i]; }
-decimal Vector3D::operator[](int i) const { return v[i]; }
+decimal  Vector3D::operator[](int i) const { return v[i]; }
 
 // ============================================================================
 // ============================================================================
 //  In-Place Arithmetic Operators
 // ============================================================================
 // ============================================================================
-Vector3D& Vector3D::operator-()
-{
-    v[0] = -v[0];
-    v[1] = -v[1];
-    v[2] = -v[2];
-    return *this;
-}
+Vector3D  Vector3D::operator-() const { return Vector3D { -v[0], -v[1], -v[2] }; }
 Vector3D& Vector3D::operator+=(const Vector3D& other)
 {
     v[0] += other[0];

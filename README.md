@@ -55,6 +55,20 @@ CMake takes multiple parameters to define different compilations :
 - `-DTESTS` : compiles the unit testing repository. To run the test, you can use : `ctest -j$(nproc)`.
 - `-DCOVERAGE` : allows performing coverage analysis. Two options are available, to run after build : `make coverage` which will save a detailed coverage reports as HTML file at the following location : `build/coverage_report/`; and `make coverage-console` to print the results in the console. Be careful: `gcovr` needs to be installed for GCC compilation.
 
+## Doxygen Documentation
+
+To generate the project documentation using Doxygen, run the following command :
+```
+doxygen Doxyfile
+```
+
+It will generate two repositories in `docs/` : `html/` and `latex/`. To visualise the documentation, use the command : 
+```
+xdg-open docs/html/index.html      # Linux
+open docs/html/index.html          # macOS
+start docs/html/index.html         # Windows
+```
+
 ## Tech Stack
 
 - Language: C++23

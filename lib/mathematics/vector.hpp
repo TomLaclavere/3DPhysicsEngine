@@ -75,24 +75,20 @@ public:
     // ============================================================================
     /// @{
 
-    /// Convert each component to its absolute value (in-place).
+    /// Convert each element to its absolute value (in-place).
     void absolute();
-
     /// Normalize this vector (in-place). If zero-length, becomes null vector.
     void normalize();
-
     /// Squared Euclidian norm. Cheaper than `getNorm()`.
     decimal getNormSquare() const { return v[0] * v[0] + v[1] * v[1] + v[2] * v[2]; }
-
     /// Euclidean norm.
     decimal getNorm() const { return std::sqrt(getNormSquare()); }
-
+    /// Minimum element value.
     decimal getMinValue() const { return std::min({ v[0], v[1], v[2] }); }
+    /// Maximum element value.
     decimal getMaxValue() const { return std::max({ v[0], v[1], v[2] }); }
-
-    /// Return a new vector with component-wise absolute values.
+    /// Return a new vector with element-wise absolute values.
     Vector3D getAbsoluteVector() const;
-
     /// Return a normalized copy of the vector. If zero-length, return null vector.
     Vector3D getNormalized() const;
     /// @}
@@ -116,7 +112,7 @@ public:
     bool isNull() const;
     /// Check if vector length equals a given value.
     bool isLengthEqual(decimal length) const;
-    /// Check if all components are finite (not NaN, not Inf).
+    /// Check if all elements are finite (not NaN, not Inf).
     bool isFinite() const;
     /// Check if vector has unit length.
     bool isNormalized() const;
@@ -174,7 +170,7 @@ public:
     // ============================================================================
     /// @{
 
-    /// Negate each component of the vector
+    /// Negate each element of the vector
     Vector3D  operator-() const;
     Vector3D& operator+=(const Vector3D&);
     Vector3D& operator-=(const Vector3D&);

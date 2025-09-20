@@ -107,7 +107,7 @@ TEST(Vector3D_Test, Setters)
 TEST(Vector3_Test, PropertyCheck)
 {
     Vector3D v;
-    EXPECT_TRUE(v.isZero());
+    EXPECT_TRUE(v.isNull());
     EXPECT_TRUE(v.isLengthEqual(0_d));
     EXPECT_FALSE(v.isNormalized());
 

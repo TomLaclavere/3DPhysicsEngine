@@ -20,7 +20,7 @@
 
 /**
  * @defgroup VectorMaths
- * Utilities for vectorial operations. Contains Vector3D class and related functions.
+ * Utilities for vectorial operations. Contains Vector3D class and related free functions.
  */
 
 /**
@@ -154,13 +154,17 @@ public:
     // ============================================================================
     /// @{
 
-    /// Access vectors components with index range checking.
+    /// Access vectors element with index range checking.
+    decimal& at(int);
+    /// Access vectors element with index range checking (const version).
+    decimal at(int) const;
+    /// Access vectors element without index range checking.
     decimal& operator()(int);
-    /// Access vectors components with index range checking (const version).
+    /// Access vectors element without index range checking (const version).
     decimal operator()(int) const;
-    /// Access vectors components without index range checking.
+    /// Access vectors element without index range checking.
     decimal& operator[](int);
-    /// Access vectors components without index range checking (const version).
+    /// Access vectors element without index range checking (const version).
     decimal operator[](int) const;
     /// @}
 

@@ -150,7 +150,7 @@ bool Vector3D::approxEqual(const Vector3D& other, decimal p) const
 // ============================================================================
 /// @param i Index of the component (0, 1, or 2).
 /// @return Reference to the component at index `i`.
-decimal& Vector3D::operator()(int i)
+decimal& Vector3D::at(int i)
 {
     if (i < 0 || i >= 3)
         throw std::out_of_range("Vector3D index out of range");
@@ -158,12 +158,18 @@ decimal& Vector3D::operator()(int i)
 }
 /// @param i Index of the component (0, 1, or 2).
 /// @return Value of the component at index `i`.
-decimal Vector3D::operator()(int i) const
+decimal Vector3D::at(int i) const
 {
     if (i < 0 || i >= 3)
         throw std::out_of_range("Vector3D index out of range");
     return v[i];
 }
+/// @param i Index of the component (0, 1, or 2). If out of range, behavior is undefined.
+/// @return Reference to the component at index `i`.
+decimal& Vector3D::operator()(int i) { return v[i]; }
+/// @param i Index of the component (0, 1, or 2). If out of range, behavior is undefined.
+/// @return Value of the component at index `i`.
+decimal Vector3D::operator()(int i) const { return v[i]; }
 /// @param i Index of the component (0, 1, or 2). If out of range, behavior is undefined.
 /// @return Reference to the component at index `i`.
 decimal& Vector3D::operator[](int i) { return v[i]; }

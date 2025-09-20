@@ -35,7 +35,9 @@
   - [x] **Test CI :** Integration of tests procedure in GitHub.
     - [x] **CI with GCC**
     - [ ] **CI with Clang :**
-- [ ] **Documentation :** Document types and utilities.
+- [ ] **Documentation :** Doxygen
+  - [ ] Document types and utilities.
+  - [ ] Documentation CI.
 
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------

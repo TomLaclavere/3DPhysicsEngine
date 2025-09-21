@@ -1,6 +1,6 @@
 /**
  * @file vector.hpp
- * 3D vector class and operations for physics/mathematical computations.
+ * @brief 3D vector class and operations for physics/mathematical computations.
  *
  * Part of the math foundation of the physics engine.
  *
@@ -25,7 +25,7 @@
 
 /**
  * @ingroup VectorMaths
- * 3D vector class with basic math operations.
+ * @brief 3D vector class with basic math operations.
  *
  * Uses `decimal` type defined in precision.hpp.
  * Stored internally as `std::array<decimal, 3>`.
@@ -88,7 +88,7 @@ public:
     /// Maximum element value.
     decimal getMaxValue() const { return std::max({ v[0], v[1], v[2] }); }
     /// Return a new vector with element-wise absolute values.
-    Vector3D getAbsoluteVector() const;
+    Vector3D getAbsolute() const;
     /// Return a normalized copy of the vector. If zero-length, return null vector.
     Vector3D getNormalized() const;
     /// @}
@@ -130,12 +130,11 @@ public:
     Vector3D crossProduct(const Vector3D&) const;
     /// @}
 
-    /// Element-wise and length comparisons.
+    /// Element-wise comparisons.
     // ============================================================================
     /// @name Operators Comparison
     // ============================================================================
     /// @{
-
     bool operator==(const Vector3D&) const;
     bool operator!=(const Vector3D&) const;
     bool operator<(const Vector3D&) const;
@@ -261,6 +260,7 @@ Vector3D operator/(decimal, const Vector3D&);
 /// @name Printing
 // ============================================================================
 /// @{
+
 /**
  * Stream output operator for Vector3D.
  * Return format is (x,y,z).

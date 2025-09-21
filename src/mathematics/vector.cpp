@@ -44,7 +44,7 @@ void Vector3D::normalize()
     else
         *this /= n;
 }
-Vector3D Vector3D::getAbsoluteVector() const
+Vector3D Vector3D::getAbsolute() const
 {
     Vector3D absV = Vector3D((*this));
     absV.absolute();

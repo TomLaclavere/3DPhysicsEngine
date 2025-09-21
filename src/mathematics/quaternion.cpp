@@ -163,9 +163,9 @@ void Quaternion::setAllValues(const Vector3D& newangles)
 // ============================================================================
 // ============================================================================
 bool Quaternion::isFinite() const { return (std::isfinite(w) && v.isFinite()); }
-bool Quaternion::isZero() const { return (commonMaths::approxEqual(w, decimal(0)) && v.isZero()); }
+bool Quaternion::isZero() const { return (commonMaths::approxEqual(w, decimal(0)) && v.isNull()); }
 bool Quaternion::isUnit() const { return (commonMaths::approxEqual(getNorm(), decimal(1))); }
-bool Quaternion::isIdentity() const { return (commonMaths::approxEqual(w, decimal(1)) && v.isZero()); }
+bool Quaternion::isIdentity() const { return (commonMaths::approxEqual(w, decimal(1)) && v.isNull()); }
 bool Quaternion::isInvertible() const { return !(commonMaths::approxEqual(getNorm(), decimal(0))); }
 bool Quaternion::isOrthogonal() const { return isUnit(); }
 bool Quaternion::isNormalized() const { return isUnit(); }
@@ -199,7 +199,7 @@ bool Quaternion::operator<(const Quaternion& other) const { return (w < other.w 
 bool Quaternion::operator<=(const Quaternion& other) const { return (w <= other.w && v <= other.v); }
 bool Quaternion::operator>(const Quaternion& other) const { return (w > other.w && v > other.v); }
 bool Quaternion::operator>=(const Quaternion& other) const { return (w >= other.w && v >= other.v); }
-bool             Quaternion::approxEqual(const Quaternion& other, decimal p) const
+bool Quaternion::approxEqual(const Quaternion& other, decimal p) const
 {
     return (commonMaths::approxEqual(w, other.w, p) && v.approxEqual(other.v, p));
 }
@@ -211,10 +211,10 @@ bool             Quaternion::approxEqual(const Quaternion& other, decimal p) con
 // ============================================================================
 // Element access with index checking
 decimal& Quaternion::operator()(int i) { return v(i); }
-decimal Quaternion::operator()(int i) const { return v(i); }
+decimal  Quaternion::operator()(int i) const { return v(i); }
 // Element access with index checking
 decimal& Quaternion::operator[](int i) { return v[i]; }
-decimal Quaternion::operator[](int i) const { return v[i]; }
+decimal  Quaternion::operator[](int i) const { return v[i]; }
 
 // ============================================================================
 // ============================================================================

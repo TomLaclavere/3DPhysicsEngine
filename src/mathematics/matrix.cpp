@@ -141,7 +141,7 @@ void Matrix3x3::setToIdentity()
         for (int j = 0; j < 3; ++j)
             (*this)(i, j) = (i == j) ? 1 : 0;
 }
-void Matrix3x3::setToZero()
+void Matrix3x3::setToNull()
 {
     for (int i = 0; i < 9; ++i)
         (*this)(i) = 0;
@@ -150,6 +150,12 @@ void Matrix3x3::setAllValues(decimal value)
 {
     for (int i = 0; i < 9; ++i)
         (*this)(i) = value;
+}
+void Matrix3x3::setAllValues(Vector3D& v)
+{
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+            (*this)(i, j) = v[j];
 }
 void Matrix3x3::setAllValues(const Vector3D& v1, const Vector3D& v2, const Vector3D& v3)
 {
@@ -383,20 +389,13 @@ Matrix3x3& Matrix3x3::operator*=(const Matrix3x3& other)
 }
 Matrix3x3& Matrix3x3::operator/=(const Matrix3x3& other)
 {
-    // Check if the divisor matrix is a zero matrix
-    bool isZeroMatrix = true;
+    // Check if the divisor matrix has a zero element
     for (int i = 0; i < 9; ++i)
     {
-        if (other.m[i] != 0)
+        if (other.m[i] == 0)
         {
-            isZeroMatrix = false;
-            break;
+            throw std::invalid_argument("Division by zero element in matrix");
         }
-    }
-
-    if (isZeroMatrix)
-    {
-        throw std::invalid_argument("Division by zero matrix");
     }
 
     // Perform element-wise division
@@ -404,6 +403,38 @@ Matrix3x3& Matrix3x3::operator/=(const Matrix3x3& other)
     {
         m[i] /= other.m[i];
     }
+    return *this;
+}
+Matrix3x3& Matrix3x3::operator+=(const Vector3D& vector)
+{
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+            (*this)(i, j) += vector[j];
+    return *this;
+}
+Matrix3x3& Matrix3x3::operator-=(const Vector3D& vector)
+{
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+            (*this)(i, j) -= vector[j];
+    return *this;
+}
+Matrix3x3& Matrix3x3::operator*=(const Vector3D& vector)
+{
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+            (*this)(i, j) *= vector[j];
+    return *this;
+}
+Matrix3x3& Matrix3x3::operator/=(const Vector3D& vector)
+{
+    // Check if the divisor vector has a zero element
+    if (vector[0] == 0 || vector[1] == 0 || vector[2] == 0)
+        throw std::invalid_argument("Division by zero");
+
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+            (*this)(i, j) /= vector[j];
     return *this;
 }
 Matrix3x3& Matrix3x3::operator+=(decimal scalar)
@@ -458,43 +489,6 @@ Matrix3x3 operator/(const Matrix3x3& A, const Matrix3x3& B)
     Matrix3x3 m(A);
     return m /= B;
 }
-
-//! Matrix3x3 Vector3D operations need to be redifiened if needed
-// // ===== Matrix3x3 op Vector3D (element-wise, vector applied to each row) =====
-// Matrix3x3 operator+(const Matrix3x3& A, const Vector3D& B)
-// {
-//     return applyMatrix(A, B, [](const Vector3D& a, const Vector3D& b) { return a + b; });
-// }
-// Matrix3x3 operator-(const Matrix3x3& A, const Vector3D& B)
-// {
-//     return applyMatrix(A, B, [](const Vector3D& a, const Vector3D& b) { return a - b; });
-// }
-// Matrix3x3 operator*(const Matrix3x3& A, const Vector3D& B)
-// {
-//     return applyMatrix(A, B, [](const Vector3D& a, const Vector3D& b) { return a * b; });
-// }
-// Matrix3x3 operator/(const Matrix3x3& A, const Vector3D& B)
-// {
-//     return applyMatrix(A, B, [](const Vector3D& a, const Vector3D& b) { return a / b; });
-// }
-
-// // ===== Vector3D op Matrix3x3 (element-wise, vector applied to each row) =====
-// Matrix3x3 operator+(const Vector3D& A, const Matrix3x3& B)
-// {
-//     return applyMatrix(B, A, [](const Vector3D& a, const Vector3D& b) { return b + a; });
-// }
-// Matrix3x3 operator-(const Vector3D& A, const Matrix3x3& B)
-// {
-//     return applyMatrix(B, A, [](const Vector3D& a, const Vector3D& b) { return b - a; });
-// }
-// Matrix3x3 operator*(const Vector3D& A, const Matrix3x3& B)
-// {
-//     return applyMatrix(B, A, [](const Vector3D& a, const Vector3D& b) { return b * a; });
-// }
-// Matrix3x3 operator/(const Vector3D& A, const Matrix3x3& B)
-// {
-//     return applyMatrix(B, A, [](const Vector3D& a, const Vector3D& b) { return b / a; });
-//}
 
 // ===== Matrix3x3 op decimal =====
 Matrix3x3 operator+(const Matrix3x3& A, decimal s)

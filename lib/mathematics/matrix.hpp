@@ -1,5 +1,5 @@
 /**
- * @file matrix3x3.hpp
+ * @file matrix.hpp
  * @brief 3×3 matrix class and operations for physics/mathematical computations.
  *
  * Part of the math foundation of the physics engine.
@@ -116,15 +116,20 @@ public:
     /// Transpose the matrix (in-place).
     void transpose();
     /// Invert the matrix (in-place). Throw `std::runtime_error` if not invertible.
-    void      inverse();
-    decimal   getMinValue() const;
-    decimal   getMaxValue() const;
-    decimal   getDeterminant() const;
-    decimal   getTrace() const;
+    void inverse();
+    /// Return matrix determinant.
+    decimal getDeterminant() const;
+    /// Return matrix trace (sum of diagonal elements).
+    decimal getTrace() const;
+    /// Return identity matrix.
     Matrix3x3 getIdentity() const;
+    /// Return a new matrix with element-wise absolute values.
     Matrix3x3 getAbsolute() const;
+    /// Return a normalized copy of the matrix. If not invertible, return identity.
     Matrix3x3 getNormalized() const;
+    /// Return the transposed matrix.
     Matrix3x3 getTranspose() const;
+    /// Return the inverted matrix. Throw `std::runtime_error` if not invertible.
     Matrix3x3 getInverse() const;
     /// @}
 
@@ -136,7 +141,7 @@ public:
     void setColumn(int, const Vector3D&);
     void setDiagonal(const Vector3D&);
     void setToIdentity();
-    void setToZero();
+    void setToNull();
     void setAllValues(decimal);
     void setAllValues(Vector3D&);
     void setAllValues(const Vector3D&, const Vector3D&, const Vector3D&);
@@ -162,11 +167,13 @@ public:
     /// @name Matrix Operations
     // ============================================================================
     /// @{
+
     Matrix3x3 matrixProduct(const Matrix3x3&) const;
     Vector3D  matrixVectorProduct(const Vector3D&) const;
     Vector3D  vectorMatrixProduct(const Vector3D&) const;
     /// @}
 
+    /// Element-wise comparisons.
     // ============================================================================
     /// @name Comparisons Operators
     // ============================================================================
@@ -180,22 +187,28 @@ public:
     bool approxEqual(const Matrix3x3&, decimal precision = PRECISION_MACHINE) const;
     /// @}
 
+    /// Element-wise arithmetic operations.
     // ============================================================================
     /// @name In-Place Arithmetic Operators
     // ============================================================================
     /// @{
+
+    /// Negate each element of the matrix.
     Matrix3x3& operator-();
     Matrix3x3& operator+=(const Matrix3x3&);
     Matrix3x3& operator-=(const Matrix3x3&);
     Matrix3x3& operator*=(const Matrix3x3&);
+    /// Element-wise division. Throw `std::invalid_argument` on division by zero
     Matrix3x3& operator/=(const Matrix3x3&);
     Matrix3x3& operator+=(const Vector3D&);
     Matrix3x3& operator-=(const Vector3D&);
     Matrix3x3& operator*=(const Vector3D&);
+    /// Element-wise division. Throw `std::invalid_argument` on division by zero
     Matrix3x3& operator/=(const Vector3D&);
     Matrix3x3& operator+=(decimal value);
     Matrix3x3& operator-=(decimal value);
     Matrix3x3& operator*=(decimal value);
+    /// Element-wise division. Throw `std::invalid_argument` on division by zero
     Matrix3x3& operator/=(decimal value);
     /// @}
 };
@@ -251,37 +264,6 @@ inline decimal& Matrix3x3::operator[](int ind) { return m[ind]; }
 inline decimal  Matrix3x3::operator[](int ind) const { return m[ind]; }
 /// @}
 
-// // ============================================================================
-// // ============================================================================
-// //  Helper for Free Arithmetic Operators
-// // ============================================================================
-// // ============================================================================
-// template <class F>
-// inline Matrix3x3 applyMatrix(const Matrix3x3& A, const Matrix3x3& B, F&& func)
-// {
-//     Matrix3x3 result;
-//     for (int i = 0; i < 9; ++i)
-//         result[i] = func(A[i], B[i]);
-//     return result;
-// }
-// template <class F>
-// inline Matrix3x3 applyMatrix(const Matrix3x3& A, const Vector3D& B, F&& func)
-// {
-//     Matrix3x3 result;
-//     for (int i = 0; i < 3; ++i)
-//         for (int j = 0; j < 3; ++j)
-//             result(i, j) = func(A(i, j), B[i]);
-//     return result;
-// }
-// template <class F>
-// inline Matrix3x3 applyMatrix(const Matrix3x3& A, decimal B, F&& func)
-// {
-//     Matrix3x3 result;
-//     for (int i = 0; i < 9; ++i)
-//         result[i] = func(A[i], B);
-//     return result;
-// }
-
 // ============================================================================
 /// @name Matrix Operations
 // ============================================================================
@@ -300,17 +282,6 @@ Matrix3x3 operator-(const Matrix3x3&, const Matrix3x3&);
 Matrix3x3 operator*(const Matrix3x3&, const Matrix3x3&);
 Matrix3x3 operator/(const Matrix3x3&, const Matrix3x3&);
 
-//! Matrix3x3 Vector3D operations need to be redifiened if needed
-// Matrix3x3 operator+(const Matrix3x3&, const Vector3D&);
-// Matrix3x3 operator-(const Matrix3x3&, const Vector3D&);
-// Matrix3x3 operator*(const Matrix3x3&, const Vector3D&);
-// Matrix3x3 operator/(const Matrix3x3&, const Vector3D&);
-
-// Matrix3x3 operator+(const Vector3D&, const Matrix3x3&);
-// Matrix3x3 operator-(const Vector3D&, const Matrix3x3&);
-// Matrix3x3 operator*(const Vector3D&, const Matrix3x3&);
-// Matrix3x3 operator/(const Vector3D&, const Matrix3x3&);
-
 Matrix3x3 operator+(const Matrix3x3&, decimal);
 Matrix3x3 operator-(const Matrix3x3&, decimal);
 Matrix3x3 operator*(const Matrix3x3&, decimal);
@@ -326,6 +297,8 @@ Matrix3x3 operator/(decimal, const Matrix3x3&);
 /// @name Printing
 // ============================================================================
 /// @{
+
+/// Stream output operator for Matrix3x3.
 std::ostream& operator<<(std::ostream&, const Matrix3x3&);
 /// @}
 /// @}

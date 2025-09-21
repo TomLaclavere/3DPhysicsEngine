@@ -54,7 +54,7 @@ TEST(Vector3D_Test, Utilies)
     EXPECT_DECIMAL_EQ(v0.getMaxValue(), 2_d);
 
     // Absolute
-    Vector3D absV = v0.getAbsoluteVector();
+    Vector3D absV = v0.getAbsolute();
     EXPECT_EQ(absV, Vector3D(1_d, 2_d, 2_d));
     v0.absolute();
     EXPECT_EQ(absV, v0);
@@ -213,10 +213,10 @@ TEST(Vector3D_Test, ElementAccessChecked)
     EXPECT_DECIMAL_EQ(v(1_d), 42.0_d);
 
     // Out-of-range checks
-    EXPECT_THROW(v(-1_d), std::out_of_range);
-    EXPECT_THROW(v(3_d), std::out_of_range);
-    EXPECT_THROW(u(-1_d), std::out_of_range);
-    EXPECT_THROW(u(3_d), std::out_of_range);
+    EXPECT_THROW(v.at(-1_d), std::out_of_range);
+    EXPECT_THROW(v.at(3_d), std::out_of_range);
+    EXPECT_THROW(u.at(-1_d), std::out_of_range);
+    EXPECT_THROW(u.at(3_d), std::out_of_range);
 
     // operator[] does not check the index, so I can't check out of range indices
 }

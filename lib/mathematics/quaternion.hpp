@@ -41,7 +41,7 @@
  * Quaternion q3 = q1 * q2;
  * @endcode
  */
-struct Quaternion
+struct Quaternion3D
 {
 private:
     Vector3D v { Vector3D() }; ///< Imaginary part (x, y, z).
@@ -52,24 +52,24 @@ public:
     /// @name Constructors
     // ============================================================================
     /// @{
-    Quaternion() = default;
-    Quaternion(decimal _x, decimal _y, decimal _z, decimal _w)
+    Quaternion3D() = default;
+    Quaternion3D(decimal _x, decimal _y, decimal _z, decimal _w)
         : v { Vector3D(_x, _y, _z) }
         , w { _w }
     {}
-    Quaternion(const Vector3D& _v, decimal _w)
+    Quaternion3D(const Vector3D& _v, decimal _w)
         : v { _v }
         , w { _w }
     {}
-    Quaternion(decimal w, const Vector3D& v)
-        : Quaternion(v, w)
+    Quaternion3D(decimal w, const Vector3D& v)
+        : Quaternion3D(v, w)
     {}
     /// Constructor from rotation matrix.
-    Quaternion(const Matrix3x3& m);
+    Quaternion3D(const Matrix3x3& m);
     /// Constructor from Euler angles.
-    Quaternion(decimal angleX, decimal angleY, decimal angleZ);
+    Quaternion3D(decimal angleX, decimal angleY, decimal angleZ);
     /// Constructor from Euler angles.
-    Quaternion(const Vector3D& eulerAngles);
+    Quaternion3D(const Vector3D& eulerAngles);
     /// @}
 
     // ============================================================================
@@ -98,15 +98,15 @@ public:
     /// Euclidean norm.
     decimal getNorm() const;
     /// Return identity quaternion (0, 0, 0, 1).
-    Quaternion getIdentity() const;
+    Quaternion3D getIdentity() const;
     /// Return null quaternion (0, 0, 0, 0).
-    Quaternion getNull() const;
+    Quaternion3D getNull() const;
     /// Return a conjugated copy of the quaternion.
-    Quaternion getConjugate() const;
+    Quaternion3D getConjugate() const;
     /// Return a normalized copy of the quaternion.
-    Quaternion getNormalize() const;
+    Quaternion3D getNormalize() const;
     /// Return an inverted copy of the quaternion.
-    Quaternion getInverse() const;
+    Quaternion3D getInverse() const;
     /// @}
 
     // ============================================================================
@@ -146,8 +146,8 @@ public:
     /// @name Quaternion Operations
     // ============================================================================
     /// @{
-    decimal    dotProduct(const Quaternion&) const;
-    Quaternion crossProduct(const Quaternion&) const;
+    decimal      dotProduct(const Quaternion3D&) const;
+    Quaternion3D crossProduct(const Quaternion3D&) const;
     /// @}
 
     /// Element-wise comparisons.
@@ -155,13 +155,13 @@ public:
     /// @name Comparisons Operators
     // ============================================================================
     /// @{
-    bool operator==(const Quaternion&) const;
-    bool operator!=(const Quaternion&) const;
-    bool operator<(const Quaternion&) const;
-    bool operator<=(const Quaternion&) const;
-    bool operator>(const Quaternion&) const;
-    bool operator>=(const Quaternion&) const;
-    bool approxEqual(const Quaternion&, decimal) const;
+    bool operator==(const Quaternion3D&) const;
+    bool operator!=(const Quaternion3D&) const;
+    bool operator<(const Quaternion3D&) const;
+    bool operator<=(const Quaternion3D&) const;
+    bool operator>(const Quaternion3D&) const;
+    bool operator>=(const Quaternion3D&) const;
+    bool approxEqual(const Quaternion3D&, decimal) const;
     /// @}
 
     /// Imaginary part element access operator. Rely on `Vector3D` operators.
@@ -191,17 +191,17 @@ public:
     /// @{
 
     /// Negate each element of the quaternion.
-    Quaternion& operator-();
-    Quaternion& operator+=(const Quaternion&);
-    Quaternion& operator-=(const Quaternion&);
-    Quaternion& operator*=(const Quaternion&);
+    Quaternion3D& operator-();
+    Quaternion3D& operator+=(const Quaternion3D&);
+    Quaternion3D& operator-=(const Quaternion3D&);
+    Quaternion3D& operator*=(const Quaternion3D&);
     /// Element-wise division by another quaternion. Throw `std::invalid_argument` on division by zero.
-    Quaternion& operator/=(const Quaternion&);
-    Quaternion& operator+=(decimal);
-    Quaternion& operator-=(decimal);
-    Quaternion& operator*=(decimal);
+    Quaternion3D& operator/=(const Quaternion3D&);
+    Quaternion3D& operator+=(decimal);
+    Quaternion3D& operator-=(decimal);
+    Quaternion3D& operator*=(decimal);
     /// Element-wise division by a decimal. Throw `std::invalid_argument` on division by zero.
-    Quaternion& operator/=(decimal);
+    Quaternion3D& operator/=(decimal);
     /// @}
 
     /// Internal functions to compute element-wise operations.
@@ -212,10 +212,10 @@ public:
 
     /// Apply a binary operation element-wise between two quaternions.
     template <class F>
-    static Quaternion apply(const Quaternion& A, const Quaternion& B, F&& func);
+    static Quaternion3D apply(const Quaternion3D& A, const Quaternion3D& B, F&& func);
     /// Apply a binary operation element-wise between a quaternion and a decimal.
     template <class F>
-    static Quaternion apply(const Quaternion& A, decimal s, F&& func);
+    static Quaternion3D apply(const Quaternion3D& A, decimal s, F&& func);
     /// @}
 };
 
@@ -227,16 +227,16 @@ public:
 /// @name Quaternion operations
 // ============================================================================
 /// @{
-decimal    dotProduct(const Quaternion&, const Quaternion&);
-Quaternion crossProduct(const Quaternion&, const Quaternion&);
+decimal      dotProduct(const Quaternion3D&, const Quaternion3D&);
+Quaternion3D crossProduct(const Quaternion3D&, const Quaternion3D&);
 /// @}
 
 // ============================================================================
 /// @name Utilities
 // ============================================================================
 /// @{
-Quaternion min(const Quaternion&, const Quaternion&);
-Quaternion max(const Quaternion&, const Quaternion&);
+Quaternion3D min(const Quaternion3D&, const Quaternion3D&);
+Quaternion3D max(const Quaternion3D&, const Quaternion3D&);
 /// Compute quaternion from the three Euler angles. Used to implement constructors.
 std::array<decimal, 4> eulerAngles_to_Quaternion(decimal angleX, decimal angleY, decimal angleZ);
 /// @}
@@ -246,23 +246,23 @@ std::array<decimal, 4> eulerAngles_to_Quaternion(decimal angleX, decimal angleY,
 /// @name Operators
 // ============================================================================
 /// @{
-Quaternion operator+(const Quaternion&, const Quaternion&);
-Quaternion operator-(const Quaternion&, const Quaternion&);
-Quaternion operator*(const Quaternion&, const Quaternion&);
+Quaternion3D operator+(const Quaternion3D&, const Quaternion3D&);
+Quaternion3D operator-(const Quaternion3D&, const Quaternion3D&);
+Quaternion3D operator*(const Quaternion3D&, const Quaternion3D&);
 /// Element-wise division by another quaternion. Throw `std::invalid_argument` on division by zero.
-Quaternion operator/(const Quaternion&, const Quaternion&);
+Quaternion3D operator/(const Quaternion3D&, const Quaternion3D&);
 
-Quaternion operator+(const Quaternion&, decimal);
-Quaternion operator-(const Quaternion&, decimal);
-Quaternion operator*(const Quaternion&, decimal);
+Quaternion3D operator+(const Quaternion3D&, decimal);
+Quaternion3D operator-(const Quaternion3D&, decimal);
+Quaternion3D operator*(const Quaternion3D&, decimal);
 /// Element-wise division by a decimal. Throw `std::invalid_argument` on division by zero.
-Quaternion operator/(const Quaternion&, decimal);
+Quaternion3D operator/(const Quaternion3D&, decimal);
 
-Quaternion operator+(decimal, const Quaternion&);
-Quaternion operator-(decimal, const Quaternion&);
-Quaternion operator*(decimal, const Quaternion&);
+Quaternion3D operator+(decimal, const Quaternion3D&);
+Quaternion3D operator-(decimal, const Quaternion3D&);
+Quaternion3D operator*(decimal, const Quaternion3D&);
 /// Element-wise division by a decimal. Throw `std::invalid_argument` on division by zero.
-Quaternion operator/(decimal, const Quaternion&);
+Quaternion3D operator/(decimal, const Quaternion3D&);
 /// @}
 
 // ============================================================================
@@ -274,7 +274,7 @@ Quaternion operator/(decimal, const Quaternion&);
  * Stream output operator for `Quaternion`.
  * Return format is (x,y,z,w).
  */
-std::ostream& operator<<(std::ostream&, const Quaternion&);
+std::ostream& operator<<(std::ostream&, const Quaternion3D&);
 /// @}
 
 /// @}

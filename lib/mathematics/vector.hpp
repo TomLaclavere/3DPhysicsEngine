@@ -149,17 +149,17 @@ public:
     // ============================================================================
     /// @{
 
-    /// Access vectors element with index range checking.
+    /// Access vector element with index range checking.
     decimal& at(int);
-    /// Access vectors element with index range checking (const version).
+    /// Access vector element with index range checking (const version).
     decimal at(int) const;
-    /// Access vectors element without index range checking.
+    /// Access vector element without index range checking.
     decimal& operator()(int);
-    /// Access vectors element without index range checking (const version).
+    /// Access vector element without index range checking (const version).
     decimal operator()(int) const;
-    /// Access vectors element without index range checking.
+    /// Access vector element without index range checking.
     decimal& operator[](int);
-    /// Access vectors element without index range checking (const version).
+    /// Access vector element without index range checking (const version).
     decimal operator[](int) const;
     /// @}
 
@@ -169,7 +169,7 @@ public:
     // ============================================================================
     /// @{
 
-    /// Negate each element of the vector
+    /// Negate each element of the vector.
     Vector3D  operator-() const;
     Vector3D& operator+=(const Vector3D&);
     Vector3D& operator-=(const Vector3D&);
@@ -262,7 +262,7 @@ Vector3D operator/(decimal, const Vector3D&);
 /// @{
 
 /**
- * Stream output operator for Vector3D.
+ * Stream output operator for `Vector3D`.
  * Return format is (x,y,z).
  */
 std::ostream& operator<<(std::ostream&, const Vector3D&);

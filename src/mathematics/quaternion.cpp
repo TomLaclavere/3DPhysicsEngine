@@ -6,7 +6,7 @@
 // ============================================================================
 //  Constructors
 // ============================================================================
-Quaternion::Quaternion(const Matrix3x3& m)
+Quaternion3D::Quaternion3D(const Matrix3x3& m)
 {
     decimal trace = m.getTrace();
     if (trace > 0)
@@ -46,22 +46,22 @@ Quaternion::Quaternion(const Matrix3x3& m)
         v         = Vector3D(x, y, z);
     }
 }
-Quaternion::Quaternion(decimal angleX, decimal angleY, decimal angleZ)
+Quaternion3D::Quaternion3D(decimal angleX, decimal angleY, decimal angleZ)
 {
     std::array<decimal, 4> quaternionElements = eulerAngles_to_Quaternion(angleX, angleY, angleZ);
 
     w = quaternionElements[0];
     v = Vector3D(quaternionElements[1], quaternionElements[2], quaternionElements[3]);
 }
-Quaternion::Quaternion(const Vector3D& eulerAngles)
+Quaternion3D::Quaternion3D(const Vector3D& eulerAngles)
 {
-    Quaternion(eulerAngles[0], eulerAngles[1], eulerAngles[2]);
+    Quaternion3D(eulerAngles[0], eulerAngles[1], eulerAngles[2]);
 }
 
 // ============================================================================
 //  Getters
 // ============================================================================
-Matrix3x3 Quaternion::getRotationMatrix() const
+Matrix3x3 Quaternion3D::getRotationMatrix() const
 {
     decimal x = v[0];
     decimal y = v[1];
@@ -84,42 +84,42 @@ Matrix3x3 Quaternion::getRotationMatrix() const
 // ============================================================================
 //  Utilities
 // ============================================================================
-void Quaternion::conjugate() { v = -v; }
-void Quaternion::normalize()
+void Quaternion3D::conjugate() { v = -v; }
+void Quaternion3D::normalize()
 {
     decimal norm = getNorm();
     if (norm < PRECISION_MACHINE)
-        *this = Quaternion();
+        *this = Quaternion3D();
     else
     {
         w /= norm;
         v /= norm;
     }
 }
-void Quaternion::inverse()
+void Quaternion3D::inverse()
 {
     (*this).conjugate();
     (*this).normalize();
 }
-decimal    Quaternion::getNormSquare() const { return w * w + v.getNormSquare(); }
-decimal    Quaternion::getNorm() const { return std::sqrt(getNormSquare()); }
-Quaternion Quaternion::getIdentity() const { return Quaternion(0, 0, 0, 1); }
-Quaternion Quaternion::getNull() const { return Quaternion(); }
-Quaternion Quaternion::getConjugate() const
+decimal      Quaternion3D::getNormSquare() const { return w * w + v.getNormSquare(); }
+decimal      Quaternion3D::getNorm() const { return std::sqrt(getNormSquare()); }
+Quaternion3D Quaternion3D::getIdentity() const { return Quaternion3D(0, 0, 0, 1); }
+Quaternion3D Quaternion3D::getNull() const { return Quaternion3D(); }
+Quaternion3D Quaternion3D::getConjugate() const
 {
-    Quaternion q = *this;
+    Quaternion3D q = *this;
     q.conjugate();
     return q;
 }
-Quaternion Quaternion::getNormalize() const
+Quaternion3D Quaternion3D::getNormalize() const
 {
-    Quaternion q = *this;
+    Quaternion3D q = *this;
     q.normalize();
     return q;
 }
-Quaternion Quaternion::getInverse() const
+Quaternion3D Quaternion3D::getInverse() const
 {
-    Quaternion q = *this;
+    Quaternion3D q = *this;
     q.inverse();
     return q;
 }
@@ -127,43 +127,43 @@ Quaternion Quaternion::getInverse() const
 // ============================================================================
 //  Setters
 // ============================================================================
-void Quaternion::setRealPart(decimal value) { w = value; }
-void Quaternion::setImaginaryPart(decimal newx, decimal newy, decimal newz)
+void Quaternion3D::setRealPart(decimal value) { w = value; }
+void Quaternion3D::setImaginaryPart(decimal newx, decimal newy, decimal newz)
 {
     v = Vector3D(newx, newy, newz);
 }
-void Quaternion::setImaginaryPart(const Vector3D& newv) { v = newv; }
-void Quaternion::setToZero()
+void Quaternion3D::setImaginaryPart(const Vector3D& newv) { v = newv; }
+void Quaternion3D::setToZero()
 {
     w = 0;
     v.setToZero();
 }
-void Quaternion::setToIdentity()
+void Quaternion3D::setToIdentity()
 {
     w    = 1;
     v[0] = 0;
     v[1] = 0;
     v[2] = 0;
 }
-void Quaternion::setAllValues(decimal newx, decimal newy, decimal newz, decimal neww)
+void Quaternion3D::setAllValues(decimal newx, decimal newy, decimal newz, decimal neww)
 {
     w    = neww;
     v[0] = newx;
     v[1] = newy;
     v[2] = newz;
 }
-void Quaternion::setAllValues(const Vector3D& newv, decimal neww)
+void Quaternion3D::setAllValues(const Vector3D& newv, decimal neww)
 {
     w = neww;
     v = newv;
 }
-void Quaternion::setAllValues(decimal neww, const Vector3D& newv)
+void Quaternion3D::setAllValues(decimal neww, const Vector3D& newv)
 {
     w = neww;
     v = newv;
 }
-void Quaternion::setAllValues(const Matrix3x3& m) { *this = Quaternion(m); }
-void Quaternion::setAllValues(decimal newangleX, decimal newangleY, decimal newangleZ)
+void Quaternion3D::setAllValues(const Matrix3x3& m) { *this = Quaternion3D(m); }
+void Quaternion3D::setAllValues(decimal newangleX, decimal newangleY, decimal newangleZ)
 {
     std::array<decimal, 4> quaternionElements = eulerAngles_to_Quaternion(newangleX, newangleY, newangleZ);
 
@@ -172,7 +172,7 @@ void Quaternion::setAllValues(decimal newangleX, decimal newangleY, decimal newa
     v[1] = quaternionElements[2];
     v[2] = quaternionElements[3];
 }
-void Quaternion::setAllValues(const Vector3D& newangles)
+void Quaternion3D::setAllValues(const Vector3D& newangles)
 {
     setAllValues(newangles[0], newangles[1], newangles[2]);
 }
@@ -180,40 +180,43 @@ void Quaternion::setAllValues(const Vector3D& newangles)
 // ============================================================================
 //  Property Checks
 // ============================================================================
-bool Quaternion::isFinite() const { return (std::isfinite(w) && v.isFinite()); }
-bool Quaternion::isZero() const { return (commonMaths::approxEqual(w, decimal(0)) && v.isNull()); }
-bool Quaternion::isUnit() const { return (commonMaths::approxEqual(getNorm(), decimal(1))); }
-bool Quaternion::isIdentity() const { return (commonMaths::approxEqual(w, decimal(1)) && v.isNull()); }
-bool Quaternion::isInvertible() const { return !(commonMaths::approxEqual(getNorm(), decimal(0))); }
-bool Quaternion::isOrthogonal() const { return isUnit(); }
-bool Quaternion::isNormalized() const { return isUnit(); }
+bool Quaternion3D::isFinite() const { return (std::isfinite(w) && v.isFinite()); }
+bool Quaternion3D::isZero() const { return (commonMaths::approxEqual(w, decimal(0)) && v.isNull()); }
+bool Quaternion3D::isUnit() const { return (commonMaths::approxEqual(getNorm(), decimal(1))); }
+bool Quaternion3D::isIdentity() const { return (commonMaths::approxEqual(w, decimal(1)) && v.isNull()); }
+bool Quaternion3D::isInvertible() const { return !(commonMaths::approxEqual(getNorm(), decimal(0))); }
+bool Quaternion3D::isOrthogonal() const { return isUnit(); }
+bool Quaternion3D::isNormalized() const { return isUnit(); }
 
 // ============================================================================
-//  Quaternion Operations
+//  Quaternion3D Operations
 // ============================================================================
-decimal Quaternion::dotProduct(const Quaternion& other) const { return w * other.w + v.dotProduct(other.v); }
-Quaternion Quaternion::crossProduct(const Quaternion& other) const
+decimal Quaternion3D::dotProduct(const Quaternion3D& other) const
 {
-    return Quaternion(w * other.v + other.w * v + v.crossProduct(other.v),
-                      w * other.w - v.dotProduct(other.v));
+    return w * other.w + v.dotProduct(other.v);
+}
+Quaternion3D Quaternion3D::crossProduct(const Quaternion3D& other) const
+{
+    return Quaternion3D(w * other.v + other.w * v + v.crossProduct(other.v),
+                        w * other.w - v.dotProduct(other.v));
 }
 
 // ============================================================================
 //  Comparisons Operators
 // ============================================================================
-bool Quaternion::operator==(const Quaternion& other) const
+bool Quaternion3D::operator==(const Quaternion3D& other) const
 {
     return commonMaths::approxEqual(w, other.w) && v == other.v;
 }
-bool Quaternion::operator!=(const Quaternion& other) const
+bool Quaternion3D::operator!=(const Quaternion3D& other) const
 {
     return !commonMaths::approxEqual(w, other.w) || v != other.v;
 }
-bool Quaternion::operator<(const Quaternion& other) const { return (w < other.w && v < other.v); }
-bool Quaternion::operator<=(const Quaternion& other) const { return (w <= other.w && v <= other.v); }
-bool Quaternion::operator>(const Quaternion& other) const { return (w > other.w && v > other.v); }
-bool Quaternion::operator>=(const Quaternion& other) const { return (w >= other.w && v >= other.v); }
-bool Quaternion::approxEqual(const Quaternion& other, decimal p) const
+bool Quaternion3D::operator<(const Quaternion3D& other) const { return (w < other.w && v < other.v); }
+bool Quaternion3D::operator<=(const Quaternion3D& other) const { return (w <= other.w && v <= other.v); }
+bool Quaternion3D::operator>(const Quaternion3D& other) const { return (w > other.w && v > other.v); }
+bool Quaternion3D::operator>=(const Quaternion3D& other) const { return (w >= other.w && v >= other.v); }
+bool Quaternion3D::approxEqual(const Quaternion3D& other, decimal p) const
 {
     return (commonMaths::approxEqual(w, other.w, p) && v.approxEqual(other.v, p));
 }
@@ -221,41 +224,41 @@ bool Quaternion::approxEqual(const Quaternion& other, decimal p) const
 // ============================================================================
 //  Element Access Operators
 // ============================================================================
-decimal& Quaternion::at(int i) { return v.at(i); }
-decimal  Quaternion::at(int i) const { return v.at(i); }
-decimal& Quaternion::operator()(int i) { return v(i); }
-decimal  Quaternion::operator()(int i) const { return v(i); }
-decimal& Quaternion::operator[](int i) { return v[i]; }
-decimal  Quaternion::operator[](int i) const { return v[i]; }
+decimal& Quaternion3D::at(int i) { return v.at(i); }
+decimal  Quaternion3D::at(int i) const { return v.at(i); }
+decimal& Quaternion3D::operator()(int i) { return v(i); }
+decimal  Quaternion3D::operator()(int i) const { return v(i); }
+decimal& Quaternion3D::operator[](int i) { return v[i]; }
+decimal  Quaternion3D::operator[](int i) const { return v[i]; }
 
 // ============================================================================
 //  In-Place Arithmetic Operators
 // ============================================================================
-Quaternion& Quaternion::operator-()
+Quaternion3D& Quaternion3D::operator-()
 {
     w = -w;
     v = -v;
     return (*this);
 }
-Quaternion& Quaternion::operator+=(const Quaternion& other)
+Quaternion3D& Quaternion3D::operator+=(const Quaternion3D& other)
 {
     w += other.w;
     v += other.v;
     return (*this);
 }
-Quaternion& Quaternion::operator-=(const Quaternion& other)
+Quaternion3D& Quaternion3D::operator-=(const Quaternion3D& other)
 {
     w -= other.w;
     v -= other.v;
     return (*this);
 }
-Quaternion& Quaternion::operator*=(const Quaternion& other)
+Quaternion3D& Quaternion3D::operator*=(const Quaternion3D& other)
 {
     w *= other.w;
     v *= other.v;
     return (*this);
 }
-Quaternion& Quaternion::operator/=(const Quaternion& other)
+Quaternion3D& Quaternion3D::operator/=(const Quaternion3D& other)
 {
     if (other.isZero())
         throw std::invalid_argument("Division by zero");
@@ -263,25 +266,25 @@ Quaternion& Quaternion::operator/=(const Quaternion& other)
     v /= other.v;
     return (*this);
 }
-Quaternion& Quaternion::operator+=(decimal scalar)
+Quaternion3D& Quaternion3D::operator+=(decimal scalar)
 {
     w += scalar;
     v += scalar;
     return (*this);
 }
-Quaternion& Quaternion::operator-=(decimal scalar)
+Quaternion3D& Quaternion3D::operator-=(decimal scalar)
 {
     w -= scalar;
     v -= scalar;
     return (*this);
 }
-Quaternion& Quaternion::operator*=(decimal scalar)
+Quaternion3D& Quaternion3D::operator*=(decimal scalar)
 {
     w *= scalar;
     v *= scalar;
     return (*this);
 }
-Quaternion& Quaternion::operator/=(decimal scalar)
+Quaternion3D& Quaternion3D::operator/=(decimal scalar)
 {
     if (commonMaths::approxEqual(scalar, decimal(0)))
         throw std::invalid_argument("Division by zero");
@@ -294,36 +297,36 @@ Quaternion& Quaternion::operator/=(decimal scalar)
 //  Helper for Free Arithmetic Operators
 // ============================================================================
 template <class F>
-Quaternion Quaternion::apply(const Quaternion& A, const Quaternion& B, F&& func)
+Quaternion3D Quaternion3D::apply(const Quaternion3D& A, const Quaternion3D& B, F&& func)
 {
-    return Quaternion(func(A.w, B.w), applyVector(A.v, B.v, func));
+    return Quaternion3D(func(A.w, B.w), applyVector(A.v, B.v, func));
 }
 template <class F>
-Quaternion Quaternion::apply(const Quaternion& A, decimal s, F&& func)
+Quaternion3D Quaternion3D::apply(const Quaternion3D& A, decimal s, F&& func)
 {
-    return Quaternion(func(A.w, s), applyVector(A.v, s, func));
+    return Quaternion3D(func(A.w, s), applyVector(A.v, s, func));
 }
 // ============================================================================
 //  Quaternions Operations
 // ============================================================================
-decimal dotProduct(const Quaternion& lhs, const Quaternion& rhs)
+decimal dotProduct(const Quaternion3D& lhs, const Quaternion3D& rhs)
 {
     return lhs.getRealPart() * rhs.getRealPart() + dotProduct(lhs.getImaginaryPart(), rhs.getImaginaryPart());
 }
-Quaternion crossProduct(const Quaternion& lhs, const Quaternion& rhs)
+Quaternion3D crossProduct(const Quaternion3D& lhs, const Quaternion3D& rhs)
 {
     decimal real =
         lhs.getRealPart() * rhs.getRealPart() - lhs.getImaginaryPart().dotProduct(rhs.getImaginaryPart());
     Vector3D img = lhs.getRealPart() * rhs.getImaginaryPart() + rhs.getRealPart() * lhs.getImaginaryPart() +
                    lhs.getImaginaryPart().crossProduct(rhs.getImaginaryPart());
-    return Quaternion(img, real);
+    return Quaternion3D(img, real);
 }
 
 // ============================================================================
 //  Utilities
 // ============================================================================
-Quaternion             min(const Quaternion&, const Quaternion&);
-Quaternion             max(const Quaternion&, const Quaternion&);
+Quaternion3D           min(const Quaternion3D&, const Quaternion3D&);
+Quaternion3D           max(const Quaternion3D&, const Quaternion3D&);
 std::array<decimal, 4> eulerAngles_to_Quaternion(decimal angleX, decimal angleY, decimal angleZ)
 {
     std::array<decimal, 4> quaternionElements;
@@ -351,50 +354,50 @@ std::array<decimal, 4> eulerAngles_to_Quaternion(decimal angleX, decimal angleY,
 // ============================================================================
 //  Free Arithmetic Operators
 // ============================================================================
-// Quaternion op Quaternion
-Quaternion operator+(const Quaternion& lhs, const Quaternion& rhs)
+// Quaternion3D op Quaternion3D
+Quaternion3D operator+(const Quaternion3D& lhs, const Quaternion3D& rhs)
 {
-    return Quaternion::apply(lhs, rhs, std::plus<decimal>());
+    return Quaternion3D::apply(lhs, rhs, std::plus<decimal>());
 }
-Quaternion operator-(const Quaternion& lhs, const Quaternion& rhs)
+Quaternion3D operator-(const Quaternion3D& lhs, const Quaternion3D& rhs)
 {
-    return Quaternion::apply(lhs, rhs, std::minus<decimal>());
+    return Quaternion3D::apply(lhs, rhs, std::minus<decimal>());
 }
-Quaternion operator*(const Quaternion& lhs, const Quaternion& rhs)
+Quaternion3D operator*(const Quaternion3D& lhs, const Quaternion3D& rhs)
 {
-    return Quaternion::apply(lhs, rhs, std::multiplies<decimal>());
+    return Quaternion3D::apply(lhs, rhs, std::multiplies<decimal>());
 }
-Quaternion operator/(const Quaternion& lhs, const Quaternion& rhs)
+Quaternion3D operator/(const Quaternion3D& lhs, const Quaternion3D& rhs)
 {
-    return Quaternion::apply(lhs, rhs, std::divides<decimal>());
+    return Quaternion3D::apply(lhs, rhs, std::divides<decimal>());
 }
-// Quaternion op decimal
-Quaternion operator+(const Quaternion& lhs, decimal rhs)
+// Quaternion3D op decimal
+Quaternion3D operator+(const Quaternion3D& lhs, decimal rhs)
 {
-    return Quaternion::apply(lhs, rhs, std::plus<decimal>());
+    return Quaternion3D::apply(lhs, rhs, std::plus<decimal>());
 }
-Quaternion operator-(const Quaternion& lhs, decimal rhs)
+Quaternion3D operator-(const Quaternion3D& lhs, decimal rhs)
 {
-    return Quaternion::apply(lhs, rhs, std::minus<decimal>());
+    return Quaternion3D::apply(lhs, rhs, std::minus<decimal>());
 }
-Quaternion operator*(const Quaternion& lhs, decimal rhs)
+Quaternion3D operator*(const Quaternion3D& lhs, decimal rhs)
 {
-    return Quaternion::apply(lhs, rhs, std::multiplies<decimal>());
+    return Quaternion3D::apply(lhs, rhs, std::multiplies<decimal>());
 }
-Quaternion operator/(const Quaternion& lhs, decimal rhs)
+Quaternion3D operator/(const Quaternion3D& lhs, decimal rhs)
 {
-    return Quaternion::apply(lhs, rhs, std::divides<decimal>());
+    return Quaternion3D::apply(lhs, rhs, std::divides<decimal>());
 }
-// decimal op Quaternion
-Quaternion operator+(decimal lhs, const Quaternion& rhs) { return rhs + lhs; }
-Quaternion operator-(decimal lhs, const Quaternion& rhs) { return rhs - lhs; }
-Quaternion operator*(decimal lhs, const Quaternion& rhs) { return rhs * lhs; }
-Quaternion operator/(decimal lhs, const Quaternion& rhs) { return rhs / lhs; }
+// decimal op Quaternion3D
+Quaternion3D operator+(decimal lhs, const Quaternion3D& rhs) { return rhs + lhs; }
+Quaternion3D operator-(decimal lhs, const Quaternion3D& rhs) { return rhs - lhs; }
+Quaternion3D operator*(decimal lhs, const Quaternion3D& rhs) { return rhs * lhs; }
+Quaternion3D operator/(decimal lhs, const Quaternion3D& rhs) { return rhs / lhs; }
 
 // ============================================================================
 //  Printing
 // ============================================================================
-std::ostream& operator<<(std::ostream& os, const Quaternion& q)
+std::ostream& operator<<(std::ostream& os, const Quaternion3D& q)
 {
     return os << "(" << q.getRealPart() << "," << q.getImaginaryPart() << ")";
 }

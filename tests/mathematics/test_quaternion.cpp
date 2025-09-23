@@ -124,7 +124,7 @@ TEST(Quaternion_Test, Getters)
     Quaternion idenity = q.getIdentity();
     EXPECT_DECIMAL_EQ(idenity.getRealPart(), 1_d);
     EXPECT_TRUE(idenity.getImaginaryPart() == Vector3D());
-    Quaternion zero = q.getZero();
+    Quaternion zero = q.getNull();
     EXPECT_DECIMAL_EQ(zero.getRealPart(), 0_d);
     EXPECT_TRUE(zero.getImaginaryPart() == Vector3D());
 }

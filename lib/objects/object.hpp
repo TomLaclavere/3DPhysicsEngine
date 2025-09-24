@@ -21,8 +21,9 @@ enum class ObjectType
 /**
  * @brief Object class representing a physical entity in the simulation.
  *
- * Holds physical intrinsics properties like mass or scale, as well as dynamic properties: position, rotation,
- * velocity, acceleration, forces, and torques.
+ * Holds physical intrinsics properties like mass (`decimal`) or scale (`Vector3D`), as well as dynamic
+ * properties: position, rotation, velocity, acceleration, forces, and torques (`Vector3D`).
+ * Can be extended for specific object types (e.g., Sphere, AABB, Plane).
  *
  */
 struct Object
@@ -38,6 +39,9 @@ private:
     decimal  mass         = 0.0_d;
 
 public:
+    /// @brief Constructions can be done with various levels of details.
+    /// Default values are zero vectors for all `Vector3D` properties, except `scale` which defaults to
+    /// (1,1,1). Mass defaults to 0.0.
     // ============================================================================
     /// @name Constructors / Destructors
     // ============================================================================
@@ -75,8 +79,9 @@ public:
     /// @}
 
     // ============================================================================
-    //  Getters
+    /// @name Getters
     // ============================================================================
+    /// @{
     Vector3D           get_position() const { return position; }
     Vector3D           get_rotation() const { return rotation; }
     Vector3D           get_scale() const { return scale; }
@@ -86,10 +91,12 @@ public:
     Vector3D           get_torque() const { return torque; }
     decimal            get_mass() const { return mass; }
     virtual ObjectType get_type() const { return ObjectType::Generic; }
+    /// @}
 
     // ============================================================================
-    //  Setters
+    /// @name Setters
     // ============================================================================
+    /// @{
     void set_position(const Vector3D& _position) { position = _position; }
     void set_rotation(const Vector3D& _rotation) { rotation = _rotation; }
     void set_scale(const Vector3D& _scale) { scale = _scale; }
@@ -98,23 +105,34 @@ public:
     void set_force(const Vector3D& _force) { force = _force; }
     void set_torque(const Vector3D& _torque) { torque = _torque; }
     void set_mass(const decimal _mass) { mass = _mass; }
+    /// @}
 
     // ============================================================================
-    //  Transformations
+    /// @name Transformations
     // ============================================================================
+    /// @{
     void apply_translation(const Vector3D& v_translation) { position += v_translation; }
     void apply_rotation(const Vector3D& v_rotation) { rotation += v_rotation; }
     void apply_scaling(const Vector3D& v_scaling) { scale += v_scaling; }
+    /// @}
 
     // ============================================================================
-    //  Physics
+    /// @name Physics
     // ============================================================================
-    void         apply_force(const Vector3D& _force) { force += _force; }
-    void         apply_torque(const Vector3D& _torque) { torque += _torque; }
+    /// @{
+    void apply_force(const Vector3D& _force) { force += _force; }
+    void apply_torque(const Vector3D& _torque) { torque += _torque; }
+    /// Integrate motion equations over a time step `dt` to update physical properties.
     virtual void integrate(decimal dt);
+    /// @}
 
     // ============================================================================
-    //  Collision
+    /// @name Collision
     // ============================================================================
+    /// @{
+
+    /// @brief Check for collision with another object.
+    /// This is a pure virtual functions that must be implemented by derived classes.
     virtual bool check_collision(const Object& other) = 0; // Pure virtual
+    /// @}
 };

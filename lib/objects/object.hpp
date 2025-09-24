@@ -1,3 +1,11 @@
+/**
+ * @file object.hpp
+ * @brief Object class representing physical entities in the simulation.
+ *
+ * This class encapsulates the properties and behaviors of objects within the physics simulation,
+ * including their position, rotation, scale, and physical forces acting upon them.
+ * It serves as a base class for specific object types like Sphere, AABB, and Plane.
+ */
 #pragma once
 #include "mathematics/vector.hpp"
 #include "precision.hpp"
@@ -10,6 +18,13 @@ enum class ObjectType
     Plane
 };
 
+/**
+ * @brief Object class representing a physical entity in the simulation.
+ *
+ * Holds physical intrinsics properties like mass or scale, as well as dynamic properties: position, rotation,
+ * velocity, acceleration, forces, and torques.
+ *
+ */
 struct Object
 {
 private:
@@ -24,10 +39,10 @@ private:
 
 public:
     // ============================================================================
+    /// @name Constructors / Destructors
     // ============================================================================
-    //  Constructors / Destructors
-    // ============================================================================
-    // ============================================================================
+    /// @{
+
     Object() = default;
     Object(decimal mass)
         : mass { mass }
@@ -57,11 +72,10 @@ public:
         , mass { mass }
     {}
     virtual ~Object() = default;
+    /// @}
 
     // ============================================================================
-    // ============================================================================
     //  Getters
-    // ============================================================================
     // ============================================================================
     Vector3D           get_position() const { return position; }
     Vector3D           get_rotation() const { return rotation; }
@@ -74,9 +88,7 @@ public:
     virtual ObjectType get_type() const { return ObjectType::Generic; }
 
     // ============================================================================
-    // ============================================================================
     //  Setters
-    // ============================================================================
     // ============================================================================
     void set_position(const Vector3D& _position) { position = _position; }
     void set_rotation(const Vector3D& _rotation) { rotation = _rotation; }
@@ -88,27 +100,21 @@ public:
     void set_mass(const decimal _mass) { mass = _mass; }
 
     // ============================================================================
-    // ============================================================================
     //  Transformations
-    // ============================================================================
     // ============================================================================
     void apply_translation(const Vector3D& v_translation) { position += v_translation; }
     void apply_rotation(const Vector3D& v_rotation) { rotation += v_rotation; }
     void apply_scaling(const Vector3D& v_scaling) { scale += v_scaling; }
 
     // ============================================================================
-    // ============================================================================
     //  Physics
-    // ============================================================================
     // ============================================================================
     void         apply_force(const Vector3D& _force) { force += _force; }
     void         apply_torque(const Vector3D& _torque) { torque += _torque; }
     virtual void integrate(decimal dt);
 
     // ============================================================================
-    // ============================================================================
     //  Collision
-    // ============================================================================
     // ============================================================================
     virtual bool check_collision(const Object& other) = 0; // Pure virtual
 };

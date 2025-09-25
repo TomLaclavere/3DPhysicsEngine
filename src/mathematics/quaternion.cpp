@@ -88,7 +88,7 @@ void Quaternion3D::conjugate() { v = -v; }
 void Quaternion3D::normalize()
 {
     decimal norm = getNorm();
-    if (norm < PRECISION_MACHINE)
+    if (commonMaths::approxEqual(norm, decimal(0)))
         *this = Quaternion3D();
     else
     {
@@ -103,8 +103,6 @@ void Quaternion3D::inverse()
 }
 decimal      Quaternion3D::getNormSquare() const { return w * w + v.getNormSquare(); }
 decimal      Quaternion3D::getNorm() const { return std::sqrt(getNormSquare()); }
-Quaternion3D Quaternion3D::getIdentity() const { return Quaternion3D(0, 0, 0, 1); }
-Quaternion3D Quaternion3D::getNull() const { return Quaternion3D(); }
 Quaternion3D Quaternion3D::getConjugate() const
 {
     Quaternion3D q = *this;
@@ -260,8 +258,13 @@ Quaternion3D& Quaternion3D::operator*=(const Quaternion3D& other)
 }
 Quaternion3D& Quaternion3D::operator/=(const Quaternion3D& other)
 {
-    if (other.isZero())
+    // Check for division by zero
+    for (int i = 0; i < 3; ++i)
+        if (commonMaths::approxEqual(other.v[i], decimal(0)))
+            throw std::invalid_argument("Division by zero");
+    if (commonMaths::approxEqual(other.w, decimal(0)))
         throw std::invalid_argument("Division by zero");
+
     w /= other.w;
     v /= other.v;
     return (*this);
@@ -369,6 +372,12 @@ Quaternion3D operator*(const Quaternion3D& lhs, const Quaternion3D& rhs)
 }
 Quaternion3D operator/(const Quaternion3D& lhs, const Quaternion3D& rhs)
 {
+    // Check for division by zero
+    for (int i = 0; i < 3; ++i)
+        if (commonMaths::approxEqual(rhs.getImaginaryPartElement(i), decimal(0)))
+            throw std::invalid_argument("Division by zero");
+    if (commonMaths::approxEqual(rhs.getRealPart(), decimal(0)))
+        throw std::invalid_argument("Division by zero");
     return Quaternion3D::apply(lhs, rhs, std::divides<decimal>());
 }
 // Quaternion3D op decimal
@@ -386,13 +395,24 @@ Quaternion3D operator*(const Quaternion3D& lhs, decimal rhs)
 }
 Quaternion3D operator/(const Quaternion3D& lhs, decimal rhs)
 {
+    if (commonMaths::approxEqual(rhs, decimal(0)))
+        throw std::invalid_argument("Division by zero");
     return Quaternion3D::apply(lhs, rhs, std::divides<decimal>());
 }
 // decimal op Quaternion3D
 Quaternion3D operator+(decimal lhs, const Quaternion3D& rhs) { return rhs + lhs; }
 Quaternion3D operator-(decimal lhs, const Quaternion3D& rhs) { return rhs - lhs; }
 Quaternion3D operator*(decimal lhs, const Quaternion3D& rhs) { return rhs * lhs; }
-Quaternion3D operator/(decimal lhs, const Quaternion3D& rhs) { return rhs / lhs; }
+Quaternion3D operator/(decimal lhs, const Quaternion3D& rhs)
+{
+    // Check for division by zero
+    for (int i = 0; i < 3; ++i)
+        if (commonMaths::approxEqual(rhs.getImaginaryPartElement(i), decimal(0)))
+            throw std::invalid_argument("Division by zero");
+    if (commonMaths::approxEqual(rhs.getRealPart(), decimal(0)))
+        throw std::invalid_argument("Division by zero");
+    return rhs / lhs;
+}
 
 // ============================================================================
 //  Printing

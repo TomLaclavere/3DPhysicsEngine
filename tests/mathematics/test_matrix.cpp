@@ -165,7 +165,7 @@ TEST(Matrix3x3_Test, Setters)
     EXPECT_EQ(m, Matrix3x3(1_d, 0_d, 0_d, 0_d, 1_d, 0_d, 0_d, 0_d, 1_d));
 
     // Zero
-    m.setToZero();
+    m.setToNull();
     EXPECT_EQ(m, Matrix3x3());
 
     // One Value
@@ -190,7 +190,7 @@ TEST(Matrix3x3_Test, PropertyCheck)
     EXPECT_FALSE(m.isIdentity());
 
     // Zero
-    m.setToZero();
+    m.setToNull();
     EXPECT_TRUE(m.isZero());
     m(1, 1) = 1_d;
     EXPECT_FALSE(m.isZero());
@@ -202,7 +202,7 @@ TEST(Matrix3x3_Test, PropertyCheck)
     EXPECT_FALSE(m.isFinite());
 
     // Diagonal
-    m.setToZero();
+    m.setToNull();
     m(0, 0) = 1_d;
     m(1, 1) = 2_d;
     m(2, 2) = 3_d;
@@ -376,7 +376,7 @@ TEST(Matrix3x3_Test, InPlace)
     EXPECT_EQ(m, Matrix3x3(1_d, 2_d, 3_d, 4_d, 5_d, 6_d, 7_d, 8_d, 9_d));
 
     // Check division by zero
-    EXPECT_THROW(m /= Matrix3x3(0_d, 0_d, 0_d, 0_d, 0_d, 0_d, 0_d, 0_d, 0_d), std::invalid_argument);
+    EXPECT_THROW(m /= Matrix3x3(9_d, 8_d, 7_d, 6_d, 5_d, 4_d, 3_d, 2_d, 0_d), std::invalid_argument);
 }
 
 TEST(Matrix3x3_Test, Free)
@@ -401,7 +401,7 @@ TEST(Matrix3x3_Test, Free)
     EXPECT_EQ(2_d * m, Matrix3x3(2_d, 4_d, 6_d, 8_d, 10_d, 12_d, 14_d, 16_d, 18_d));
     EXPECT_EQ(2_d / m, Matrix3x3(2_d / 1_d, 2_d / 2_d, 2_d / 3_d, 2_d / 4_d, 2_d / 5_d, 2_d / 6_d, 2_d / 7_d,
                                  2_d / 8_d, 2_d / 9_d));
-    EXPECT_THROW(m / 0, std::invalid_argument);
+    EXPECT_THROW(m / 0_d, std::invalid_argument);
 
     // Matrix Vector Arithmetic Operators
     Vector3D v(1_d, 2_d, 3_d);

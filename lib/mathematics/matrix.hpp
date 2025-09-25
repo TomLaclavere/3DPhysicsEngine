@@ -143,7 +143,7 @@ public:
     void setToIdentity();
     void setToNull();
     void setAllValues(decimal);
-    void setAllValues(Vector3D&);
+    void setAllValues(const Vector3D&);
     void setAllValues(const Vector3D&, const Vector3D&, const Vector3D&);
     void setAllValues(decimal, decimal, decimal, decimal, decimal, decimal, decimal, decimal, decimal);
     void setAllValues(const Matrix3x3&);

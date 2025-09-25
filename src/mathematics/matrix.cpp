@@ -151,7 +151,7 @@ void Matrix3x3::setAllValues(decimal value)
     for (int i = 0; i < 9; ++i)
         (*this)(i) = value;
 }
-void Matrix3x3::setAllValues(Vector3D& v)
+void Matrix3x3::setAllValues(const Vector3D& v)
 {
     for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)

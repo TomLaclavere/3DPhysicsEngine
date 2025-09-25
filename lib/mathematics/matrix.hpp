@@ -302,3 +302,4 @@ Matrix3x3 operator/(decimal, const Matrix3x3&);
 std::ostream& operator<<(std::ostream&, const Matrix3x3&);
 /// @}
 /// @}
+/// @}

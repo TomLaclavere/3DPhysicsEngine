@@ -1,3 +1,25 @@
+/**
+ * @file vector.cpp
+ * @brief Implementation of Vector3D class methods and related free functions.
+ *
+ * Implements all member functions of the Vector3D class declared in vector.hpp,
+ * as well as free arithmetic operators and utility functions.
+ *
+ * This file includes:
+ *  - Vector3D utilities (absolute value, normalization, norms)
+ *  - Setters and property checks
+ *  - Vector operations (dot/cross product)
+ *  - Comparison and arithmetic operators
+ *  - Free arithmetic operators for Vector3D and decimal
+ *  - Stream output operator
+ *
+ * Exception safety:
+ *  - Out-of-range access for `operator()` throws `std::out_of_range`.
+ *  - Division by zero in in-place or free arithmetic operators throws `std::invalid_argument`.
+ *
+ * @see vector.hpp
+ */
+
 #include "mathematics/vector.hpp"
 
 #include <cmath>
@@ -6,9 +28,7 @@
 #include <stdexcept>
 
 // ============================================================================
-// ============================================================================
 //  Utilities
-// ============================================================================
 // ============================================================================
 void Vector3D::absolute()
 {
@@ -24,7 +44,7 @@ void Vector3D::normalize()
     else
         *this /= n;
 }
-Vector3D Vector3D::getAbsoluteVector() const
+Vector3D Vector3D::getAbsolute() const
 {
     Vector3D absV = Vector3D((*this));
     absV.absolute();
@@ -46,9 +66,7 @@ Vector3D max(const Vector3D& a, const Vector3D& b)
 }
 
 // ============================================================================
-// ============================================================================
 //  Setters
-// ============================================================================
 // ============================================================================
 void Vector3D::setX(decimal x_) { v[0] = x_; }
 void Vector3D::setY(decimal y_) { v[1] = y_; }
@@ -58,19 +76,15 @@ void Vector3D::setAllValues(decimal s) { v = { s, s, s }; }
 void Vector3D::setAllValues(decimal x_, decimal y_, decimal z_) { v = { x_, y_, z_ }; }
 
 // ============================================================================
-// ============================================================================
 //  Property Checks
 // ============================================================================
-// ============================================================================
-bool Vector3D::isZero() const { return commonMaths::approxEqual(getNormSquare(), decimal(0)); }
+bool Vector3D::isNull() const { return commonMaths::approxEqual(getNormSquare(), decimal(0)); }
 bool Vector3D::isLengthEqual(decimal val) const { return commonMaths::approxEqual(getNormSquare(), val); }
 bool Vector3D::isFinite() const { return std::isfinite(v[0]) && std::isfinite(v[1]) && std::isfinite(v[2]); }
 bool Vector3D::isNormalized() const { return commonMaths::approxEqual(getNorm(), decimal(1)); }
 
 // ============================================================================
-// ============================================================================
 //  Vector Operations
-// ============================================================================
 // ============================================================================
 decimal Vector3D::dotProduct(const Vector3D& other) const
 {
@@ -85,9 +99,7 @@ Vector3D Vector3D::crossProduct(const Vector3D& other) const
 Vector3D crossProduct(const Vector3D& lhs, const Vector3D& rhs) { return lhs.crossProduct(rhs); }
 
 // ============================================================================
-// ============================================================================
 //  Comparison Operators
-// ============================================================================
 // ============================================================================
 bool Vector3D::operator==(const Vector3D& other) const
 {
@@ -134,29 +146,39 @@ bool Vector3D::approxEqual(const Vector3D& other, decimal p) const
 }
 
 // ============================================================================
+//  Element Access Operators
 // ============================================================================
-//  Element Acess Operators
-// ============================================================================
-// ============================================================================
-decimal& Vector3D::operator()(int i)
+/// @param i Index of the component (0, 1, or 2).
+/// @return Reference to the component at index `i`.
+decimal& Vector3D::at(int i)
 {
     if (i < 0 || i >= 3)
         throw std::out_of_range("Vector3D index out of range");
     return v[i];
 }
-decimal Vector3D::operator()(int i) const
+/// @param i Index of the component (0, 1, or 2).
+/// @return Value of the component at index `i`.
+decimal Vector3D::at(int i) const
 {
     if (i < 0 || i >= 3)
         throw std::out_of_range("Vector3D index out of range");
     return v[i];
 }
+/// @param i Index of the component (0, 1, or 2). If out of range, behavior is undefined.
+/// @return Reference to the component at index `i`.
+decimal& Vector3D::operator()(int i) { return v[i]; }
+/// @param i Index of the component (0, 1, or 2). If out of range, behavior is undefined.
+/// @return Value of the component at index `i`.
+decimal Vector3D::operator()(int i) const { return v[i]; }
+/// @param i Index of the component (0, 1, or 2). If out of range, behavior is undefined.
+/// @return Reference to the component at index `i`.
 decimal& Vector3D::operator[](int i) { return v[i]; }
-decimal  Vector3D::operator[](int i) const { return v[i]; }
+/// @param i Index of the component (0, 1, or 2). If out of range, behavior is undefined.
+/// @return Value of the component at index `i`.
+decimal Vector3D::operator[](int i) const { return v[i]; }
 
 // ============================================================================
-// ============================================================================
 //  In-Place Arithmetic Operators
-// ============================================================================
 // ============================================================================
 Vector3D  Vector3D::operator-() const { return Vector3D { -v[0], -v[1], -v[2] }; }
 Vector3D& Vector3D::operator+=(const Vector3D& other)
@@ -182,7 +204,8 @@ Vector3D& Vector3D::operator*=(const Vector3D& other)
 }
 Vector3D& Vector3D::operator/=(const Vector3D& other)
 {
-    if (other[0] == 0 || other[1] == 0 || other[2] == 0)
+    if (commonMaths::approxEqual(other[0], decimal(0)) || commonMaths::approxEqual(other[1], decimal(0)) ||
+        commonMaths::approxEqual(other[2], decimal(0)))
         throw std::invalid_argument("Division by zero");
     v[0] /= other[0];
     v[1] /= other[1];
@@ -212,15 +235,13 @@ Vector3D& Vector3D::operator*=(decimal s)
 }
 Vector3D& Vector3D::operator/=(decimal s)
 {
-    if (s == 0)
+    if (commonMaths::approxEqual(s, decimal(0)))
         throw std::invalid_argument("Division by zero");
     return *this *= decimal(1) / s;
 }
 
 // ============================================================================
-// ============================================================================
 //  Free Arithmetic Operators
-// ============================================================================
 // ============================================================================
 // Vector3D op Vector3D
 Vector3D operator+(const Vector3D& lhs, const Vector3D& rhs)
@@ -237,10 +258,12 @@ Vector3D operator*(const Vector3D& lhs, const Vector3D& rhs)
 }
 Vector3D operator/(const Vector3D& lhs, const Vector3D& rhs)
 {
-    if (rhs[0] == 0 || rhs[1] == 0 || rhs[2] == 0)
+    if (commonMaths::approxEqual(rhs[0], decimal(0)) || commonMaths::approxEqual(rhs[1], decimal(0)) ||
+        commonMaths::approxEqual(rhs[2], decimal(0)))
         throw std::invalid_argument("Division by zero");
     return applyVector(lhs, rhs, std::divides<decimal>());
 }
+
 // Vector3D op decimal
 Vector3D operator+(const Vector3D& lhs, decimal rhs) { return applyVector(lhs, rhs, std::plus<decimal>()); }
 Vector3D operator-(const Vector3D& lhs, decimal rhs) { return applyVector(lhs, rhs, std::minus<decimal>()); }
@@ -250,10 +273,11 @@ Vector3D operator*(const Vector3D& lhs, decimal rhs)
 }
 Vector3D operator/(const Vector3D& lhs, decimal rhs)
 {
-    if (rhs == 0)
+    if (commonMaths::approxEqual(rhs, decimal(0)))
         throw std::invalid_argument("Division by zero");
     return applyVector(lhs, rhs, std::divides<decimal>());
 }
+
 // Decimal op Vector3D
 Vector3D operator+(decimal lhs, const Vector3D& rhs) { return rhs + lhs; }
 Vector3D operator-(decimal lhs, const Vector3D& rhs) { return rhs - lhs; }
@@ -261,9 +285,7 @@ Vector3D operator*(decimal lhs, const Vector3D& rhs) { return rhs * lhs; }
 Vector3D operator/(decimal lhs, const Vector3D& rhs) { return rhs / lhs; }
 
 // ============================================================================
-// ============================================================================
-//  Free Arithmetic Operators
-// ============================================================================
+// Printing
 // ============================================================================
 std::ostream& operator<<(std::ostream& os, const Vector3D& v)
 {

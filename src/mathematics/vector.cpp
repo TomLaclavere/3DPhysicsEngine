@@ -204,7 +204,8 @@ Vector3D& Vector3D::operator*=(const Vector3D& other)
 }
 Vector3D& Vector3D::operator/=(const Vector3D& other)
 {
-    if (other[0] == 0 || other[1] == 0 || other[2] == 0)
+    if (commonMaths::approxEqual(other[0], decimal(0)) || commonMaths::approxEqual(other[1], decimal(0)) ||
+        commonMaths::approxEqual(other[2], decimal(0)))
         throw std::invalid_argument("Division by zero");
     v[0] /= other[0];
     v[1] /= other[1];
@@ -234,7 +235,7 @@ Vector3D& Vector3D::operator*=(decimal s)
 }
 Vector3D& Vector3D::operator/=(decimal s)
 {
-    if (s == 0)
+    if (commonMaths::approxEqual(s, decimal(0)))
         throw std::invalid_argument("Division by zero");
     return *this *= decimal(1) / s;
 }
@@ -257,7 +258,8 @@ Vector3D operator*(const Vector3D& lhs, const Vector3D& rhs)
 }
 Vector3D operator/(const Vector3D& lhs, const Vector3D& rhs)
 {
-    if (rhs[0] == 0 || rhs[1] == 0 || rhs[2] == 0)
+    if (commonMaths::approxEqual(rhs[0], decimal(0)) || commonMaths::approxEqual(rhs[1], decimal(0)) ||
+        commonMaths::approxEqual(rhs[2], decimal(0)))
         throw std::invalid_argument("Division by zero");
     return applyVector(lhs, rhs, std::divides<decimal>());
 }
@@ -271,7 +273,7 @@ Vector3D operator*(const Vector3D& lhs, decimal rhs)
 }
 Vector3D operator/(const Vector3D& lhs, decimal rhs)
 {
-    if (rhs == 0)
+    if (commonMaths::approxEqual(rhs, decimal(0)))
         throw std::invalid_argument("Division by zero");
     return applyVector(lhs, rhs, std::divides<decimal>());
 }

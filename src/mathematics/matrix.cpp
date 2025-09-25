@@ -387,12 +387,18 @@ Matrix3x3& Matrix3x3::operator*=(const Matrix3x3& other)
         m[i] *= other[i];
     return *this;
 }
+/**
+ * Element-wise division by another matrix.
+ * This is NOT standard matrix division (multiplication by the inverse).
+ * Each element is divided by the corresponding element of the other matrix.
+ * Throws `std::invalid_argument` on division by zero.
+ */
 Matrix3x3& Matrix3x3::operator/=(const Matrix3x3& other)
 {
     // Check if the divisor matrix has a zero element
     for (int i = 0; i < 9; ++i)
     {
-        if (other.m[i] == 0)
+        if (commonMaths::approxEqual(other[i], decimal(0)))
         {
             throw std::invalid_argument("Division by zero element in matrix");
         }
@@ -429,7 +435,8 @@ Matrix3x3& Matrix3x3::operator*=(const Vector3D& vector)
 Matrix3x3& Matrix3x3::operator/=(const Vector3D& vector)
 {
     // Check if the divisor vector has a zero element
-    if (vector[0] == 0 || vector[1] == 0 || vector[2] == 0)
+    if (commonMaths::approxEqual(vector[0], decimal(0)) || commonMaths::approxEqual(vector[1], decimal(0)) ||
+        commonMaths::approxEqual(vector[2], decimal(0)))
         throw std::invalid_argument("Division by zero");
 
     for (int i = 0; i < 3; ++i)
@@ -457,7 +464,7 @@ Matrix3x3& Matrix3x3::operator*=(decimal scalar)
 }
 Matrix3x3& Matrix3x3::operator/=(decimal scalar)
 {
-    if (scalar == 0)
+    if (commonMaths::approxEqual(scalar, decimal(0)))
         throw std::invalid_argument("Division by zero");
     decimal inv = 1 / scalar;
     for (int i = 0; i < 9; ++i)
@@ -486,6 +493,11 @@ Matrix3x3 operator*(const Matrix3x3& A, const Matrix3x3& B)
 }
 Matrix3x3 operator/(const Matrix3x3& A, const Matrix3x3& B)
 {
+    for (int i = 0; i < 9; ++i)
+    {
+        if (commonMaths::approxEqual(B[i], decimal(0)))
+            throw std::invalid_argument("Division by zero element in matrix");
+    }
     Matrix3x3 m(A);
     return m /= B;
 }
@@ -508,7 +520,7 @@ Matrix3x3 operator*(const Matrix3x3& A, decimal s)
 }
 Matrix3x3 operator/(const Matrix3x3& A, decimal s)
 {
-    if (s == 0)
+    if (commonMaths::approxEqual(s, decimal(0)))
         throw std::invalid_argument("Division by zero");
     decimal   inv = 1 / s;
     Matrix3x3 m(A);
@@ -524,7 +536,7 @@ Matrix3x3 operator/(decimal s, const Matrix3x3& A)
     Matrix3x3 result;
     for (int i = 0; i < 9; ++i)
     {
-        if (A[i] == 0)
+        if (commonMaths::approxEqual(A[i], decimal(0)))
             throw std::invalid_argument("Division by zero");
         result[i] = s / A[i];
     }

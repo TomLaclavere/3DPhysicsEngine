@@ -78,7 +78,7 @@ public:
     /// @{
     decimal   getRealPart() const { return w; };
     Vector3D  getImaginaryPart() const { return v; };
-    Vector3D  getImaginaryPartElement(int index) const { return v[index]; };
+    decimal   getImaginaryPartElement(int index) const { return v[index]; };
     Matrix3x3 getRotationMatrix() const;
     /// @}
 
@@ -98,9 +98,9 @@ public:
     /// Euclidean norm.
     decimal getNorm() const;
     /// Return identity quaternion (0, 0, 0, 1).
-    Quaternion3D getIdentity() const;
+    static Quaternion3D getIdentity() { return Quaternion3D(0, 0, 0, 1); };
     /// Return null quaternion (0, 0, 0, 0).
-    Quaternion3D getNull() const;
+    static Quaternion3D getNull() { return Quaternion3D(0, 0, 0, 0); };
     /// Return a conjugated copy of the quaternion.
     Quaternion3D getConjugate() const;
     /// Return a normalized copy of the quaternion.

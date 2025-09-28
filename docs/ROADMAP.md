@@ -35,19 +35,25 @@
   - [x] **Test CI :** Integration of tests procedure in GitHub.
     - [x] **CI with GCC**
     - [ ] **CI with Clang :**
-- [ ] **Documentation :** Doxygen
-  - [ ] Document types and utilities.
+- [x] **Documentation :** Doxygen
+  - [x] Document functions and utilities.
   - [x] Documentation CI.
 
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
 
-## Phase 3: Rigid Body Dynamics
+## Phase 3: Rigid Body Dynamics & Physics World
 - [ ] **Core Model :**
-  - [ ] **RigidBody :** mass, barycentre, inertia, torque, string, energy (kinetic and potential), hook, damping
+  - [ ] **RigidBody :** 
+    - [ ] **Advanced Physical properties :** mass, barycentre, string
+    - [ ] **Energy :** kinetic and potential energies, conservation
+    - [ ] **Advanced motion :** Inertia, torque, hook, damping
   - [ ] **PhysicsWorld :** 
-    - [ ] **Time loop* 
+    - [ ] **Physical constants**
+        - [ ] Define and implement physical constants
+        - [ ] Design a way to define all the variables of the simulation : parameters file ? command line ? compilation flags ? 
+    - [ ] **Time loop**
     - [ ] **External forces :** gravity, wind, ...
 - [ ] **Equation of motion**
 - [ ] **Rotation & Angular Dynamics** 

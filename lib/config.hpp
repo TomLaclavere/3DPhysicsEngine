@@ -1,9 +1,10 @@
 /**
  * @file precision_constants.hpp
- * @brief Defines numerical precision constants for the physics/math engine.
+ * @brief Defines numerical precision  and physical constants for the physics/math engine.
  *
  * This file centralizes tolerance values and machine precision
  * used in floating-point comparisons and stability checks.
+ * It also includes physical constants relevant to simulations.
  */
 #pragma once
 
@@ -23,3 +24,5 @@
  * - Stability thresholds in numerical algorithms.
  */
 const decimal PRECISION_MACHINE = std::numeric_limits<decimal>::epsilon();
+
+const decimal gravityEarth = 9.80665; // m/s^2

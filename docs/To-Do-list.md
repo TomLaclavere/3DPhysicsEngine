@@ -8,10 +8,14 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 ## CMake and Build System
 
-- [ ] Build executable for main
+- [x] Build executable for main
 - [ ] Automatic addition of new source files to CMakeLists.txt
 - [ ] Make `run.sh` executable at compilation
 - [ ] Clean and refine CMakeLists.txt files
+- [ ] Clean generation of build/
+- [ ] Add bash scripts for common commands :
+    - [ ] test.sh
+    - [ ] coverage.sh (with argument for in console or html)
 
 ## Documentation
 
@@ -22,3 +26,5 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 - [ ] Add Doxygen badge to README.md
 - [ ] Add CMake badge to README.md
 - [ ] Add GitHub Actions badge to README.md
+
+## Done

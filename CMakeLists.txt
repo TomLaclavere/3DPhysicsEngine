@@ -28,9 +28,19 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # =============================================
+# Find Dependencies
+# =============================================
+find_package(yaml-cpp REQUIRED)
+if(yaml-cpp_FOUND)
+    message(STATUS "Found yaml-cpp: ${yaml-cpp_DIR}")
+else()
+    message(FATAL_ERROR "yaml-cpp not found! Please install it: sudo apt-get install libyaml-cpp-dev")
+endif()
+
+# =============================================
 # Project Options
 # =============================================
-option(USE_DOUBLE_PRECISION "Compile using double precision floating values" OFF)
+option(DOUBLE_PRECISION "Compile using double precision floating values" OFF)
 option(TESTS                "Build unit tests"                               ON)
 option(COVERAGE             "Enable coverage reporting"                      ON)
 
@@ -38,6 +48,8 @@ option(COVERAGE             "Enable coverage reporting"                      ON)
 # Main Library Target
 # =============================================
 add_library(3DPhysicsEngine
+    src/config.cpp
+
     src/mathematics/vector.cpp
     src/mathematics/matrix.cpp
     src/mathematics/quaternion.cpp
@@ -50,6 +62,8 @@ add_library(3DPhysicsEngine
 target_include_directories(3DPhysicsEngine
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/lib
 )
+
+target_link_libraries(3DPhysicsEngine PUBLIC yaml-cpp)
 
 # =============================================
 # Precision Definition
@@ -68,6 +82,21 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 endif()
 
 # =============================================
+# Main Application Executable
+# =============================================
+add_executable(PhysicsEngine src/main.cpp)
+target_link_libraries(PhysicsEngine PRIVATE 3DPhysicsEngine)
+target_include_directories(PhysicsEngine PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+set_target_properties(PhysicsEngine PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+add_custom_target(run
+    COMMAND ./PhysicsEngine
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+    DEPENDS PhysicsEngine
+    COMMENT "Running PhysicsEngine..."
+)
+
+# =============================================
 # Testing Configuration
 # =============================================
 if(TESTS)
@@ -75,14 +104,20 @@ if(TESTS)
 
     include(FetchContent)
     FetchContent_Declare(
-        googletest
-        GIT_REPOSITORY https://github.com/google/googletest.git
-        GIT_TAG        release-1.12.1
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG        main
     )
     FetchContent_MakeAvailable(googletest)
 
     add_subdirectory(tests)
 endif()
+
+# =============================================
+# Output Directory Configuration
+# =============================================
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 # =============================================
 # Coverage Analysis

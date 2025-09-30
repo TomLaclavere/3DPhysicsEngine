@@ -3,7 +3,7 @@ name: 3DPhysicsEngine CI
 on:
   push:
     branches:
-      - main  
+      - main
   pull_request:
     branches:
       - main
@@ -55,9 +55,10 @@ jobs:
       - name: Generate coverage report
         run: cmake --build build --target coverage-console
 
-      - name: Upload coverage results
-        uses: actions/upload-artifact@v4
+      - name: Upload coverage to Codacy
+        uses: codacy/codacy-coverage-reporter-action@v1
         with:
-          name: coverage-report-${{ matrix.compiler }}
-          path: build/coverage/
-          if-no-files-found: ignore
+          # You must configure this token in your GitHub repository secrets
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          # Set this to the path of your generated coverage report file
+          coverage-reports: build/coverage_report/cobertura.xml

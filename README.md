@@ -1,5 +1,10 @@
 # 3D Physics Engine in C++ for HPC
 
+[![CMake](https://img.shields.io/badge/CMake-3.22.1-brightgreen)](https://cmake.org/)
+[![GitHub Actions](https://github.com/tomlaclavere/3DPhysicsEngine/workflows/CI/badge.svg)](https://github.com/tomlaclavere/3DPhysicsEngine/actions)
+[![Coverage](https://codecov.io/gh/tomlaclavere/3DPhysicsEngine/branch/main/graph/badge.svg)](https://codecov.io/gh/tomlaclavere/3DPhysicsEngine)
+[![Documentation](https://img.shields.io/badge/docs-doxygen-blue)](https://tomlaclavere.github.io/3DPhysicsEngine/)
+
 ## Project Overview
 A modular 3D physics engine built in modern C++, designed to combine scientific rigour with extreme performance. Inspired by the architecture and best practices of Project Chrono reactphysics3d, this engine aims to strengthen C++ expertise and HPC techniques by delivering a complete, extensible, and highly optimized simulation core.
 

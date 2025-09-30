@@ -10,15 +10,14 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 - [x] Build executable for main
 - [ ] Automatic addition of new source files to CMakeLists.txt
-- [ ] Make `run.sh` executable at compilation
 - [ ] Clean and refine CMakeLists.txt files
-- [ ] Clean generation of build/
-- [ ] Add bash scripts for common commands :
-    - [ ] tests.sh
-    - [ ] coverage.sh (with argument for in console or HTML)
+- [ ] Clean/organize generation of build/
+- [x] Add bash scripts for common commands :
+    - [x] tests.sh
+    - [x] coverage.sh (with argument for in console or HTML)
     - [x] build.sh
-    - [ ] clean.sh
-    - [ ] run.sh
+    - [x] clean.sh
+    - [x] run.sh
 
 ## Documentation
 

@@ -14,8 +14,11 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 - [ ] Clean and refine CMakeLists.txt files
 - [ ] Clean generation of build/
 - [ ] Add bash scripts for common commands :
-    - [ ] test.sh
-    - [ ] coverage.sh (with argument for in console or html)
+    - [ ] tests.sh
+    - [ ] coverage.sh (with argument for in console or HTML)
+    - [x] build.sh
+    - [ ] clean.sh
+    - [ ] run.sh
 
 ## Documentation
 

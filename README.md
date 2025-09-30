@@ -2,6 +2,8 @@
 
 [![CMake](https://img.shields.io/badge/CMake-3.22.1-064f8d?logo=cmake)](https://cmake.org/)
 [![GitHub Actions](https://img.shields.io/github/actions/workflow/status/tomlaclavere/3DPhysicsEngine/ci.yml?branch=main&logo=githubactions)](https://github.com/tomlaclavere/3DPhysicsEngine/actions)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/deef48eb6ab64d118def430438d08f0c)](https://app.codacy.com/gh/TomLaclavere/3DPhysicsEngine/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Coverage/deef48eb6ab64d118def430438d08f0c)](https://app.codacy.com/gh/TomLaclavere/3DPhysicsEngine/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue?logo=readthedocs)](https://tomlaclavere.github.io/3DPhysicsEngine/)
 [![Licence](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![C++](https://img.shields.io/badge/C++-23-blue?logo=c%2B%2B)](https://isocpp.org/)

@@ -1,7 +1,7 @@
 # 3D Physics Engine in C++ for HPC
 
 ## Project Overview
-A modular 3D physics engine built in modern C++, designed to combine scientific rigor with extreme performance. Inspired by the architecture and best practices of Project Chrono reactphysics3d, this engine aims to strengthen C++ expertise and HPC techniques by delivering a complete, extensible, and highly optimized simulation core.
+A modular 3D physics engine built in modern C++, designed to combine scientific rigour with extreme performance. Inspired by the architecture and best practices of Project Chrono reactphysics3d, this engine aims to strengthen C++ expertise and HPC techniques by delivering a complete, extensible, and highly optimized simulation core.
 
 ## Goals
 
@@ -55,15 +55,42 @@ CMake takes multiple parameters to define different compilations :
 - `-DTESTS` : compiles the unit testing repository. To run the test, you can use : `ctest -j$(nproc)`.
 - `-DCOVERAGE` : allows performing coverage analysis. Two options are available, to run after build : `make coverage` which will save a detailed coverage reports as HTML file at the following location : `build/coverage_report/`; and `make coverage-console` to print the results in the console. Be careful: `gcovr` needs to be installed for GCC compilation.
 
+## Developer scripts
+
+For convenience, bash scripts can be used to run common tasks : build, run, tests, coverage and clean. These executable files are provides in `scripts/` repository folder :
+
+```
+scripts/
+├─ build.sh        # configure & build with CMake
+├─ run_app.sh      # build (if needed) and run the executable
+├─ run_tests.sh    # build (if needed) and run tests via CTest
+├─ coverage.sh     # build+generate coverage (html or console)
+└─ clean.sh        # remove the build directory
+```
+
+These scripts are designed to be simple and CI-friendly. They accept arguments and environment variables to adapt to different workflows.
+
+### Make sure scripts are executable
+The executable files should be committed to Git. If it is not yet set, run locally : 
+
+```bash
+chmod +x scripts/*.sh
+```
+If someone clones the repo on a system that does not preserve the executable bit (Windows), they can still run scripts with `bash scripts/build.sh`.
+
+### How to use ?
+
+A detailed explanation can be found in `scripts/USAGE.md`, to explain the different options, parameters and options to use these bash scripts.
+
 ## Doxygen Documentation
 
 To generate the project documentation using Doxygen, run the following command :
-```
+```bash
 doxygen Doxyfile
 ```
 
 It will generate two repositories in `docs/` : `html/` and `latex/`. To visualise the documentation, use the command : 
-```
+```bash
 xdg-open docs/html/index.html      # Linux
 open docs/html/index.html          # macOS
 start docs/html/index.html         # Windows

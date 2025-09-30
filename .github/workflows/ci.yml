@@ -55,10 +55,12 @@ jobs:
       - name: Generate coverage report
         run: cmake --build build --target coverage-console
 
+      - name: Generate Codacy coverage report
+        run: |
+          gcovr --root . --exclude-unreachable-branches --exclude-throw-branches --xml cobertura.xml
+
       - name: Upload coverage to Codacy
         uses: codacy/codacy-coverage-reporter-action@v1
         with:
-          # You must configure this token in your GitHub repository secrets
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          # Set this to the path of your generated coverage report file
-          coverage-reports: build/coverage_report/coverage_report.html
+          coverage-reports: cobertura.xml # Now pointing to the correct Cobertura XML file

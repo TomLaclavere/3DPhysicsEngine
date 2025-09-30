@@ -69,6 +69,7 @@ open docs/html/index.html          # macOS
 start docs/html/index.html         # Windows
 ```
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/2acc159d10ac445d8cd8d17d2a4d69ef)](https://app.codacy.com/gh/TomLaclavere/3DPhysicsEngine?utm_source=github.com&utm_medium=referral&utm_content=TomLaclavere/3DPhysicsEngine&utm_campaign=Badge_Grade)
 The documentation is generated at each commit on the main branch, and accessible at : [![Documentation](https://img.shields.io/badge/docs-online-brightgreen)](https://tomlaclavere.github.io/3DPhysicsEngine/)
 
 

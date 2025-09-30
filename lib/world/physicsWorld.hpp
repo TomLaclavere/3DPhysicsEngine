@@ -9,9 +9,10 @@
 struct PhysicsWorld
 {
 private:
+    Config&             config = Config::get();
     std::vector<Object> objects;
     decimal             deltaTime       = 1_d;
-    decimal             gravityConstant = gravityEarth;
+    decimal             gravityConstant = config.gravity;
 
 public:
     PhysicsWorld()  = default;

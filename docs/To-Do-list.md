@@ -4,6 +4,8 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 ## General Tasks
 
+- [ ] Analyse code with Codacy
+
 ## Code Quality and Maintenance
 
 ## CMake and Build System
@@ -24,9 +26,8 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 ## Unit Testing and CI/CD
 
 - [ ] CI with Clang
-- [ ] Add coverage badge to README.md
-- [ ] Add Doxygen badge to README.md
-- [ ] Add CMake badge to README.md
-- [ ] Add GitHub Actions badge to README.md
+- [x] Add Doxygen badge to README.md
+- [x] Add CMake badge to README.md
+- [x] Add GitHub Actions badge to README.md
 
 ## Done

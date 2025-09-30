@@ -61,4 +61,4 @@ jobs:
           # You must configure this token in your GitHub repository secrets
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
           # Set this to the path of your generated coverage report file
-          coverage-reports: build/coverage_report/cobertura.xml
+          coverage-reports: build/coverage_report/coverage_report.html

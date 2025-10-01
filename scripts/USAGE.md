@@ -52,10 +52,10 @@ Use '--' to separate script/CMake args from arguments forwarded to the executabl
 ./scripts/run.sh
 
 # force rebuild (using Clang instead of default GCC), then run
-./scripts/run_app.sh --rebuild -DUSE_CLANG=ON
+./scripts/run.sh --rebuild -DUSE_CLANG=ON
 
 # pass compile-time flags (use double precision) and forward runtime args after -- (give configuration file)
-./scripts/run_app.sh -DUSE_DOUBLE_PRECISION=ON -- --config config.yaml
+./scripts/run.sh -DUSE_DOUBLE_PRECISION=ON -- --config config.yaml
 ```
 
 ### Test
@@ -70,13 +70,13 @@ After building, it prefers to run 'ctest' (if available). If ctest is missing, i
 ./scripts/tests.sh -h
 
 # run tests
-./scripts/run_tests.sh
+./scripts/tests.sh
 
 # pass compile flags and filter gtest names
-./scripts/run_tests.sh -DUSE_CLANG=ON --gtest-filter MySuite.*
+./scripts/tests.sh -DUSE_CLANG=ON --gtest-filter MySuite.*
 
 # force rebuild and run (changing compiler)
-./scripts/run_tests.sh --rebuild -DUSE_CLANG=ON
+./scripts/tests.sh --rebuild -DUSE_CLANG=ON
 ```
 
 ### Coverage

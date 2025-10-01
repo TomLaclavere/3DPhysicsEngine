@@ -399,7 +399,7 @@ TEST(Matrix3x3_Test, Free)
     EXPECT_EQ(5_d + m, Matrix3x3(6_d, 7_d, 8_d, 9_d, 10_d, 11_d, 12_d, 13_d, 14_d));
     EXPECT_EQ(5_d - m, Matrix3x3(4_d, 3_d, 2_d, 1_d, 0_d, -1_d, -2_d, -3_d, -4_d));
     EXPECT_EQ(2_d * m, Matrix3x3(2_d, 4_d, 6_d, 8_d, 10_d, 12_d, 14_d, 16_d, 18_d));
-    EXPECT_EQ(2_d / m, Matrix3x3(2_d / 1_d, 2_d / 2_d, 2_d / 3_d, 2_d / 4_d, 2_d / 5_d, 2_d / 6_d, 2_d / 7_d,
+    EXPECT_EQ(2_d / m, Matrix3x3(2_d / 1_d, 1_d, 2_d / 3_d, 2_d / 4_d, 2_d / 5_d, 2_d / 6_d, 2_d / 7_d,
                                  2_d / 8_d, 2_d / 9_d));
     EXPECT_THROW(m / 0_d, std::invalid_argument);
 

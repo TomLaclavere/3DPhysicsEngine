@@ -33,7 +33,7 @@ public:
     // ============================================================================
     /// @{
     Sphere() = default;
-    Sphere(const Vector3D& position)
+    explicit Sphere(const Vector3D& position)
         : Object(position)
     {}
     Sphere(const Vector3D& position, const decimal& scale)

@@ -15,7 +15,7 @@ chmod +x scripts/*.sh
 
 ## Examples
 
-Examples to show how to use each bash files. These are not exhaustive examples, but only the most common cases. For more details about all flags, arguments and usage, use `--help`.
+Examples to show how to use each bash scripts. These are not exhaustive examples, but only the most common cases. For more details about all flags, arguments and usage, use `--help`.
 
 ### Build
 
@@ -32,7 +32,7 @@ Configure & build using CMake.
 ./scripts/build.sh -DCMAKE_CXX_FLAGS="-O3"
 
 # pass CMake args
-./scripts/build.sh -DUSE_CLANG=ON -DUSE_DOUBLE_PRECISION=ON
+./scripts/build.sh -DUSE_CLANG=ON -DDOUBLE_PRECISION=ON
 
 # set build dir and type
 ./scripts/build.sh --build-dir out --build-type Release -DUSE_CLANG=ON
@@ -55,7 +55,7 @@ Use '--' to separate script/CMake args from arguments forwarded to the executabl
 ./scripts/run.sh --rebuild -DUSE_CLANG=ON
 
 # pass compile-time flags (use double precision) and forward runtime args after -- (give configuration file)
-./scripts/run.sh -DUSE_DOUBLE_PRECISION=ON -- --config config.yaml
+./scripts/run.sh -DDOUBLE_PRECISION=ON -- --config config.yaml
 ```
 
 ### Test

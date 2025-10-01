@@ -11,6 +11,7 @@
 #include "precision.hpp"
 
 #include <limits>
+#include <stdexcept>
 #include <string>
 
 /**

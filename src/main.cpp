@@ -9,9 +9,9 @@ int main(int argc, char** argv)
     config.loadFromFile("src/config.yaml");
 
     // Print
-    std::cout << "Gravity: " << config.gravity << " m/s^2\n";
-    std::cout << "Timestep: " << config.timeStep << " s\n";
-    std::cout << "Max iterations: " << config.maxIterations << "\n";
+    std::cout << "Gravity: " << config.getGravity() << " m/s^2\n";
+    std::cout << "Timestep: " << config.getTimeStep() << " s\n";
+    std::cout << "Max iterations: " << config.getMaxIterations() << "\n";
 
     return 0;
 }

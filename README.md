@@ -65,7 +65,7 @@ CMake takes multiple parameters to define different compilations :
 
 ## Developer scripts
 
-For convenience, bash scripts can be used to run common tasks : build, run, tests, coverage and clean. These executable files are provides in `scripts/` repository folder :
+For convenience, bash scripts can be used to run common tasks : build, run, tests, coverage and clean. These executable files are provided in `scripts/` repository folder :
 
 ```
 scripts/

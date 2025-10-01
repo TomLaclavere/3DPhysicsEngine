@@ -65,11 +65,11 @@ public:
         : Quaternion3D(v, w)
     {}
     /// Constructor from rotation matrix.
-    Quaternion3D(const Matrix3x3& m);
+    explicit Quaternion3D(const Matrix3x3& m);
     /// Constructor from Euler angles.
     Quaternion3D(decimal angleX, decimal angleY, decimal angleZ);
     /// Constructor from Euler angles.
-    Quaternion3D(const Vector3D& eulerAngles);
+    explicit Quaternion3D(const Vector3D& eulerAngles);
     /// @}
 
     // ============================================================================

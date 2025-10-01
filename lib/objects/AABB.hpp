@@ -33,7 +33,7 @@ public:
     // ============================================================================
     /// @{
     AABB() = default;
-    AABB(const Vector3D& position)
+    explicit AABB(const Vector3D& position)
         : Object(position)
     {}
     AABB(const Vector3D& position, const Vector3D& scale)

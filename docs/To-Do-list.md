@@ -5,7 +5,6 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 ## General Tasks
 
 - [ ] Analyse code with Codacy
-- [ ] Correct code from Sourcery remarks
 
 ## Code Quality and Maintenance
 

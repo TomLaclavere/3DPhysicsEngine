@@ -56,6 +56,7 @@ public:
     ObjectType get_type() const override { return ObjectType::Sphere; }
     Vector3D   get_center() const { return get_position(); }
     decimal    get_radius() const { return get_scale()[0] * 0.5_d; }
+    decimal    get_scale_value() const { return get_scale()[0]; }
     /// @}
 
     // ============================================================================

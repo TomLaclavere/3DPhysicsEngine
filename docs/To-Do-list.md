@@ -4,16 +4,13 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 ## General Tasks
 
-- [ ] Analyse code with Codacy
-
 ## Code Quality and Maintenance
 
 ## CMake and Build System
 
 - [x] Build executable for main
-- [ ] Automatic addition of new source files to CMakeLists.txt
-- [ ] Clean and refine CMakeLists.txt files
-- [ ] Clean/organize generation of build/
+- [x] Clean and refine CMakeLists.txt files
+- [x] Clean/organize generation of build/
 - [x] Add bash scripts for common commands :
     - [x] tests.sh
     - [x] coverage.sh (with argument for in console or HTML)

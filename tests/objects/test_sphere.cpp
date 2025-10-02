@@ -20,7 +20,7 @@ TEST(Sphere_Test, ConstructorsAndGetters)
     Sphere sphere(position, rotation, scale, velocity, acceleration, force, torque, mass);
 
     EXPECT_EQ(sphere.get_position(), position);
-    EXPECT_EQ(sphere.get_scale(), scale);
+    EXPECT_EQ(sphere.get_scale_value(), scale);
     EXPECT_EQ(sphere.get_rotation(), rotation);
     EXPECT_EQ(sphere.get_velocity(), velocity);
     EXPECT_EQ(sphere.get_acceleration(), acceleration);

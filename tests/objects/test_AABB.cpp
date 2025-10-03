@@ -5,7 +5,7 @@
 #include <ostream>
 #include <sstream>
 
-TEST(AABB_Test, ConstructorsAndGetters)
+TEST(AABBTest, ConstructorsAndGetters)
 {
     Vector3D position(1_d, 2_d, 3_d);
     Vector3D rotation(0_d, 0_d, 0_d);
@@ -18,21 +18,21 @@ TEST(AABB_Test, ConstructorsAndGetters)
 
     AABB aabb(position, rotation, scale, velocity, acceleration, force, torque, mass);
 
-    EXPECT_EQ(aabb.get_position(), position);
-    EXPECT_EQ(aabb.get_rotation(), rotation);
-    EXPECT_EQ(aabb.get_scale(), scale);
-    EXPECT_EQ(aabb.get_velocity(), velocity);
-    EXPECT_EQ(aabb.get_acceleration(), acceleration);
-    EXPECT_EQ(aabb.get_force(), force);
-    EXPECT_EQ(aabb.get_torque(), torque);
-    EXPECT_DECIMAL_EQ(aabb.get_mass(), mass);
-    EXPECT_EQ(aabb.get_type(), ObjectType::AABB);
+    EXPECT_EQ(aabb.getPosition(), position);
+    EXPECT_EQ(aabb.getRotation(), rotation);
+    EXPECT_EQ(aabb.getScale(), scale);
+    EXPECT_EQ(aabb.getVelocity(), velocity);
+    EXPECT_EQ(aabb.getAcceleration(), acceleration);
+    EXPECT_EQ(aabb.getForce(), force);
+    EXPECT_EQ(aabb.getTorque(), torque);
+    EXPECT_DECIMAL_EQ(aabb.getMass(), mass);
+    EXPECT_EQ(aabb.getType(), ObjectType::AABB);
 
-    EXPECT_EQ(aabb.get_min(), position - scale * 0.5_d);
-    EXPECT_EQ(aabb.get_max(), position + scale * 0.5_d);
+    EXPECT_EQ(aabb.getMin(), position - scale * 0.5_d);
+    EXPECT_EQ(aabb.getMax(), position + scale * 0.5_d);
 }
 
-TEST(AABB_Test, Setters)
+TEST(AABBTest, Setters)
 {
     AABB aabb;
 
@@ -44,24 +44,24 @@ TEST(AABB_Test, Setters)
     Vector3D newTorque(0.0004_d, 0.0005_d, 0.0006_d);
     decimal  newMass = 20.0_d;
 
-    aabb.set_position(newPosition);
-    aabb.set_scale(newScale);
-    aabb.set_velocity(newVelocity);
-    aabb.set_acceleration(newAcceleration);
-    aabb.set_force(newForce);
-    aabb.set_torque(newTorque);
-    aabb.set_mass(newMass);
+    aabb.setPosition(newPosition);
+    aabb.setScale(newScale);
+    aabb.setVelocity(newVelocity);
+    aabb.setAcceleration(newAcceleration);
+    aabb.setForce(newForce);
+    aabb.setTorque(newTorque);
+    aabb.setMass(newMass);
 
-    EXPECT_EQ(aabb.get_position(), newPosition);
-    EXPECT_EQ(aabb.get_scale(), newScale);
-    EXPECT_EQ(aabb.get_velocity(), newVelocity);
-    EXPECT_EQ(aabb.get_acceleration(), newAcceleration);
-    EXPECT_EQ(aabb.get_force(), newForce);
-    EXPECT_EQ(aabb.get_torque(), newTorque);
-    EXPECT_DECIMAL_EQ(aabb.get_mass(), newMass);
+    EXPECT_EQ(aabb.getPosition(), newPosition);
+    EXPECT_EQ(aabb.getScale(), newScale);
+    EXPECT_EQ(aabb.getVelocity(), newVelocity);
+    EXPECT_EQ(aabb.getAcceleration(), newAcceleration);
+    EXPECT_EQ(aabb.getForce(), newForce);
+    EXPECT_EQ(aabb.getTorque(), newTorque);
+    EXPECT_DECIMAL_EQ(aabb.getMass(), newMass);
 }
 
-TEST(AABB_Test, integrate)
+TEST(AABBTest, integrate)
 {
     Vector3D position(1_d, 2_d, 3_d);
     Vector3D rotation(0_d, 0_d, 0_d);
@@ -77,59 +77,59 @@ TEST(AABB_Test, integrate)
 
     aabb.integrate(dt);
 
-    EXPECT_EQ(aabb.get_position(), Vector3D(7_d, 22_d, -4_d));
-    EXPECT_EQ(aabb.get_velocity(), Vector3D(3_d, 10_d, -3.5_d));
+    EXPECT_EQ(aabb.getPosition(), Vector3D(7_d, 22_d, -4_d));
+    EXPECT_EQ(aabb.getVelocity(), Vector3D(3_d, 10_d, -3.5_d));
 }
 
-TEST(AABB_Test, AABB_Collision)
+TEST(AABBTest, AABBCollision)
 {
     AABB aabb1(Vector3D(0_d, 0_d, 0_d), Vector3D(2_d, 2_d, 2_d));
     AABB aabb2(Vector3D(1_d, 1_d, 1_d), Vector3D(2_d, 2_d, 2_d));
     AABB aabb3(Vector3D(3_d, 3_d, 3_d), Vector3D(2_d, 2_d, 2_d));
 
-    EXPECT_TRUE(aabb1.check_collision(aabb2));  // Overlapping
-    EXPECT_FALSE(aabb1.check_collision(aabb3)); // Not overlapping
+    EXPECT_TRUE(aabb1.checkCollision(aabb2));  // Overlapping
+    EXPECT_FALSE(aabb1.checkCollision(aabb3)); // Not overlapping
 }
 
-TEST(AABB_Test, AABB_Sphere_Collision)
+TEST(AABBTest, AABBSphereCollision)
 {
     AABB aabb(Vector3D(0_d, 0_d, 0_d), Vector3D(2_d, 2_d, 2_d));
 
     // Basic cases
     Sphere sphere_inside(Vector3D(1_d, 1_d, 1_d), 0.5_d);
     Sphere sphere_outside(Vector3D(4_d, 4_d, 4_d), 1_d);
-    Sphere sphere_touching_face(Vector3D(3_d, 1_d, 1_d), 4_d);
+    Sphere sphereTouchingFace(Vector3D(3_d, 1_d, 1_d), 4_d);
 
-    EXPECT_TRUE(aabb.check_collision(sphere_inside));
-    EXPECT_FALSE(aabb.check_collision(sphere_outside));
-    EXPECT_TRUE(aabb.check_collision(sphere_touching_face));
+    EXPECT_TRUE(aabb.checkCollision(sphere_inside));
+    EXPECT_FALSE(aabb.checkCollision(sphere_outside));
+    EXPECT_TRUE(aabb.checkCollision(sphereTouchingFace));
 
     // Edge cases
-    Sphere sphere_touching_edge(Vector3D(1_d + 1_d / std::sqrt(2.0_d), 1_d + 1_d / std::sqrt(2.0_d), 1_d),
-                                2_d);
-    Sphere sphere_touching_corner(
+    Sphere sphereTouching_edge(Vector3D(1_d + 1_d / std::sqrt(2.0_d), 1_d + 1_d / std::sqrt(2.0_d), 1_d),
+                               2_d);
+    Sphere sphereTouchingCorner(
         Vector3D(1_d + 1_d / std::sqrt(3.0_d), 1_d + 1_d / std::sqrt(3.0_d), 1_d + 1_d / std::sqrt(3.0_d)),
         2_d);
 
-    EXPECT_TRUE(aabb.check_collision(sphere_touching_edge));
-    EXPECT_TRUE(aabb.check_collision(sphere_touching_corner));
+    EXPECT_TRUE(aabb.checkCollision(sphereTouching_edge));
+    EXPECT_TRUE(aabb.checkCollision(sphereTouchingCorner));
 
     // Special cases
-    Sphere sphere_containing_aabb(Vector3D(1_d, 1_d, 1_d), 2_d);
-    Sphere sphere_zero_radius(Vector3D(1_d, 1_d, 1_d), 0_d);
+    Sphere sphereContainingAabb(Vector3D(1_d, 1_d, 1_d), 2_d);
+    Sphere sphere_zeroRadius(Vector3D(1_d, 1_d, 1_d), 0_d);
 
     decimal r      = 0.05_d;
     decimal offset = r / std::sqrt(3.0_d);
-    Sphere  sphere_at_corner(Vector3D(1_d + offset, 1_d + offset, 1_d + offset), 0.1_d);
+    Sphere  sphereAtCorner(Vector3D(1_d + offset, 1_d + offset, 1_d + offset), 0.1_d);
 
-    EXPECT_TRUE(aabb.check_collision(sphere_containing_aabb));
-    EXPECT_TRUE(aabb.check_collision(sphere_zero_radius));
-    EXPECT_TRUE(aabb.check_collision(sphere_at_corner));
+    EXPECT_TRUE(aabb.checkCollision(sphereContainingAabb));
+    EXPECT_TRUE(aabb.checkCollision(sphere_zeroRadius));
+    EXPECT_TRUE(aabb.checkCollision(sphereAtCorner));
 
     // Negative coordinate cases
     Sphere sphere_negative_outside(Vector3D(-2_d, -2_d, -2_d), 1_d);
-    Sphere sphere_negative_touching(Vector3D(-1_d, 1_d, 1_d), 1_d);
+    Sphere sphere_negativeTouching(Vector3D(-1_d, 1_d, 1_d), 1_d);
 
-    EXPECT_FALSE(aabb.check_collision(sphere_negative_outside));
-    EXPECT_TRUE(aabb.check_collision(sphere_negative_touching));
+    EXPECT_FALSE(aabb.checkCollision(sphere_negative_outside));
+    EXPECT_TRUE(aabb.checkCollision(sphere_negativeTouching));
 }

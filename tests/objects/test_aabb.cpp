@@ -1,4 +1,4 @@
-#include "objects/AABB.hpp"
+#include "objects/aabb.hpp"
 #include "test_functions.hpp"
 
 #include <gtest/gtest.h>

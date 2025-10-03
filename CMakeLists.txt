@@ -67,7 +67,7 @@ set(ENGINE_MATH_SOURCES
 
 set(ENGINE_OBJECT_SOURCES
     src/objects/object.cpp
-    src/objects/AABB.cpp
+    src/objects/aabb.cpp
     src/objects/sphere.cpp
 )
 

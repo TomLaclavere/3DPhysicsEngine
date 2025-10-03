@@ -1,4 +1,4 @@
-#include "objects/AABB.hpp"
+#include "objects/aabb.hpp"
 #include "objects/sphere.hpp"
 #include "test_functions.hpp"
 

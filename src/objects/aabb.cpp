@@ -1,5 +1,5 @@
 /**
- * @file AABB.cpp
+ * @file aabb.cpp
  * @brief Implementation of collision detection methods for Axis-Aligned Bounding Boxes (AABB).
  *
  * This file provides the concrete implementations of collision checks involving AABBs:
@@ -8,9 +8,9 @@
  *
  * It also implements the polymorphic collision check used by the Object hierarchy.
  *
- * @see AABB.hpp
+ * @see aabb.hpp
  */
-#include "objects/AABB.hpp"
+#include "objects/aabb.hpp"
 
 #include "objects/sphere.hpp"
 

@@ -60,8 +60,9 @@ add_engine_test(mathematics_test
 )
 
 add_engine_test(object_test
+    objects/test_object.cpp
     objects/test_sphere.cpp
-    objects/test_AABB.cpp
+    objects/test_aabb.cpp
 )
 
 # =============================================

@@ -15,7 +15,7 @@ chmod +x scripts/*.sh
 
 ## Examples
 
-Examples to show how to use each bash files. These are not exhaustive examples, but only the most common cases. For more details about all flags, arguments and usage, use `--help`.
+Examples to show how to use each bash scripts. These are not exhaustive examples, but only the most common cases. For more details about all flags, arguments and usage, use `--help`.
 
 ### Build
 
@@ -32,10 +32,10 @@ Configure & build using CMake.
 ./scripts/build.sh -DCMAKE_CXX_FLAGS="-O3"
 
 # pass CMake args
-./scripts/build.sh -DUSE_CLANG=ON -DUSE_DOUBLE_PRECISION=ON
+./scripts/build.sh -D3DPE_USE_CLANG=ON -D3DPE_USE_DOUBLE_PRECISION=ON
 
 # set build dir and type
-./scripts/build.sh --build-dir out --build-type Release -DUSE_CLANG=ON
+./scripts/build.sh --build-dir out --build-type Release -D3DPE_USE_CLANG=ON
 ```
 
 ### Run
@@ -52,10 +52,10 @@ Use '--' to separate script/CMake args from arguments forwarded to the executabl
 ./scripts/run.sh
 
 # force rebuild (using Clang instead of default GCC), then run
-./scripts/run_app.sh --rebuild -DUSE_CLANG=ON
+./scripts/run.sh --rebuild -D3DPE_USE_CLANG=ON
 
 # pass compile-time flags (use double precision) and forward runtime args after -- (give configuration file)
-./scripts/run_app.sh -DUSE_DOUBLE_PRECISION=ON -- --config config.yaml
+./scripts/run.sh -D3DPE_USE_DOUBLE_PRECISION=ON -- --config config.yaml
 ```
 
 ### Test
@@ -70,13 +70,13 @@ After building, it prefers to run 'ctest' (if available). If ctest is missing, i
 ./scripts/tests.sh -h
 
 # run tests
-./scripts/run_tests.sh
+./scripts/tests.sh
 
 # pass compile flags and filter gtest names
-./scripts/run_tests.sh -DUSE_CLANG=ON --gtest-filter MySuite.*
+./scripts/tests.sh -D3DPE_USE_CLANG=ON --gtest-filter MySuite.*
 
 # force rebuild and run (changing compiler)
-./scripts/run_tests.sh --rebuild -DUSE_CLANG=ON
+./scripts/tests.sh --rebuild -D3DPE_USE_CLANG=ON
 ```
 
 ### Coverage
@@ -95,7 +95,7 @@ Coverage can be printed in current console or saved (and opened) using HTML form
 ./scripts/coverage.sh --format html [--open]
 
 # add compile-time flags
-./scripts/coverage.sh --format html -DUSE_CLANG=ON --open
+./scripts/coverage.sh --format html -D3DPE_USE_CLANG=ON --open
 ```
 
 ### Clean

@@ -12,7 +12,7 @@
  */
 #include "objects/sphere.hpp"
 
-#include "objects/AABB.hpp"
+#include "objects/aabb.hpp"
 #include "precision.hpp"
 
 #include <algorithm>

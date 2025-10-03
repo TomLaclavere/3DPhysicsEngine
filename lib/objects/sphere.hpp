@@ -53,10 +53,10 @@ public:
     /// @name Getters
     // ============================================================================
     /// @{
-    ObjectType get_type() const override { return ObjectType::Sphere; }
-    Vector3D   get_center() const { return get_position(); }
-    decimal    get_radius() const { return get_scale()[0] * 0.5_d; }
-    decimal    get_scale_value() const { return get_scale()[0]; }
+    ObjectType getType() const override { return ObjectType::Sphere; }
+    Vector3D   getCenter() const { return getPosition(); }
+    decimal    getScaleValue() const { return getScale()[0]; }
+    decimal    getRadius() const { return getScaleValue() * 0.5_d; }
     /// @}
 
     // ============================================================================
@@ -65,10 +65,10 @@ public:
     /// @{
 
     /// Check collision between two Spheres.
-    bool sphere_collision(const Sphere& a, const Sphere& b);
+    bool sphereCollision(const Sphere& a, const Sphere& b);
     /// Check collision between a Sphere and an AABB.
-    static bool AABB_sphere_collision(const Sphere& sphere, const AABB& aabb);
+    static bool aabbSphereCollision(const Sphere& sphere, const AABB& aabb);
     /// Check collision with another Object.
-    virtual bool check_collision(const Object& other) override;
+    virtual bool checkCollision(const Object& other) override;
     /// @}
 };

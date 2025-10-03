@@ -30,12 +30,12 @@
  * @param b Second sphere.
  * @return true if the spheres intersect, false otherwise.
  */
-bool Sphere::sphere_collision(const Sphere& a, const Sphere& b)
+bool Sphere::sphereCollision(const Sphere& a, const Sphere& b)
 {
-    Vector3D center_diff       = b.get_center() - a.get_center();
-    decimal  squared_distance  = center_diff.getNormSquare();
-    decimal  squared_sum_radii = (a.get_radius() + b.get_radius()) * (a.get_radius() + b.get_radius());
-    return squared_distance <= squared_sum_radii;
+    Vector3D centerDiff      = b.getCenter() - a.getCenter();
+    decimal  squaredDistance = centerDiff.getNormSquare();
+    decimal  squaredSumRadii = (a.getRadius() + b.getRadius()) * (a.getRadius() + b.getRadius());
+    return squaredDistance <= squaredSumRadii;
 }
 
 /**
@@ -48,11 +48,11 @@ bool Sphere::sphere_collision(const Sphere& a, const Sphere& b)
  * @param aabb The AABB to test against.
  * @return true if the sphere and AABB intersect, false otherwise.
  */
-bool Sphere::AABB_sphere_collision(const Sphere& sphere, const AABB& aabb)
+bool Sphere::aabbSphereCollision(const Sphere& sphere, const AABB& aabb)
 {
-    const Vector3D c    = sphere.get_center();
-    const Vector3D amin = aabb.get_min();
-    const Vector3D amax = aabb.get_max();
+    const Vector3D c    = sphere.getCenter();
+    const Vector3D amin = aabb.getMin();
+    const Vector3D amax = aabb.getMax();
 
     // Clamp each coordinate of the sphere center to the AABB bounds
     Vector3D closest;
@@ -62,7 +62,7 @@ bool Sphere::AABB_sphere_collision(const Sphere& sphere, const AABB& aabb)
 
     // Compute squared distance from sphere center to closest point on AABB
     decimal dist = (closest - c).getNormSquare();
-    decimal r2   = sphere.get_radius() * sphere.get_radius();
+    decimal r2   = sphere.getRadius() * sphere.getRadius();
 
     // Add small epsilon (PRECISION_MACHINE) to account for floating-point errors
     return dist <= r2 + PRECISION_MACHINE;
@@ -77,14 +77,14 @@ bool Sphere::AABB_sphere_collision(const Sphere& sphere, const AABB& aabb)
  * @param other The object to test against.
  * @return true if the objects intersect, false otherwise.
  */
-bool Sphere::check_collision(const Object& other)
+bool Sphere::checkCollision(const Object& other)
 {
-    switch (other.get_type())
+    switch (other.getType())
     {
     case ObjectType::Sphere:
-        return sphere_collision(*this, static_cast<const Sphere&>(other));
+        return sphereCollision(*this, static_cast<const Sphere&>(other));
     case ObjectType::AABB:
-        return AABB_sphere_collision(*this, static_cast<const AABB&>(other));
+        return aabbSphereCollision(*this, static_cast<const AABB&>(other));
     default:
         return false;
     }

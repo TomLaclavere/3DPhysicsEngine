@@ -49,10 +49,10 @@ public:
               decimal m32, decimal m33)
         : m { m11, m12, m13, m21, m22, m23, m31, m32, m33 }
     {}
-    Matrix3x3(decimal value)
+    explicit Matrix3x3(decimal value)
         : m { value, value, value, value, value, value, value, value, value }
     {}
-    Matrix3x3(const Vector3D& v)
+    explicit Matrix3x3(const Vector3D& v)
         : m { v.getX(), v.getY(), v.getZ(), v.getX(), v.getY(), v.getZ(), v.getX(), v.getY(), v.getZ() }
     {}
     Matrix3x3(const Vector3D& v1, const Vector3D& v2, const Vector3D& v3)

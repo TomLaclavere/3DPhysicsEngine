@@ -49,7 +49,7 @@ public:
     // ============================================================================
     /// @{
     Vector3D() = default;
-    Vector3D(decimal value)
+    explicit Vector3D(decimal value)
         : v { value, value, value }
     {}
     Vector3D(decimal x, decimal y, decimal z)

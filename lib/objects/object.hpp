@@ -82,46 +82,46 @@ public:
     /// @name Getters
     // ============================================================================
     /// @{
-    Vector3D           get_position() const { return position; }
-    Vector3D           get_rotation() const { return rotation; }
-    Vector3D           get_scale() const { return scale; }
-    Vector3D           get_velocity() const { return velocity; }
-    Vector3D           get_acceleration() const { return acceleration; }
-    Vector3D           get_force() const { return force; }
-    Vector3D           get_torque() const { return torque; }
-    decimal            get_mass() const { return mass; }
-    virtual ObjectType get_type() const { return ObjectType::Generic; }
+    Vector3D           getPosition() const { return position; }
+    Vector3D           getRotation() const { return rotation; }
+    Vector3D           getScale() const { return scale; }
+    Vector3D           getVelocity() const { return velocity; }
+    Vector3D           getAcceleration() const { return acceleration; }
+    Vector3D           getForce() const { return force; }
+    Vector3D           getTorque() const { return torque; }
+    decimal            getMass() const { return mass; }
+    virtual ObjectType getType() const { return ObjectType::Generic; }
     /// @}
 
     // ============================================================================
     /// @name Setters
     // ============================================================================
     /// @{
-    void set_position(const Vector3D& _position) { position = _position; }
-    void set_rotation(const Vector3D& _rotation) { rotation = _rotation; }
-    void set_scale(const Vector3D& _scale) { scale = _scale; }
-    void set_velocity(const Vector3D& _velocity) { velocity = _velocity; }
-    void set_acceleration(const Vector3D& _acceleration) { acceleration = _acceleration; }
-    void set_force(const Vector3D& _force) { force = _force; }
-    void set_torque(const Vector3D& _torque) { torque = _torque; }
-    void set_mass(const decimal _mass) { mass = _mass; }
+    void setPosition(const Vector3D& _position) { position = _position; }
+    void setRotation(const Vector3D& _rotation) { rotation = _rotation; }
+    void setScale(const Vector3D& _scale) { scale = _scale; }
+    void setVelocity(const Vector3D& _velocity) { velocity = _velocity; }
+    void setAcceleration(const Vector3D& _acceleration) { acceleration = _acceleration; }
+    void setForce(const Vector3D& _force) { force = _force; }
+    void setTorque(const Vector3D& _torque) { torque = _torque; }
+    void setMass(const decimal _mass) { mass = _mass; }
     /// @}
 
     // ============================================================================
     /// @name Transformations
     // ============================================================================
     /// @{
-    void apply_translation(const Vector3D& v_translation) { position += v_translation; }
-    void apply_rotation(const Vector3D& v_rotation) { rotation += v_rotation; }
-    void apply_scaling(const Vector3D& v_scaling) { scale += v_scaling; }
+    void applyTranslation(const Vector3D& v_translation) { position += v_translation; }
+    void applyRotation(const Vector3D& v_rotation) { rotation += v_rotation; }
+    void applyScaling(const Vector3D& v_scaling) { scale += v_scaling; }
     /// @}
 
     // ============================================================================
     /// @name Physics
     // ============================================================================
     /// @{
-    void apply_force(const Vector3D& _force) { force += _force; }
-    void apply_torque(const Vector3D& _torque) { torque += _torque; }
+    void applyForce(const Vector3D& _force) { force += _force; }
+    void applyTorque(const Vector3D& _torque) { torque += _torque; }
     /// Integrate motion equations over a time step `dt` to update physical properties.
     virtual void integrate(decimal dt);
     /// @}
@@ -133,6 +133,6 @@ public:
 
     /// @brief Check for collision with another object.
     /// This is a pure virtual functions that must be implemented by derived classes.
-    virtual bool check_collision(const Object& other) = 0; // Pure virtual
+    virtual bool checkCollision(const Object& other) = 0; // Pure virtual
     /// @}
 };

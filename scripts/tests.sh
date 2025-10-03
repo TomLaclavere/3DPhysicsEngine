@@ -6,7 +6,7 @@ BUILD_DIR=${BUILD_DIR:-build}
 BUILD_TYPE=${BUILD_TYPE:-Debug}
 REBUILD=0
 CMAKE_ARGS=()
-GTEST_FILTER=""   # optional: pass to gtest binaries via =<filter>
+GTEST_FILTER=${GTEST_FILTER:-""}
 
 usage() {
     cat <<EOF
@@ -63,37 +63,15 @@ else
     fi
 fi
 
-# Prefer ctest if available
-if command -v ctest >/dev/null 2>&1; then
-    echo "Running tests via ctest..."
-    # use CTEST_PARALLEL_LEVEL env as optional parallelism support
-    if [[ -z "${CTEST_PARALLEL_LEVEL:-}" ]]; then
-        export CTEST_PARALLEL_LEVEL=$(nproc)
-    fi
-    ctest --test-dir "$BUILD_DIR" -C "$BUILD_TYPE" --output-on-failure
-    exit $?
+# Run via ctest
+if ! command -v ctest >/dev/null 2>&1; then
+  echo "ctest not found—please install CTest (CMake) to run tests."
+  exit 2
 fi
 
-# Fallback: discover test binaries in the build directory and run them
-echo "ctest not found — falling back to discovering test binaries in $BUILD_DIR"
-mapfile -t TEST_BINS < <(find "$BUILD_DIR" -type f -executable -printf '%p\n' \
-    | grep -E '/([^/]*test[^/]*)$' || true)
-
-if [[ ${#TEST_BINS[@]} -eq 0 ]]; then
-    echo "No test executables found in build tree. Install ctest or ensure tests are built."
-    exit 2
-fi
-
-echo "Found ${#TEST_BINS[@]} test binaries. Running them sequentially..."
-RET=0
-for tb in "${TEST_BINS[@]}"; do
-    echo
-    echo "== Running: $tb =="
-    if [[ -n "$GTEST_FILTER" ]]; then
-        "$tb" --gtest_filter="$GTEST_FILTER" || RET=$?
-    else
-        "$tb" || RET=$?
-    fi
-done
-
-exit $RET
+echo "Running tests via ctest in $BUILD_DIR (type=$BUILD_TYPE)…"
+export CTEST_PARALLEL_LEVEL=${CTEST_PARALLEL_LEVEL:-$(nproc)}
+CTEST_ARGS=(--test-dir "$BUILD_DIR" -C "$BUILD_TYPE" --output-on-failure)
+[[ -n "$GTEST_FILTER" ]] && CTEST_ARGS+=(-R "$GTEST_FILTER")
+ctest "${CTEST_ARGS[@]}"
+exit $?

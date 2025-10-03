@@ -11,6 +11,7 @@
 #include "precision.hpp"
 
 #include <limits>
+#include <stdexcept>
 #include <string>
 
 /**
@@ -28,6 +29,7 @@ const decimal PRECISION_MACHINE = std::numeric_limits<decimal>::epsilon();
 
 struct Config
 {
+private:
     // Physical constants
     decimal gravity = 9.81_d; // m/s^2
 
@@ -35,12 +37,57 @@ struct Config
     decimal      timeStep      = 0.01_d; // seconds
     unsigned int maxIterations = 10;     // max iterations for physics solver
 
-    // Singleton accessor
+    /// Singleton constructor
+    Config() = default;
+
+public:
+    // Prevent copying of singleton
+    Config(const Config&)            = delete;
+    Config& operator=(const Config&) = delete;
+
+    // ============================================================================
+    /// @name Getters
+    // ============================================================================
+    /// @{
+
+    /// Singleton accessor
     static Config& get();
+    decimal        getGravity() const { return gravity; }
+    decimal        getTimeStep() const { return timeStep; }
+    unsigned int   getMaxIterations() const { return maxIterations; }
+    /// @}
 
-    // Load configuration from a file
+    // ============================================================================
+    /// @name Setters
+    // ============================================================================
+    /// @{
+    void setGravity(decimal g)
+    {
+        if (g < 0)
+            throw std::invalid_argument("Gravity cannot be negative");
+        gravity = g;
+    }
+
+    void setTimeStep(decimal dt)
+    {
+        if (dt <= 0)
+            throw std::invalid_argument("Time step must be positive");
+        timeStep = dt;
+    }
+
+    void setMaxIterations(unsigned int max)
+    {
+        if (max == 0)
+            throw std::invalid_argument("Max iterations must be positive");
+        maxIterations = max;
+    }
+    /// @}
+
+    // ============================================================================
+    /// @name Loading Methods
+    // ============================================================================
+    /// @{
     void loadFromFile(const std::string& path);
-
-    // Override configuration with command line arguments
     void overrideFromCommandLine(int argc, char** argv);
+    /// @}
 };

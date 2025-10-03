@@ -33,7 +33,7 @@ public:
     // ============================================================================
     /// @{
     AABB() = default;
-    AABB(const Vector3D& position)
+    explicit AABB(const Vector3D& position)
         : Object(position)
     {}
     AABB(const Vector3D& position, const Vector3D& scale)
@@ -53,11 +53,11 @@ public:
     /// @name Getters
     // ============================================================================
     /// @{
-    ObjectType get_type() const override { return ObjectType::AABB; }
+    ObjectType getType() const override { return ObjectType::AABB; }
     /// Return the minimum corner of the AABB.
-    Vector3D get_min() const { return get_position() - get_scale() * 0.5; }
+    Vector3D getMin() const { return getPosition() - getScale() * 0.5; }
     /// Return the maximum corner of the AABB.
-    Vector3D get_max() const { return get_position() + get_scale() * 0.5; }
+    Vector3D getMax() const { return getPosition() + getScale() * 0.5; }
     /// @}
 
     // ============================================================================
@@ -66,10 +66,10 @@ public:
     /// @{
 
     /// Check collision between two AABBs.
-    bool aabb_collision(const AABB& a, const AABB& b);
+    bool aabbCollision(const AABB& a, const AABB& b);
     /// Check collision between an AABB and a Sphere.
-    bool AABB_sphere_collision(const AABB& AABB, const Sphere& sphere);
+    bool aabbSphereCollision(const AABB& AABB, const Sphere& sphere);
     /// Check collision with another Object.
-    virtual bool check_collision(const Object& other) override;
+    virtual bool checkCollision(const Object& other) override;
     /// @}
 };

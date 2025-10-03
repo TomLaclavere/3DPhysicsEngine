@@ -12,7 +12,7 @@ private:
     Config&             config = Config::get();
     std::vector<Object> objects;
     decimal             deltaTime       = 1_d;
-    decimal             gravityConstant = config.gravity;
+    decimal             gravityConstant = config.getGravity();
 
 public:
     PhysicsWorld()  = default;

@@ -6,6 +6,57 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 ## Code Quality and Maintenance
 
+## Simulation Management
+
+### Parameter Control
+- [ ] **Core Parameters Implementation**
+  - [ ] Integration method selection
+  - [ ] Collision detection precision
+  - [ ] Maximum iteration count
+
+- [ ] **Parameter Management System**
+  - [x] Load from configuration file (YAML)
+  - [ ] Command-line parameter override
+  - [ ] Runtime parameter modification
+  - [ ] Parameter validation and bounds checking
+  - [ ] Default fallback values
+
+### Runtime Control
+- [ ] **Simulation Control Commands**
+  - [ ] Start/Stop simulation
+  - [ ] Pause/Resume functionality
+  - [ ] Step-by-step execution
+  - [ ] Reset to initial state
+  - [ ] Emergency stop
+
+- [ ] **Runtime Interaction**
+  - [ ] Real-time parameter modification
+  - [ ] State saving/loading
+  - [ ] Performance monitoring
+  - [ ] Debug visualization toggles
+  - [ ] Event logging system
+
+### User Interface
+- [ ] **Command Interface**
+  - [ ] Interactive command prompt
+  - [ ] Command history
+  - [ ] Tab completion
+  - [ ] Help system
+  - [ ] Error handling and feedback
+
+- [ ] **Parameter Display**
+  - [ ] Current parameter values
+  - [ ] Parameter modification history
+  - [ ] Performance metrics
+  - [ ] System status indicators
+
+### Data Management
+- [ ] **State Management**
+  - [ ] Simulation state serialization
+  - [ ] Checkpoint system
+  - [ ] State restoration
+  - [ ] Configuration presets
+
 ## CMake and Build System
 
 - [x] Build executable for main

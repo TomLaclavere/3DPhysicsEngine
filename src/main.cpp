@@ -8,6 +8,9 @@ int main(int argc, char** argv)
     Config& config = Config::get();
     config.loadFromFile("src/config.yaml");
 
+    // Override with command line arguments if provided
+    config.overrideFromCommandLine(argc, argv);
+
     // Print
     std::cout << "Gravity: " << config.getGravity() << " m/s^2\n";
     std::cout << "Timestep: " << config.getTimeStep() << " s\n";

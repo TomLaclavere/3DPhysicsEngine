@@ -52,9 +52,9 @@
   - [ ] **PhysicsWorld :** 
     - [ ] **Physical constants**
         - [ ] Define and implement physical constants
-        - [ ] **Design a way to define all the variables of the simulation :** 
-          - [ ] Parameters file (yaml)
-          - [ ] Command lines
+        - [x] **Design a way to define all the variables of the simulation :** 
+          - [x] Parameters file (yaml)
+          - [x] Command lines
     - [ ] **Time loop**
     - [ ] **External forces :** gravity, wind, ...
 - [ ] **Equation of motion**

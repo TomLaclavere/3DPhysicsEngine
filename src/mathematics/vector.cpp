@@ -289,5 +289,5 @@ Vector3D operator/(decimal lhs, const Vector3D& rhs) { return rhs / lhs; }
 // ============================================================================
 std::ostream& operator<<(std::ostream& os, const Vector3D& v)
 {
-    return os << "(" << v[0] << "," << v[1] << "," << v[2] << ")";
+    return os << "(" << v[0] << " ," << v[1] << " ," << v[2] << ")";
 }

@@ -45,24 +45,24 @@
 
 ## Phase 3: Rigid Body Dynamics & Physics World
   - [ ] **Core Setup :** 
-    - [ ] **Physical constants**
+    - [x] **Physical constants**
         - [x] Define and implement physical constants
         - [x] **Design a way to define all the variables of the simulation :** 
           - [x] Parameters file (yaml)
           - [x] Command lines
-    - [ ] **Time loop**
-    - [ ] **External forces :** gravity
+    - [x] **Time loop**
+    - [x] **External forces :** gravity
     - [ ] **Object management**
 - [ ] **Simple Motion :**
-  - [ ] **Linear Motion Basics**
-    - [ ] Position updates
-    - [ ] Velocity updates
-    - [ ] Basic force application
+  - [x] **Linear Motion Basics**
+    - [x] Position updates
+    - [x] Velocity updates
+    - [x] Basic force application
   - [ ] **Basic Integration**
-    - [ ] **Semi-implicit Euler** (basic) 
+    - [x] **Semi-implicit Euler** (basic) 
     - [ ] **Time step handling**
     - [ ] **Verlet** (optional)
-- [ ] **Fundamental Test :** 
+- [ ] **Fundamental Test :** Add examples repository to implement testing cases for basic physical situations
   - [ ] **Free fall**
   - [ ] **Projectile motion**
   - [ ] **Pendulum** (optional)

@@ -1,5 +1,8 @@
 #include "world/physicsWorld.hpp"
 
+// ============================================================================
+//  Core simulation methods
+// ============================================================================
 void PhysicsWorld::initialize()
 {
     isRunning = false;
@@ -8,6 +11,9 @@ void PhysicsWorld::initialize()
     gravityConstant = config.getGravity();
 }
 
+// ============================================================================
+//  Time step methods
+// ============================================================================
 void PhysicsWorld::update(decimal dt)
 {
     if (!isRunning)
@@ -26,29 +32,32 @@ void PhysicsWorld::fixedUpdate()
             continue; // Skip null pointers
 
         // Semi-implicit Euler integration
-        applyGravity();
+        applyForces();
         obj->setVelocity(obj->getVelocity() + obj->getAcceleration() * timeStep);
         obj->setPosition(obj->getPosition() + obj->getVelocity() * timeStep);
     }
 }
 
-void PhysicsWorld::applyGravity()
+// ============================================================================
+//  Force computation
+// ============================================================================
+Vector3D PhysicsWorld::computeGravity() { return Vector3D(0_d, 0_d, gravityConstant); }
+void     PhysicsWorld::applyGravity()
 {
     for (auto* obj : objects)
     {
         if (!obj)
             continue;
 
-        // Force = mass * acceleration
-        Vector3D gravityForce(0_d, 0_d, gravityConstant * obj->getMass());
-
-        // Reset force before applying gravity
-        obj->setForce(Vector3D(0_d, 0_d, 0_d));
-        obj->setForce(gravityForce);
-
         // Update acceleration
-        obj->setAcceleration(obj->getForce() / obj->getMass());
+        obj->setAcceleration(gravityAcc);
     }
 }
 
-void PhysicsWorld::reset() { initialize(); }
+// ============================================================================
+//  Objects management
+// ============================================================================
+
+// ============================================================================
+//  Print & Save
+// ============================================================================

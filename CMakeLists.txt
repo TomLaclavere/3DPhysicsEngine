@@ -71,10 +71,14 @@ set(ENGINE_OBJECT_SOURCES
     src/objects/sphere.cpp
 )
 
+set(ENGINE_WORLD_SOURCES
+    src/world/physicsWorld.cpp)
+
 set(ENGINE_ALL_SOURCES
     ${ENGINE_CORE_SOURCES}
     ${ENGINE_MATH_SOURCES}
     ${ENGINE_OBJECT_SOURCES}
+    ${ENGINE_WORLD_SOURCES}
 )
 
 # =============================================

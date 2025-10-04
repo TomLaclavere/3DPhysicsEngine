@@ -52,6 +52,7 @@
           - [x] Command lines
     - [ ] **Time loop**
     - [ ] **External forces :** gravity
+    - [ ] **Object management**
 - [ ] **Simple Motion :**
   - [ ] **Linear Motion Basics**
     - [ ] Position updates

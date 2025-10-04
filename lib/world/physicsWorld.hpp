@@ -12,9 +12,10 @@ private:
     Config&              config;
     std::vector<Object*> objects;
 
-    decimal timeStep        = config.getTimeStep();
-    decimal gravityConstant = config.getGravity();
-    bool    isRunning       = false;
+    decimal  timeStep        = config.getTimeStep();
+    bool     isRunning       = false;
+    decimal  gravityConstant = config.getGravity();
+    Vector3D gravityAcc      = computeGravity();
 
 public:
     // ============================================================================
@@ -35,7 +36,7 @@ public:
     void initialize();
     void start() { isRunning = true; }
     void stop() { isRunning = false; }
-    void reset();
+    void reset() { initialize(); }
     /// @}
 
     // ============================================================================
@@ -50,8 +51,10 @@ public:
     /// @name Force computation
     // ============================================================================
     /// @{
-    void computeForces();
-    void applyGravity();
+    Vector3D computeGravity();
+    void     computeForce();
+    void     applyGravity();
+    void     applyForces() { applyGravity(); }
     /// @}
 
     // ============================================================================

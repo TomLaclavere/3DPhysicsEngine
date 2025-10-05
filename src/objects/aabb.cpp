@@ -12,7 +12,7 @@
  */
 #include "objects/aabb.hpp"
 
-#include "objects/sphere.hpp"
+#include "objects/collision.hpp"
 
 // ============================================================================
 //  Collision
@@ -27,13 +27,7 @@
  * @param b Second AABB to test.
  * @return true if the AABBs overlap, false otherwise.
  */
-bool AABB::aabbCollision(const AABB& a, const AABB& b)
-{
-    // Check for overlap along each axis
-    return (a.getMin()[0] <= b.getMax()[0] && a.getMax()[0] >= b.getMin()[0]) &&
-           (a.getMin()[1] <= b.getMax()[1] && a.getMax()[1] >= b.getMin()[1]) &&
-           (a.getMin()[2] <= b.getMax()[2] && a.getMax()[2] >= b.getMin()[2]);
-}
+bool AABB::aabbCollision(const AABB& aabb) { return ::aabbCollision(*this, aabb); }
 
 /**
  * @brief Checks for intersection between an Axis-Aligned Bounding Box (AABB)
@@ -46,11 +40,7 @@ bool AABB::aabbCollision(const AABB& a, const AABB& b)
  * @param sphere The Sphere to test.
  * @return true if the AABB and the Sphere overlap, false otherwise.
  */
-bool AABB::aabbSphereCollision(const AABB& aabb, const Sphere& sphere)
-{
-    // Use the static function from Sphere for consistency
-    return Sphere::aabbSphereCollision(sphere, aabb);
-}
+bool AABB::aabbSphereCollision(const Sphere& sphere) { return ::aabbSphereCollision(*this, sphere); }
 
 /**
  * @brief Checks for intersection between this AABB and another Object.
@@ -69,9 +59,9 @@ bool AABB::checkCollision(const Object& other)
     switch (other.getType())
     {
     case ObjectType::AABB:
-        return aabbCollision(*this, static_cast<const AABB&>(other));
+        return AABB::aabbCollision(static_cast<const AABB&>(other));
     case ObjectType::Sphere:
-        return aabbSphereCollision(*this, static_cast<const Sphere&>(other));
+        return AABB::aabbSphereCollision(static_cast<const Sphere&>(other));
     default:
         return false;
     }

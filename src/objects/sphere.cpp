@@ -12,10 +12,7 @@
  */
 #include "objects/sphere.hpp"
 
-#include "objects/aabb.hpp"
-#include "precision.hpp"
-
-#include <algorithm>
+#include "objects/collision.hpp"
 
 // ============================================================================
 //  Collision
@@ -30,13 +27,7 @@
  * @param b Second sphere.
  * @return true if the spheres intersect, false otherwise.
  */
-bool Sphere::sphereCollision(const Sphere& a, const Sphere& b)
-{
-    Vector3D centerDiff      = b.getCenter() - a.getCenter();
-    decimal  squaredDistance = centerDiff.getNormSquare();
-    decimal  squaredSumRadii = (a.getRadius() + b.getRadius()) * (a.getRadius() + b.getRadius());
-    return squaredDistance <= squaredSumRadii;
-}
+bool Sphere::sphereCollision(const Sphere& sphere) { return ::sphereCollision(*this, sphere); }
 
 /**
  * @brief Checks collision between a sphere and an axis-aligned bounding box (AABB).
@@ -48,25 +39,7 @@ bool Sphere::sphereCollision(const Sphere& a, const Sphere& b)
  * @param aabb The AABB to test against.
  * @return true if the sphere and AABB intersect, false otherwise.
  */
-bool Sphere::aabbSphereCollision(const Sphere& sphere, const AABB& aabb)
-{
-    const Vector3D c    = sphere.getCenter();
-    const Vector3D amin = aabb.getMin();
-    const Vector3D amax = aabb.getMax();
-
-    // Clamp each coordinate of the sphere center to the AABB bounds
-    Vector3D closest;
-    closest[0] = std::clamp(c[0], amin[0], amax[0]);
-    closest[1] = std::clamp(c[1], amin[1], amax[1]);
-    closest[2] = std::clamp(c[2], amin[2], amax[2]);
-
-    // Compute squared distance from sphere center to closest point on AABB
-    decimal dist = (closest - c).getNormSquare();
-    decimal r2   = sphere.getRadius() * sphere.getRadius();
-
-    // Add small epsilon (PRECISION_MACHINE) to account for floating-point errors
-    return dist <= r2 + PRECISION_MACHINE;
-}
+bool Sphere::sphereAABBCollision(const AABB& aabb) { return ::sphereAABBCollision(*this, aabb); }
 
 /**
  * @brief Polymorphic collision detection against another Object.
@@ -82,9 +55,9 @@ bool Sphere::checkCollision(const Object& other)
     switch (other.getType())
     {
     case ObjectType::Sphere:
-        return sphereCollision(*this, static_cast<const Sphere&>(other));
+        return Sphere::sphereCollision(static_cast<const Sphere&>(other));
     case ObjectType::AABB:
-        return aabbSphereCollision(*this, static_cast<const AABB&>(other));
+        return Sphere::sphereAABBCollision(static_cast<const AABB&>(other));
     default:
         return false;
     }

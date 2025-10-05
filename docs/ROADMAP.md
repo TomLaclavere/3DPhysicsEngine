@@ -60,7 +60,7 @@
     - [x] Basic force application
   - [ ] **Basic Integration**
     - [x] **Semi-implicit Euler** (basic) 
-    - [ ] **Time step handling**
+    - [x] **Time step handling**
     - [ ] **Verlet** (optional)
 - [ ] **Fundamental Test :** Add examples repository to implement testing cases for basic physical situations
   - [ ] **Free fall**

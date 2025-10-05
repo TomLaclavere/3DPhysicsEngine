@@ -280,5 +280,5 @@ TEST(Vector3D_Test, Printing)
     Vector3D          v(1_d, 2_d, 3_d);
     std::stringstream ss;
     ss << v;
-    EXPECT_EQ(ss.str(), "(1,2,3)");
+    EXPECT_EQ(ss.str(), "(1, 2, 3)");
 }

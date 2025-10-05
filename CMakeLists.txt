@@ -69,6 +69,8 @@ set(ENGINE_OBJECT_SOURCES
     src/objects/object.cpp
     src/objects/aabb.cpp
     src/objects/sphere.cpp
+    src/objects/plane.cpp
+    src/objects/collision.cpp
 )
 
 set(ENGINE_WORLD_SOURCES

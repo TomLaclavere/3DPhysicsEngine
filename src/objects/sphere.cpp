@@ -23,8 +23,7 @@
  * Collision occurs if the distance between centers is less than or equal
  * to the sum of their radii.
  *
- * @param a First sphere.
- * @param b Second sphere.
+ * @param sphere Sphere to test against.
  * @return true if the spheres intersect, false otherwise.
  */
 bool Sphere::sphereCollision(const Sphere& sphere) { return ::sphereCollision(*this, sphere); }
@@ -35,8 +34,7 @@ bool Sphere::sphereCollision(const Sphere& sphere) { return ::sphereCollision(*t
  * The closest point on the AABB to the sphere center is computed, and collision
  * occurs if this point lies within the sphere radius.
  *
- * @param sphere The sphere to test.
- * @param aabb The AABB to test against.
+ * @param aabb AABB to test against.
  * @return true if the sphere and AABB intersect, false otherwise.
  */
 bool Sphere::sphereAABBCollision(const AABB& aabb) { return ::sphereAABBCollision(*this, aabb); }
@@ -47,7 +45,7 @@ bool Sphere::sphereAABBCollision(const AABB& aabb) { return ::sphereAABBCollisio
  * Dispatches to the appropriate collision method depending on the type of
  * the other object (Sphere or AABB).
  *
- * @param other The object to test against.
+ * @param other Object to test against.
  * @return true if the objects intersect, false otherwise.
  */
 bool Sphere::checkCollision(const Object& other)

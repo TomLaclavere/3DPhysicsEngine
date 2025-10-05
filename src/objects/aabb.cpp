@@ -23,8 +23,7 @@
  * This function verifies overlap along all three axes (x, y, z). Two AABBs are
  * considered colliding if they overlap on each axis simultaneously.
  *
- * @param a First AABB to test.
- * @param b Second AABB to test.
+ * @param aabb AABB to test against.
  * @return true if the AABBs overlap, false otherwise.
  */
 bool AABB::aabbCollision(const AABB& aabb) { return ::aabbCollision(*this, aabb); }
@@ -36,8 +35,7 @@ bool AABB::aabbCollision(const AABB& aabb) { return ::aabbCollision(*this, aabb)
  * Delegates the collision computation to the static helper function in the
  * Sphere class to ensure consistency across collision checks.
  *
- * @param aabb The AABB to test.
- * @param sphere The Sphere to test.
+ * @param sphere Sphere to test against.
  * @return true if the AABB and the Sphere overlap, false otherwise.
  */
 bool AABB::aabbSphereCollision(const Sphere& sphere) { return ::aabbSphereCollision(*this, sphere); }
@@ -47,11 +45,11 @@ bool AABB::aabbSphereCollision(const Sphere& sphere) { return ::aabbSphereCollis
  *
  * Dispatches the collision test depending on the runtime type of the other
  * object:
- * - AABB: Uses aabb_collision().
+ * - AABB: Uses aabbCollision().
  * - Sphere: Uses aabbSphereCollision().
  * - Default: Returns false (no collision test implemented).
  *
- * @param other The Object to test against.
+ * @param other Object to test against.
  * @return true if a collision is detected, false otherwise.
  */
 bool AABB::checkCollision(const Object& other)

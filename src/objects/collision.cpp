@@ -40,9 +40,6 @@ bool spherePlaneCollision(const Sphere& sphere, const Plane& plane) { return tru
 bool aabbCollision(const AABB& aabb1, const AABB& aabb2)
 {
     // Check for overlap along each axis
-    // return (aabb1.getMin()[0] <= aabb2.getMax()[0] && aabb1.getMax()[0] >= aabb2.getMin()[0]) &&
-    //        (aabb1.getMin()[1] <= aabb2.getMax()[1] && aabb1.getMax()[1] >= aabb2.getMin()[1]) &&
-    //        (aabb1.getMin()[2] <= aabb2.getMax()[2] && aabb1.getMax()[2] >= aabb2.getMin()[2]);
     return (aabb1.getMin() <= aabb2.getMax() && aabb1.getMax() >= aabb2.getMin());
 }
 

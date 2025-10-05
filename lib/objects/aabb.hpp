@@ -11,11 +11,16 @@
 #include "precision.hpp"
 #include "sphere.hpp"
 
+// Forward declaration
+struct Sphere;
+struct AABB;
+struct Plane;
+
 /**
  * @brief Axis-Aligned Bounding Box (AABB).
  *
  * Inherits from @ref Object and represents a box aligned with the X, Y, Z axes.
- * Defined by its center position and scale (width, height, depth).
+ * Defined by its center position and size (width, height, depth).
  *
  * Example usage:
  * @code
@@ -36,15 +41,15 @@ public:
     explicit AABB(const Vector3D& position)
         : Object(position)
     {}
-    AABB(const Vector3D& position, const Vector3D& scale)
-        : Object(position, scale)
+    AABB(const Vector3D& position, const Vector3D& size)
+        : Object(position, size)
     {}
-    AABB(const Vector3D& position, const Vector3D& scale, decimal mass)
-        : Object(position, scale, mass)
+    AABB(const Vector3D& position, const Vector3D& size, decimal mass)
+        : Object(position, size, mass)
     {}
-    AABB(const Vector3D& position, const Vector3D& rotation, const Vector3D& scale, const Vector3D& velocity,
+    AABB(const Vector3D& position, const Vector3D& rotation, const Vector3D& size, const Vector3D& velocity,
          const Vector3D& acceleration, const Vector3D& force, const Vector3D& torque, decimal mass)
-        : Object(position, rotation, scale, velocity, acceleration, force, torque, mass)
+        : Object(position, rotation, size, velocity, acceleration, force, torque, mass)
     {}
     virtual ~AABB() = default;
     /// @}
@@ -55,9 +60,9 @@ public:
     /// @{
     ObjectType getType() const override { return ObjectType::AABB; }
     /// Return the minimum corner of the AABB.
-    Vector3D getMin() const { return getPosition() - getScale() * 0.5; }
+    Vector3D getMin() const { return getPosition() - getSize() * 0.5; }
     /// Return the maximum corner of the AABB.
-    Vector3D getMax() const { return getPosition() + getScale() * 0.5; }
+    Vector3D getMax() const { return getPosition() + getSize() * 0.5; }
     /// @}
 
     // ============================================================================
@@ -66,9 +71,11 @@ public:
     /// @{
 
     /// Check collision between two AABBs.
-    bool aabbCollision(const AABB& a, const AABB& b);
+    bool aabbCollision(const AABB& aabb);
     /// Check collision between an AABB and a Sphere.
-    bool aabbSphereCollision(const AABB& AABB, const Sphere& sphere);
+    bool aabbSphereCollision(const Sphere& sphere);
+    /// Check collisoin between an AABB and a Plane
+    bool aabbPlaneCollision(const Sphere& sphere);
     /// Check collision with another Object.
     virtual bool checkCollision(const Object& other) override;
     /// @}

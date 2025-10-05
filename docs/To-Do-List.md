@@ -5,7 +5,14 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 ## General Tasks
 - [x] Clean physicsWorld
 - [x] Reorganize methods in config and physicsWorld
-- [ ] Add duration tracking (per iteration & total)
+- [x] Add duration tracking (per iteration & total)
+- [ ] **Integrate :** method for all objects or for PhysicsWorld ? 
+- [ ] **Objects :** need to improve the construction and collision of all objects
+  - [x] **Object**
+  - [x] **Sphere**
+  - [x] **AABB**
+  - [ ] **Implement Plane object**
+- [ ] Remove forward declarations of objects
 
 ## Code Quality and Maintenance
 
@@ -66,7 +73,9 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 - [ ] CI with Clang
 
-## Done
+
+
+# Done
 
 ## General Tasks
 

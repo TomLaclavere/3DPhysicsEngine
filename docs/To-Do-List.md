@@ -6,6 +6,7 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 - [x] Clean physicsWorld
 - [x] Reorganize methods in config and physicsWorld
 - [x] Add duration tracking (per iteration & total)
+- [ ] Create utilities to clean main.cpp
 - [ ] **Integrate :** method for all objects or for PhysicsWorld ? 
 - [ ] **Objects :** need to improve the construction and collision of all objects
   - [x] **Object**

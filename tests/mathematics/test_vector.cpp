@@ -59,11 +59,11 @@ TEST(Vector3D_Test, Utilies)
     v0.absolute();
     EXPECT_EQ(absV, v0);
 
-    // Normalize
-    Vector3D normV   = v0.getNormalized();
+    // Normalise
+    Vector3D normV   = v0.getNormalised();
     decimal  invNorm = 1 / v0.getNorm();
     EXPECT_EQ(normV, invNorm * v0);
-    v0.normalize();
+    v0.normalise();
     EXPECT_EQ(normV, v0);
 }
 
@@ -109,13 +109,13 @@ TEST(Vector3_Test, PropertyCheck)
     Vector3D v;
     EXPECT_TRUE(v.isNull());
     EXPECT_TRUE(v.isLengthEqual(0_d));
-    EXPECT_FALSE(v.isNormalized());
+    EXPECT_FALSE(v.isNormalised());
 
     v.setAllValues(4_d, 0_d, -3_d);
     EXPECT_TRUE(v.isLengthEqual(25_d));
-    EXPECT_FALSE(v.isNormalized());
-    v.normalize();
-    EXPECT_TRUE(v.isNormalized());
+    EXPECT_FALSE(v.isNormalised());
+    v.normalise();
+    EXPECT_TRUE(v.isNormalised());
     EXPECT_TRUE(v.isFinite());
 
     decimal  inf = std::numeric_limits<decimal>::infinity();

@@ -59,10 +59,11 @@ public:
     // ============================================================================
     /// @{
     ObjectType getType() const override { return ObjectType::AABB; }
+    Vector3D   getHalfExtents() const { return getSize() * 0.5_d; }
     /// Return the minimum corner of the AABB.
-    Vector3D getMin() const { return getPosition() - getSize() * 0.5; }
+    Vector3D getMin() const { return getPosition() - getHalfExtents(); }
     /// Return the maximum corner of the AABB.
-    Vector3D getMax() const { return getPosition() + getSize() * 0.5; }
+    Vector3D getMax() const { return getPosition() + getHalfExtents(); }
     /// @}
 
     // ============================================================================

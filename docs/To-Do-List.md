@@ -12,7 +12,8 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
   - [x] **Object**
   - [x] **Sphere**
   - [x] **AABB**
-  - [ ] **Implement Plane object**
+  - [x] **Implement Plane object**
+  - [ ] **Test Plane collisions**
 - [ ] Remove forward declarations of objects
 
 ## Code Quality and Maintenance

@@ -1,77 +1,92 @@
 #include "config.hpp"
 #include "objects/sphere.hpp"
+#include "utilities/timer.cpp"
 #include "world/physicsWorld.hpp"
 
 #include <chrono>
 #include <iomanip>
 #include <iostream>
 
+// ------------------------------------------------------------------------
+// Helper: format a Vector3D as a fixed-width string
+// ------------------------------------------------------------------------
+inline std::string formatVector(const Vector3D& v)
+{
+    std::ostringstream oss;
+    oss << std::scientific << std::setprecision(3) << "(" << std::setw(10) << v[0] << ", " << std::setw(10)
+        << v[1] << ", " << std::setw(10) << v[2] << ")";
+    return oss.str();
+}
+
+// ============================================================================
+// Main entry point
+// ============================================================================
 int main(int argc, char** argv)
 {
+    Timer totalTimer;
+
     // Load configuration
+    Timer   configTimer;
     Config& config = Config::get();
     config.loadFromFile("src/config.yaml");
-
-    // Override with command line arguments if provided
     config.overrideFromCommandLine(argc, argv);
 
-    // Print
     std::cout << "----------------------------------------\n";
-    std::cout << "Simulation Parameters :\n";
-    std::cout << "Gravity: " << config.getGravity() << " m/s^2\n";
+    std::cout << "Simulation Parameters:\n";
+    std::cout << "Gravity: " << config.getGravity() << " m/s²\n";
     std::cout << "Timestep: " << config.getTimeStep() << " s\n";
     std::cout << "Max iterations: " << config.getMaxIterations() << "\n";
+    std::cout << "Loading configuration took: " << configTimer.elapsedMilliseconds() << " ms\n";
 
     // Initialize simulation
-    PhysicsWorld world = PhysicsWorld(config);
-
-    // Add objects
-    auto* sphere = new Sphere(Vector3D(0_d, 0_d, 0_d), 1_d, 1_d);
+    Timer        initTimer;
+    PhysicsWorld world(config);
+    auto*        sphere = new Sphere(Vector3D(0_d, 0_d, 0_d), 1_d, 1_d);
     world.addObject(sphere);
-
-    // Main loop
-    auto          totalDuration = std::chrono::high_resolution_clock::now();
-    const decimal timeStep      = config.getTimeStep();
-    size_t        counter       = 0;
     world.start();
 
-    // Header with better alignment
-    std::cout << "\nStarting simulation...\n";
-    std::cout << std::fixed << std::setprecision(2);
-    std::cout << std::setw(8) << "Time(s)" << std::setw(25) << "Position(x,y,z)" << std::setw(25)
-              << "Velocity(x,y,z)" << std::setw(20) << "Duration(µs)" << "\n";
-    std::cout << std::string(80, '-') << "\n";
+    std::cout << "Initializing world took: " << initTimer.elapsedMilliseconds() << " ms\n\n";
 
-    while (counter < config.getMaxIterations())
+    // Column widths
+    constexpr int col_time = 10;
+    constexpr int col_vec  = 40;
+    constexpr int col_step = 12;
+
+    // Header
+    std::cout << std::left << std::setw(col_time) << "Time(s)" << std::setw(col_vec) << "Position(x,y,z)"
+              << std::setw(col_vec) << "Velocity(x,y,z)" << std::setw(col_step) << "Step (µs)\n";
+    std::cout << std::string(col_time + 2 * col_vec + col_step, '-') << "\n";
+
+    // Simulation loop
+    Timer         simulationTimer;
+    const decimal timeStep = config.getTimeStep();
+    const size_t  maxIter  = config.getMaxIterations();
+
+    for (size_t counter = 0; counter < maxIter; ++counter)
     {
-        auto start = std::chrono::high_resolution_clock::now();
+        Timer stepTimer;
 
-        decimal  time = counter * timeStep;
-        Vector3D pos  = sphere->getPosition();
-        Vector3D vel  = sphere->getVelocity();
+        const decimal  time = counter * timeStep;
+        const Vector3D pos  = sphere->getPosition();
+        const Vector3D vel  = sphere->getVelocity();
 
         world.update(timeStep);
 
-        auto end      = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-
-        // Print
         if (counter % 100 == 0)
         {
-            std::cout << std::setw(10) << time << std::setw(10) << pos << std::setw(10) << vel
-                      << std::setw(10) << duration.count() << "\n";
+            std::cout << std::left << std::setw(col_time) << std::fixed << std::setprecision(3) << time
+                      << std::setw(col_vec) << formatVector(pos) << std::setw(col_vec) << formatVector(vel)
+                      << std::right << std::setw(col_step) << stepTimer.elapsedMicroseconds() << "\n";
         }
-
-        counter++;
     }
 
-    std::cout << "Simulation took : "
-              << std::chrono::duration_cast<std::chrono::microseconds>(
-                     std::chrono::high_resolution_clock::now() - totalDuration)
-              << "\n";
+    const double simTimeSec = simulationTimer.elapsedSeconds();
+    const double avgStepUs  = simulationTimer.elapsedMicroseconds() / static_cast<double>(maxIter);
 
-    // Cleanup
+    std::cout << "\nSimulation took: " << simTimeSec << " s\n";
+    std::cout << "Average iteration time: " << avgStepUs << " µs\n";
+    std::cout << "Total execution time: " << totalTimer.elapsedSeconds() << " s\n";
+
     delete sphere;
-
     return 0;
 }

@@ -24,6 +24,7 @@
 
 #include <cmath>
 #include <functional>
+#include <iomanip>
 #include <iostream>
 #include <stdexcept>
 
@@ -289,5 +290,11 @@ Vector3D operator/(decimal lhs, const Vector3D& rhs) { return rhs / lhs; }
 // ============================================================================
 std::ostream& operator<<(std::ostream& os, const Vector3D& v)
 {
-    return os << "(" << v[0] << ", " << v[1] << ", " << v[2] << ")";
+    std::ios oldState(nullptr);
+    oldState.copyfmt(os);
+
+    os << std::scientific << std::setprecision(3) << "(" << v[0] << " , " << v[1] << " , " << v[2] << ")";
+
+    os.copyfmt(oldState);
+    return os;
 }

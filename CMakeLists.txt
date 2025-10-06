@@ -73,6 +73,9 @@ set(ENGINE_OBJECT_SOURCES
     src/objects/collision.cpp
 )
 
+set(ENGINE_UTILITIES_SOURCE
+    src/utilities/timer.cpp)
+
 set(ENGINE_WORLD_SOURCES
     src/world/physicsWorld.cpp)
 
@@ -80,6 +83,7 @@ set(ENGINE_ALL_SOURCES
     ${ENGINE_CORE_SOURCES}
     ${ENGINE_MATH_SOURCES}
     ${ENGINE_OBJECT_SOURCES}
+    ${ENGINE_UTILITIES_SOURCE}
     ${ENGINE_WORLD_SOURCES}
 )
 

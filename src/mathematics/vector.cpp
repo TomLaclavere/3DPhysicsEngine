@@ -37,7 +37,7 @@ void Vector3D::absolute()
     v[1] = std::fabs(v[1]);
     v[2] = std::fabs(v[2]);
 }
-void Vector3D::normalize()
+void Vector3D::normalise()
 {
     decimal n = getNorm();
     if (n < PRECISION_MACHINE)
@@ -51,11 +51,11 @@ Vector3D Vector3D::getAbsolute() const
     absV.absolute();
     return absV;
 }
-Vector3D Vector3D::getNormalized() const
+Vector3D Vector3D::getNormalised() const
 {
-    Vector3D normalizedV = Vector3D((*this));
-    normalizedV.normalize();
-    return normalizedV;
+    Vector3D normalisedV = Vector3D((*this));
+    normalisedV.normalise();
+    return normalisedV;
 }
 Vector3D min(const Vector3D& a, const Vector3D& b)
 {
@@ -82,7 +82,7 @@ void Vector3D::setAllValues(decimal x_, decimal y_, decimal z_) { v = { x_, y_, 
 bool Vector3D::isNull() const { return commonMaths::approxEqual(getNormSquare(), decimal(0)); }
 bool Vector3D::isLengthEqual(decimal val) const { return commonMaths::approxEqual(getNormSquare(), val); }
 bool Vector3D::isFinite() const { return std::isfinite(v[0]) && std::isfinite(v[1]) && std::isfinite(v[2]); }
-bool Vector3D::isNormalized() const { return commonMaths::approxEqual(getNorm(), decimal(1)); }
+bool Vector3D::isNormalised() const { return commonMaths::approxEqual(getNorm(), decimal(1)); }
 
 // ============================================================================
 //  Vector Operations

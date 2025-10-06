@@ -36,7 +36,7 @@ private:
     Vector3D acceleration = Vector3D();
     Vector3D force        = Vector3D();
     Vector3D torque       = Vector3D();
-    decimal  mass         = 0.0_d;
+    decimal  mass         = 0_d; // static by default
 
 public:
     /// @brief Constructions can be done with various levels of details.

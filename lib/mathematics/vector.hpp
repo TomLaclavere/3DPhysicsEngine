@@ -77,8 +77,8 @@ public:
 
     /// Convert each element to its absolute value (in-place).
     void absolute();
-    /// Normalize this vector (in-place). If zero-length, becomes null vector.
-    void normalize();
+    /// Normalise this vector (in-place). If zero-length, becomes null vector.
+    void normalise();
     /// Squared Euclidian norm. Cheaper than `getNorm()`.
     decimal getNormSquare() const { return v[0] * v[0] + v[1] * v[1] + v[2] * v[2]; }
     /// Euclidean norm.
@@ -89,8 +89,8 @@ public:
     decimal getMaxValue() const { return std::max({ v[0], v[1], v[2] }); }
     /// Return a new vector with element-wise absolute values.
     Vector3D getAbsolute() const;
-    /// Return a normalized copy of the vector. If zero-length, return null vector.
-    Vector3D getNormalized() const;
+    /// Return a normalised copy of the vector. If zero-length, return null vector.
+    Vector3D getNormalised() const;
     /// @}
 
     // ============================================================================
@@ -115,7 +115,7 @@ public:
     /// Check if all elements are finite (not NaN, not Inf).
     bool isFinite() const;
     /// Check if vector has unit length.
-    bool isNormalized() const;
+    bool isNormalised() const;
     /// @}
 
     // ============================================================================

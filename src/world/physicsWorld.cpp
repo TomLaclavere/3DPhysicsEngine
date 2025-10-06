@@ -41,7 +41,7 @@ void PhysicsWorld::fixedUpdate()
 // ============================================================================
 //  Force computation
 // ============================================================================
-Vector3D PhysicsWorld::computeGravity() { return Vector3D(0_d, 0_d, gravityConstant); }
+Vector3D PhysicsWorld::computeGravity() { return Vector3D(0_d, 0_d, -gravityConstant); }
 void     PhysicsWorld::applyGravity()
 {
     for (auto* obj : objects)

@@ -19,9 +19,9 @@ void Matrix3x3::absolute()
     }
 }
 
-/// @brief Normalize the matrix using the Gram-Schmidt process on its rows. If the matrix is not invertible,
+/// @brief Normalise the matrix using the Gram-Schmidt process on its rows. If the matrix is not invertible,
 /// it is set to the identity matrix.
-void Matrix3x3::normalize()
+void Matrix3x3::normalise()
 {
     // Copy rows
     Vector3D r0(m[0], m[1], m[2]);
@@ -29,16 +29,16 @@ void Matrix3x3::normalize()
     Vector3D r2(m[6], m[7], m[8]);
 
     // Gram-Schmidt process (rows)
-    // 1. Normalize first row
-    r0.normalize();
+    // 1. Normalise first row
+    r0.normalise();
 
-    // 2. Make r1 orthogonal to r0, then normalize
+    // 2. Make r1 orthogonal to r0, then normalise
     r1 = r1 - r0 * r1.dotProduct(r0);
-    r1.normalize();
+    r1.normalise();
 
-    // 3. Make r2 orthogonal to r0 and r1, then normalize
+    // 3. Make r2 orthogonal to r0 and r1, then normalise
     r2 = r2 - r0 * r2.dotProduct(r0) - r1 * r2.dotProduct(r1);
-    r2.normalize();
+    r2.normalise();
 
     // Modify matrix rows
     (*this).setRow(0, r0);
@@ -88,15 +88,15 @@ Matrix3x3 Matrix3x3::getIdentity() const
 }
 Matrix3x3 Matrix3x3::getAbsolute() const
 {
-    Matrix3x3 normalizedM = Matrix3x3((*this));
-    normalizedM.absolute();
-    return normalizedM;
+    Matrix3x3 normalisedM = Matrix3x3((*this));
+    normalisedM.absolute();
+    return normalisedM;
 }
-Matrix3x3 Matrix3x3::getNormalized() const
+Matrix3x3 Matrix3x3::getNormalised() const
 {
-    Matrix3x3 normalizedM { Matrix3x3((*this)) };
-    normalizedM.normalize();
-    return normalizedM;
+    Matrix3x3 normalisedM { Matrix3x3((*this)) };
+    normalisedM.normalise();
+    return normalisedM;
 }
 Matrix3x3 Matrix3x3::getTranspose() const
 {
@@ -233,7 +233,7 @@ bool Matrix3x3::isSymmetric() const
 }
 bool Matrix3x3::isInvertible() const { return !commonMaths::approxEqual(getDeterminant(), decimal(0)); }
 bool Matrix3x3::isOrthogonal() const { return (getTranspose().matrixProduct(*this)).isIdentity(); }
-bool Matrix3x3::isNormalized() const
+bool Matrix3x3::isNormalised() const
 {
     // Verify norm of columns
     for (int i = 0; i < 3; ++i)

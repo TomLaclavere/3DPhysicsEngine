@@ -137,12 +137,12 @@ TEST(Matrix3x3_Test, Utilities)
     m.transpose();
     EXPECT_EQ(transM, m);
 
-    // Normalize
-    Matrix3x3 normM = m.getNormalized();
+    // Normalise
+    Matrix3x3 normM = m.getNormalised();
     for (int i = 0; i < 3; ++i)
         EXPECT_NEAR(normM.getRow(i).getNorm(), 1_d, PRECISION_MACHINE);
 
-    m.normalize();
+    m.normalise();
     EXPECT_TRUE(normM.approxEqual(m, PRECISION_MACHINE));
 
     // Inverse
@@ -230,11 +230,11 @@ TEST(Matrix3x3_Test, PropertyCheck)
     m(0, 1) = 1_d;
     EXPECT_FALSE(m.isOrthogonal());
 
-    // Normalized
+    // Normalised
     m.setToIdentity();
-    EXPECT_TRUE(m.isNormalized());
+    EXPECT_TRUE(m.isNormalised());
     m(0, 0) = 2_d;
-    EXPECT_FALSE(m.isNormalized());
+    EXPECT_FALSE(m.isNormalised());
 }
 
 // ——————————————————————————————————————————————————————————————————————————

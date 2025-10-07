@@ -7,10 +7,12 @@
  */
 
 #pragma once
-#include "aabb.hpp"
 #include "object.hpp"
 #include "precision.hpp"
-#include "sphere.hpp"
+
+// Forward declaration
+struct Sphere;
+struct AABB;
 
 /**
  * @class Plane

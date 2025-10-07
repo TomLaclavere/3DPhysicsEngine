@@ -1,33 +1,24 @@
 /**
  * @file aabb.hpp
- * @brief Axis-Aligned Bounding Box (AABB) object for collision detection.
+ * @brief Axis-Aligned Bounding Box (AABB) object used in physics simulation.
  *
- * Provides an implementation of an Object that represents a 3D box aligned
- * with the world axes. Used for fast collision detection against other AABBs
- * and spheres.
+ * An AABB is constructed with a position (its center) and a vector giving its size along the three Cartesian
+ * axis. It inherit from Object.
  */
 #pragma once
+#include "aabb.hpp"
 #include "object.hpp"
 #include "precision.hpp"
 #include "sphere.hpp"
 
-// Forward declaration
-struct Sphere;
-struct AABB;
-struct Plane;
-
 /**
- * @brief Axis-Aligned Bounding Box (AABB).
+ * @class AABB
+ * @brief Represent an Axis-Aligned Bounding Box (AABB) for physics simulation.
  *
  * Inherits from @ref Object and represents a box aligned with the X, Y, Z axes.
- * Defined by its center position and size (width, height, depth).
+ * An AABB is defined by its center position and size (width, height, depth).
  *
- * Example usage:
- * @code
- * AABB box(Vector3D(0,0,0), Vector3D(2,2,2)); // Cube centered at origin, size 2
- * Sphere sphere(Vector3D(1,0,0), 1.0_d);
- * bool collision = box.check_collision(sphere);
- * @endcode
+ * The AABB supports collision detection with other AABBs, Spheres, and Planes.
  */
 struct AABB : public Object
 {
@@ -76,7 +67,7 @@ public:
     /// Check collision between an AABB and a Sphere.
     bool aabbSphereCollision(const Sphere& sphere);
     /// Check collisoin between an AABB and a Plane
-    bool aabbPlaneCollision(const Sphere& sphere);
+    bool aabbPlaneCollision(const Plane& plane);
     /// Check collision with another Object.
     virtual bool checkCollision(const Object& other) override;
     /// @}

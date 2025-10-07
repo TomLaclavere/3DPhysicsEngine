@@ -4,7 +4,7 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 ## General Tasks
 - [x] Clean physicsWorld
-- [ ] Write documentation for physicsWorld
+- [x] Write documentation for physicsWorld
 - [x] Reorganize methods in config and physicsWorld
 - [x] Add duration tracking (per iteration & total)
 - [ ] Create utilities to clean main.cpp
@@ -17,7 +17,7 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
   - [ ] **Test Plane collisions**
 - [ ] Verify Collision implementation
 - [ ] Remove forward declarations of objects
-- [ ] Document common.hpp + rename commonMath with something else (comparison or something)
+- [x] Document common.hpp 
 - [ ] Use functions from common.hpp for comparison
 
 ## Code Quality and Maintenance

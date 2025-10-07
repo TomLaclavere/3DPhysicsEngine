@@ -9,7 +9,10 @@
 #include "aabb.hpp"
 #include "object.hpp"
 #include "precision.hpp"
-#include "sphere.hpp"
+
+// Forward declaration
+struct Sphere;
+struct Plane;
 
 /**
  * @class AABB

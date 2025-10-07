@@ -2,8 +2,8 @@
  * @file sphere.hpp
  * @brief Definition of the Sphere object used in physics simulation.
  *
- * A Sphere is represented as a position (its center) and a uniform size corresponding to its diameter. It
- * inherits from Object and integrates into the polymorphic collision system.
+ * A Sphere is constructed with a position (its center) and a uniform size corresponding to its diameter.
+ * It inherits from Object.
  */
 
 #pragma once
@@ -12,18 +12,17 @@
 #include "plane.hpp"
 #include "precision.hpp"
 
-struct AABB; ///< Forward declaration for AABB-Sphere collision functions.
-
 /**
  * @class Sphere
  * @brief Represents a spherical object for physics simulation.
  *
- * A Sphere is defined by its center (position) and its radius, which is derived
+ * Inherits from @ref Object and represents a sphere.
+ * Sphere is defined by its position (center) and its diameter, which is derived
  * from the size attribute of Object. By convention:
  * - `size.x == size.y == size.z`, enforced via constructors.
  * - The radius is computed as `size.x * 0.5`.
  *
- * The Sphere supports collision detection with other Spheres and AABBs.
+ * The Sphere supports collision detection with other Spheres, AABBs, and Planes.
  */
 struct Sphere : public Object
 {

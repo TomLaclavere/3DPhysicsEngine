@@ -1,5 +1,15 @@
+/**
+ * @file collision.cpp
+ * @brief Definition of collision conditions between Object used in physics simulation.
+ *
+ * Defining methods to check collision between Object.
+ * Currently, collision between Sphere, AABB, and Plane are implemented.
+ *
+ * @see collision.hpp
+ */
 #include "objects/collision.hpp"
 
+#include "mathematics/common.hpp"
 #include "objects/aabb.hpp"
 #include "objects/plane.hpp"
 #include "objects/sphere.hpp"
@@ -9,6 +19,17 @@
 // ============================================================================
 //  Sphere
 // ============================================================================
+
+/**
+ * @brief Check collision between two spheres.
+ *
+ * Collision occurs if the distance between centers is less than or equal
+ * to the sum of their radii.
+ *
+ * @param sphere1 Sphere instance.
+ * @param sphere2 Sphere instance.
+ * @return true if the spheres intersect, false otherwise.
+ */
 bool sphereCollision(const Sphere& sphere1, const Sphere& sphere2)
 {
     Vector3D centerDiff      = sphere2.getCenter() - sphere1.getCenter();
@@ -16,9 +37,19 @@ bool sphereCollision(const Sphere& sphere1, const Sphere& sphere2)
     decimal  squaredSumRadii =
         (sphere2.getRadius() + sphere1.getRadius()) * (sphere2.getRadius() + sphere1.getRadius());
 
-    return squaredDistance <= squaredSumRadii + PRECISION_MACHINE;
+    return commonMaths::approxGreaterOrEqualThan(squaredDistance, squaredSumRadii);
 }
 
+/**
+ * @brief Checks collision between a sphere and a finite plane.
+ *
+ * Collision occurs if the sphere's center-to-plane distance is smaller than the sphere radius, and if the
+ * projection of the sphere center onto the plane lies within its rectangle bounds.
+ *
+ * @param sphere Sphere instance.
+ * @param aabb AABB instance.
+ * @return true if the sphere and plane intersect, false otherwise.
+ */
 bool sphereAABBCollision(const Sphere& sphere, const AABB& aabb)
 {
     const Vector3D center  = sphere.getCenter();
@@ -35,21 +66,31 @@ bool sphereAABBCollision(const Sphere& sphere, const AABB& aabb)
     decimal dist = (closest - center).getNormSquare();
     decimal r2   = sphere.getRadius() * sphere.getRadius();
 
-    return dist <= r2 + PRECISION_MACHINE;
+    return commonMaths::approxGreaterOrEqualThan(dist, r2);
 }
 
+/**
+ * @brief Checks collision between a sphere and a finite plane.
+ *
+ * Collision occurs if the sphere's center-to-plane distance is smaller than the sphere radius, and if the
+ * projection of the sphere center onto the plane lies within its rectangle bounds.
+ *
+ * @param sphere Sphere instance.
+ * @param plane Plane instance.
+ * @return true if the sphere and plane intersect, false otherwise.
+ */
 bool spherePlaneCollision(const Sphere& sphere, const Plane& plane)
 {
-    // 1- Signed distance from the sphere center to plane
+    // 1 - Signed distance from the sphere center to plane
     decimal dist = (sphere.getCenter() - plane.getPosition()).dotProduct(plane.getNormal());
 
     if (std::abs(dist) > sphere.getRadius())
         return false; // sphere too far away from plane
 
-    // 2- Project sphere center onto the plane
+    // 2 - Project sphere center onto the plane
     Vector3D proj = sphere.getCenter() - dist * plane.getNormal();
 
-    // 3- Check if projection lies within plane rectangle
+    // 3 - Check if projection lies within plane rectangle
     Vector3D local = proj - plane.getPosition();
     decimal  s     = local.dotProduct(plane.getU());
     decimal  t     = local.dotProduct(plane.getV());
@@ -60,14 +101,44 @@ bool spherePlaneCollision(const Sphere& sphere, const Plane& plane)
 // ============================================================================
 //  AABB
 // ============================================================================
+/**
+ * @brief Checks collision between two aabb.
+ *
+ * Collision occurs if they overlap on each axis simultaneously.
+ *
+ * @param aabb1 AABB instance.
+ * @param aabb2 AABB instance.
+ * @return true if the AABBs intersect, false otherwise.
+ */
 bool aabbCollision(const AABB& aabb1, const AABB& aabb2)
 {
     // Check for overlap along each axis
     return (aabb1.getMin() <= aabb2.getMax() && aabb1.getMax() >= aabb2.getMin());
 }
 
+/**
+ * @brief Check collision between an aabb and a Sphere
+ *
+ * Collision occurs if the sphere's center-to-plane distance is smaller than the sphere radius, and if the
+ * projection of the sphere center onto the plane lies within its rectangle bounds.
+ * Delegates the collision checking to the function sphereAABBCollision.
+ *
+ * @param aabb AABB instance.
+ * @param sphere Sphere instance.
+ * @return true if the aabb and the sphere intersect, false otherwise.
+ */
 bool aabbSphereCollision(const AABB& aabb, const Sphere& sphere) { return sphereAABBCollision(sphere, aabb); }
 
+/**
+ * @brief Checks collision between an aabb and a finite plane.
+ *
+ * Collision occurs if the signed distance from the AABB to the plane is less than or equal to the projection
+ * radius of the AABB onto the plane normal.
+ *
+ * @param aabb AABB instance.
+ * @param plane Plane instance.
+ * @return true if the AABB and the Plane intersect, false otherwise.
+ */
 bool aabbPlaneCollision(const AABB& aabb, const Plane& plane)
 {
     // 1- Signed distance from AABB center to plane
@@ -106,6 +177,16 @@ bool aabbPlaneCollision(const AABB& aabb, const Plane& plane)
 // ============================================================================
 //  Plane
 // ============================================================================
+/**
+ * @brief Checks collision between two finite planes.
+ *
+ * Collision occurs if the associated infinite planes intersects (they are not parallel), and if the
+ * intersection line passes through both rectangles' bounds.
+ *
+ * @param plane1 Plane instance.
+ * @param plane2 Plane instance.
+ * @return true if the planes intersect, false otherwise.
+ */
 bool planeCollision(const Plane& plane1, const Plane& plane2)
 {
     // 1- Check if parallel
@@ -137,9 +218,31 @@ bool planeCollision(const Plane& plane1, const Plane& plane2)
     return inBounds(plane1, intersectionPoint) && inBounds(plane2, intersectionPoint);
 };
 
+/**
+ * @brief Checks collision between a finite plane and a sphere.
+ *
+ * Collision occurs if the sphere's center-to-plane distance is smaller than the sphere radius, and if the
+ * projection of the sphere center onto the plane lies within its rectangle bounds.
+ * Delegates the collision checking to the function spherePlaneCollision.
+ *
+ * @param plane Plane instance.
+ * @param sphere Sphere instance.
+ * @return true if the plane and sphere intersect, false otherwise.
+ */
 bool planeSphereCollision(const Plane& plane, const Sphere& sphere)
 {
     return spherePlaneCollision(sphere, plane);
 }
 
+/**
+ * @brief Check collision between a finite plane and an aabb.
+ *
+ * Collision occurs if the signed distance from the AABB to the plane is less than or equal to the projection
+ * radius of the AABB onto the plane normal.
+ * Delegates the collision checking to the function aabbPlaneCollision
+ *
+ * @param plane Plane instance.
+ * @param aabb AABB instance.
+ * @return true if the plane and the aabb intersect, false otherwise.
+ */
 bool planeAABBCollision(const Plane& plane, const AABB& aabb) { return aabbPlaneCollision(aabb, plane); }

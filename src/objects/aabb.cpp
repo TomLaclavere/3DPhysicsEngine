@@ -5,6 +5,7 @@
  * This file provides the concrete implementations of collision checks involving AABBs:
  * - AABB vs. AABB
  * - AABB vs. Sphere
+ * - AABB vs. Plane
  *
  * It also implements the polymorphic collision check used by the Object hierarchy.
  *
@@ -18,36 +19,43 @@
 //  Collision
 // ============================================================================
 /**
- * @brief Checks for intersection between two Axis-Aligned Bounding Boxes (AABB).
+ * @brief Checks collision between two aabb.
  *
- * This function verifies overlap along all three axes (x, y, z). Two AABBs are
- * considered colliding if they overlap on each axis simultaneously.
+ * Collision occurs if they overlap on each axis simultaneously.
  *
  * @param aabb AABB to test against.
- * @return true if the AABBs overlap, false otherwise.
+ * @return true if the AABBs intersect, false otherwise.
  */
 bool AABB::aabbCollision(const AABB& aabb) { return ::aabbCollision(*this, aabb); }
 
 /**
- * @brief Checks for intersection between an Axis-Aligned Bounding Box (AABB)
- *        and a Sphere.
+ * @brief Checks collision between an aabb and a sphere.
  *
- * Delegates the collision computation to the static helper function in the
- * Sphere class to ensure consistency across collision checks.
+ * Collision occurs if the sphere's center-to-plane distance is smaller than the sphere radius, and if the
+ * projection of the sphere center onto the plane lies within its rectangle bounds.
  *
  * @param sphere Sphere to test against.
- * @return true if the AABB and the Sphere overlap, false otherwise.
+ * @return true if the AABB and the Sphere intersect, false otherwise.
  */
 bool AABB::aabbSphereCollision(const Sphere& sphere) { return ::aabbSphereCollision(*this, sphere); }
 
 /**
- * @brief Checks for intersection between this AABB and another Object.
+ * @brief Checks collision between an aabb and a finite plane.
  *
- * Dispatches the collision test depending on the runtime type of the other
- * object:
- * - AABB: Uses aabbCollision().
- * - Sphere: Uses aabbSphereCollision().
- * - Default: Returns false (no collision test implemented).
+ * Collision occurs if the signed distance from the AABB to the plane is less than or equal to the projection
+ * radius of the AABB onto the plane normal.
+ *
+ * @param plane Plane to test against.
+ * @return true if the AABB and the Plane intersect, false otherwise.
+ */
+bool AABB::aabbPlaneCollision(const Plane& plane) { return ::aabbPlaneCollision(*this, plane); }
+
+/**
+ * @brief Polymorphic collision detection against another Object.
+ *
+ * Dispatches to the appropriate collision method depending on the type of
+ * the other object.
+ * Only collision between Sphere, AABB, and Plane are implemented.
  *
  * @param other Object to test against.
  * @return true if a collision is detected, false otherwise.
@@ -60,6 +68,8 @@ bool AABB::checkCollision(const Object& other)
         return AABB::aabbCollision(static_cast<const AABB&>(other));
     case ObjectType::Sphere:
         return AABB::aabbSphereCollision(static_cast<const Sphere&>(other));
+    case ObjectType::Plane:
+        return AABB::aabbPlaneCollision(static_cast<const Plane&>(other));
     default:
         return false;
     }

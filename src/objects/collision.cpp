@@ -132,7 +132,7 @@ bool aabbSphereCollision(const AABB& aabb, const Sphere& sphere) { return sphere
 /**
  * @brief Checks collision between an aabb and a finite plane.
  *
- * Collision occurs if the signed distance from the AABB to the plane is less than or equal to the projection
+ * Collision occurs if the signed istance from the AABB to the plane is less than or equal to the projection
  * radius of the AABB onto the plane normal.
  *
  * @param aabb AABB instance.
@@ -167,8 +167,9 @@ bool aabbPlaneCollision(const AABB& aabb, const Plane& plane)
                 decimal  s     = local.dotProduct(plane.getU());
                 decimal  t     = local.dotProduct(plane.getV());
 
-                if (std::abs(s) <= plane.getHalfWidth() && std::abs(t) <= plane.getHalfHeight())
-                    return true; // at least one corner intersects the plane patch
+                // true if at least one corner intersects the plane patch
+                return (commonMaths::approxGreaterOrEqualThan(std::abs(s), plane.getHalfWidth()) &&
+                        commonMaths::approxGreaterOrEqualThan(std::abs(t), plane.getHalfHeight()));
             }
 
     return false;
@@ -212,7 +213,8 @@ bool planeCollision(const Plane& plane1, const Plane& plane2)
         Vector3D local = X - P.getPosition();
         decimal  s     = local.dotProduct(P.getU());
         decimal  t     = local.dotProduct(P.getV());
-        return (std::abs(s) <= P.getHalfWidth()) && (std::abs(t) <= P.getHalfHeight());
+        return (commonMaths::approxGreaterOrEqualThan(std::abs(s), P.getHalfWidth()) &&
+                commonMaths::approxGreaterOrEqualThan(std::abs(t), P.getHalfHeight()));
     };
 
     return inBounds(plane1, intersectionPoint) && inBounds(plane2, intersectionPoint);

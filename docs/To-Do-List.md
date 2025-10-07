@@ -3,11 +3,7 @@
 While the roadmap outlines the major phases and tasks, this To-Do list captures smaller, actionable items that need to be addressed throughout the project. These side tasks are essential for maintaining code quality, ensuring smooth development, and enhancing the overall project. 
 
 ## General Tasks
-- [x] Clean physicsWorld
-- [x] Write documentation for physicsWorld
-- [x] Reorganize methods in config and physicsWorld
-- [x] Add duration tracking (per iteration & total)
-- [ ] Create utilities to clean main.cpp
+
 - [ ] **Integrate :** method for all objects or for PhysicsWorld ? 
 - [ ] **Objects :** need to improve the construction and collision of all objects
   - [x] **Object**
@@ -17,8 +13,6 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
   - [ ] **Test Plane collisions**
 - [ ] Verify Collision implementation
 - [ ] Remove forward declarations of objects
-- [x] Document common.hpp 
-- [ ] Use functions from common.hpp for comparison
 
 ## Code Quality and Maintenance
 
@@ -27,8 +21,8 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 ### Parameter Control
 - [ ] **Core Parameters Implementation**
   - [ ] Integration method selection
-  - [ ] Collision detection precision
-  - [ ] Maximum iteration count
+  - [x] Collision detection precision
+  - [x] Maximum iteration count
 
 - [ ] **Parameter Management System**
   - [ ] Runtime parameter modification ?
@@ -39,7 +33,7 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 - [ ] **Simulation Control Commands**
   - [ ] Start/Stop simulation
   - [ ] Pause/Resume functionality
-  - [ ] Step-by-step execution
+  - [x] Step-by-step execution
   - [ ] Reset to initial state
   - [ ] Emergency stop
 
@@ -79,11 +73,15 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 - [ ] CI with Clang
 
-
-
 # Done
 
 ## General Tasks
+- [x] Clean physicsWorld
+- [x] Write documentation for physicsWorld
+- [x] Reorganize methods in config and physicsWorld
+- [x] Add duration tracking (per iteration & total)
+- [x] Document common.hpp 
+- [x] Use functions from common.hpp for comparison
 
 ## Code Quality and Maintenance
 

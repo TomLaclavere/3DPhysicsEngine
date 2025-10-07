@@ -3,6 +3,7 @@
 // ============================================================================
 //  Core simulation methods
 // ============================================================================
+/// Clear Object array and initialise physical and simulation parameters from config
 void PhysicsWorld::initialize()
 {
     isRunning = false;
@@ -20,10 +21,10 @@ void PhysicsWorld::update(decimal dt)
         return;
 
     timeStep = dt;
-    fixedUpdate();
+    integrateEuler();
 }
-
-void PhysicsWorld::fixedUpdate()
+/// Update position and velocity of each Object in PhysicalWorld using semi-explicite Euler integration.
+void PhysicsWorld::integrateEuler()
 {
     // Update each object's position and velocity
     for (auto* obj : objects)
@@ -42,7 +43,8 @@ void PhysicsWorld::fixedUpdate()
 //  Force computation
 // ============================================================================
 Vector3D PhysicsWorld::computeGravity() { return Vector3D(0_d, 0_d, -gravityConstant); }
-void     PhysicsWorld::applyGravity()
+/// Apply gravtiational force to all Object in Physical World by updating their acceleration.
+void PhysicsWorld::applyGravity()
 {
     for (auto* obj : objects)
     {

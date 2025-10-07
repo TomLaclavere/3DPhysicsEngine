@@ -95,5 +95,7 @@ bool Plane::checkCollision(const Object& other)
         return Plane::planeSphereCollision(static_cast<const Sphere&>(other));
     case ObjectType::AABB:
         return Plane::planeAABBCollision(static_cast<const AABB&>(other));
+    default:
+        return false;
     }
 }

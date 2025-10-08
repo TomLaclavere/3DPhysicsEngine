@@ -51,7 +51,7 @@ bool Plane::containsPoint(const Vector3D& point) const
  * @param plane Plane to test against.
  * @return true if the planes intersect, false otherwise.
  */
-bool Plane::planeCollision(const Plane& plane) { return ::planeCollision(*this, plane); }
+bool Plane::planeCollision(const Plane& plane) { return Collision::collide(*this, plane); }
 
 /**
  * @brief Checks collision between a finite plane and a sphere.
@@ -62,7 +62,7 @@ bool Plane::planeCollision(const Plane& plane) { return ::planeCollision(*this, 
  * @param sphere Sphere to test against.
  * @return true if the Plane and the Sphere intersect, false otherwise.
  */
-bool Plane::planeSphereCollision(const Sphere& sphere) { return ::planeSphereCollision(*this, sphere); }
+bool Plane::planeSphereCollision(const Sphere& sphere) { return Collision::collide(*this, sphere); }
 
 /**
  * @brief Checks collision between a finite plane and an aabb.
@@ -73,7 +73,7 @@ bool Plane::planeSphereCollision(const Sphere& sphere) { return ::planeSphereCol
  * @param aabb AABB to test against.
  * @return true if the Plane and the AABB intersect, false otherwise.
  */
-bool Plane::planeAABBCollision(const AABB& aabb) { return ::planeAABBCollision(*this, aabb); }
+bool Plane::planeAABBCollision(const AABB& aabb) { return Collision::collide(*this, aabb); }
 
 /**
  * @brief Polymorphic collision detection against another Object.

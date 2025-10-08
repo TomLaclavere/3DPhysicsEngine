@@ -35,7 +35,7 @@ public:
     // ============================================================================
     /// @{
     PhysicsWorld() = default;
-    PhysicsWorld(Config& _config)
+    explicit PhysicsWorld(Config& _config)
         : config { _config }
     {}
     ~PhysicsWorld() { clearObjects(); };

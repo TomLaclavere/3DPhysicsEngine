@@ -45,7 +45,7 @@ inline bool approxEqual(decimal lhs, decimal rhs, decimal precision = PRECISION_
  */
 inline bool approxGreaterThan(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE)
 {
-    return lhs < rhs + precision;
+    return lhs > rhs + precision;
 }
 
 /**
@@ -60,7 +60,7 @@ inline bool approxGreaterThan(decimal lhs, decimal rhs, decimal precision = PREC
  */
 inline bool approxSmallerThan(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE)
 {
-    return lhs > rhs + precision;
+    return lhs < rhs + precision;
 }
 
 /**
@@ -75,7 +75,7 @@ inline bool approxSmallerThan(decimal lhs, decimal rhs, decimal precision = PREC
  */
 inline bool approxGreaterOrEqualThan(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE)
 {
-    return lhs <= rhs + precision;
+    return lhs >= rhs + precision;
 }
 
 /**
@@ -90,7 +90,7 @@ inline bool approxGreaterOrEqualThan(decimal lhs, decimal rhs, decimal precision
  */
 inline bool approxSmallerOrEqualThan(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE)
 {
-    return lhs >= rhs + precision;
+    return lhs <= rhs + precision;
 }
 
 } // namespace commonMaths

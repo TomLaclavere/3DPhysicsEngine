@@ -26,7 +26,7 @@
  * @param aabb AABB to test against.
  * @return true if the AABBs intersect, false otherwise.
  */
-bool AABB::aabbCollision(const AABB& aabb) { return ::aabbCollision(*this, aabb); }
+bool AABB::aabbCollision(const AABB& aabb) { return Collision::collide(*this, aabb); }
 
 /**
  * @brief Checks collision between an aabb and a sphere.
@@ -37,7 +37,7 @@ bool AABB::aabbCollision(const AABB& aabb) { return ::aabbCollision(*this, aabb)
  * @param sphere Sphere to test against.
  * @return true if the AABB and the Sphere intersect, false otherwise.
  */
-bool AABB::aabbSphereCollision(const Sphere& sphere) { return ::aabbSphereCollision(*this, sphere); }
+bool AABB::aabbSphereCollision(const Sphere& sphere) { return Collision::collide(*this, sphere); }
 
 /**
  * @brief Checks collision between an aabb and a finite plane.
@@ -48,7 +48,7 @@ bool AABB::aabbSphereCollision(const Sphere& sphere) { return ::aabbSphereCollis
  * @param plane Plane to test against.
  * @return true if the AABB and the Plane intersect, false otherwise.
  */
-bool AABB::aabbPlaneCollision(const Plane& plane) { return ::aabbPlaneCollision(*this, plane); }
+bool AABB::aabbPlaneCollision(const Plane& plane) { return Collision::collide(*this, plane); }
 
 /**
  * @brief Polymorphic collision detection against another Object.

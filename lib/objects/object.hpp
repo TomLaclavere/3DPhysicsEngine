@@ -112,6 +112,15 @@ public:
     /// @{
     void applyTranslation(const Vector3D& v_translation) { position += v_translation; }
     void applyRotation(const Vector3D& v_rotation);
+    /**
+     * @brief Applies scaling to the object.
+     *
+     * For certain object types (e.g., spheres), non-uniform scaling is not permitted
+     * as it may violate geometric assumptions. For such objects, only uniform scaling
+     * (where all components of v_scaling are equal) is allowed.
+     *
+     * @param v_scaling The scaling vector to apply.
+     */
     void applyScaling(const Vector3D& v_scaling) { size *= v_scaling; }
     /// @}
 

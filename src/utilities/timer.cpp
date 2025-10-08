@@ -1,26 +1,14 @@
-#include <chrono>
+#include "utilities/timer.hpp"
 
-// ============================================================================
-// Timer utility for consistent duration measurement
-// ============================================================================
-class Timer
+void Timer::reset() { start_time = std::chrono::high_resolution_clock::now(); }
+
+[[nodiscard]] long long Timer::elapsedMicroseconds() const
 {
-private:
-    std::chrono::high_resolution_clock::time_point start_time;
+    return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() -
+                                                                 start_time)
+        .count();
+}
 
-public:
-    Timer() { reset(); }
+[[nodiscard]] decimal Timer::elapsedMilliseconds() const { return elapsedMicroseconds() / 1000_d; }
 
-    void reset() { start_time = std::chrono::high_resolution_clock::now(); }
-
-    [[nodiscard]] long long elapsedMicroseconds() const
-    {
-        return std::chrono::duration_cast<std::chrono::microseconds>(
-                   std::chrono::high_resolution_clock::now() - start_time)
-            .count();
-    }
-
-    [[nodiscard]] double elapsedMilliseconds() const { return elapsedMicroseconds() / 1000.0; }
-
-    [[nodiscard]] double elapsedSeconds() const { return elapsedMicroseconds() / 1e6; }
-};
+[[nodiscard]] decimal Timer::elapsedSeconds() const { return elapsedMicroseconds() / 1e6_d; }

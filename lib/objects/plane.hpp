@@ -46,30 +46,29 @@ public:
         updateLocalAxes();
     }
 
-    Plane(const Vector3D& position, const Vector3D& size)
-        : Object(position, size)
+    Plane(const Vector3D& position, const Vector3D& _normal)
+        : Object(position)
+        , normal(_normal.getNormalised())
     {
-        halfWidth  = size[0] * 0.5_d;
-        halfHeight = size[1] * 0.5_d;
+
         updateLocalAxes();
     }
 
     Plane(const Vector3D& position, const Vector3D& size, const Vector3D& _normal)
         : Object(position, size)
         , normal(_normal.getNormalised())
+        , halfWidth { size[0] * 0.5_d }
+        , halfHeight { size[1] * 0.5_d }
     {
-        halfWidth  = size[0] * 0.5_d;
-        halfHeight = size[1] * 0.5_d;
         updateLocalAxes();
     }
 
-    Plane(const Vector3D& position, const Vector3D& size, decimal mass,
-          const Vector3D& _normal = Vector3D(0_d, 1_d, 0_d))
+    Plane(const Vector3D& position, const Vector3D& size, decimal mass, const Vector3D& _normal)
         : Object(position, size, mass)
         , normal(_normal.getNormalised())
+        , halfWidth { size[0] * 0.5_d }
+        , halfHeight { size[1] * 0.5_d }
     {
-        halfWidth  = size[0] * 0.5_d;
-        halfHeight = size[1] * 0.5_d;
         updateLocalAxes();
     }
 

@@ -67,14 +67,24 @@ set(ENGINE_MATH_SOURCES
 
 set(ENGINE_OBJECT_SOURCES
     src/objects/object.cpp
-    src/objects/AABB.cpp
+    src/objects/aabb.cpp
     src/objects/sphere.cpp
+    src/objects/plane.cpp
+    src/objects/collision.cpp
 )
+
+set(ENGINE_UTILITIES_SOURCE
+    src/utilities/timer.cpp)
+
+set(ENGINE_WORLD_SOURCES
+    src/world/physicsWorld.cpp)
 
 set(ENGINE_ALL_SOURCES
     ${ENGINE_CORE_SOURCES}
     ${ENGINE_MATH_SOURCES}
     ${ENGINE_OBJECT_SOURCES}
+    ${ENGINE_UTILITIES_SOURCE}
+    ${ENGINE_WORLD_SOURCES}
 )
 
 # =============================================

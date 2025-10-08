@@ -23,16 +23,74 @@ namespace commonMaths {
  *
  * Uses an absolute difference check: `|lhs - rhs| <= precision`.
  *
- * @param lhs First value.
- * @param rhs Second value.
+ * @param lhs Left value.
+ * @param rhs Right value.
  * @param precision Tolerance (defaults to `PRECISION_MACHINE`).
  * @return true if the two values are approximately equal.
- *
- * @note Designed for cases where floating-point rounding errors must be ignored.
  */
 inline bool approxEqual(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE)
 {
     return (std::abs(lhs - rhs) <= precision);
+}
+
+/**
+ * @brief Compare two floating-point numbers for approximate greater than.
+ *
+ * Uses an absolute difference check: `lhs < rhs + precision`.
+ *
+ * @param lhs Left value.
+ * @param rhs Right value.
+ * @param precision Tolerance (defaults to `PRECISION_MACHINE`).
+ * @return true if lhs is approximatevely greater than rhs, false otherwise.
+ */
+inline bool approxGreaterThan(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE)
+{
+    return lhs > rhs + precision;
+}
+
+/**
+ * @brief Compare two floating-point numbers for approximate smaller than.
+ *
+ * Uses an absolute difference check: `lhs > rhs + precision`.
+ *
+ * @param lhs Left value.
+ * @param rhs Right value.
+ * @param precision Tolerance (defaults to `PRECISION_MACHINE`).
+ * @return true if lhs is approximatevely smaller than rhs, false otherwise.
+ */
+inline bool approxSmallerThan(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE)
+{
+    return lhs < rhs + precision;
+}
+
+/**
+ * @brief Compare two floating-point numbers for approximate greater or equal than.
+ *
+ * Uses an absolute difference check: `lhs <= rhs + precision`.
+ *
+ * @param lhs Left value.
+ * @param rhs Right value.
+ * @param precision Tolerance (defaults to `PRECISION_MACHINE`).
+ * @return true if lhs is approximatevely greater or equal than rhs, false otherwise.
+ */
+inline bool approxGreaterOrEqualThan(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE)
+{
+    return lhs >= rhs + precision;
+}
+
+/**
+ * @brief Compare two floating-point numbers for approximate smaller or equal than.
+ *
+ * Uses an absolute difference check: `lhs >= rhs + precision`.
+ *
+ * @param lhs Left value.
+ * @param rhs Right value.
+ * @param precision Tolerance (defaults to `PRECISION_MACHINE`).
+ * @return true if lhs is approximatevely qmaller or equal than rhs, false otherwise.
+ */
+inline bool approxSmallerOrEqualThan(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE)
+{
+    return lhs <= rhs + precision;
 }
 
 } // namespace commonMaths

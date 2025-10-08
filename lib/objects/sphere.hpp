@@ -2,27 +2,29 @@
  * @file sphere.hpp
  * @brief Definition of the Sphere object used in physics simulation.
  *
- * A Sphere is represented as a position (its center) and a uniform scale
- * (used internally to compute its radius). It inherits from Object and
- * integrates into the polymorphic collision system.
+ * A Sphere is constructed with a position (its center) and a uniform size corresponding to its diameter.
+ * It inherits from Object.
  */
 
 #pragma once
 #include "object.hpp"
 #include "precision.hpp"
 
-struct AABB; ///< Forward declaration for AABB-Sphere collision functions.
+// Forward declaration
+struct AABB;
+struct Plane;
 
 /**
  * @class Sphere
  * @brief Represents a spherical object for physics simulation.
  *
- * A Sphere is defined by its center (position) and its radius, which is derived
- * from the scale attribute of Object. By convention:
- * - `scale.x == scale.y == scale.z`, enforced via constructors.
- * - The radius is computed as `scale.x * 0.5`.
+ * Inherits from @ref Object and represents a sphere.
+ * Sphere is defined by its position (center) and its diameter, which is derived
+ * from the size attribute of Object. By convention:
+ * - `size.x == size.y == size.z`, enforced via constructors.
+ * - The radius is computed as `size.x * 0.5`.
  *
- * The Sphere supports collision detection with other Spheres and AABBs.
+ * The Sphere supports collision detection with other Spheres, AABBs, and Planes.
  */
 struct Sphere : public Object
 {
@@ -36,15 +38,15 @@ public:
     explicit Sphere(const Vector3D& position)
         : Object(position)
     {}
-    Sphere(const Vector3D& position, const decimal& scale)
-        : Object(position, Vector3D(scale))
+    Sphere(const Vector3D& position, const decimal& size)
+        : Object(position, Vector3D(size))
     {}
-    Sphere(const Vector3D& position, const decimal& scale, decimal mass)
-        : Object(position, Vector3D(scale), mass)
+    Sphere(const Vector3D& position, const decimal& size, decimal mass)
+        : Object(position, Vector3D(size), mass)
     {}
-    Sphere(const Vector3D& position, const Vector3D& rotation, const decimal& scale, const Vector3D& velocity,
+    Sphere(const Vector3D& position, const Vector3D& rotation, const decimal& size, const Vector3D& velocity,
            const Vector3D& acceleration, const Vector3D& force, const Vector3D& torque, decimal mass)
-        : Object(position, rotation, Vector3D(scale), velocity, acceleration, force, torque, mass)
+        : Object(position, rotation, Vector3D(size), velocity, acceleration, force, torque, mass)
     {}
     virtual ~Sphere() = default;
     /// @}
@@ -55,8 +57,8 @@ public:
     /// @{
     ObjectType getType() const override { return ObjectType::Sphere; }
     Vector3D   getCenter() const { return getPosition(); }
-    decimal    getScaleValue() const { return getScale()[0]; }
-    decimal    getRadius() const { return getScaleValue() * 0.5_d; }
+    decimal    getDiameter() const { return getSize().getX(); }
+    decimal    getRadius() const { return getDiameter() * 0.5_d; }
     /// @}
 
     // ============================================================================
@@ -65,9 +67,11 @@ public:
     /// @{
 
     /// Check collision between two Spheres.
-    bool sphereCollision(const Sphere& a, const Sphere& b);
+    bool sphereCollision(const Sphere& sphere);
     /// Check collision between a Sphere and an AABB.
-    static bool aabbSphereCollision(const Sphere& sphere, const AABB& aabb);
+    bool sphereAABBCollision(const AABB& aabb);
+    /// Check collision between a Sphere and a Plane
+    bool spherePlaneCollision(const Plane& plane);
     /// Check collision with another Object.
     virtual bool checkCollision(const Object& other) override;
     /// @}

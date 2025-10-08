@@ -1,4 +1,4 @@
-#include "objects/AABB.hpp"
+#include "objects/aabb.hpp"
 #include "objects/sphere.hpp"
 #include "test_functions.hpp"
 
@@ -9,7 +9,7 @@
 TEST(SphereTest, ConstructorsAndGetters)
 {
     Vector3D position(1_d, 2_d, 3_d);
-    decimal  scale(4_d);
+    decimal  size(4_d);
     Vector3D rotation(0_d, 0_d, 0_d);
     Vector3D velocity(0.1_d, 0.2_d, 0.3_d);
     Vector3D acceleration(0.01_d, 0.02_d, 0.03_d);
@@ -17,10 +17,10 @@ TEST(SphereTest, ConstructorsAndGetters)
     Vector3D torque(0.0001_d, 0.0002_d, 0.0003_d);
     decimal  mass = 10.0_d;
 
-    Sphere sphere(position, rotation, scale, velocity, acceleration, force, torque, mass);
+    Sphere sphere(position, rotation, size, velocity, acceleration, force, torque, mass);
 
     EXPECT_EQ(sphere.getPosition(), position);
-    EXPECT_EQ(sphere.getScaleValue(), scale);
+    EXPECT_EQ(sphere.getDiameter(), size);
     EXPECT_EQ(sphere.getRotation(), rotation);
     EXPECT_EQ(sphere.getVelocity(), velocity);
     EXPECT_EQ(sphere.getAcceleration(), acceleration);

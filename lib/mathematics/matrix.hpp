@@ -111,8 +111,8 @@ public:
 
     /// Convert each element to its absolute value (in-place).
     void absolute();
-    /// Normalize the matrix (in-place). If not invertible, becomes identity.
-    void normalize();
+    /// Normalise the matrix (in-place). If not invertible, becomes identity.
+    void normalise();
     /// Transpose the matrix (in-place).
     void transpose();
     /// Invert the matrix (in-place). Throw `std::runtime_error` if not invertible.
@@ -125,8 +125,8 @@ public:
     Matrix3x3 getIdentity() const;
     /// Return a new matrix with element-wise absolute values.
     Matrix3x3 getAbsolute() const;
-    /// Return a normalized copy of the matrix. If not invertible, return identity.
-    Matrix3x3 getNormalized() const;
+    /// Return a normalised copy of the matrix. If not invertible, return identity.
+    Matrix3x3 getNormalised() const;
     /// Return the transposed matrix.
     Matrix3x3 getTranspose() const;
     /// Return the inverted matrix. Throw `std::runtime_error` if not invertible.
@@ -160,7 +160,7 @@ public:
     bool isSymmetric() const;
     bool isInvertible() const;
     bool isOrthogonal() const;
-    bool isNormalized() const;
+    bool isNormalised() const;
     /// @}
 
     // ============================================================================

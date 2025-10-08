@@ -3,7 +3,7 @@
  * @brief Object class representing physical entities in the simulation.
  *
  * This class encapsulates the properties and behaviors of objects within the physics simulation,
- * including their position, rotation, scale, and physical forces acting upon them.
+ * including their position, rotation, size, and physical forces acting upon them.
  * It serves as a base class for specific object types like Sphere, AABB, and Plane.
  */
 #pragma once
@@ -21,7 +21,7 @@ enum class ObjectType
 /**
  * @brief Object class representing a physical entity in the simulation.
  *
- * Holds physical intrinsics properties like mass (`decimal`) or scale (`Vector3D`), as well as dynamic
+ * Holds physical intrinsics properties like mass (`decimal`) or size (`Vector3D`), as well as dynamic
  * properties: position, rotation, velocity, acceleration, forces, and torques (`Vector3D`).
  * Can be extended for specific object types (e.g., Sphere, AABB, Plane).
  *
@@ -31,16 +31,16 @@ struct Object
 private:
     Vector3D position     = Vector3D();
     Vector3D rotation     = Vector3D();
-    Vector3D scale        = Vector3D(1_d, 1_d, 1_d);
+    Vector3D size         = Vector3D(1_d, 1_d, 1_d);
     Vector3D velocity     = Vector3D();
     Vector3D acceleration = Vector3D();
     Vector3D force        = Vector3D();
     Vector3D torque       = Vector3D();
-    decimal  mass         = 0.0_d;
+    decimal  mass         = 0_d; // static by default
 
 public:
     /// @brief Constructions can be done with various levels of details.
-    /// Default values are zero vectors for all `Vector3D` properties, except `scale` which defaults to
+    /// Default values are zero vectors for all `Vector3D` properties, except `size` which defaults to
     /// (1,1,1). Mass defaults to 0.0.
     // ============================================================================
     /// @name Constructors / Destructors
@@ -54,21 +54,20 @@ public:
     Object(const Vector3D& position)
         : position { position }
     {}
-    Object(const Vector3D& position, const Vector3D& scale)
+    Object(const Vector3D& position, const Vector3D& size)
         : position { position }
-        , scale { scale }
+        , size { size }
     {}
-    Object(const Vector3D& position, const Vector3D& scale, decimal mass)
+    Object(const Vector3D& position, const Vector3D& size, decimal mass)
         : position { position }
-        , scale { scale }
+        , size { size }
         , mass { mass }
     {}
-    Object(const Vector3D& position, const Vector3D& rotation, const Vector3D& scale,
-           const Vector3D& velocity, const Vector3D& acceleration, const Vector3D& force,
-           const Vector3D& torque, decimal mass)
+    Object(const Vector3D& position, const Vector3D& rotation, const Vector3D& size, const Vector3D& velocity,
+           const Vector3D& acceleration, const Vector3D& force, const Vector3D& torque, decimal mass)
         : position { position }
         , rotation { rotation }
-        , scale { scale }
+        , size { size }
         , velocity { velocity }
         , acceleration { acceleration }
         , force { force }
@@ -84,7 +83,7 @@ public:
     /// @{
     Vector3D           getPosition() const { return position; }
     Vector3D           getRotation() const { return rotation; }
-    Vector3D           getScale() const { return scale; }
+    Vector3D           getSize() const { return size; }
     Vector3D           getVelocity() const { return velocity; }
     Vector3D           getAcceleration() const { return acceleration; }
     Vector3D           getForce() const { return force; }
@@ -99,7 +98,7 @@ public:
     /// @{
     void setPosition(const Vector3D& _position) { position = _position; }
     void setRotation(const Vector3D& _rotation) { rotation = _rotation; }
-    void setScale(const Vector3D& _scale) { scale = _scale; }
+    void setSize(const Vector3D& _size) { size = _size; }
     void setVelocity(const Vector3D& _velocity) { velocity = _velocity; }
     void setAcceleration(const Vector3D& _acceleration) { acceleration = _acceleration; }
     void setForce(const Vector3D& _force) { force = _force; }
@@ -112,14 +111,29 @@ public:
     // ============================================================================
     /// @{
     void applyTranslation(const Vector3D& v_translation) { position += v_translation; }
-    void applyRotation(const Vector3D& v_rotation) { rotation += v_rotation; }
-    void applyScaling(const Vector3D& v_scaling) { scale += v_scaling; }
+    void applyRotation(const Vector3D& v_rotation);
+    /**
+     * @brief Applies scaling to the object.
+     *
+     * For certain object types (e.g., spheres), non-uniform scaling is not permitted
+     * as it may violate geometric assumptions. For such objects, only uniform scaling
+     * (where all components of v_scaling are equal) is allowed.
+     *
+     * @param v_scaling The scaling vector to apply.
+     */
+    void applyScaling(const Vector3D& v_scaling) { size *= v_scaling; }
     /// @}
 
     // ============================================================================
     /// @name Physics
     // ============================================================================
     /// @{
+    bool isStatic() const { return mass <= 0_d; }
+    void resetForces()
+    {
+        force.setToZero();
+        torque.setToZero();
+    }
     void applyForce(const Vector3D& _force) { force += _force; }
     void applyTorque(const Vector3D& _torque) { torque += _torque; }
     /// Integrate motion equations over a time step `dt` to update physical properties.

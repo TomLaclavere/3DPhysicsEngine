@@ -1,4 +1,5 @@
-#include "objects/AABB.hpp"
+#include "objects/aabb.hpp"
+#include "objects/sphere.hpp"
 #include "test_functions.hpp"
 
 #include <gtest/gtest.h>
@@ -9,18 +10,18 @@ TEST(AABBTest, ConstructorsAndGetters)
 {
     Vector3D position(1_d, 2_d, 3_d);
     Vector3D rotation(0_d, 0_d, 0_d);
-    Vector3D scale(4_d, 5_d, 6_d);
+    Vector3D size(4_d, 5_d, 6_d);
     Vector3D velocity(0.1_d, 0.2_d, 0.3_d);
     Vector3D acceleration(0.01_d, 0.02_d, 0.03_d);
     Vector3D force(0.001_d, 0.002_d, 0.003_d);
     Vector3D torque(0.0001_d, 0.0002_d, 0.0003_d);
     decimal  mass = 10.0_d;
 
-    AABB aabb(position, rotation, scale, velocity, acceleration, force, torque, mass);
+    AABB aabb(position, rotation, size, velocity, acceleration, force, torque, mass);
 
     EXPECT_EQ(aabb.getPosition(), position);
     EXPECT_EQ(aabb.getRotation(), rotation);
-    EXPECT_EQ(aabb.getScale(), scale);
+    EXPECT_EQ(aabb.getSize(), size);
     EXPECT_EQ(aabb.getVelocity(), velocity);
     EXPECT_EQ(aabb.getAcceleration(), acceleration);
     EXPECT_EQ(aabb.getForce(), force);
@@ -28,8 +29,8 @@ TEST(AABBTest, ConstructorsAndGetters)
     EXPECT_DECIMAL_EQ(aabb.getMass(), mass);
     EXPECT_EQ(aabb.getType(), ObjectType::AABB);
 
-    EXPECT_EQ(aabb.getMin(), position - scale * 0.5_d);
-    EXPECT_EQ(aabb.getMax(), position + scale * 0.5_d);
+    EXPECT_EQ(aabb.getMin(), position - size * 0.5_d);
+    EXPECT_EQ(aabb.getMax(), position + size * 0.5_d);
 }
 
 TEST(AABBTest, Setters)
@@ -37,7 +38,7 @@ TEST(AABBTest, Setters)
     AABB aabb;
 
     Vector3D newPosition(4_d, 5_d, 6_d);
-    Vector3D newScale(7_d, 8_d, 9_d);
+    Vector3D newsize(7_d, 8_d, 9_d);
     Vector3D newVelocity(0.4_d, 0.5_d, 0.6_d);
     Vector3D newAcceleration(0.04_d, 0.05_d, 0.06_d);
     Vector3D newForce(0.004_d, 0.005_d, 0.006_d);
@@ -45,7 +46,7 @@ TEST(AABBTest, Setters)
     decimal  newMass = 20.0_d;
 
     aabb.setPosition(newPosition);
-    aabb.setScale(newScale);
+    aabb.setSize(newsize);
     aabb.setVelocity(newVelocity);
     aabb.setAcceleration(newAcceleration);
     aabb.setForce(newForce);
@@ -53,7 +54,7 @@ TEST(AABBTest, Setters)
     aabb.setMass(newMass);
 
     EXPECT_EQ(aabb.getPosition(), newPosition);
-    EXPECT_EQ(aabb.getScale(), newScale);
+    EXPECT_EQ(aabb.getSize(), newsize);
     EXPECT_EQ(aabb.getVelocity(), newVelocity);
     EXPECT_EQ(aabb.getAcceleration(), newAcceleration);
     EXPECT_EQ(aabb.getForce(), newForce);
@@ -65,14 +66,14 @@ TEST(AABBTest, integrate)
 {
     Vector3D position(1_d, 2_d, 3_d);
     Vector3D rotation(0_d, 0_d, 0_d);
-    Vector3D scale(4_d, 5_d, 6_d);
+    Vector3D size(4_d, 5_d, 6_d);
     Vector3D velocity(-1_d, 0_d, 0.5_d);
     Vector3D acceleration(2_d, 5_d, -2_d);
     Vector3D force(0.001_d, 0.002_d, 0.003_d);
     Vector3D torque(0.0001_d, 0.0002_d, 0.0003_d);
     decimal  mass = 10.0_d;
 
-    AABB    aabb(position, rotation, scale, velocity, acceleration, force, torque, mass);
+    AABB    aabb(position, rotation, size, velocity, acceleration, force, torque, mass);
     decimal dt = 2.0_d;
 
     aabb.integrate(dt);

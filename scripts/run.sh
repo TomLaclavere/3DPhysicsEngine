@@ -5,7 +5,7 @@ set -euo pipefail
 BUILD_DIR=${BUILD_DIR:-build}
 BUILD_TYPE=${BUILD_TYPE:-Debug}
 APP_NAME=${APP_NAME:-PhysicsEngine}
-BIN_DIR=${BIN_DIR:-"$BUILD_DIR/bin"}
+BIN_DIR=${BIN_DIR:-"$BUILD_DIR"}
 REBUILD=0
 CMAKE_ARGS=()
 APP_ARGS=()
@@ -22,7 +22,7 @@ Options:
 Any argument starting with '-' that is not recognized is forwarded to CMake.
 Use '--' to separate script/CMake args from arguments forwarded to the executable.
 Examples:
-  ./scripts/run_app.sh -DUSE_CLANG=ON -- --config config.yaml --seed 42
+  ./scripts/run_app.sh -DUSE_CLANG=ON -- --config config.yaml --iters 20
   ./scripts/run_app.sh --rebuild -DUSE_DOUBLE_PRECISION=ON
 EOF
 }

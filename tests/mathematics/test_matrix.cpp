@@ -7,9 +7,7 @@
 #include <sstream>
 
 // ——————————————————————————————————————————————————————————————————————————
-// ——————————————————————————————————————————————————————————————————————————
-//  Constructors and getters
-// ——————————————————————————————————————————————————————————————————————————
+//  Constructors, getters and setters
 // ——————————————————————————————————————————————————————————————————————————
 TEST(Matrix3x3_Test, Constructors)
 {
@@ -19,11 +17,31 @@ TEST(Matrix3x3_Test, Constructors)
         for (int j = 0; j < 3; ++j)
             EXPECT_DECIMAL_EQ(m(i, j), 0_d);
 
-    // One Value
-    m.setAllValues(1_d);
+    // Nine Values
+    Matrix3x3 m1(1_d, 2_d, 3_d, 4_d, 5_d, 6_d, 7_d, 8_d, 9_d);
     for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
-            EXPECT_DECIMAL_EQ(m(i, j), 1_d);
+            EXPECT_DECIMAL_EQ(m1(i, j), decimal(i * 3 + j + 1));
+
+    // Three Vectors
+    Vector3D  r1(1_d, 2_d, 3_d), r2(4_d, 5_d, 6_d), r3(7_d, 8_d, 9_d);
+    Matrix3x3 m2(r1, r2, r3);
+    EXPECT_EQ(m2.getRow(0), r1);
+    EXPECT_EQ(m2.getRow(1), r2);
+    EXPECT_EQ(m2.getRow(2), r3);
+    EXPECT_EQ(m2.getColumn(0), Vector3D(1_d, 4_d, 7_d));
+    EXPECT_EQ(m2.getColumn(1), Vector3D(2_d, 5_d, 8_d));
+    EXPECT_EQ(m2.getColumn(2), Vector3D(3_d, 6_d, 9_d));
+
+    // Copy constructor
+    Matrix3x3 m3(m);
+    EXPECT_EQ(m3, m);
+}
+
+TEST(Matrix3x3_Test, Setters)
+{
+    // Zero
+    Matrix3x3 m;
 
     // Nine Values
     m.setAllValues(1_d, 2_d, 3_d, 4_d, 5_d, 6_d, 7_d, 8_d, 9_d);
@@ -31,7 +49,7 @@ TEST(Matrix3x3_Test, Constructors)
         for (int j = 0; j < 3; ++j)
             EXPECT_DECIMAL_EQ(m(i, j), decimal(i * 3 + j + 1));
 
-    // Diagonal from Vector (corrected test)
+    // Diagonal from Vector
     m.setDiagonal(Vector3D(1_d, 2_d, 3_d));
     // Check diagonal elements are set correctly
     EXPECT_DECIMAL_EQ(m(0, 0), 1_d);
@@ -52,15 +70,35 @@ TEST(Matrix3x3_Test, Constructors)
     EXPECT_EQ(m.getRow(1), r2);
     EXPECT_EQ(m.getRow(2), r3);
 
-    // Copy constructor
-    Matrix3x3 m_alt(m);
-    EXPECT_EQ(m_alt, m);
+    // Set from vectors
+    Vector3D r(1_d, 2_d, 3_d), c(4_d, 5_d, 6_d), d(7_d, 8_d, 9_d);
+
+    m.setRow(0, r);
+    EXPECT_EQ(m.getRow(0), r);
+
+    m.setColumn(1, c);
+    EXPECT_EQ(m.getColumn(1), c);
+
+    m.setDiagonal(d);
+    EXPECT_EQ(m.getDiagonal(), d);
+
+    // Identity
+    m.setToIdentity();
+    EXPECT_EQ(m, Matrix3x3(1_d, 0_d, 0_d, 0_d, 1_d, 0_d, 0_d, 0_d, 1_d));
+
+    // Zero
+    m.setToNull();
+    EXPECT_EQ(m, Matrix3x3());
+
+    // One Value
+    m.setAllValues(-3.14_d);
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+            EXPECT_DECIMAL_EQ(m(i, j), -3.14_d);
 }
 
 // ——————————————————————————————————————————————————————————————————————————
-// ——————————————————————————————————————————————————————————————————————————
 //  Utilities
-// ——————————————————————————————————————————————————————————————————————————
 // ——————————————————————————————————————————————————————————————————————————
 TEST(Matrix3x3_Test, Utilities)
 {
@@ -99,12 +137,12 @@ TEST(Matrix3x3_Test, Utilities)
     m.transpose();
     EXPECT_EQ(transM, m);
 
-    // Normalize
-    Matrix3x3 normM = m.getNormalized();
+    // Normalise
+    Matrix3x3 normM = m.getNormalised();
     for (int i = 0; i < 3; ++i)
         EXPECT_NEAR(normM.getRow(i).getNorm(), 1_d, PRECISION_MACHINE);
 
-    m.normalize();
+    m.normalise();
     EXPECT_TRUE(normM.approxEqual(m, PRECISION_MACHINE));
 
     // Inverse
@@ -142,43 +180,7 @@ TEST(Matrix3x3_Test, Utilities)
 }
 
 // ——————————————————————————————————————————————————————————————————————————
-// ——————————————————————————————————————————————————————————————————————————
-//  Setters
-// ——————————————————————————————————————————————————————————————————————————
-// ——————————————————————————————————————————————————————————————————————————
-TEST(Matrix3x3_Test, Setters)
-{
-    Matrix3x3 m;
-    Vector3D  r(1_d, 2_d, 3_d), c(4_d, 5_d, 6_d), d(7_d, 8_d, 9_d);
-
-    m.setRow(0, r);
-    EXPECT_EQ(m.getRow(0), r);
-
-    m.setColumn(1, c);
-    EXPECT_EQ(m.getColumn(1), c);
-
-    m.setDiagonal(d);
-    EXPECT_EQ(m.getDiagonal(), d);
-
-    // Identity
-    m.setToIdentity();
-    EXPECT_EQ(m, Matrix3x3(1_d, 0_d, 0_d, 0_d, 1_d, 0_d, 0_d, 0_d, 1_d));
-
-    // Zero
-    m.setToNull();
-    EXPECT_EQ(m, Matrix3x3());
-
-    // One Value
-    m.setAllValues(-3.14_d);
-    for (int i = 0; i < 3; ++i)
-        for (int j = 0; j < 3; ++j)
-            EXPECT_DECIMAL_EQ(m(i, j), -3.14_d);
-}
-
-// ——————————————————————————————————————————————————————————————————————————
-// ——————————————————————————————————————————————————————————————————————————
 //  Property Check
-// ——————————————————————————————————————————————————————————————————————————
 // ——————————————————————————————————————————————————————————————————————————
 TEST(Matrix3x3_Test, PropertyCheck)
 {
@@ -228,14 +230,13 @@ TEST(Matrix3x3_Test, PropertyCheck)
     m(0, 1) = 1_d;
     EXPECT_FALSE(m.isOrthogonal());
 
-    // Normalized
+    // Normalised
     m.setToIdentity();
-    EXPECT_TRUE(m.isNormalized());
+    EXPECT_TRUE(m.isNormalised());
     m(0, 0) = 2_d;
-    EXPECT_FALSE(m.isNormalized());
+    EXPECT_FALSE(m.isNormalised());
 }
 
-// ——————————————————————————————————————————————————————————————————————————
 // ——————————————————————————————————————————————————————————————————————————
 //  Matrix Operations
 // ——————————————————————————————————————————————————————————————————————————
@@ -292,9 +293,7 @@ TEST(Matrix3x3_Test, MatrixProduct)
 }
 
 // ——————————————————————————————————————————————————————————————————————————
-// ——————————————————————————————————————————————————————————————————————————
 //  Comparison Operators
-// ——————————————————————————————————————————————————————————————————————————
 // ——————————————————————————————————————————————————————————————————————————
 TEST(Matrix3x3_Test, ComparisonOperators)
 {
@@ -324,10 +323,20 @@ TEST(Matrix3x3_Test, ComparisonOperators)
 }
 
 // ——————————————————————————————————————————————————————————————————————————
-// ——————————————————————————————————————————————————————————————————————————
 //  Element Access Operators
 // ——————————————————————————————————————————————————————————————————————————
-// ——————————————————————————————————————————————————————————————————————————
+TEST(Matrix3x3_Test, Mapping)
+{
+    Matrix3x3 m;
+    EXPECT_DECIMAL_EQ(m.mapping(0, 0), 0);
+    EXPECT_DECIMAL_EQ(m.mapping(1, 2), 5);
+    EXPECT_DECIMAL_EQ(m.mapping(2, 2), 8);
+
+    EXPECT_THROW(m.mapping(-1, 0), std::out_of_range);
+    EXPECT_THROW(m.mapping(0, 4), std::out_of_range);
+    EXPECT_THROW(m.mapping(3, 3), std::out_of_range);
+}
+
 TEST(Matrix3x3_Test, ElementAccess)
 {
     Matrix3x3       m(1_d, 2_d, 3_d, 4_d, 5_d, 6_d, 7_d, 8_d, 9_d);
@@ -359,9 +368,7 @@ TEST(Matrix3x3_Test, ElementAccess)
     EXPECT_THROW(cm(0, 3), std::out_of_range);
 }
 // ——————————————————————————————————————————————————————————————————————————
-// ——————————————————————————————————————————————————————————————————————————
 //  Arithmetic Operators
-// ——————————————————————————————————————————————————————————————————————————
 // ——————————————————————————————————————————————————————————————————————————
 TEST(Matrix3x3_Test, InPlace)
 {
@@ -410,9 +417,7 @@ TEST(Matrix3x3_Test, Free)
 }
 
 // ——————————————————————————————————————————————————————————————————————————
-// ——————————————————————————————————————————————————————————————————————————
 //  Printing
-// ——————————————————————————————————————————————————————————————————————————
 // ——————————————————————————————————————————————————————————————————————————
 TEST(Matrix3x3_Test, StreamOutput)
 {

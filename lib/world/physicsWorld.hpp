@@ -21,7 +21,7 @@
 struct PhysicsWorld
 {
 private:
-    Config&              config;
+    Config&              config = Config::get();
     std::vector<Object*> objects;
 
     decimal  timeStep        = config.getTimeStep();

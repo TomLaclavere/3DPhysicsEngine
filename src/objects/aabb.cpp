@@ -16,6 +16,14 @@
 #include "objects/collision.hpp"
 
 // ============================================================================
+//  Getters
+// ============================================================================
+ObjectType AABB::getType() const { return ObjectType::AABB; }
+Vector3D   AABB::getHalfExtents() const { return getSize() * 0.5_d; }
+Vector3D   AABB::getMin() const { return getPosition() - getHalfExtents(); }
+Vector3D   AABB::getMax() const { return getPosition() + getHalfExtents(); }
+
+// ============================================================================
 //  Collision
 // ============================================================================
 /**

@@ -73,9 +73,13 @@ TEST(Matrix3x3_Test, Setters)
     // Set from vectors
     Vector3D r(1_d, 2_d, 3_d), c(4_d, 5_d, 6_d), d(7_d, 8_d, 9_d);
 
+    EXPECT_THROW(m.setRow(-1, r), std::out_of_range);
+    EXPECT_THROW(m.setRow(3, r), std::out_of_range);
     m.setRow(0, r);
     EXPECT_EQ(m.getRow(0), r);
 
+    EXPECT_THROW(m.setColumn(-1, r), std::out_of_range);
+    EXPECT_THROW(m.setColumn(3, r), std::out_of_range);
     m.setColumn(1, c);
     EXPECT_EQ(m.getColumn(1), c);
 
@@ -95,6 +99,19 @@ TEST(Matrix3x3_Test, Setters)
     for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
             EXPECT_DECIMAL_EQ(m(i, j), -3.14_d);
+
+    // One Vector
+    m.setAllValues(r);
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+            EXPECT_DECIMAL_EQ(m(i, j), r(j));
+
+    // Matrix
+    Matrix3x3 mTest(1_d, 2_d, 3_d, 4_d, 5_d, 6_d, 7_d, 8_d, 9_d);
+    m.setAllValues(mTest);
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+            EXPECT_DECIMAL_EQ(m(i, j), decimal(i * 3 + j + 1));
 }
 
 // ——————————————————————————————————————————————————————————————————————————
@@ -102,6 +119,8 @@ TEST(Matrix3x3_Test, Setters)
 // ——————————————————————————————————————————————————————————————————————————
 TEST(Matrix3x3_Test, Utilities)
 {
+    Matrix3x3 mZero;
+    mZero.setToNull();
     Matrix3x3 m(-1_d, 2_d, -3_d, 4_d, -5_d, 6_d, -7_d, 8_d, -9_d);
 
     // Determinant & Trace
@@ -151,6 +170,7 @@ TEST(Matrix3x3_Test, Utilities)
     EXPECT_DECIMAL_EQ(det, 1_d); // Should be exactly 1
 
     Matrix3x3 inv = invM.getInverse();
+    EXPECT_THROW(mZero.getInverse(), std::invalid_argument);
     // Exact inverse should be:
     // [-24, 18, 5]
     // [20, -15, -4]
@@ -177,6 +197,7 @@ TEST(Matrix3x3_Test, Utilities)
 
     invM.inverse();
     EXPECT_TRUE(invM.approxEqual(inv, PRECISION_MACHINE));
+    EXPECT_FALSE(invM.approxEqual(transM, PRECISION_MACHINE));
 }
 
 // ——————————————————————————————————————————————————————————————————————————
@@ -189,6 +210,9 @@ TEST(Matrix3x3_Test, PropertyCheck)
     m.setToIdentity();
     EXPECT_TRUE(m.isIdentity());
     m(0, 1) = 1_d;
+    EXPECT_FALSE(m.isIdentity());
+    m.setToIdentity();
+    m(1, 1) = 2_d;
     EXPECT_FALSE(m.isIdentity());
 
     // Zero
@@ -234,6 +258,10 @@ TEST(Matrix3x3_Test, PropertyCheck)
     m.setToIdentity();
     EXPECT_TRUE(m.isNormalised());
     m(0, 0) = 2_d;
+    EXPECT_FALSE(m.isNormalised());
+    m.setToNull();
+    EXPECT_FALSE(m.isNormalised());
+    m.setAllValues(1_d, 0_d, 0_d, 0_d, 1_d, 0_d, 1_d, 1_d, 1_d);
     EXPECT_FALSE(m.isNormalised());
 }
 
@@ -300,6 +328,13 @@ TEST(Matrix3x3_Test, ComparisonOperators)
     Matrix3x3 a(1_d, 2_d, 3_d, 4_d, 5_d, 6_d, 7_d, 8_d, 9_d);
     Matrix3x3 b(9_d, 8_d, 7_d, 6_d, 5_d, 4_d, 3_d, 2_d, 1_d);
     Matrix3x3 c(10_d, 10_d, 10_d, 10_d, 10_d, 10_d, 10_d, 10_d, 10_d);
+    Matrix3x3 d(9_d, 8_d, 7_d, 6_d, 5_d, 4_d, 3_d, 2_d, 1_d);
+
+    EXPECT_TRUE(b == d);
+    EXPECT_FALSE(a == d);
+
+    EXPECT_TRUE(a != d);
+    EXPECT_FALSE(b != d);
 
     EXPECT_FALSE(a < b);
     EXPECT_FALSE(b < a);
@@ -335,6 +370,34 @@ TEST(Matrix3x3_Test, Mapping)
     EXPECT_THROW(m.mapping(-1, 0), std::out_of_range);
     EXPECT_THROW(m.mapping(0, 4), std::out_of_range);
     EXPECT_THROW(m.mapping(3, 3), std::out_of_range);
+}
+
+TEST(Matrix3x3_Test, At)
+{
+    Matrix3x3       m(1_d, 2_d, 3_d, 4_d, 5_d, 6_d, 7_d, 8_d, 9_d);
+    const Matrix3x3 cm(-5_d, 0_d, -3_d, 2_d, -1_d, 7_d, 6_d, -3_d, 10_d);
+
+    // 2D at() access
+    EXPECT_DECIMAL_EQ(m.at(0, 2), 3_d);
+    EXPECT_DECIMAL_EQ(m.at(2, 2), 9_d);
+    EXPECT_DECIMAL_EQ(cm.at(1, 1), -1_d);
+
+    // 1D at() access
+    EXPECT_DECIMAL_EQ(m.at(3), 4_d);
+    EXPECT_DECIMAL_EQ(m.at(7), 8_d);
+    EXPECT_DECIMAL_EQ(cm.at(2), -3_d);
+
+    // Out-of-range checks
+    EXPECT_THROW(m.at(3, 0), std::out_of_range);
+    EXPECT_THROW(m.at(0, 3), std::out_of_range);
+    EXPECT_THROW(m.at(-1, 0), std::out_of_range);
+    EXPECT_THROW(m.at(0, -1), std::out_of_range);
+    EXPECT_THROW(cm.at(3, 0), std::out_of_range);
+    EXPECT_THROW(cm.at(0, 3), std::out_of_range);
+    EXPECT_THROW(m.at(-1), std::out_of_range);
+    EXPECT_THROW(m.at(9), std::out_of_range);
+    EXPECT_THROW(cm.at(-1), std::out_of_range);
+    EXPECT_THROW(cm.at(9), std::out_of_range);
 }
 
 TEST(Matrix3x3_Test, ElementAccess)
@@ -381,9 +444,26 @@ TEST(Matrix3x3_Test, InPlace)
     EXPECT_EQ(m, Matrix3x3(2_d, 4_d, 6_d, 8_d, 10_d, 12_d, 14_d, 16_d, 18_d));
     m /= Matrix3x3(2_d, 2_d, 2_d, 2_d, 2_d, 2_d, 2_d, 2_d, 2_d);
     EXPECT_EQ(m, Matrix3x3(1_d, 2_d, 3_d, 4_d, 5_d, 6_d, 7_d, 8_d, 9_d));
+    m = -m;
+    EXPECT_EQ(m, Matrix3x3(-1_d, -2_d, -3_d, -4_d, -5_d, -6_d, -7_d, -8_d, -9_d));
 
     // Check division by zero
     EXPECT_THROW(m /= Matrix3x3(9_d, 8_d, 7_d, 6_d, 5_d, 4_d, 3_d, 2_d, 0_d), std::invalid_argument);
+
+    Vector3D v(1_d, 0_d, -3_d);
+    m += v;
+    EXPECT_EQ(m, Matrix3x3(0_d, -2_d, -6_d, -3_d, -5_d, -9_d, -6_d, -8_d, -12_d));
+    m -= v;
+    EXPECT_EQ(m, Matrix3x3(-1_d, -2_d, -3_d, -4_d, -5_d, -6_d, -7_d, -8_d, -9_d));
+    m *= v;
+    EXPECT_EQ(m, Matrix3x3(-1_d, -0_d, 9_d, -4_d, -0_d, 18_d, -7_d, -0_d, 27_d));
+    EXPECT_THROW(m /= v, std::invalid_argument);
+    m /= Vector3D(1_d, 2_d, -3_d);
+    EXPECT_EQ(m, Matrix3x3(-1_d, -0_d, -3_d, -4_d, -0_d, -6_d, -7_d, -0_d, -9_d));
+
+    EXPECT_THROW(m / 0_d, std::invalid_argument);
+    m /= 2_d;
+    EXPECT_EQ(m, Matrix3x3(-0.5_d, -0_d, -1.5_d, -2_d, -0_d, -3_d, -3.5_d, -0_d, -4.5_d));
 }
 
 TEST(Matrix3x3_Test, Free)
@@ -397,6 +477,8 @@ TEST(Matrix3x3_Test, Free)
     EXPECT_EQ(m * n, Matrix3x3(9_d, 16_d, 21_d, 24_d, 25_d, 24_d, 21_d, 16_d, 9_d));
     EXPECT_EQ(m / n,
               Matrix3x3(1_d / 9_d, 1_d / 4_d, 3_d / 7_d, 2_d / 3_d, 1_d, 3_d / 2_d, 7_d / 3_d, 4_d, 9_d));
+    n(0, 2) = 0_d;
+    EXPECT_THROW(m / n, std::invalid_argument);
 
     // Matrix Scalar Arithmetic Operators
     EXPECT_EQ(m + 5_d, Matrix3x3(6_d, 7_d, 8_d, 9_d, 10_d, 11_d, 12_d, 13_d, 14_d));
@@ -409,6 +491,7 @@ TEST(Matrix3x3_Test, Free)
     EXPECT_EQ(2_d / m, Matrix3x3(2_d / 1_d, 1_d, 2_d / 3_d, 2_d / 4_d, 2_d / 5_d, 2_d / 6_d, 2_d / 7_d,
                                  2_d / 8_d, 2_d / 9_d));
     EXPECT_THROW(m / 0_d, std::invalid_argument);
+    EXPECT_THROW(2_d / n, std::invalid_argument);
 
     // Matrix Vector Arithmetic Operators
     Vector3D v(1_d, 2_d, 3_d);

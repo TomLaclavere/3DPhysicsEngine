@@ -14,6 +14,7 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
   - [ ] **Test Plane collisions**
 - [ ] Verify Collision implementation
 - [ ] Remove forward declarations of objects
+- [ ] Verify scripts/ (check parameters and re-compile conditions)
 
 ## Code Quality and Maintenance
 

@@ -9,6 +9,73 @@
 // The element (i, j) (row i, column j) is at index [i * 3 + j] in the array m[9].
 
 // ============================================================================
+//  Constructor
+// ============================================================================
+Matrix3x3::Matrix3x3(decimal m11, decimal m12, decimal m13, decimal m21, decimal m22, decimal m23,
+                     decimal m31, decimal m32, decimal m33)
+    : m { m11, m12, m13, m21, m22, m23, m31, m32, m33 }
+{}
+Matrix3x3::Matrix3x3(const Matrix3x3& m)
+    : m { m.m }
+{}
+
+// ============================================================================
+//  Element Access Operators
+// ============================================================================
+int Matrix3x3::mapping(int ind_x, int ind_y) const
+{
+    {
+        if (ind_x < 0 || ind_x >= 3 || ind_y < 0 || ind_y >= 3)
+        {
+            throw std::out_of_range("Matrix3x3 indices out of range");
+        }
+        return ind_x * 3 + ind_y;
+    }
+}
+// 2D element access
+decimal& Matrix3x3::at(int ind_x, int ind_y)
+{
+    if (ind_x < 0 || ind_x >= 3 || ind_y < 0 || ind_y >= 3)
+        throw std::out_of_range("Matrix3x3 index out of range");
+    return m[mapping(ind_x, ind_y)];
+}
+decimal Matrix3x3::at(int ind_x, int ind_y) const
+{
+    if (ind_x < 0 || ind_x >= 3 || ind_y < 0 || ind_y >= 3)
+        throw std::out_of_range("Matrix3x3 index out of range");
+    return m[mapping(ind_x, ind_y)];
+}
+decimal& Matrix3x3::operator()(int ind_x, int ind_y) { return m[mapping(ind_x, ind_y)]; }
+decimal  Matrix3x3::operator()(int ind_x, int ind_y) const { return m[mapping(ind_x, ind_y)]; }
+
+// 1D element access
+decimal& Matrix3x3::at(int ind)
+{
+    if (ind < 0 || ind >= 9)
+        throw std::out_of_range("Matrix3x3 index out of range");
+    return m[ind];
+}
+decimal Matrix3x3::at(int ind) const
+{
+    if (ind < 0 || ind >= 9)
+        throw std::out_of_range("Matrix3x3 index out of range");
+    return m[ind];
+}
+decimal& Matrix3x3::operator()(int ind) { return m[ind]; }
+decimal  Matrix3x3::operator()(int ind) const { return m[ind]; }
+decimal& Matrix3x3::operator[](int ind) { return m[ind]; }
+decimal  Matrix3x3::operator[](int ind) const { return m[ind]; }
+
+// ============================================================================
+//  Getters
+// ============================================================================
+Vector3D Matrix3x3::getRow(int index) const
+{
+    return Vector3D(m[index * 3], m[index * 3 + 1], m[index * 3 + 2]);
+}
+Vector3D Matrix3x3::getColumn(int index) const { return Vector3D(m[index], m[index + 3], m[index + 6]); }
+
+// ============================================================================
 //  Utilities
 // ============================================================================
 void Matrix3x3::absolute()
@@ -55,7 +122,7 @@ void Matrix3x3::inverse()
 {
     decimal det = getDeterminant();
     if (commonMaths::approxEqual(det, decimal(0)))
-        throw std::runtime_error("Matrix is singular and cannot be inverted");
+        throw std::invalid_argument("Matrix is singular and cannot be inverted");
     decimal invDet = decimal(1) / det;
 
     Matrix3x3 inv;

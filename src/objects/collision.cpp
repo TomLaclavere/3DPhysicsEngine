@@ -264,8 +264,7 @@ bool collide<Plane, Plane>(const Plane& p1, const Plane& p2)
         Vector3D local = X - P.getPosition();
         decimal  s     = local.dotProduct(P.getU());
         decimal  t     = local.dotProduct(P.getV());
-        return (commonMaths::approxGreaterOrEqualThan(std::abs(s), P.getHalfWidth()) &&
-                commonMaths::approxGreaterOrEqualThan(std::abs(t), P.getHalfHeight()));
+        return (std::abs(s) <= P.getHalfWidth()) && (std::abs(t) <= P.getHalfHeight());
     };
 
     return inBounds(p1, intersectionPoint) && inBounds(p2, intersectionPoint);

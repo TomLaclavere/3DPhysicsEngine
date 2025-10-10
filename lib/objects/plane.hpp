@@ -72,6 +72,14 @@ public:
         updateLocalAxes();
     }
 
+    Plane(const Vector3D& position, const Vector3D& rotation, const Vector3D& size, const Vector3D& velocity,
+          const Vector3D& acceleration, const Vector3D& force, const Vector3D& torque, decimal mass,
+          const Vector3D& _normal)
+        : Object(position, rotation, size, velocity, acceleration, force, torque, mass)
+    {
+        updateLocalAxes();
+    }
+
     virtual ~Plane() = default;
     /// @}
 

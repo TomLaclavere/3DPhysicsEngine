@@ -52,12 +52,12 @@ public:
     /// @name Getters
     // ============================================================================
     /// @{
-    ObjectType getType() const override { return ObjectType::AABB; }
-    Vector3D   getHalfExtents() const { return getSize() * 0.5_d; }
+    ObjectType getType() const override;
+    Vector3D   getHalfExtents() const;
     /// Return the minimum corner of the AABB.
-    Vector3D getMin() const { return getPosition() - getHalfExtents(); }
+    Vector3D getMin() const;
     /// Return the maximum corner of the AABB.
-    Vector3D getMax() const { return getPosition() + getHalfExtents(); }
+    Vector3D getMax() const;
     /// @}
 
     // ============================================================================

@@ -3,8 +3,6 @@
 #include "test_functions.hpp"
 
 #include <gtest/gtest.h>
-#include <ostream>
-#include <sstream>
 
 TEST(SphereTest, ConstructorsAndGetters)
 {

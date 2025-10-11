@@ -144,7 +144,7 @@ TEST(Quaternion_Test, Setters)
     EXPECT_EQ(q.getImaginaryPart(), v);
     EXPECT_DECIMAL_EQ(q.getRealPart(), 9_d);
 
-    q.setToZero();
+    q.setToNull();
     EXPECT_TRUE(q.isZero());
 
     q.setToIdentity();
@@ -157,7 +157,7 @@ TEST(Quaternion_Test, Setters)
 TEST(Quaternion_Test, PropertyChecks)
 {
     Quaternion3D q;
-    q.setToZero();
+    q.setToNull();
     EXPECT_TRUE(q.isZero());
     q.setToIdentity();
     EXPECT_TRUE(q.isIdentity());
@@ -184,7 +184,7 @@ TEST(Quaternion_Test, PropertyChecks)
 
     // Invertible
     EXPECT_TRUE(q.isInvertible()); // Non-zero norm means it's invertible
-    q.setToZero();
+    q.setToNull();
     EXPECT_FALSE(q.isInvertible()); // Zero norm means it's not invertible
 
     // Orthogonal

@@ -53,17 +53,9 @@ public:
     // ============================================================================
     /// @{
     Quaternion3D() = default;
-    Quaternion3D(decimal _x, decimal _y, decimal _z, decimal _w)
-        : v { Vector3D(_x, _y, _z) }
-        , w { _w }
-    {}
-    Quaternion3D(const Vector3D& _v, decimal _w)
-        : v { _v }
-        , w { _w }
-    {}
-    Quaternion3D(decimal w, const Vector3D& v)
-        : Quaternion3D(v, w)
-    {}
+    Quaternion3D(decimal _x, decimal _y, decimal _z, decimal _w);
+    Quaternion3D(const Vector3D& _v, decimal _w);
+    Quaternion3D(decimal w, const Vector3D& v);
     /// Constructor from rotation matrix.
     explicit Quaternion3D(const Matrix3x3& m);
     /// Constructor from Euler angles.
@@ -76,10 +68,10 @@ public:
     /// @name Getters
     // ============================================================================
     /// @{
-    decimal   getRealPart() const { return w; };
-    Vector3D  getImaginaryPart() const { return v; };
-    decimal   getImaginaryPartElement(int index) const { return v[index]; };
-    Matrix3x3 getRotationMatrix() const;
+    decimal  getRealPart() const;
+    Vector3D getImaginaryPart() const;
+    decimal  getImaginaryPartElement(int index) const;
+
     /// @}
 
     // ============================================================================
@@ -107,6 +99,7 @@ public:
     Quaternion3D getNormalize() const;
     /// Return an inverted copy of the quaternion.
     Quaternion3D getInverse() const;
+    Matrix3x3    getRotationMatrix() const;
     /// @}
 
     // ============================================================================
@@ -216,6 +209,9 @@ public:
     /// Apply a binary operation element-wise between a quaternion and a decimal.
     template <class F>
     static Quaternion3D apply(const Quaternion3D& A, decimal s, F&& func);
+    /// Apply a binary operation element-wise between a decimal and a quaternion.
+    template <class F>
+    static Quaternion3D apply(decimal s, const Quaternion3D& A, F&& func);
     /// @}
 };
 

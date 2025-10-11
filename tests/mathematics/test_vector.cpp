@@ -228,7 +228,7 @@ TEST(Vector3D_Test, ElementAccessChecked)
     EXPECT_THROW(u.at(-1_d), std::out_of_range);
     EXPECT_THROW(u.at(3_d), std::out_of_range);
 
-    // operator[] does not check the index, so I can't check out of range indices
+    // operator[] & () do not check the index, so I can't check out of range indices
 }
 
 // ——————————————————————————————————————————————————————————————————————————

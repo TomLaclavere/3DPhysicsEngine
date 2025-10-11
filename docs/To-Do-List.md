@@ -4,14 +4,17 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 ## General Tasks
 
+- [ ] Use EXPECT_VECTOR_EQ in test_vector.cpp
+- [ ] Use EXPECT_MATRIX_EQ in test_matrix.cpp
+- [ ] Use EXPECT_QUATERNION_EQ in test_quaternion.cpp
 - [ ] **Integrate :** method for all objects or for PhysicsWorld ? 
 - [ ] Define a default config + pass this to default PhysicsWorld constructor
-- [ ] **Objects :** need to improve the construction and collision of all objects
+- [x] **Objects :** need to improve the construction and collision of all objects
   - [x] **Object**
   - [x] **Sphere**
   - [x] **AABB**
   - [x] **Implement Plane object**
-  - [ ] **Test Plane collisions**
+  - [x] **Test Plane collisions**
 - [ ] Verify Collision implementation
 - [ ] Remove forward declarations of objects
 - [ ] Verify scripts/ (check parameters and re-compile conditions)

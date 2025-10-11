@@ -166,25 +166,26 @@ TEST(QuaternionTest, FromMatrix)
 // ——————————————————————————————————————————————————————————————————————————
 //  Utilities
 // ——————————————————————————————————————————————————————————————————————————
-TEST(QuaternionTest, ConjugateAndNormalize)
+TEST(QuaternionTest, ConjugateAndNormalise)
 {
     Quaternion3D q(1_d, 2_d, 3_d, 4_d);
     Quaternion3D conjugateQ = q.getConjugate();
-    Quaternion3D normalizeQ = conjugateQ.getNormalize();
+    Quaternion3D normaliseQ = conjugateQ.getNormalise();
     q.conjugate();
     EXPECT_VECTOR_EQ(q.getImaginaryPart(), Vector3D(-1_d, -2_d, -3_d));
     EXPECT_VECTOR_EQ(conjugateQ.getImaginaryPart(), Vector3D(-1_d, -2_d, -3_d));
-    q.normalize();
+    q.normalise();
     EXPECT_TRUE(q.isUnit());
-    EXPECT_TRUE(normalizeQ.isUnit());
+    EXPECT_TRUE(normaliseQ.isUnit());
 
     q.setToNull();
     EXPECT_QUATERNION_EQ(q, Quaternion3D());
+    EXPECT_QUATERNION_EQ(q.getNormalise(), Quaternion3D());
 }
 TEST(QuaternionTest, Inverse)
 {
     Quaternion3D q(1_d, 2_d, 3_d, 4_d);
-    q.normalize();
+    q.normalise();
     Quaternion3D orig = q;
 
     // In-place inverse twice should return to original
@@ -289,7 +290,7 @@ TEST(QuaternionTest, PropertyChecks)
     q.setToIdentity();
     EXPECT_TRUE(q.isIdentity());
     EXPECT_TRUE(q.isUnit());
-    EXPECT_TRUE(q.isNormalized());
+    EXPECT_TRUE(q.isNormalised());
     EXPECT_TRUE(q.isFinite());
     EXPECT_TRUE(q.isOrthogonal());
     EXPECT_TRUE(q.isInvertible()); // isInvertible returns true if norm==0
@@ -324,15 +325,15 @@ TEST(QuaternionTest, PropertyChecks)
     Quaternion3D orthogonalQ(0_d, 1_d, 0_d, 0_d);
     EXPECT_TRUE(orthogonalQ.isOrthogonal());
 
-    // Normalized
+    // Normalised
     q.setAllValues(1_d, 0_d, 0_d, 0_d);
-    EXPECT_TRUE(q.isNormalized()); // Identity Quaternion3D is normalized
-    // Non-identity Quaternion3D is not normalized
+    EXPECT_TRUE(q.isNormalised()); // Identity Quaternion3D is normalised
+    // Non-identity Quaternion3D is not normalised
     q.setAllValues(1_d, 2_d, 3_d, 4_d);
-    EXPECT_FALSE(q.isNormalized());
-    // Check with a normalized Quaternion3D
-    Quaternion3D normalizedQ = q.getNormalize();
-    EXPECT_TRUE(normalizedQ.isNormalized());
+    EXPECT_FALSE(q.isNormalised());
+    // Check with a normalised Quaternion3D
+    Quaternion3D normalisedQ = q.getNormalise();
+    EXPECT_TRUE(normalisedQ.isNormalised());
 }
 
 // ——————————————————————————————————————————————————————————————————————————

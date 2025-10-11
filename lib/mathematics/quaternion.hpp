@@ -37,7 +37,7 @@
  * @code
  * Quaternion q1(0, 0, 0, 1);     // Identity
  * Quaternion q2(Vector3D(1,0,0), 0.5);
- * q1.normalize();
+ * q1.normalise();
  * Quaternion q3 = q1 * q2;
  * @endcode
  */
@@ -82,8 +82,8 @@ public:
     /// In-place conjugate (negate imaginary part).
     void conjugate();
     /// In-place normalise. If zero-length quaternion, becomes null quaternion.
-    void normalize();
-    /// In-place inverse (conjugate then normalize).
+    void normalise();
+    /// In-place inverse (conjugate then normalise).
     void inverse();
     /// Squared Euclidean norm. Cheaper than `getNorm()`.
     decimal getNormSquare() const;
@@ -95,8 +95,8 @@ public:
     static Quaternion3D getNull() { return Quaternion3D(0, 0, 0, 0); };
     /// Return a conjugated copy of the quaternion.
     Quaternion3D getConjugate() const;
-    /// Return a normalized copy of the quaternion.
-    Quaternion3D getNormalize() const;
+    /// Return a normalised copy of the quaternion.
+    Quaternion3D getNormalise() const;
     /// Return an inverted copy of the quaternion.
     Quaternion3D getInverse() const;
     Matrix3x3    getRotationMatrix() const;
@@ -132,7 +132,7 @@ public:
     bool isIdentity() const;
     bool isInvertible() const;
     bool isOrthogonal() const;
-    bool isNormalized() const;
+    bool isNormalised() const;
     /// @}
 
     // ============================================================================

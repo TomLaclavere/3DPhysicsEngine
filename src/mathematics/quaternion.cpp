@@ -131,10 +131,10 @@ void Quaternion3D::setImaginaryPart(decimal newx, decimal newy, decimal newz)
     v = Vector3D(newx, newy, newz);
 }
 void Quaternion3D::setImaginaryPart(const Vector3D& newv) { v = newv; }
-void Quaternion3D::setToZero()
+void Quaternion3D::setToNull()
 {
     w = 0;
-    v.setToZero();
+    v.setToNull();
 }
 void Quaternion3D::setToIdentity()
 {

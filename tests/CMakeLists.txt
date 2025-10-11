@@ -66,6 +66,9 @@ add_engine_test(object_test
     objects/test_plane.cpp
 )
 
+add_engine_test(utility_test
+    utilities/test_timer.cpp)
+
 # =============================================
 # Test Configuration Summary
 # =============================================
@@ -73,4 +76,5 @@ add_engine_test(object_test
 message(STATUS "Configured tests:")
 message(STATUS "  mathematics_test - Unit tests for mathematical components")
 message(STATUS "  object_test - Unit tests for physical objects")
+message(STATUS "  utility_test - Unit tests for utilities")
 message(STATUS "  Test output directory: ${CMAKE_BINARY_DIR}/bin/tests")

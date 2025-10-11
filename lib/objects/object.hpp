@@ -131,8 +131,8 @@ public:
     bool isStatic() const { return mass <= 0_d; }
     void resetForces()
     {
-        force.setToZero();
-        torque.setToZero();
+        force.setToNull();
+        torque.setToNull();
     }
     void applyForce(const Vector3D& _force) { force += _force; }
     void applyTorque(const Vector3D& _torque) { torque += _torque; }

@@ -116,7 +116,7 @@ public:
     void setRealPart(decimal value);
     void setImaginaryPart(decimal, decimal, decimal);
     void setImaginaryPart(const Vector3D& newv);
-    void setToZero();
+    void setToNull();
     void setToIdentity();
     void setAllValues(decimal, decimal, decimal, decimal);
     void setAllValues(const Vector3D&, decimal);

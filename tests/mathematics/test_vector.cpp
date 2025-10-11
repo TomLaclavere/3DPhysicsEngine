@@ -61,6 +61,9 @@ TEST(Vector3D_Test, Utilies)
     EXPECT_EQ(normV, invNorm * v0);
     v0.normalise();
     EXPECT_EQ(normV, v0);
+    v0.setToNull();
+    v0.normalise();
+    EXPECT_EQ(v0, Vector3D(0_d, 0_d, 0_d));
 }
 
 TEST(Vector3D_Test, StaticMinMaxFunctions)
@@ -83,7 +86,7 @@ TEST(Vector3D_Test, Setters)
     v.setZ(6_d);
     EXPECT_EQ(v, Vector3D(4_d, 5_d, 6_d));
 
-    v.setToZero();
+    v.setToNull();
     EXPECT_EQ(v, Vector3D());
 
     v.setAllValues(4);
@@ -145,6 +148,7 @@ TEST(Vector3D_Test, ComparisonOperators)
 
     // Equality & Inequality
     EXPECT_TRUE(u == w);
+    EXPECT_TRUE(u.getV() == w.getV());
     EXPECT_FALSE(u != w);
     EXPECT_TRUE(u != v);
 
@@ -153,20 +157,28 @@ TEST(Vector3D_Test, ComparisonOperators)
     v.setAllValues(1.002_d, 2.0002_d, 3.0002_d);
     EXPECT_TRUE(u.approxEqual(v, 0.01_d));
     EXPECT_FALSE(u.approxEqual(v, 1e-5_d));
+    Vector3D u_(1.001_d, 1.0001_d, 3.0001_d);
+    Vector3D u__(1.001_d, 2.0001_d, 1.0001_d);
 
     // Higher & Smaller
     EXPECT_TRUE(u < v);
+    EXPECT_FALSE(u < u_);
+    EXPECT_FALSE(u < u__);
     EXPECT_FALSE(v < u);
 
     EXPECT_TRUE(u <= v);
     EXPECT_TRUE(u <= u);
+    EXPECT_FALSE(u <= u_);
+    EXPECT_FALSE(u <= u__);
     EXPECT_FALSE(v <= u);
 
     EXPECT_TRUE(v > u);
+    EXPECT_FALSE(u_ > u);
     EXPECT_FALSE(u > v);
 
     EXPECT_TRUE(v >= u);
     EXPECT_TRUE(u >= u);
+    EXPECT_FALSE(u_ >= u);
     EXPECT_FALSE(u >= v);
 }
 
@@ -183,13 +195,15 @@ TEST(Vector3D_Test, ElementAccessChecked)
     EXPECT_DECIMAL_EQ(v(1_d), 2_d);
     EXPECT_DECIMAL_EQ(v(2_d), 3_d);
 
-    EXPECT_DECIMAL_EQ(v[0_d], 1_d);
-    EXPECT_DECIMAL_EQ(v[1_d], 2_d);
-    EXPECT_DECIMAL_EQ(v[2_d], 3_d);
-
     EXPECT_DECIMAL_EQ(u(0_d), 4_d);
     EXPECT_DECIMAL_EQ(u(1_d), 5_d);
     EXPECT_DECIMAL_EQ(u(2_d), 6_d);
+
+    // operator[] const and non-const
+
+    EXPECT_DECIMAL_EQ(v[0_d], 1_d);
+    EXPECT_DECIMAL_EQ(v[1_d], 2_d);
+    EXPECT_DECIMAL_EQ(v[2_d], 3_d);
 
     EXPECT_DECIMAL_EQ(u[0_d], 4_d);
     EXPECT_DECIMAL_EQ(u[1_d], 5_d);
@@ -197,6 +211,16 @@ TEST(Vector3D_Test, ElementAccessChecked)
 
     v(1_d) = 42.0_d;
     EXPECT_DECIMAL_EQ(v(1_d), 42.0_d);
+
+    // operator at const and non-const
+
+    EXPECT_DECIMAL_EQ(v.at(0_d), 1_d);
+    EXPECT_DECIMAL_EQ(v.at(1_d), 42_d);
+    EXPECT_DECIMAL_EQ(v.at(2_d), 3_d);
+
+    EXPECT_DECIMAL_EQ(u.at(0_d), 4_d);
+    EXPECT_DECIMAL_EQ(u.at(1_d), 5_d);
+    EXPECT_DECIMAL_EQ(u.at(2_d), 6_d);
 
     // Out-of-range checks
     EXPECT_THROW(v.at(-1_d), std::out_of_range);
@@ -226,6 +250,7 @@ TEST(Vector3D_Test, InPlace)
 
     // Check division by zero
     EXPECT_THROW(v /= Vector3D(0_d), std::invalid_argument);
+    EXPECT_THROW(v /= 0_d, std::invalid_argument);
 }
 
 TEST(Vector3D_Test, Free)
@@ -242,12 +267,19 @@ TEST(Vector3D_Test, Free)
     // vector add/sub and negation
     Vector3D a(1_d, 1_d, 1_d), b(2_d, 3_d, 4_d);
     EXPECT_EQ(a + b, Vector3D(3_d, 4_d, 5_d));
+    EXPECT_EQ(a - b, Vector3D(-1_d, -2_d, -3_d));
+    EXPECT_EQ(b - 1_d, Vector3D(1_d, 2_d, 3_d));
+    EXPECT_EQ(2_d - b, Vector3D(0_d, -1_d, -2_d));
     EXPECT_EQ(-b, Vector3D(-2_d, -3_d, -4_d));
 
     // scalar and vector division
     Vector3D w(8_d, 6_d, 4_d);
     EXPECT_EQ(w / 2_d, Vector3D(4_d, 3_d, 2_d));
+    EXPECT_EQ(2_d / w, Vector3D(0.25_d, decimal(1_d / 3_d), 0.5_d));
     EXPECT_EQ(w / Vector3D(2_d, 2_d, 2_d), Vector3D(4_d, 3_d, 2_d));
+
+    // vector multiplication
+    EXPECT_EQ(v * w, Vector3D(8_d, 12_d, 12_d));
 
     // division by zero
     EXPECT_THROW({ auto result = w / 0_d; }, std::invalid_argument);

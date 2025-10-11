@@ -91,25 +91,45 @@ bool collide<Sphere, AABB>(const Sphere& sphere, const AABB& aabb)
 template <>
 bool collide<Sphere, Plane>(const Sphere& sphere, const Plane& plane)
 {
-    // Calculate signed distance from sphere center to plane
-    const Vector3D planeToSphere = sphere.getCenter() - plane.getPosition();
-    const decimal  distance      = planeToSphere.dotProduct(plane.getNormal());
+    const Vector3D& sphereCenter = sphere.getCenter();
+    const decimal   sphereRadius = sphere.getRadius();
 
-    // If distance is greater than radius, no collision
-    if (std::abs(distance) > sphere.getRadius())
+    // 1. Check distance using plane equation
+    const Vector3D planeToSphere = sphereCenter - plane.getPosition();
+    const decimal  signedDist    = planeToSphere.dotProduct(plane.getNormal());
+
+    // Early exit: sphere completely behind or too far in front
+    if (signedDist < -sphereRadius || signedDist > sphereRadius)
     {
         return false;
     }
 
-    // Project sphere center onto plane
-    const Vector3D projection = sphere.getCenter() - distance * plane.getNormal();
+    // 2. Project onto plane and check bounds with radius padding
+    const Vector3D proj  = sphereCenter - signedDist * plane.getNormal();
+    const Vector3D local = proj - plane.getPosition();
 
-    // Check if projection is within plane bounds
-    const Vector3D local = projection - plane.getPosition();
-    const decimal  s     = local.dotProduct(plane.getU());
-    const decimal  t     = local.dotProduct(plane.getV());
+    const decimal s = local.dotProduct(plane.getU());
+    const decimal t = local.dotProduct(plane.getV());
 
-    return (std::abs(s) <= plane.getHalfWidth()) && (std::abs(t) <= plane.getHalfHeight());
+    // Check bounds with radius consideration
+    const decimal effectiveHalfWidth  = plane.getHalfWidth() + sphereRadius;
+    const decimal effectiveHalfHeight = plane.getHalfHeight() + sphereRadius;
+
+    if (std::abs(s) > effectiveHalfWidth || std::abs(t) > effectiveHalfHeight)
+    {
+        return false;
+    }
+
+    // 3. Exact distance to clamped point
+    const decimal clampedS = std::clamp(s, -plane.getHalfWidth(), plane.getHalfWidth());
+    const decimal clampedT = std::clamp(t, -plane.getHalfHeight(), plane.getHalfHeight());
+
+    const Vector3D closestPoint = plane.getPosition() + clampedS * plane.getU() + clampedT * plane.getV();
+    const Vector3D delta        = closestPoint - sphereCenter;
+    const decimal  dist2        = delta.dotProduct(delta);
+
+    // Collision if within radius
+    return commonMaths::approxSmallerOrEqualThan(dist2, sphere.getRadius() * sphere.getRadius());
 }
 
 // ============================================================================

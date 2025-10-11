@@ -6,6 +6,10 @@
 
 #include <gtest/gtest.h>
 
+// ——————————————————————————————————————————————————————————————————————————
+//  Constructors, Getters, and Setters
+// ——————————————————————————————————————————————————————————————————————————
+
 TEST(PlaneTest, ConstructorsAndGetters)
 {
     Vector3D position(1_d, 2_d, 3_d);
@@ -31,7 +35,7 @@ TEST(PlaneTest, ConstructorsAndGetters)
     EXPECT_EQ(plane.getType(), ObjectType::Plane);
 
     EXPECT_EQ(plane.getU(), Vector3D(0_d, 1_d, 0_d));
-    EXPECT_EQ(plane.getV(), Vector3D(-1_d, 0_d, 0_d));
+    EXPECT_EQ(plane.getV(), Vector3D(1_d, 0_d, 0_d));
 }
 
 TEST(planeTest, Setters)
@@ -65,7 +69,77 @@ TEST(planeTest, Setters)
     EXPECT_DECIMAL_EQ(plane.getMass(), newMass);
 }
 
-TEST(planeTest, planeCollision)
+// ——————————————————————————————————————————————————————————————————————————
+//  Utilities
+// ——————————————————————————————————————————————————————————————————————————
+
+TEST(PlaneTest, updateLocalAxes)
+{
+    // Normal along Z
+    Plane           p1(Vector3D(0_d, 0_d, 0_d), Vector3D(0_d, 0_d, 1_d));
+    const Vector3D& n1 = p1.getNormal();
+    const Vector3D& u1 = p1.getU();
+    const Vector3D& v1 = p1.getV();
+
+    // Orthogonality
+    EXPECT_DECIMAL_EQ(n1.dotProduct(u1), 0_d);
+    EXPECT_DECIMAL_EQ(n1.dotProduct(v1), 0_d);
+    EXPECT_DECIMAL_EQ(u1.dotProduct(v1), 0_d);
+
+    // Normalisation
+    EXPECT_DECIMAL_EQ(n1.getNorm(), 1_d);
+    EXPECT_DECIMAL_EQ(u1.getNorm(), 1_d);
+    EXPECT_DECIMAL_EQ(v1.getNorm(), 1_d);
+
+    // Now try a tilted normal
+    Plane           p2(Vector3D(0_d, 0_d, 0_d), Vector3D(1_d, 1_d, 0_d).getNormalised());
+    const Vector3D& n2 = p2.getNormal();
+    const Vector3D& u2 = p2.getU();
+    const Vector3D& v2 = p2.getV();
+
+    EXPECT_DECIMAL_EQ(n2.dotProduct(u2), 0_d);
+    EXPECT_DECIMAL_EQ(n2.dotProduct(v2), 0_d);
+    EXPECT_DECIMAL_EQ(u2.dotProduct(v2), 0_d);
+}
+
+TEST(PlaneTest, ProjectPoint)
+{
+    Plane p(Vector3D(0_d, 0_d, 0_d), Vector3D(0_d, 0_d, 1_d));
+
+    // Point above plane (z = 5)
+    Vector3D pt(1_d, 2_d, 5_d);
+    Vector3D proj = p.projectPoint(pt);
+
+    // Projection should be (1,2,0)
+    EXPECT_DECIMAL_EQ(proj[0], 1_d);
+    EXPECT_DECIMAL_EQ(proj[1], 2_d);
+    EXPECT_DECIMAL_EQ(proj[2], 0_d);
+
+    // Distance between point and projection equals height (5)
+    EXPECT_DECIMAL_EQ((pt - proj).getNorm(), 5_d);
+}
+
+TEST(PlaneTest, ContainsPoint)
+{
+    Plane p(Vector3D(0_d, 0_d, 0_d), Vector3D(2_d, 4_d, 0_d), Vector3D(0_d, 0_d, 1_d));
+
+    // Inside bounds
+    EXPECT_TRUE(p.containsPoint(Vector3D(0.5_d, 0.5_d, 0_d)));
+
+    // On the edge
+    EXPECT_TRUE(p.containsPoint(Vector3D(1_d, 0_d, 0_d)));
+    EXPECT_TRUE(p.containsPoint(Vector3D(1_d, 2_d, 0_d)));
+
+    // Outside bounds
+    EXPECT_FALSE(p.containsPoint(Vector3D(2.1_d, 0_d, 0_d)));
+    EXPECT_FALSE(p.containsPoint(Vector3D(0_d, -2.1_d, 0_d)));
+}
+
+// ——————————————————————————————————————————————————————————————————————————
+//  Collisions
+// ——————————————————————————————————————————————————————————————————————————
+
+TEST(PlaneTest, planeCollision)
 {
     Plane plane1(Vector3D(0_d, 0_d, 0_d), Vector3D(10_d, 10_d, 0_d), Vector3D(0_d, 0_d, 1_d));
     Plane plane2(Vector3D(0_d, 0_d, 0.5_d), Vector3D(10_d, 10_d, 0_d), Vector3D(0_d, 1_d, 0_d));
@@ -77,28 +151,47 @@ TEST(planeTest, planeCollision)
 
 TEST(PlaneTest, PlaneSphereCollision)
 {
-    Plane plane(Vector3D(0_d, 0_d, 0_d), Vector3D(10_d, 10_d, 0_d), Vector3D(0_d, 0_d, 1_d));
+    Plane plane(Vector3D(0_d, 0_d, 0_d), Vector3D(4_d, 4_d, 0_d), Vector3D(0_d, 0_d, 1_d));
 
-    Sphere sphereInside(Vector3D(0_d, 0_d, 0_d), 0.5_d);
-    Sphere sphereAbove(Vector3D(0_d, 0_d, 4_d), 1_d);
-    Sphere sphereBelow(Vector3D(0_d, 0_d, -3_d), 1_d);
+    // Sphere intersecting the plane from the front
+    Sphere sphereIntersecting(Vector3D(0_d, 0_d, 0.5_d), 1_d); // Center at z=0.5, radius=1
+    EXPECT_TRUE(plane.checkCollision(sphereIntersecting));
 
-    EXPECT_TRUE(plane.checkCollision(sphereInside));
+    // Sphere completely above plane (no intersection)
+    Sphere sphereAbove(Vector3D(0_d, 0_d, 2.5_d), 1_d); // Center at z=2.5, radius=1 → distance > radius
     EXPECT_FALSE(plane.checkCollision(sphereAbove));
-    EXPECT_FALSE(plane.checkCollision(sphereBelow));
 
-    Sphere sphereTouchingEdge(Vector3D(4_d, 0_d, 0_d), 1_d);
-    Sphere sphereTouchingCorner(Vector3D(4_d, 4_d, 0_d), 1_d);
+    // Sphere completely behind plane (one-sided collision = no intersection)
+    Sphere sphereBehind(Vector3D(0_d, 0_d, -2.5_d), 1_d);
+    EXPECT_FALSE(plane.checkCollision(sphereBehind));
 
+    // Sphere touching the edge from front side
+    Sphere sphereTouchingEdge(Vector3D(2_d, 0_d, 0.5_d), 1_d); // At right edge, intersecting in Z
     EXPECT_TRUE(plane.checkCollision(sphereTouchingEdge));
+
+    // Sphere touching the corner from front side
+    Sphere sphereTouchingCorner(Vector3D(2_d, 2_d, 0.5_d), 1_d);
     EXPECT_TRUE(plane.checkCollision(sphereTouchingCorner));
 
-    // Special cases
-    Sphere sphereContainingplane(Vector3D(0_d, 0_d, 0_d), 5_d);
-    Sphere sphereZeroRadius(Vector3D(0_d, 0_d, 0_d), 0_d);
+    // Sphere outside plane bounds in X direction
+    Sphere sphereOutsideX(Vector3D(3_d, 0_d, 0.5_d), 1_d); // Too far right
+    EXPECT_FALSE(plane.checkCollision(sphereOutsideX));
 
-    EXPECT_TRUE(plane.checkCollision(sphereContainingplane));
-    EXPECT_TRUE(plane.checkCollision(sphereZeroRadius));
+    // Sphere outside plane bounds in Y direction
+    Sphere sphereOutsideY(Vector3D(0_d, 3_d, 0.5_d), 1_d); // Too far up
+    EXPECT_FALSE(plane.checkCollision(sphereOutsideY));
+
+    // Large sphere containing the entire plane
+    Sphere sphereContainingPlane(Vector3D(0_d, 0_d, 0_d), 5_d);
+    EXPECT_TRUE(plane.checkCollision(sphereContainingPlane));
+
+    // Zero-radius sphere exactly on plane surface within bounds
+    Sphere sphereZeroRadiusOnPlane(Vector3D(0_d, 0_d, 0_d), 0_d);
+    EXPECT_TRUE(plane.checkCollision(sphereZeroRadiusOnPlane));
+
+    // Zero-radius sphere outside plane bounds
+    Sphere sphereZeroRadiusOutside(Vector3D(3_d, 0_d, 0_d), 0_d);
+    EXPECT_FALSE(plane.checkCollision(sphereZeroRadiusOutside));
 }
 
 TEST(planeTest, planeAABBCollision)

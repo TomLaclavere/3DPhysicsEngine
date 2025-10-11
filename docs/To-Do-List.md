@@ -4,7 +4,6 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 ## General Tasks
 
-- [ ] Use EXPECT_QUATERNION_EQ in test_quaternion.cpp
 - [ ] **Integrate :** method for all objects or for PhysicsWorld ? 
 - [ ] Define a default config + pass this to default PhysicsWorld constructor
 - [x] **Objects :** need to improve the construction and collision of all objects

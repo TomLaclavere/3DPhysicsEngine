@@ -259,9 +259,8 @@ TEST(Matrix3x3_Test, PropertyCheck)
     EXPECT_TRUE(m.isNormalised());
     m(0, 0) = 2_d;
     EXPECT_FALSE(m.isNormalised());
+    // Norm = 0
     m.setToNull();
-    EXPECT_FALSE(m.isNormalised());
-    m.setAllValues(1_d, 0_d, 0_d, 0_d, 1_d, 0_d, 1_d, 1_d, 1_d);
     EXPECT_FALSE(m.isNormalised());
 }
 

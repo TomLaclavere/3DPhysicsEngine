@@ -81,29 +81,29 @@ public:
     /// @name Getters
     // ============================================================================
     /// @{
-    Vector3D           getPosition() const { return position; }
-    Vector3D           getRotation() const { return rotation; }
-    Vector3D           getSize() const { return size; }
-    Vector3D           getVelocity() const { return velocity; }
-    Vector3D           getAcceleration() const { return acceleration; }
-    Vector3D           getForce() const { return force; }
-    Vector3D           getTorque() const { return torque; }
-    decimal            getMass() const { return mass; }
-    virtual ObjectType getType() const { return ObjectType::Generic; }
+    Vector3D           getPosition() const;
+    Vector3D           getRotation() const;
+    Vector3D           getSize() const;
+    Vector3D           getVelocity() const;
+    Vector3D           getAcceleration() const;
+    Vector3D           getForce() const;
+    Vector3D           getTorque() const;
+    decimal            getMass() const;
+    virtual ObjectType getType() const;
     /// @}
 
     // ============================================================================
     /// @name Setters
     // ============================================================================
     /// @{
-    void setPosition(const Vector3D& _position) { position = _position; }
-    void setRotation(const Vector3D& _rotation) { rotation = _rotation; }
-    void setSize(const Vector3D& _size) { size = _size; }
-    void setVelocity(const Vector3D& _velocity) { velocity = _velocity; }
-    void setAcceleration(const Vector3D& _acceleration) { acceleration = _acceleration; }
-    void setForce(const Vector3D& _force) { force = _force; }
-    void setTorque(const Vector3D& _torque) { torque = _torque; }
-    void setMass(const decimal _mass) { mass = _mass; }
+    void setPosition(const Vector3D& _position);
+    void setRotation(const Vector3D& _rotation);
+    void setSize(const Vector3D& _size);
+    void setVelocity(const Vector3D& _velocity);
+    void setAcceleration(const Vector3D& _acceleration);
+    void setForce(const Vector3D& _force);
+    void setTorque(const Vector3D& _torque);
+    void setMass(const decimal _mass);
     /// @}
 
     // ============================================================================

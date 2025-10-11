@@ -91,7 +91,7 @@ decimal  Quaternion3D::getImaginaryPartElement(int index) const { return v[index
 //  Utilities
 // ============================================================================
 void Quaternion3D::conjugate() { v = -v; }
-void Quaternion3D::normalize()
+void Quaternion3D::normalise()
 {
     decimal norm = getNorm();
     if (commonMaths::approxEqual(norm, decimal(0)))
@@ -105,7 +105,7 @@ void Quaternion3D::normalize()
 void Quaternion3D::inverse()
 {
     (*this).conjugate();
-    (*this).normalize();
+    (*this).normalise();
 }
 decimal      Quaternion3D::getNormSquare() const { return w * w + v.getNormSquare(); }
 decimal      Quaternion3D::getNorm() const { return std::sqrt(getNormSquare()); }
@@ -115,10 +115,10 @@ Quaternion3D Quaternion3D::getConjugate() const
     q.conjugate();
     return q;
 }
-Quaternion3D Quaternion3D::getNormalize() const
+Quaternion3D Quaternion3D::getNormalise() const
 {
     Quaternion3D q = *this;
-    q.normalize();
+    q.normalise();
     return q;
 }
 Quaternion3D Quaternion3D::getInverse() const
@@ -209,7 +209,7 @@ bool Quaternion3D::isUnit() const { return (commonMaths::approxEqual(getNorm(), 
 bool Quaternion3D::isIdentity() const { return (commonMaths::approxEqual(w, decimal(1)) && v.isNull()); }
 bool Quaternion3D::isInvertible() const { return !(commonMaths::approxEqual(getNorm(), decimal(0))); }
 bool Quaternion3D::isOrthogonal() const { return isUnit(); }
-bool Quaternion3D::isNormalized() const { return isUnit(); }
+bool Quaternion3D::isNormalised() const { return isUnit(); }
 
 // ============================================================================
 //  Quaternion3D Operations

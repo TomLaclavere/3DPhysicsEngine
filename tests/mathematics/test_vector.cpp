@@ -282,8 +282,9 @@ TEST(Vector3D_Test, Free)
     EXPECT_VECTOR_EQ(v * w, Vector3D(8_d, 12_d, 12_d));
 
     // division by zero
-    EXPECT_THROW({ auto result = w / 0_d; }, std::invalid_argument);
-    EXPECT_THROW({ auto result = w / Vector3D(); }, std::invalid_argument);
+    EXPECT_THROW(w / 0_d, std::invalid_argument);
+    EXPECT_THROW(w / Vector3D(0_d), std::invalid_argument);
+    EXPECT_THROW(2_d / Vector3D(0_d), std::invalid_argument);
 }
 
 // ——————————————————————————————————————————————————————————————————————————

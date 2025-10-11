@@ -6,44 +6,67 @@
 // ============================================================================
 //  Constructors
 // ============================================================================
+Quaternion3D::Quaternion3D(decimal _x, decimal _y, decimal _z, decimal _w)
+    : v { Vector3D(_x, _y, _z) }
+    , w { _w }
+{}
+Quaternion3D::Quaternion3D(const Vector3D& _v, decimal _w)
+    : v { _v }
+    , w { _w }
+{}
+Quaternion3D::Quaternion3D(decimal _w, const Vector3D& _v)
+    : Quaternion3D(_v, _w)
+{}
 Quaternion3D::Quaternion3D(const Matrix3x3& m)
 {
     decimal trace = m.getTrace();
-    if (trace > 0)
+
+    if (trace > 0_d)
     {
-        decimal s = std::sqrt(trace + 1.0) * 2;
-        w         = 0.25 * s;
-        decimal x = (m(2, 1) - m(1, 2)) / s;
-        decimal y = (m(0, 2) - m(2, 0)) / s;
-        decimal z = (m(1, 0) - m(0, 1)) / s;
-        v         = Vector3D(x, y, z);
-    }
-    else if ((m(0, 0) > m(1, 1)) && (m(0, 0) > m(2, 2)))
-    {
-        decimal s = std::sqrt(1.0 + m(0, 0) - m(1, 1) - m(2, 2)) * 2;
-        w         = (m(2, 1) - m(1, 2)) / s;
-        decimal x = 0.25 * s;
-        decimal y = (m(0, 1) + m(1, 0)) / s;
-        decimal z = (m(0, 2) + m(2, 0)) / s;
-        v         = Vector3D(x, y, z);
-    }
-    else if (m(1, 1) > m(2, 2))
-    {
-        decimal s = std::sqrt(1.0 + m(1, 1) - m(0, 0) - m(2, 2)) * 2;
-        w         = (m(0, 2) - m(2, 0)) / s;
-        decimal x = (m(0, 1) + m(1, 0)) / s;
-        decimal y = 0.25 * s;
-        decimal z = (m(1, 2) + m(2, 1)) / s;
-        v         = Vector3D(x, y, z);
+        decimal s = std::sqrt(trace + 1_d) * 2_d;
+        w         = 0.25_d * s;
+        v         = Vector3D((m(2, 1) - m(1, 2)) / s, (m(0, 2) - m(2, 0)) / s, (m(1, 0) - m(0, 1)) / s);
     }
     else
     {
-        decimal s = std::sqrt(1.0 + m(2, 2) - m(0, 0) - m(1, 1)) * 2;
-        w         = (m(1, 0) - m(0, 1)) / s;
-        decimal x = (m(0, 2) + m(2, 0)) / s;
-        decimal y = (m(1, 2) + m(2, 1)) / s;
-        decimal z = 0.25 * s;
-        v         = Vector3D(x, y, z);
+        // Find the index of the largest diagonal element
+        int i = 0;
+        if (m(1, 1) > m(0, 0))
+            i = 1;
+        if (m(2, 2) > m(i, i))
+            i = 2;
+
+        decimal  s;
+        Vector3D qv;
+
+        switch (i)
+        {
+        case 0: // m00 largest
+            s     = std::sqrt(1_d + m(0, 0) - m(1, 1) - m(2, 2)) * 2_d;
+            qv[0] = 0.25_d * s;
+            qv[1] = (m(0, 1) + m(1, 0)) / s;
+            qv[2] = (m(0, 2) + m(2, 0)) / s;
+            w     = (m(2, 1) - m(1, 2)) / s;
+            break;
+
+        case 1: // m11 largest
+            s     = std::sqrt(1_d + m(1, 1) - m(0, 0) - m(2, 2)) * 2_d;
+            qv[0] = (m(0, 1) + m(1, 0)) / s;
+            qv[1] = 0.25_d * s;
+            qv[2] = (m(1, 2) + m(2, 1)) / s;
+            w     = (m(0, 2) - m(2, 0)) / s;
+            break;
+
+        default: // m22 largest
+            s     = std::sqrt(1_d + m(2, 2) - m(0, 0) - m(1, 1)) * 2_d;
+            qv[0] = (m(0, 2) + m(2, 0)) / s;
+            qv[1] = (m(1, 2) + m(2, 1)) / s;
+            qv[2] = 0.25_d * s;
+            w     = (m(1, 0) - m(0, 1)) / s;
+            break;
+        }
+
+        v = qv;
     }
 }
 Quaternion3D::Quaternion3D(decimal angleX, decimal angleY, decimal angleZ)
@@ -54,32 +77,15 @@ Quaternion3D::Quaternion3D(decimal angleX, decimal angleY, decimal angleZ)
     v = Vector3D(quaternionElements[1], quaternionElements[2], quaternionElements[3]);
 }
 Quaternion3D::Quaternion3D(const Vector3D& eulerAngles)
-{
-    Quaternion3D(eulerAngles[0], eulerAngles[1], eulerAngles[2]);
-}
+    : Quaternion3D(eulerAngles[0], eulerAngles[1], eulerAngles[2])
+{}
 
 // ============================================================================
 //  Getters
 // ============================================================================
-Matrix3x3 Quaternion3D::getRotationMatrix() const
-{
-    decimal x = v[0];
-    decimal y = v[1];
-    decimal z = v[2];
-
-    decimal xx = x * x;
-    decimal yy = y * y;
-    decimal zz = z * z;
-    decimal xy = x * y;
-    decimal xz = x * z;
-    decimal yz = y * z;
-    decimal wx = w * x;
-    decimal wy = w * y;
-    decimal wz = w * z;
-
-    return Matrix3x3(1 - 2 * (yy + zz), 2 * (xy - wz), 2 * (xz + wy), 2 * (xy + wz), 1 - 2 * (xx + zz),
-                     2 * (yz - wx), 2 * (xz - wy), 2 * (yz + wx), 1 - 2 * (xx + yy));
-}
+decimal  Quaternion3D::getRealPart() const { return w; }
+Vector3D Quaternion3D::getImaginaryPart() const { return v; }
+decimal  Quaternion3D::getImaginaryPartElement(int index) const { return v[index]; }
 
 // ============================================================================
 //  Utilities
@@ -120,6 +126,25 @@ Quaternion3D Quaternion3D::getInverse() const
     Quaternion3D q = *this;
     q.inverse();
     return q;
+}
+Matrix3x3 Quaternion3D::getRotationMatrix() const
+{
+    decimal x = v[0];
+    decimal y = v[1];
+    decimal z = v[2];
+
+    decimal xx = x * x;
+    decimal yy = y * y;
+    decimal zz = z * z;
+    decimal xy = x * y;
+    decimal xz = x * z;
+    decimal yz = y * z;
+    decimal wx = w * x;
+    decimal wy = w * y;
+    decimal wz = w * z;
+
+    return Matrix3x3(1 - 2 * (yy + zz), 2 * (xy - wz), 2 * (xz + wy), 2 * (xy + wz), 1 - 2 * (xx + zz),
+                     2 * (yz - wx), 2 * (xz - wy), 2 * (yz + wx), 1 - 2 * (xx + yy));
 }
 
 // ============================================================================
@@ -309,6 +334,11 @@ Quaternion3D Quaternion3D::apply(const Quaternion3D& A, decimal s, F&& func)
 {
     return Quaternion3D(func(A.w, s), applyVector(A.v, s, func));
 }
+template <class F>
+Quaternion3D Quaternion3D::apply(decimal s, const Quaternion3D& A, F&& func)
+{
+    return Quaternion3D(func(s, A.w), applyVector(s, A.v, func));
+}
 // ============================================================================
 //  Quaternions Operations
 // ============================================================================
@@ -400,9 +430,18 @@ Quaternion3D operator/(const Quaternion3D& lhs, decimal rhs)
     return Quaternion3D::apply(lhs, rhs, std::divides<decimal>());
 }
 // decimal op Quaternion3D
-Quaternion3D operator+(decimal lhs, const Quaternion3D& rhs) { return rhs + lhs; }
-Quaternion3D operator-(decimal lhs, const Quaternion3D& rhs) { return rhs - lhs; }
-Quaternion3D operator*(decimal lhs, const Quaternion3D& rhs) { return rhs * lhs; }
+Quaternion3D operator+(decimal lhs, const Quaternion3D& rhs)
+{
+    return Quaternion3D::apply(lhs, rhs, std::plus<decimal>());
+}
+Quaternion3D operator-(decimal lhs, const Quaternion3D& rhs)
+{
+    return Quaternion3D::apply(lhs, rhs, std::minus<decimal>());
+}
+Quaternion3D operator*(decimal lhs, const Quaternion3D& rhs)
+{
+    return Quaternion3D::apply(lhs, rhs, std::multiplies<decimal>());
+}
 Quaternion3D operator/(decimal lhs, const Quaternion3D& rhs)
 {
     // Check for division by zero
@@ -411,7 +450,7 @@ Quaternion3D operator/(decimal lhs, const Quaternion3D& rhs)
             throw std::invalid_argument("Division by zero");
     if (commonMaths::approxEqual(rhs.getRealPart(), decimal(0)))
         throw std::invalid_argument("Division by zero");
-    return rhs / lhs;
+    return Quaternion3D::apply(lhs, rhs, std::divides<decimal>());
 }
 
 // ============================================================================

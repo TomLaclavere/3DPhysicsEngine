@@ -16,6 +16,14 @@
 #include "objects/collision.hpp"
 
 // ============================================================================
+//  Getters
+// ============================================================================
+ObjectType Sphere::getType() const { return ObjectType::Sphere; }
+Vector3D   Sphere::getCenter() const { return getPosition(); }
+decimal    Sphere::getDiameter() const { return getSize().getX(); }
+decimal    Sphere::getRadius() const { return getDiameter() * 0.5_d; }
+
+// ============================================================================
 //  Collision
 // ============================================================================
 /**

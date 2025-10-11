@@ -38,7 +38,7 @@ TEST(PlaneTest, ConstructorsAndGetters)
     EXPECT_EQ(plane.getV(), Vector3D(1_d, 0_d, 0_d));
 }
 
-TEST(planeTest, Setters)
+TEST(PlaneTest, Setters)
 {
     Plane plane;
 
@@ -194,7 +194,7 @@ TEST(PlaneTest, PlaneSphereCollision)
     EXPECT_FALSE(plane.checkCollision(sphereZeroRadiusOutside));
 }
 
-TEST(planeTest, planeAABBCollision)
+TEST(PlaneTest, planeAABBCollision)
 {
     AABB aabb(Vector3D(0_d, 0_d, 0_d), Vector3D(2_d, 2_d, 2_d));
 
@@ -234,7 +234,7 @@ struct DummyObject : public Object
     bool       checkCollision(const Object&) override { return false; }
 };
 
-TEST(plane, CheckCollision_DefaultCase)
+TEST(PlaneTest, CheckCollision_DefaultCase)
 {
     Plane       plane(Vector3D(0_d, 0_d, 0_d), Vector3D(1_d, 1_d, 1_d));
     DummyObject dummy;

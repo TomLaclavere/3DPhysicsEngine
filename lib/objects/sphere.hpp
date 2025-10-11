@@ -55,10 +55,10 @@ public:
     /// @name Getters
     // ============================================================================
     /// @{
-    ObjectType getType() const override { return ObjectType::Sphere; }
-    Vector3D   getCenter() const { return getPosition(); }
-    decimal    getDiameter() const { return getSize().getX(); }
-    decimal    getRadius() const { return getDiameter() * 0.5_d; }
+    ObjectType getType() const override;
+    Vector3D   getCenter() const;
+    decimal    getDiameter() const;
+    decimal    getRadius() const;
     /// @}
 
     // ============================================================================

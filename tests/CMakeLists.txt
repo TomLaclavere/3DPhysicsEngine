@@ -70,7 +70,8 @@ add_engine_test(utility_test
     utilities/test_timer.cpp)
 
 add_engine_test(world_test
-    world/test_config.cpp)
+    world/test_config.cpp
+    world/test_physicsworld.cpp)
 
 # =============================================
 # Test Configuration Summary

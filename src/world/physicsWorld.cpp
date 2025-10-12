@@ -1,6 +1,22 @@
 #include "world/physicsWorld.hpp"
 
 // ============================================================================
+//  Getters
+// ============================================================================
+Config&  PhysicsWorld::getConfig() const { return config; }
+bool     PhysicsWorld::getIsRunning() const { return isRunning; }
+decimal  PhysicsWorld::getTimeStep() const { return timeStep; }
+decimal  PhysicsWorld::getGravityCst() const { return gravityCst; }
+Vector3D PhysicsWorld::getGravityAcc() const { return gravityAcc; }
+
+// ============================================================================
+//  Setters
+// ============================================================================
+void PhysicsWorld::setTimeStep(decimal ind) { timeStep = ind; }
+void PhysicsWorld::setGravityCst(decimal g) { gravityCst = g; }
+void PhysicsWorld::setGravityAcc(const Vector3D& acc) { gravityAcc = acc; }
+
+// ============================================================================
 //  Core simulation methods
 // ============================================================================
 /// Clear Object array and initialise physical and simulation parameters from config
@@ -8,8 +24,8 @@ void PhysicsWorld::initialize()
 {
     isRunning = false;
     objects.clear();
-    timeStep        = config.getTimeStep();
-    gravityConstant = config.getGravity();
+    timeStep   = config.getTimeStep();
+    gravityCst = config.getGravity();
 }
 
 // ============================================================================
@@ -42,7 +58,7 @@ void PhysicsWorld::integrateEuler()
 // ============================================================================
 //  Force computation
 // ============================================================================
-Vector3D PhysicsWorld::computeGravity() { return Vector3D(0_d, 0_d, -gravityConstant); }
+Vector3D PhysicsWorld::computeGravity() { return Vector3D(0_d, 0_d, -gravityCst); }
 /// Apply gravtiational force to all Object in Physical World by updating their acceleration.
 void PhysicsWorld::applyGravity()
 {
@@ -55,6 +71,7 @@ void PhysicsWorld::applyGravity()
         obj->setAcceleration(gravityAcc);
     }
 }
+void PhysicsWorld::applyForces() { applyGravity(); }
 
 // ============================================================================
 //  Objects management

@@ -1,16 +1,25 @@
 // config.cpp
-#include "config.hpp"
+#include "world/config.hpp"
 
 #include <iostream>
 #include <stdexcept>
 #include <yaml-cpp/yaml.h>
 
+// ============================================================================
+//  Getters
+// ============================================================================
 Config& Config::get()
 {
     static Config instance;
     return instance;
 }
+decimal      Config::getGravity() const { return gravity; }
+decimal      Config::getTimeStep() const { return timeStep; }
+unsigned int Config::getMaxIterations() const { return maxIterations; }
 
+// ============================================================================
+//  Loading Methods
+// ============================================================================
 void Config::loadFromFile(const std::string& path)
 {
     try

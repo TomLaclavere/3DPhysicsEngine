@@ -4,9 +4,9 @@
  *
  */
 
-#include "config.hpp"
 #include "mathematics/common.hpp"
 #include "objects/object.hpp"
+#include "world/config.hpp"
 
 #include <vector>
 

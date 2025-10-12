@@ -4,14 +4,10 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 ## General Tasks
 
+- [ ] Unit test for Config
+- [ ] Unit test for PhysicsWorld
 - [ ] **Integrate :** method for all objects or for PhysicsWorld ? 
 - [ ] Define a default config + pass this to default PhysicsWorld constructor
-- [x] **Objects :** need to improve the construction and collision of all objects
-  - [x] **Object**
-  - [x] **Sphere**
-  - [x] **AABB**
-  - [x] **Implement Plane object**
-  - [x] **Test Plane collisions**
 - [ ] Verify Collision implementation
 - [ ] Remove forward declarations of objects
 - [ ] Verify scripts/ (check parameters and re-compile conditions)
@@ -90,9 +86,15 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 ## Simulation Management
 
 ### Parameter Control
-- [ ] **Parameter Management System**
+- [x] **Parameter Management System**
   - [x] Load from configuration file (YAML)
   - [x] Command-line parameter override
+- [x] **Objects :** need to improve the construction and collision of all objects
+  - [x] **Object**
+  - [x] **Sphere**
+  - [x] **AABB**
+  - [x] **Implement Plane object**
+  - [x] **Test Plane collisions**
 
 ### Runtime Control
 

@@ -11,7 +11,6 @@
  */
 #pragma once
 #include "common.hpp"
-#include "config.hpp"
 #include "precision.hpp"
 
 #include <algorithm>

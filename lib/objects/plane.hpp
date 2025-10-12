@@ -57,8 +57,8 @@ public:
     Plane(const Vector3D& position, const Vector3D& size, const Vector3D& _normal)
         : Object(position, size)
         , normal(_normal.getNormalised())
-        , halfWidth { size[0] * 0.5_d }
-        , halfHeight { size[1] * 0.5_d }
+        , halfHeight { size[0] * 0.5_d }
+        , halfWidth { size[1] * 0.5_d }
     {
         updateLocalAxes();
     }
@@ -66,8 +66,16 @@ public:
     Plane(const Vector3D& position, const Vector3D& size, decimal mass, const Vector3D& _normal)
         : Object(position, size, mass)
         , normal(_normal.getNormalised())
-        , halfWidth { size[0] * 0.5_d }
-        , halfHeight { size[1] * 0.5_d }
+        , halfHeight { size[0] * 0.5_d }
+        , halfWidth { size[1] * 0.5_d }
+    {
+        updateLocalAxes();
+    }
+
+    Plane(const Vector3D& position, const Vector3D& rotation, const Vector3D& size, const Vector3D& velocity,
+          const Vector3D& acceleration, const Vector3D& force, const Vector3D& torque, decimal mass,
+          const Vector3D& _normal)
+        : Object(position, rotation, size, velocity, acceleration, force, torque, mass)
     {
         updateLocalAxes();
     }
@@ -79,12 +87,12 @@ public:
     /// @name Getters
     // ============================================================================
     /// @{
-    ObjectType      getType() const override { return ObjectType::Plane; }
-    const Vector3D& getNormal() const { return normal; }
-    const Vector3D& getU() const { return u; }
-    const Vector3D& getV() const { return v; }
-    decimal         getHalfWidth() const { return halfWidth; }
-    decimal         getHalfHeight() const { return halfHeight; }
+    ObjectType      getType() const override;
+    const Vector3D& getNormal() const;
+    const Vector3D& getU() const;
+    const Vector3D& getV() const;
+    decimal         getHalfWidth() const;
+    decimal         getHalfHeight() const;
     /// @}
 
     // ============================================================================

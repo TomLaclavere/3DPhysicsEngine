@@ -1,10 +1,10 @@
 #include "objects/aabb.hpp"
+#include "objects/object.hpp"
+#include "objects/plane.hpp"
 #include "objects/sphere.hpp"
 #include "test_functions.hpp"
 
 #include <gtest/gtest.h>
-#include <ostream>
-#include <sstream>
 
 TEST(AABBTest, ConstructorsAndGetters)
 {
@@ -133,4 +133,54 @@ TEST(AABBTest, AABBSphereCollision)
 
     EXPECT_FALSE(aabb.checkCollision(sphere_negative_outside));
     EXPECT_TRUE(aabb.checkCollision(sphere_negativeTouching));
+}
+
+TEST(AABBTest, aabbPlaneCollision)
+{
+    AABB aabb(Vector3D(0_d, 0_d, 0_d), Vector3D(2_d, 2_d, 2_d));
+
+    // Basic cases
+    Plane planeAbove(Vector3D(0_d, 0_d, 3_d));
+    Plane planeBelow(Vector3D(0_d, 0_d, -3_d));
+    Plane planeCenter(Vector3D(0_d, 0_d, 0_d));
+    Plane planeLeftOut(Vector3D(-3_d, 0_d, 0_d));
+    Plane planeLeftIn(Vector3D(-1.5_d, 0_d, 0_d));
+    Plane planeRightOut(Vector3D(5_d, 0_d, 0_d));
+    Plane planeRightIn(Vector3D(1.5_d, 0_d, 0_d));
+
+    EXPECT_FALSE(aabb.checkCollision(planeAbove));
+    EXPECT_FALSE(aabb.checkCollision(planeBelow));
+    EXPECT_TRUE(aabb.checkCollision(planeCenter));
+    EXPECT_FALSE(aabb.checkCollision(planeLeftOut));
+    EXPECT_FALSE(aabb.checkCollision(planeRightOut));
+    EXPECT_TRUE(aabb.checkCollision(planeLeftIn));
+    EXPECT_TRUE(aabb.checkCollision(planeRightIn));
+
+    // Edge cases
+    Plane planeUp(Vector3D(0_d, 0_d, 1_d));
+    Plane planeDown(Vector3D(0_d, 0_d, -1_d));
+    Plane planeLeft(Vector3D(-2_d, 0_d, 0_d));
+    Plane planeRight(Vector3D(2_d, 0_d, 0_d));
+
+    EXPECT_TRUE(aabb.checkCollision(planeUp));
+    EXPECT_TRUE(aabb.checkCollision(planeDown));
+    EXPECT_TRUE(aabb.checkCollision(planeLeft));
+    EXPECT_TRUE(aabb.checkCollision(planeRight));
+}
+
+// Dummy class to simulate an unknown object type
+struct DummyObject : public Object
+{
+    ObjectType getType() const override { return ObjectType::Generic; }
+    bool       checkCollision(const Object&) override { return false; }
+};
+
+TEST(AABB, CheckCollision_DefaultCase)
+{
+    AABB        box(Vector3D(0_d, 0_d, 0_d), Vector3D(1_d, 1_d, 1_d));
+    DummyObject dummy;
+
+    bool result = box.checkCollision(dummy);
+
+    EXPECT_FALSE(result); // Default case should return false
 }

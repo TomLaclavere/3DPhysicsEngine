@@ -4,9 +4,9 @@
  *
  */
 
-#include "config.hpp"
 #include "mathematics/common.hpp"
 #include "objects/object.hpp"
+#include "world/config.hpp"
 
 #include <vector>
 
@@ -24,10 +24,10 @@ private:
     Config&              config = Config::get();
     std::vector<Object*> objects;
 
-    decimal  timeStep        = config.getTimeStep();
-    bool     isRunning       = false;
-    decimal  gravityConstant = config.getGravity();
-    Vector3D gravityAcc      = computeGravity();
+    bool     isRunning  = false;
+    decimal  timeStep   = config.getTimeStep();
+    decimal  gravityCst = config.getGravity();
+    Vector3D gravityAcc = computeGravity();
 
 public:
     // ============================================================================
@@ -39,6 +39,26 @@ public:
         : config { _config }
     {}
     ~PhysicsWorld() { clearObjects(); };
+    /// @}
+
+    // ============================================================================
+    /// @name Getters
+    // ============================================================================
+    /// @{
+    Config&  getConfig() const;
+    bool     getIsRunning() const;
+    decimal  getTimeStep() const;
+    decimal  getGravityCst() const;
+    Vector3D getGravityAcc() const;
+    /// @}
+
+    // ============================================================================
+    /// @name Setters
+    // ============================================================================
+    /// @{
+    void setTimeStep(decimal step);
+    void setGravityCst(decimal g);
+    void setGravityAcc(const Vector3D& acc);
     /// @}
 
     // ============================================================================
@@ -76,7 +96,7 @@ public:
     void     computeForce();
     /// Apply gravitational force to all Object.
     void applyGravity();
-    void applyForces() { applyGravity(); }
+    void applyForces();
     /// @}
 
     // ============================================================================

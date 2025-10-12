@@ -4,13 +4,8 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 ## General Tasks
 
-- [ ] Unit test for Config
-- [ ] Unit test for PhysicsWorld
 - [ ] **Integrate :** method for all objects or for PhysicsWorld ? 
-- [ ] Define a default config + pass this to default PhysicsWorld constructor
-- [ ] Verify Collision implementation
-- [ ] Remove forward declarations of objects
-- [ ] Verify scripts/ (check parameters and re-compile conditions)
+- [x] Verify scripts/ (check parameters and re-compile conditions)
 
 ## Code Quality and Maintenance
 
@@ -80,6 +75,8 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 - [x] Add duration tracking (per iteration & total)
 - [x] Document common.hpp 
 - [x] Use functions from common.hpp for comparison
+- [x] Unit test for Config
+- [x] Unit test for PhysicsWorld
 
 ## Code Quality and Maintenance
 

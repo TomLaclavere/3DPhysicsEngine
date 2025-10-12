@@ -111,7 +111,7 @@ public:
     void normalise();
     /// Transpose the matrix (in-place).
     void transpose();
-    /// Invert the matrix (in-place). Throw `std::runtime_error` if not invertible.
+    /// Invert the matrix (in-place). Throw `std::invalid_argument` if not invertible.
     void inverse();
     /// Return matrix determinant.
     decimal getDeterminant() const;
@@ -125,7 +125,7 @@ public:
     Matrix3x3 getNormalised() const;
     /// Return the transposed matrix.
     Matrix3x3 getTranspose() const;
-    /// Return the inverted matrix. Throw `std::runtime_error` if not invertible.
+    /// Return the inverted matrix. Throw `std::invalid_argument` if not invertible.
     Matrix3x3 getInverse() const;
     /// @}
 

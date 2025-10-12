@@ -11,8 +11,8 @@
 
 #pragma once
 
-#include "config.hpp"
 #include "precision.hpp"
+#include "world/config.hpp"
 
 #include <cmath>
 

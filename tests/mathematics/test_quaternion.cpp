@@ -1,5 +1,7 @@
 #include "mathematics/common.hpp"
+#include "mathematics/matrix.hpp"
 #include "mathematics/quaternion.hpp"
+#include "mathematics/vector.hpp"
 #include "test_functions.hpp"
 
 #include <cmath>
@@ -8,119 +10,198 @@
 #include <sstream>
 
 // ——————————————————————————————————————————————————————————————————————————
+//  Constructors and Getters
 // ——————————————————————————————————————————————————————————————————————————
-// 1) Constructors and Getters
-// ——————————————————————————————————————————————————————————————————————————
-// ——————————————————————————————————————————————————————————————————————————
-TEST(Quaternion_Test, DefaultConstructorZeroes)
+TEST(QuaternionTest, DefaultConstructorZeroes)
 {
     Quaternion3D q;
     EXPECT_DECIMAL_EQ(q.getRealPart(), 0_d);
     EXPECT_TRUE(q.getImaginaryPart() == Vector3D());
 }
-TEST(Quaternion_Test, ValueConstructor)
+TEST(QuaternionTest, ValueConstructor)
 {
     Quaternion3D q(1_d, 2_d, 3_d, 4_d);
     EXPECT_DECIMAL_EQ(q.getRealPart(), 4_d);
-    EXPECT_EQ(q.getImaginaryPart(), Vector3D(1_d, 2_d, 3_d));
+    EXPECT_VECTOR_EQ(q.getImaginaryPart(), Vector3D(1_d, 2_d, 3_d));
 }
-TEST(Quaternion_Test, VectorAndScalarConstructor)
+TEST(QuaternionTest, VectorAndScalarConstructor)
 {
     // Vector scalar
     Vector3D     v(1_d, 2_d, 3_d);
     Quaternion3D q(v, 4_d);
-    EXPECT_EQ(q.getImaginaryPart(), v);
+    EXPECT_VECTOR_EQ(q.getImaginaryPart(), v);
     EXPECT_DECIMAL_EQ(q.getRealPart(), 4_d);
     // Scalar vector
     Vector3D     v_bis(1_d, 2_d, 3_d);
     Quaternion3D q_bis(4_d, v_bis);
-    EXPECT_EQ(q_bis.getImaginaryPart(), v_bis);
+    EXPECT_VECTOR_EQ(q_bis.getImaginaryPart(), v_bis);
     EXPECT_DECIMAL_EQ(q_bis.getRealPart(), 4_d);
 }
-TEST(Quaternion_Test, FromEulerAngles_ProducesExpectedRotation)
+TEST(QuaternionTest, FromEulerAngles)
 {
     // 90 degrees (pi/2) rotation about X axis
     decimal      angleX = decimal(M_PI) / 2_d;
     decimal      angleY = 0_d;
     decimal      angleZ = 0_d;
     Quaternion3D q(angleX, angleY, angleZ);
+    Quaternion3D q_(Vector3D(angleX, angleY, angleZ));
 
     // The expected Quaternion3D for 90deg about X is (sqrt(0.5), 0, 0, sqrt(0.5))
     decimal s = std::sin(angleX / 2_d);
     decimal c = std::cos(angleX / 2_d);
-    EXPECT_TRUE(q.approxEqual(Quaternion3D(s, 0_d, 0_d, c), PRECISION_MACHINE));
+    EXPECT_QUATERNION_EQ(q, Quaternion3D(s, 0_d, 0_d, c));
 
     // Check normalization
-    EXPECT_NEAR(q.getNorm(), 1_d, PRECISION_MACHINE);
+    EXPECT_DECIMAL_EQ(q.getNorm(), 1_d);
+    EXPECT_DECIMAL_EQ(q_.getNorm(), 1_d);
 
     // Check rotation matrix matches expected
     Matrix3x3 expected(1_d, 0_d, 0_d, 0_d, 0_d, -1_d, 0_d, 1_d, 0_d);
-    Matrix3x3 rot = q.getRotationMatrix();
-    for (int i = 0; i < 3; ++i)
-        for (int j = 0; j < 3; ++j)
-            EXPECT_NEAR(rot(i, j), expected(i, j), PRECISION_MACHINE);
+    Matrix3x3 rot  = q.getRotationMatrix();
+    Matrix3x3 rot_ = q_.getRotationMatrix();
+    EXPECT_MATRIX_EQ(rot, expected);
+    EXPECT_MATRIX_EQ(rot_, expected);
 }
-TEST(Quaternion_Test, FromMatrix_ProducesExpectedQuaternion)
+TEST(QuaternionTest, FromMatrix)
 {
-    // 90 degrees (pi/2) rotation about X axis
-    decimal   angle = decimal(M_PI) / 2;
-    Matrix3x3 m(1_d, 0_d, 0_d, 0_d, std::cos(angle), -std::sin(angle), 0_d, std::sin(angle), std::cos(angle));
-    Quaternion3D q(m);
+    // =====================
+    // Branch 1: trace > 0 (small rotations)
+    // =====================
+    {
+        decimal   angle = M_PI / 4_d; // 45° around Z
+        Matrix3x3 R;
+        R(0, 0) = std::cos(angle);
+        R(0, 1) = -std::sin(angle);
+        R(1, 0) = std::sin(angle);
+        R(1, 1) = std::cos(angle);
+        R(2, 2) = 1_d;
 
-    // The expected Quaternion3D for 90deg about X is (sqrt(0.5), 0, 0, sqrt(0.5))
-    decimal      s = std::sin(angle / 2);
-    decimal      c = std::cos(angle / 2);
-    Quaternion3D expected(s, 0_d, 0_d, c);
+        Quaternion3D q(R);
+        decimal      half = angle / 2_d;
+        EXPECT_DECIMAL_EQ(q.getRealPart(), std::cos(half));
+        EXPECT_VECTOR_EQ(q.getImaginaryPart(), Vector3D(0_d, 0_d, std::sin(half)));
+        EXPECT_MATRIX_EQ(q.getRotationMatrix(), R);
+    }
 
-    EXPECT_TRUE(q.approxEqual(expected, PRECISION_MACHINE));
+    // ======================================================
+    // Branch 2: trace <= 0, m(0,0) largest
+    // ======================================================
+    {
+        // 120° rotation around X axis - this gives cleaner math
+        decimal   angle = 2_d * M_PI / 3_d; // 120°
+        Matrix3x3 R;
+        R(0, 0) = 1_d;
+        R(1, 1) = std::cos(angle);  // cos(120°) = -0.5
+        R(1, 2) = -std::sin(angle); // sin(120°) = √3/2 ≈ 0.8660254
+        R(2, 1) = std::sin(angle);
+        R(2, 2) = std::cos(angle);
 
-    // Check normalization
-    EXPECT_NEAR(q.getNorm(), 1_d, PRECISION_MACHINE);
+        Quaternion3D q(R);
+        decimal      half = angle / 2_d;                                            // 60°
+        EXPECT_DECIMAL_EQ(q.getRealPart(), std::cos(half));                         // cos(60°) = 0.5
+        EXPECT_VECTOR_EQ(q.getImaginaryPart(), Vector3D(std::sin(half), 0_d, 0_d)); // sin(60°) = √3/2
+        EXPECT_MATRIX_EQ(q.getRotationMatrix(), R);
+    }
 
-    // Check that converting back to matrix gives the original
-    Matrix3x3 rot = q.getRotationMatrix();
-    for (int i = 0; i < 3; ++i)
-        for (int j = 0; j < 3; ++j)
-            EXPECT_NEAR(rot(i, j), m(i, j), PRECISION_MACHINE);
+    // ======================================================
+    // Branch 3: trace <= 0, m(1,1) largest
+    // ======================================================
+    {
+        // 120° rotation around Y axis
+        decimal   angle = 2_d * M_PI / 3_d; // 120°
+        Matrix3x3 R;
+        R(1, 1) = 1_d;
+        R(0, 0) = std::cos(angle);  // -0.5
+        R(0, 2) = std::sin(angle);  // 0.8660254
+        R(2, 0) = -std::sin(angle); // -0.8660254
+        R(2, 2) = std::cos(angle);  // -0.5
+
+        Quaternion3D q(R);
+        decimal      half = angle / 2_d; // 60°
+        EXPECT_DECIMAL_EQ(q.getRealPart(), std::cos(half));
+        EXPECT_VECTOR_EQ(q.getImaginaryPart(), Vector3D(0_d, std::sin(half), 0_d));
+        EXPECT_MATRIX_EQ(q.getRotationMatrix(), R);
+    }
+
+    // ======================================================
+    // Branch 4: trace <= 0, m(2,2) largest
+    // ======================================================
+    {
+        // 120° rotation around Z axis
+        decimal   angle = 2_d * M_PI / 3_d; // 120°
+        Matrix3x3 R;
+        R(2, 2) = 1_d;
+        R(0, 0) = std::cos(angle);  // -0.5
+        R(0, 1) = -std::sin(angle); // -0.8660254
+        R(1, 0) = std::sin(angle);  // 0.8660254
+        R(1, 1) = std::cos(angle);  // -0.5
+
+        Quaternion3D q(R);
+        decimal      half = angle / 2_d; // 60°
+        EXPECT_DECIMAL_EQ(q.getRealPart(), std::cos(half));
+        EXPECT_VECTOR_EQ(q.getImaginaryPart(), Vector3D(0_d, 0_d, std::sin(half)));
+        EXPECT_MATRIX_EQ(q.getRotationMatrix(), R);
+    }
+
+    // ======================================================
+    // Edge case: trace = -1 (180° rotation)
+    // ======================================================
+    {
+        decimal   angle = M_PI; // 180°
+        Matrix3x3 R;
+        R(0, 0) = 1_d;
+        R(1, 1) = std::cos(angle);  // -1
+        R(1, 2) = -std::sin(angle); // 0
+        R(2, 1) = std::sin(angle);  // 0
+        R(2, 2) = std::cos(angle);  // -1
+
+        Quaternion3D q(R);
+        // For 180° rotation around X, quaternion should be [0, 1, 0, 0]
+        EXPECT_DECIMAL_EQ(q.getRealPart(), 0_d);
+        EXPECT_VECTOR_EQ(q.getImaginaryPart(), Vector3D(1_d, 0_d, 0_d));
+        EXPECT_MATRIX_EQ(q.getRotationMatrix(), R);
+    }
 }
 
 // ——————————————————————————————————————————————————————————————————————————
+//  Utilities
 // ——————————————————————————————————————————————————————————————————————————
-// 2) Utilities
-// ——————————————————————————————————————————————————————————————————————————
-// ——————————————————————————————————————————————————————————————————————————
-TEST(Quaternion_Test, ConjugateAndNormalize)
+TEST(QuaternionTest, ConjugateAndNormalise)
 {
     Quaternion3D q(1_d, 2_d, 3_d, 4_d);
     Quaternion3D conjugateQ = q.getConjugate();
-    Quaternion3D normalizeQ = conjugateQ.getNormalize();
+    Quaternion3D normaliseQ = conjugateQ.getNormalise();
     q.conjugate();
-    EXPECT_EQ(q.getImaginaryPart(), Vector3D(-1_d, -2_d, -3_d));
-    EXPECT_EQ(conjugateQ.getImaginaryPart(), Vector3D(-1_d, -2_d, -3_d));
-    q.normalize();
+    EXPECT_VECTOR_EQ(q.getImaginaryPart(), Vector3D(-1_d, -2_d, -3_d));
+    EXPECT_VECTOR_EQ(conjugateQ.getImaginaryPart(), Vector3D(-1_d, -2_d, -3_d));
+    q.normalise();
     EXPECT_TRUE(q.isUnit());
-    EXPECT_TRUE(normalizeQ.isUnit());
+    EXPECT_TRUE(normaliseQ.isUnit());
+
+    q.setToNull();
+    EXPECT_QUATERNION_EQ(q, Quaternion3D());
+    EXPECT_QUATERNION_EQ(q.getNormalise(), Quaternion3D());
 }
-TEST(Quaternion_Test, Inverse)
+TEST(QuaternionTest, Inverse)
 {
     Quaternion3D q(1_d, 2_d, 3_d, 4_d);
-    q.normalize();
+    q.normalise();
     Quaternion3D orig = q;
 
     // In-place inverse twice should return to original
     q.inverse();
     q.inverse();
-    EXPECT_TRUE(q.approxEqual(orig, PRECISION_MACHINE));
+    EXPECT_QUATERNION_EQ(q, orig);
 
     Quaternion3D inv = orig.getInverse();
     q.inverse();
-    EXPECT_EQ(inv, q);
+    EXPECT_QUATERNION_EQ(inv, q);
 }
-TEST(Quaternion_Test, Getters)
+TEST(QuaternionTest, Getters)
 {
     Quaternion3D q(1_d, 2_d, 3_d, 4_d);
-    EXPECT_NEAR(q.getNormSquare(), 1_d * 1_d + 2_d * 2_d + 3_d * 3_d + 4_d * 4_d, PRECISION_MACHINE);
-    EXPECT_NEAR(q.getNorm(), std::sqrt(1_d * 1_d + 2_d * 2_d + 3_d * 3_d + 4_d * 4_d), PRECISION_MACHINE);
+    EXPECT_DECIMAL_EQ(q.getNormSquare(), 1_d * 1_d + 2_d * 2_d + 3_d * 3_d + 4_d * 4_d);
+    EXPECT_DECIMAL_EQ(q.getNorm(), std::sqrt(1_d * 1_d + 2_d * 2_d + 3_d * 3_d + 4_d * 4_d));
     Quaternion3D idenity = q.getIdentity();
     EXPECT_DECIMAL_EQ(idenity.getRealPart(), 1_d);
     EXPECT_TRUE(idenity.getImaginaryPart() == Vector3D());
@@ -130,47 +211,86 @@ TEST(Quaternion_Test, Getters)
 }
 
 // ——————————————————————————————————————————————————————————————————————————
+//  Setters
 // ——————————————————————————————————————————————————————————————————————————
-// 3) Setters
-// ——————————————————————————————————————————————————————————————————————————
-// ——————————————————————————————————————————————————————————————————————————
-TEST(Quaternion_Test, Setters)
+TEST(QuaternionTest, Setters)
 {
     Quaternion3D q;
     q.setAllValues(1_d, 2_d, 3_d, 4_d);
-    EXPECT_EQ(q.getImaginaryPart(), Vector3D(1_d, 2_d, 3_d));
+    EXPECT_VECTOR_EQ(q.getImaginaryPart(), Vector3D(1_d, 2_d, 3_d));
     EXPECT_DECIMAL_EQ(q.getRealPart(), 4_d);
 
     Vector3D v(5_d, 6_d, 7_d);
     q.setAllValues(v, 8_d);
-    EXPECT_EQ(q.getImaginaryPart(), v);
+    EXPECT_VECTOR_EQ(q.getImaginaryPart(), v);
     EXPECT_DECIMAL_EQ(q.getRealPart(), 8_d);
 
     q.setAllValues(9_d, v);
-    EXPECT_EQ(q.getImaginaryPart(), v);
+    EXPECT_VECTOR_EQ(q.getImaginaryPart(), v);
     EXPECT_DECIMAL_EQ(q.getRealPart(), 9_d);
 
-    q.setToZero();
+    q.setToNull();
     EXPECT_TRUE(q.isZero());
 
     q.setToIdentity();
     EXPECT_TRUE(q.isIdentity());
 }
 
-// ——————————————————————————————————————————————————————————————————————————
-// ——————————————————————————————————————————————————————————————————————————
-// 4) Property Checks
-// ——————————————————————————————————————————————————————————————————————————
-// ——————————————————————————————————————————————————————————————————————————
-TEST(Quaternion_Test, PropertyChecks)
+TEST(QuaternionTest, SetAllValues)
 {
     Quaternion3D q;
-    q.setToZero();
+    // From scalar ( = real part)
+    q.setRealPart(0_d);
+    EXPECT_DECIMAL_EQ(q.getRealPart(), 0_d);
+
+    // From vector ( = imaginary part)
+    q.setImaginaryPart(1_d, -4_d, 14_d);
+    EXPECT_VECTOR_EQ(q.getImaginaryPart(), Vector3D(1_d, -4_d, 14_d));
+
+    q.setImaginaryPart(Vector3D(-2_d, 0_d, 3.14_d));
+    EXPECT_VECTOR_EQ(q.getImaginaryPart(), Vector3D(-2_d, 0_d, 3.14_d));
+
+    // From rotation matrix
+    decimal   angle = M_PI / 2_d;
+    Matrix3x3 R;
+    R(0, 0) = std::cos(angle);
+    R(0, 1) = -std::sin(angle);
+    R(1, 0) = std::sin(angle);
+    R(1, 1) = std::cos(angle);
+    R(2, 2) = 1_d;
+    q.setAllValues(R);
+    decimal half = angle / 2_d;
+    EXPECT_DECIMAL_EQ(q.getRealPart(), std::cos(half));
+    EXPECT_VECTOR_EQ(q.getImaginaryPart(), Vector3D(0_d, 0_d, std::sin(half)));
+    EXPECT_MATRIX_EQ(q.getRotationMatrix(), R);
+
+    // From Euler angles
+    Quaternion3D q_;
+    decimal      angleX = decimal(M_PI) / 2_d;
+    decimal      angleY = 0_d;
+    decimal      angleZ = 0_d;
+    q.setAllValues(angleX, angleY, angleZ);
+    q_.setAllValues(Vector3D(angleX, angleY, angleZ));
+
+    // The expected Quaternion3D for 90deg about X is (sqrt(0.5), 0, 0, sqrt(0.5))
+    decimal s = std::sin(angleX / 2_d);
+    decimal c = std::cos(angleX / 2_d);
+    EXPECT_QUATERNION_EQ(q, Quaternion3D(s, 0_d, 0_d, c));
+    EXPECT_QUATERNION_EQ(q_, Quaternion3D(s, 0_d, 0_d, c));
+}
+
+// ——————————————————————————————————————————————————————————————————————————
+//  Property Checks
+// ——————————————————————————————————————————————————————————————————————————
+TEST(QuaternionTest, PropertyChecks)
+{
+    Quaternion3D q;
+    q.setToNull();
     EXPECT_TRUE(q.isZero());
     q.setToIdentity();
     EXPECT_TRUE(q.isIdentity());
     EXPECT_TRUE(q.isUnit());
-    EXPECT_TRUE(q.isNormalized());
+    EXPECT_TRUE(q.isNormalised());
     EXPECT_TRUE(q.isFinite());
     EXPECT_TRUE(q.isOrthogonal());
     EXPECT_TRUE(q.isInvertible()); // isInvertible returns true if norm==0
@@ -192,7 +312,7 @@ TEST(Quaternion_Test, PropertyChecks)
 
     // Invertible
     EXPECT_TRUE(q.isInvertible()); // Non-zero norm means it's invertible
-    q.setToZero();
+    q.setToNull();
     EXPECT_FALSE(q.isInvertible()); // Zero norm means it's not invertible
 
     // Orthogonal
@@ -205,42 +325,38 @@ TEST(Quaternion_Test, PropertyChecks)
     Quaternion3D orthogonalQ(0_d, 1_d, 0_d, 0_d);
     EXPECT_TRUE(orthogonalQ.isOrthogonal());
 
-    // Normalized
+    // Normalised
     q.setAllValues(1_d, 0_d, 0_d, 0_d);
-    EXPECT_TRUE(q.isNormalized()); // Identity Quaternion3D is normalized
-    // Non-identity Quaternion3D is not normalized
+    EXPECT_TRUE(q.isNormalised()); // Identity Quaternion3D is normalised
+    // Non-identity Quaternion3D is not normalised
     q.setAllValues(1_d, 2_d, 3_d, 4_d);
-    EXPECT_FALSE(q.isNormalized());
-    // Check with a normalized Quaternion3D
-    Quaternion3D normalizedQ = q.getNormalize();
-    EXPECT_TRUE(normalizedQ.isNormalized());
+    EXPECT_FALSE(q.isNormalised());
+    // Check with a normalised Quaternion3D
+    Quaternion3D normalisedQ = q.getNormalise();
+    EXPECT_TRUE(normalisedQ.isNormalised());
 }
 
 // ——————————————————————————————————————————————————————————————————————————
+//  Quaternion3D Operations
 // ——————————————————————————————————————————————————————————————————————————
-// 5) Quaternion3D Operations
-// ——————————————————————————————————————————————————————————————————————————
-// ——————————————————————————————————————————————————————————————————————————
-TEST(Quaternion_Test, DotAndCrossProduct)
+TEST(QuaternionTest, DotAndCrossProduct)
 {
     Quaternion3D q1(1_d, 0_d, 0_d, 1_d);
     Quaternion3D q2(0_d, 1_d, 0_d, 1_d);
     decimal      dot = q1.dotProduct(q2);
     EXPECT_DECIMAL_EQ(dot, 1_d); // 1*0 + 0*1 + 0*0 + 1*1 = 1
     decimal dot_alt = dotProduct(q1, q2);
-    EXPECT_EQ(dotProduct(q1, q2), dot);
+    EXPECT_DECIMAL_EQ(dotProduct(q1, q2), dot);
 
     Quaternion3D cross = q1.crossProduct(q2);
-    EXPECT_EQ(cross, Quaternion3D(1_d, 1_d, 1_d, 1_d));
-    EXPECT_EQ(crossProduct(q1, q2), cross);
+    EXPECT_QUATERNION_EQ(cross, Quaternion3D(1_d, 1_d, 1_d, 1_d));
+    EXPECT_QUATERNION_EQ(crossProduct(q1, q2), cross);
 }
 
 // ——————————————————————————————————————————————————————————————————————————
+//  Comparison Operators
 // ——————————————————————————————————————————————————————————————————————————
-// 6) Comparison Operators
-// ——————————————————————————————————————————————————————————————————————————
-// ——————————————————————————————————————————————————————————————————————————
-TEST(Quaternion_Test, ComparisonOperators)
+TEST(QuaternionTest, ComparisonOperators)
 {
     Quaternion3D a(1_d, 2_d, 3_d, 4_d), b(1_d, 2_d, 3_d, 4_d), c(2_d, 3_d, 4_d, 5_d);
 
@@ -258,96 +374,137 @@ TEST(Quaternion_Test, ComparisonOperators)
 }
 
 // ——————————————————————————————————————————————————————————————————————————
+//  Element Access
 // ——————————————————————————————————————————————————————————————————————————
-// 7) Element Access
-// ——————————————————————————————————————————————————————————————————————————
-// ——————————————————————————————————————————————————————————————————————————
-TEST(Quaternion_Test, ElementAccess)
+TEST(QuaternionTest, ElementAccess)
 {
-    Quaternion3D q(1_d, 2_d, 3_d, 4_d);
+    Quaternion3D       q(1_d, 2_d, 3_d, 4_d);
+    const Quaternion3D cq(5_d, 0_d, -5_d, 3.14_d);
 
+    // operator()(int) const and non-const
     EXPECT_DECIMAL_EQ(q(0_d), 1_d);
     EXPECT_DECIMAL_EQ(q(1_d), 2_d);
     EXPECT_DECIMAL_EQ(q(2_d), 3_d);
 
-    q(0_d) = 10_d;
-    EXPECT_DECIMAL_EQ(q(0_d), 10_d);
+    EXPECT_DECIMAL_EQ(cq(0_d), 5_d);
+    EXPECT_DECIMAL_EQ(cq(1_d), 0_d);
+    EXPECT_DECIMAL_EQ(cq(2_d), -5_d);
 
-    EXPECT_DECIMAL_EQ(q[0_d], 10_d);
-    q[1_d] = 20_d;
-    EXPECT_DECIMAL_EQ(q[1_d], 20_d);
+    // operator[] const and non-const
+    EXPECT_DECIMAL_EQ(q[0_d], 1_d);
+    EXPECT_DECIMAL_EQ(q[1_d], 2_d);
+    EXPECT_DECIMAL_EQ(q[2_d], 3_d);
+
+    EXPECT_DECIMAL_EQ(cq[0_d], 5_d);
+    EXPECT_DECIMAL_EQ(cq[1_d], 0_d);
+    EXPECT_DECIMAL_EQ(cq[2_d], -5_d);
+
+    // operator at const and non-const
+    EXPECT_DECIMAL_EQ(q.at(0_d), 1_d);
+    EXPECT_DECIMAL_EQ(q.at(1_d), 2_d);
+    EXPECT_DECIMAL_EQ(q.at(2_d), 3_d);
+
+    EXPECT_DECIMAL_EQ(cq.at(0_d), 5_d);
+    EXPECT_DECIMAL_EQ(cq.at(1_d), 0_d);
+    EXPECT_DECIMAL_EQ(cq.at(2_d), -5_d);
+
+    // Out-of-range checks
+    EXPECT_THROW(q.at(-1_d), std::out_of_range);
+    EXPECT_THROW(q.at(3_d), std::out_of_range);
+    EXPECT_THROW(cq.at(-1_d), std::out_of_range);
+    EXPECT_THROW(cq.at(3_d), std::out_of_range);
+
+    // operator[] & () do not check the index, so I can't check out of range indices
 }
 
 // ——————————————————————————————————————————————————————————————————————————
+//  In-place Arithmetic Operators
 // ——————————————————————————————————————————————————————————————————————————
-// 8) In-place Arithmetic Operators
-// ——————————————————————————————————————————————————————————————————————————
-// ——————————————————————————————————————————————————————————————————————————
-TEST(Quaternion_Test, InPlaceArithmeticOperators)
+TEST(QuaternionTest, InPlaceArithmeticOperators)
 {
     Quaternion3D q(1_d, 2_d, 3_d, 4_d);
     Quaternion3D orig = q;
 
     q += Quaternion3D(1_d, 1_d, 1_d, 1_d);
-    EXPECT_EQ(q, Quaternion3D(2_d, 3_d, 4_d, 5_d));
+    EXPECT_QUATERNION_EQ(q, Quaternion3D(2_d, 3_d, 4_d, 5_d));
 
     q -= Quaternion3D(1_d, 1_d, 1_d, 1_d);
-    EXPECT_EQ(q, orig);
+    EXPECT_QUATERNION_EQ(q, orig);
 
     q *= Quaternion3D(2_d, 2_d, 2_d, 2_d);
-    EXPECT_EQ(q, Quaternion3D(2_d, 4_d, 6_d, 8_d));
+    EXPECT_QUATERNION_EQ(q, Quaternion3D(2_d, 4_d, 6_d, 8_d));
 
     q /= Quaternion3D(2_d, 2_d, 2_d, 2_d);
-    EXPECT_EQ(q, orig);
+    EXPECT_QUATERNION_EQ(q, orig);
+    EXPECT_THROW(q /= Quaternion3D(0_d, 1_d, 2_d, -2_d), std::invalid_argument);
+    EXPECT_THROW(q /= Quaternion3D(-2_d, 1_d, 2_d, 0_d), std::invalid_argument);
 
     q += 1_d;
-    EXPECT_EQ(q, Quaternion3D(2_d, 3_d, 4_d, 5_d));
+    EXPECT_QUATERNION_EQ(q, Quaternion3D(2_d, 3_d, 4_d, 5_d));
 
     q -= 1_d;
-    EXPECT_EQ(q, orig);
+    EXPECT_QUATERNION_EQ(q, orig);
 
     q *= 2_d;
-    EXPECT_EQ(q, Quaternion3D(2_d, 4_d, 6_d, 8_d));
+    EXPECT_QUATERNION_EQ(q, Quaternion3D(2_d, 4_d, 6_d, 8_d));
 
     q /= 2_d;
-    EXPECT_EQ(q, orig);
+    EXPECT_QUATERNION_EQ(q, orig);
+    EXPECT_THROW(q /= 0_d, std::invalid_argument);
+
+    EXPECT_QUATERNION_EQ(-q, Quaternion3D(-1_d, -2_d, -3_d, -4_d));
 }
 
 // ——————————————————————————————————————————————————————————————————————————
+//  Arithmetic Operators
 // ——————————————————————————————————————————————————————————————————————————
-// 9) Arithmetic Operators
-// ——————————————————————————————————————————————————————————————————————————
-// ——————————————————————————————————————————————————————————————————————————
-TEST(Quaternion_Test, ArithmeticOperators)
+TEST(QuaternionTest, ArithmeticOperators)
 {
     Quaternion3D q1(1_d, 2_d, 3_d, 4_d);
     Quaternion3D q2(4_d, 5_d, 6_d, 7_d);
 
+    // Quaternion x Quaternion
     Quaternion3D sum = q1 + q2;
-    EXPECT_EQ(sum, Quaternion3D(1_d + 4_d, 2_d + 5_d, 3_d + 6_d, 4_d + 7_d));
+    EXPECT_QUATERNION_EQ(sum, Quaternion3D(1_d + 4_d, 2_d + 5_d, 3_d + 6_d, 4_d + 7_d));
 
     Quaternion3D diff = q1 - q2;
-    EXPECT_EQ(diff, Quaternion3D(1_d - 4_d, 2_d - 5_d, 3_d - 6_d, 4_d - 7_d));
+    EXPECT_QUATERNION_EQ(diff, Quaternion3D(1_d - 4_d, 2_d - 5_d, 3_d - 6_d, 4_d - 7_d));
 
     Quaternion3D prod = q1 * q2;
-    EXPECT_EQ(prod, Quaternion3D(1_d * 4_d, 2_d * 5_d, 3_d * 6_d, 4_d * 7_d));
+    EXPECT_QUATERNION_EQ(prod, Quaternion3D(1_d * 4_d, 2_d * 5_d, 3_d * 6_d, 4_d * 7_d));
 
     Quaternion3D quot = q2 / q1;
-    EXPECT_EQ(quot, Quaternion3D(4_d / 1_d, 5_d / 2_d, 6_d / 3_d, 7_d / 4_d));
+    EXPECT_QUATERNION_EQ(quot, Quaternion3D(4_d / 1_d, 5_d / 2_d, 6_d / 3_d, 7_d / 4_d));
+    EXPECT_THROW(q1 / Quaternion3D(0_d, 1_d, 2_d, -2_d), std::invalid_argument);
+    EXPECT_THROW(q2 / Quaternion3D(-2_d, 1_d, 2_d, 0_d), std::invalid_argument);
 
+    // Quaternion x Scalar
     Quaternion3D scalarSum = q1 + 2_d;
-    EXPECT_EQ(scalarSum, Quaternion3D(1_d + 2_d, 2_d + 2_d, 3_d + 2_d, 4_d + 2_d));
+    EXPECT_QUATERNION_EQ(scalarSum, Quaternion3D(1_d + 2_d, 2_d + 2_d, 3_d + 2_d, 4_d + 2_d));
+
+    Quaternion3D scalarSoustrac = q1 - 3_d;
+    EXPECT_QUATERNION_EQ(scalarSoustrac, Quaternion3D(-2_d, -1_d, 0_d, 1_d));
 
     Quaternion3D scalarProd = q1 * 2_d;
-    EXPECT_EQ(scalarProd, Quaternion3D(1_d * 2_d, 2_d * 2_d, 3_d * 2_d, 4_d * 2_d));
+    EXPECT_QUATERNION_EQ(scalarProd, Quaternion3D(1_d * 2_d, 2_d * 2_d, 3_d * 2_d, 4_d * 2_d));
+
+    Quaternion3D scalarDiv = q1 / 2_d;
+    EXPECT_QUATERNION_EQ(scalarDiv, Quaternion3D(0.5_d, 1_d, 1.5_d, 2_d));
+    EXPECT_THROW(q1 / 0_d, std::invalid_argument);
+
+    // Scalar x Quaternion
+    EXPECT_QUATERNION_EQ(2_d + q1, Quaternion3D(3_d, 4_d, 5_d, 6_d));
+    EXPECT_QUATERNION_EQ(2_d - q1, Quaternion3D(1_d, 0_d, -1_d, -2_d));
+    EXPECT_QUATERNION_EQ(2_d * q1, Quaternion3D(2_d, 4_d, 6_d, 8_d));
+    EXPECT_QUATERNION_EQ(2_d / q1, Quaternion3D(2_d, 1_d, 2_d / 3_d, 0.5_d));
+    EXPECT_THROW(2_d / Quaternion3D(0_d, 1_d, 2_d, -2_d), std::invalid_argument);
+    EXPECT_THROW(2_d / Quaternion3D(-2_d, 1_d, 2_d, 0_d), std::invalid_argument);
 }
 
 // ——————————————————————————————————————————————————————————————————————————
+//  Stream Output
 // ——————————————————————————————————————————————————————————————————————————
-// 10) Stream Output
-// ——————————————————————————————————————————————————————————————————————————
-// ——————————————————————————————————————————————————————————————————————————
-TEST(Quaternion_Test, StreamOutput)
+TEST(QuaternionTest, StreamOutput)
 {
     Quaternion3D      q(1_d, 2_d, 3_d, 4_d);
     std::stringstream ss;

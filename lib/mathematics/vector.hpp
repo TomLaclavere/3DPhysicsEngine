@@ -11,7 +11,6 @@
  */
 #pragma once
 #include "common.hpp"
-#include "config.hpp"
 #include "precision.hpp"
 
 #include <algorithm>
@@ -49,25 +48,19 @@ public:
     // ============================================================================
     /// @{
     Vector3D() = default;
-    explicit Vector3D(decimal value)
-        : v { value, value, value }
-    {}
-    Vector3D(decimal x, decimal y, decimal z)
-        : v { x, y, z }
-    {}
-    Vector3D(const Vector3D& newv)
-        : v { newv.v }
-    {}
+    explicit Vector3D(decimal value);
+    Vector3D(decimal x, decimal y, decimal z);
+    Vector3D(const Vector3D& newv);
     /// @}
 
     // ============================================================================
     /// @name Getters
     // ============================================================================
     /// @{
-    decimal                getX() const { return v[0]; }
-    decimal                getY() const { return v[1]; }
-    decimal                getZ() const { return v[2]; }
-    std::array<decimal, 3> getV() const { return v; }
+    decimal                getX() const;
+    decimal                getY() const;
+    decimal                getZ() const;
+    std::array<decimal, 3> getV() const;
     /// @}
 
     // ============================================================================
@@ -80,13 +73,13 @@ public:
     /// Normalise this vector (in-place). If zero-length, becomes null vector.
     void normalise();
     /// Squared Euclidian norm. Cheaper than `getNorm()`.
-    decimal getNormSquare() const { return v[0] * v[0] + v[1] * v[1] + v[2] * v[2]; }
+    decimal getNormSquare() const;
     /// Euclidean norm.
-    decimal getNorm() const { return std::sqrt(getNormSquare()); }
+    decimal getNorm() const;
     /// Minimum element value.
-    decimal getMinValue() const { return std::min({ v[0], v[1], v[2] }); }
+    decimal getMinValue() const;
     /// Maximum element value.
-    decimal getMaxValue() const { return std::max({ v[0], v[1], v[2] }); }
+    decimal getMaxValue() const;
     /// Return a new vector with element-wise absolute values.
     Vector3D getAbsolute() const;
     /// Return a normalised copy of the vector. If zero-length, return null vector.
@@ -100,7 +93,7 @@ public:
     void setX(decimal);
     void setY(decimal);
     void setZ(decimal);
-    void setToZero();
+    void setToNull();
     void setAllValues(decimal);
     void setAllValues(decimal, decimal, decimal);
     /// @}
@@ -228,6 +221,13 @@ template <class F>
 inline Vector3D applyVector(const Vector3D& A, decimal s, F&& f)
 {
     return Vector3D { f(A[0], s), f(A[1], s), f(A[2], s) };
+}
+
+/// Apply a binary operation element-wise between a scalar and a vector.
+template <class F>
+inline Vector3D applyVector(decimal s, const Vector3D& A, F&& f)
+{
+    return Vector3D { f(s, A[0]), f(s, A[1]), f(s, A[2]) };
 }
 /// @}
 

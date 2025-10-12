@@ -37,7 +37,7 @@
  * @code
  * Quaternion q1(0, 0, 0, 1);     // Identity
  * Quaternion q2(Vector3D(1,0,0), 0.5);
- * q1.normalize();
+ * q1.normalise();
  * Quaternion q3 = q1 * q2;
  * @endcode
  */
@@ -53,17 +53,9 @@ public:
     // ============================================================================
     /// @{
     Quaternion3D() = default;
-    Quaternion3D(decimal _x, decimal _y, decimal _z, decimal _w)
-        : v { Vector3D(_x, _y, _z) }
-        , w { _w }
-    {}
-    Quaternion3D(const Vector3D& _v, decimal _w)
-        : v { _v }
-        , w { _w }
-    {}
-    Quaternion3D(decimal w, const Vector3D& v)
-        : Quaternion3D(v, w)
-    {}
+    Quaternion3D(decimal _x, decimal _y, decimal _z, decimal _w);
+    Quaternion3D(const Vector3D& _v, decimal _w);
+    Quaternion3D(decimal w, const Vector3D& v);
     /// Constructor from rotation matrix.
     explicit Quaternion3D(const Matrix3x3& m);
     /// Constructor from Euler angles.
@@ -76,10 +68,10 @@ public:
     /// @name Getters
     // ============================================================================
     /// @{
-    decimal   getRealPart() const { return w; };
-    Vector3D  getImaginaryPart() const { return v; };
-    decimal   getImaginaryPartElement(int index) const { return v[index]; };
-    Matrix3x3 getRotationMatrix() const;
+    decimal  getRealPart() const;
+    Vector3D getImaginaryPart() const;
+    decimal  getImaginaryPartElement(int index) const;
+
     /// @}
 
     // ============================================================================
@@ -90,8 +82,8 @@ public:
     /// In-place conjugate (negate imaginary part).
     void conjugate();
     /// In-place normalise. If zero-length quaternion, becomes null quaternion.
-    void normalize();
-    /// In-place inverse (conjugate then normalize).
+    void normalise();
+    /// In-place inverse (conjugate then normalise).
     void inverse();
     /// Squared Euclidean norm. Cheaper than `getNorm()`.
     decimal getNormSquare() const;
@@ -103,10 +95,11 @@ public:
     static Quaternion3D getNull() { return Quaternion3D(0, 0, 0, 0); };
     /// Return a conjugated copy of the quaternion.
     Quaternion3D getConjugate() const;
-    /// Return a normalized copy of the quaternion.
-    Quaternion3D getNormalize() const;
+    /// Return a normalised copy of the quaternion.
+    Quaternion3D getNormalise() const;
     /// Return an inverted copy of the quaternion.
     Quaternion3D getInverse() const;
+    Matrix3x3    getRotationMatrix() const;
     /// @}
 
     // ============================================================================
@@ -116,7 +109,7 @@ public:
     void setRealPart(decimal value);
     void setImaginaryPart(decimal, decimal, decimal);
     void setImaginaryPart(const Vector3D& newv);
-    void setToZero();
+    void setToNull();
     void setToIdentity();
     void setAllValues(decimal, decimal, decimal, decimal);
     void setAllValues(const Vector3D&, decimal);
@@ -139,7 +132,7 @@ public:
     bool isIdentity() const;
     bool isInvertible() const;
     bool isOrthogonal() const;
-    bool isNormalized() const;
+    bool isNormalised() const;
     /// @}
 
     // ============================================================================
@@ -216,6 +209,9 @@ public:
     /// Apply a binary operation element-wise between a quaternion and a decimal.
     template <class F>
     static Quaternion3D apply(const Quaternion3D& A, decimal s, F&& func);
+    /// Apply a binary operation element-wise between a decimal and a quaternion.
+    template <class F>
+    static Quaternion3D apply(decimal s, const Quaternion3D& A, F&& func);
     /// @}
 };
 

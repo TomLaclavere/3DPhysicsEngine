@@ -16,6 +16,16 @@
 #include "objects/collision.hpp"
 
 // ============================================================================
+//  Getters
+// ============================================================================
+ObjectType      Plane::getType() const { return ObjectType::Plane; }
+const Vector3D& Plane::getNormal() const { return normal; }
+const Vector3D& Plane::getU() const { return u; }
+const Vector3D& Plane::getV() const { return v; }
+decimal         Plane::getHalfWidth() const { return halfWidth; }
+decimal         Plane::getHalfHeight() const { return halfHeight; }
+
+// ============================================================================
 //  Utilities
 // ============================================================================
 void Plane::updateLocalAxes()
@@ -23,7 +33,7 @@ void Plane::updateLocalAxes()
     // Choose an arbitrary vector not parallel to the normal
     Vector3D ref = (std::abs(normal[0]) < 0.9_d) ? Vector3D(1_d, 0_d, 0_d) : Vector3D(0_d, 0_d, 1_d);
     u            = (normal.crossProduct(ref)).getNormalised();
-    v            = (normal.crossProduct(u)).getNormalised();
+    v            = (u.crossProduct(normal)).getNormalised();
 }
 Vector3D Plane::projectPoint(const Vector3D& point) const
 {
@@ -36,7 +46,8 @@ bool Plane::containsPoint(const Vector3D& point) const
     Vector3D local = point - getPosition();
     decimal  s     = local.dotProduct(u);
     decimal  t     = local.dotProduct(v);
-    return (std::abs(s) <= halfWidth && std::abs(t) <= halfHeight);
+    return (commonMaths::approxSmallerOrEqualThan(std::abs(s), halfWidth) &&
+            commonMaths::approxSmallerOrEqualThan(std::abs(t), halfHeight));
 }
 
 // ============================================================================

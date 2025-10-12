@@ -55,10 +55,6 @@ endif()
 # =============================================
 # Source Files Groups
 # =============================================
-set(ENGINE_CORE_SOURCES
-    src/config.cpp
-)
-
 set(ENGINE_MATH_SOURCES
     src/mathematics/vector.cpp
     src/mathematics/matrix.cpp
@@ -77,6 +73,7 @@ set(ENGINE_UTILITIES_SOURCE
     src/utilities/timer.cpp)
 
 set(ENGINE_WORLD_SOURCES
+    src/world/config.cpp
     src/world/physicsWorld.cpp)
 
 set(ENGINE_ALL_SOURCES

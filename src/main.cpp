@@ -1,6 +1,6 @@
-#include "config.hpp"
 #include "objects/sphere.hpp"
 #include "utilities/timer.cpp"
+#include "world/config.hpp"
 #include "world/physicsWorld.hpp"
 
 #include <chrono>

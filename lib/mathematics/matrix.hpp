@@ -46,9 +46,7 @@ public:
     /// @{
     Matrix3x3() = default;
     Matrix3x3(decimal m11, decimal m12, decimal m13, decimal m21, decimal m22, decimal m23, decimal m31,
-              decimal m32, decimal m33)
-        : m { m11, m12, m13, m21, m22, m23, m31, m32, m33 }
-    {}
+              decimal m32, decimal m33);
     explicit Matrix3x3(decimal value)
         : m { value, value, value, value, value, value, value, value, value }
     {}
@@ -59,9 +57,7 @@ public:
         : m { v1.getX(), v1.getY(), v1.getZ(), v2.getX(), v2.getY(),
               v2.getZ(), v3.getX(), v3.getY(), v3.getZ() }
     {}
-    Matrix3x3(const Matrix3x3& m)
-        : m { m.m }
-    {}
+    Matrix3x3(const Matrix3x3& m);
     /// @}
 
     // ============================================================================
@@ -99,8 +95,8 @@ public:
     /// @name Getters
     // ============================================================================
     /// @{
-    Vector3D getRow(int index) const { return Vector3D(m[index * 3], m[index * 3 + 1], m[index * 3 + 2]); }
-    Vector3D getColumn(int index) const { return Vector3D(m[index], m[index + 3], m[index + 6]); }
+    Vector3D getRow(int index) const;
+    Vector3D getColumn(int index) const;
     Vector3D getDiagonal() const { return Vector3D(m[0], m[4], m[8]); }
     /// @}
 
@@ -215,54 +211,6 @@ public:
 
 /// @addtogroup MatrixMaths
 /// @{
-
-// ============================================================================
-/// @name Element Access Operators
-// ============================================================================
-/// @{
-inline int Matrix3x3::mapping(int ind_x, int ind_y) const
-{
-    if (ind_x < 0 || ind_x >= 3 || ind_y < 0 || ind_y >= 3)
-    {
-        throw std::out_of_range("Matrix3x3 indices out of range");
-    }
-    return ind_x * 3 + ind_y;
-}
-
-// 2D element access
-inline decimal& Matrix3x3::at(int ind_x, int ind_y)
-{
-    if (ind_x < 0 || ind_x >= 3 || ind_y < 0 || ind_y >= 3)
-        throw std::out_of_range("Matrix3x3 index out of range");
-    return m[mapping(ind_x, ind_y)];
-}
-inline decimal Matrix3x3::at(int ind_x, int ind_y) const
-{
-    if (ind_x < 0 || ind_x >= 3 || ind_y < 0 || ind_y >= 3)
-        throw std::out_of_range("Matrix3x3 index out of range");
-    return m[mapping(ind_x, ind_y)];
-}
-inline decimal& Matrix3x3::operator()(int ind_x, int ind_y) { return m[mapping(ind_x, ind_y)]; }
-inline decimal  Matrix3x3::operator()(int ind_x, int ind_y) const { return m[mapping(ind_x, ind_y)]; }
-
-// 1D element access
-inline decimal& Matrix3x3::at(int ind)
-{
-    if (ind < 0 || ind >= 9)
-        throw std::out_of_range("Matrix3x3 index out of range");
-    return m[ind];
-}
-inline decimal Matrix3x3::at(int ind) const
-{
-    if (ind < 0 || ind >= 9)
-        throw std::out_of_range("Matrix3x3 index out of range");
-    return m[ind];
-}
-inline decimal& Matrix3x3::operator()(int ind) { return m[ind]; }
-inline decimal  Matrix3x3::operator()(int ind) const { return m[ind]; }
-inline decimal& Matrix3x3::operator[](int ind) { return m[ind]; }
-inline decimal  Matrix3x3::operator[](int ind) const { return m[ind]; }
-/// @}
 
 // ============================================================================
 /// @name Matrix Operations

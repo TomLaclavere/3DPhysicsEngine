@@ -52,9 +52,9 @@ public:
 
     /// Singleton accessor
     static Config& get();
-    decimal        getGravity() const { return gravity; }
-    decimal        getTimeStep() const { return timeStep; }
-    unsigned int   getMaxIterations() const { return maxIterations; }
+    decimal        getGravity() const;
+    decimal        getTimeStep() const;
+    unsigned int   getMaxIterations() const;
     /// @}
 
     // ============================================================================

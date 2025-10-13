@@ -58,13 +58,14 @@ void PhysicsWorld::integrateEuler()
 // ============================================================================
 //  Force computation
 // ============================================================================
-Vector3D PhysicsWorld::computeGravity() { return Vector3D(0_d, 0_d, -gravityCst); }
 /// Apply gravtiational force to all Object in Physical World by updating their acceleration.
 void PhysicsWorld::applyGravity()
 {
     for (auto* obj : objects)
     {
         if (!obj)
+            continue;
+        if (!(obj->getIsFixed()))
             continue;
 
         // Update acceleration

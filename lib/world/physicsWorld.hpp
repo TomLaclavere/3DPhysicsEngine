@@ -7,6 +7,7 @@
 #include "mathematics/common.hpp"
 #include "objects/object.hpp"
 #include "world/config.hpp"
+#include "world/physics.hpp"
 
 #include <vector>
 
@@ -27,7 +28,7 @@ private:
     bool     isRunning  = false;
     decimal  timeStep   = config.getTimeStep();
     decimal  gravityCst = config.getGravity();
-    Vector3D gravityAcc = computeGravity();
+    Vector3D gravityAcc = Physics::computeGravityAcc(gravityCst);
 
 public:
     // ============================================================================

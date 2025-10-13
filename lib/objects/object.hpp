@@ -29,14 +29,19 @@ enum class ObjectType
 struct Object
 {
 private:
-    Vector3D position     = Vector3D();
-    Vector3D rotation     = Vector3D();
-    Vector3D size         = Vector3D(1_d, 1_d, 1_d);
-    Vector3D velocity     = Vector3D();
-    Vector3D acceleration = Vector3D();
-    Vector3D force        = Vector3D();
-    Vector3D torque       = Vector3D();
-    decimal  mass         = 0_d; // static by default
+    Vector3D position       = Vector3D();
+    Vector3D rotation       = Vector3D();
+    Vector3D size           = Vector3D(1_d, 1_d, 1_d);
+    Vector3D velocity       = Vector3D();
+    Vector3D acceleration   = Vector3D();
+    Vector3D force          = Vector3D();
+    Vector3D torque         = Vector3D();
+    decimal  mass           = 0_d; // static by default
+    decimal  stiffnessCst   = 0_d;
+    decimal  restitutionCst = 0_d;
+    decimal  frictionCst    = 0_d;
+
+    bool isFixed = true;
 
 public:
     /// @brief Constructions can be done with various levels of details.
@@ -62,7 +67,9 @@ public:
         : position { position }
         , size { size }
         , mass { mass }
-    {}
+    {
+        checkFixed();
+    }
     Object(const Vector3D& position, const Vector3D& rotation, const Vector3D& size, const Vector3D& velocity,
            const Vector3D& acceleration, const Vector3D& force, const Vector3D& torque, decimal mass)
         : position { position }
@@ -73,7 +80,9 @@ public:
         , force { force }
         , torque { torque }
         , mass { mass }
-    {}
+    {
+        checkFixed();
+    }
     virtual ~Object() = default;
     /// @}
 
@@ -89,7 +98,11 @@ public:
     Vector3D           getForce() const;
     Vector3D           getTorque() const;
     decimal            getMass() const;
+    decimal            getStiffnessCst() const;
+    decimal            getRestitutionCst() const;
+    decimal            getFrictionCst() const;
     virtual ObjectType getType() const;
+    bool               getIsFixed() const;
     /// @}
 
     // ============================================================================
@@ -104,6 +117,7 @@ public:
     void setForce(const Vector3D& _force);
     void setTorque(const Vector3D& _torque);
     void setMass(const decimal _mass);
+    void setIsFixed(bool b);
     /// @}
 
     // ============================================================================
@@ -128,7 +142,12 @@ public:
     /// @name Physics
     // ============================================================================
     /// @{
-    bool isStatic() const { return mass <= 0_d; }
+    void checkFixed()
+    {
+        if (mass <= 0_d)
+            isFixed = true;
+    }
+    bool isFixed() const { return isFixed; }
     void resetForces()
     {
         force.setToNull();

@@ -80,11 +80,11 @@ public:
     // ============================================================================
     /// @{
 
+    /// @brief Integrate using Euler integration method.
+    void integrateEuler(Object& obj, decimal dt);
     /// @brief Compute physical world at time t + dt.
     /// @param dt Timestep parameter in second.
-    void update(decimal dt);
-    /// @brief Integrate using Euler integration method.
-    void integrateEuler();
+    void integrate(decimal dt);
     /// @}
 
     // ============================================================================
@@ -92,11 +92,14 @@ public:
     // ============================================================================
     /// @{
 
-    /// Compute gravitational acceleration from gravity constant.
-    Vector3D computeGravity();
-    void     computeForce();
     /// Apply gravitational force to all Object.
-    void applyGravity();
+    void applyGravityForces();
+    void applySpringForces(Object& obj, Object& other);
+    void applyDamplingForces(Object& obj, Object& other);
+    void applyFrictionForces(Object& obj, Object& other);
+    void applyContactForces(Object& obj, Object& other);
+    /// Avoid overlap by nullifying the acceleration and speed if collision occurs
+    void avoidOverlap(Object& obj, Object& other);
     void applyForces();
     /// @}
 
@@ -112,6 +115,10 @@ public:
         if (obj)
             objects.push_back(obj);
     }
+    void removeObject(Object* obj)
+    {
+        objects.erase(std::remove(objects.begin(), objects.end(), obj), objects.end());
+    }
     /// Clear Object array
     void    clearObjects() { objects.clear(); }
     size_t  getObjectCount() const { return objects.size(); }
@@ -122,6 +129,6 @@ public:
     /// @name Printing & Saving
     // ============================================================================
     /// @{
-    void print();
+    void printState() const;
     void save();
 };

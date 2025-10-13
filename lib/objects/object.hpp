@@ -41,7 +41,7 @@ private:
     decimal  restitutionCst = 0_d;
     decimal  frictionCst    = 0_d;
 
-    bool isFixed = true;
+    bool fixed = true;
 
 public:
     /// @brief Constructions can be done with various levels of details.
@@ -117,13 +117,15 @@ public:
     void setForce(const Vector3D& _force);
     void setTorque(const Vector3D& _torque);
     void setMass(const decimal _mass);
-    void setIsFixed(bool b);
+    void setIsFixed(bool b) { fixed = b; };
+    void setReconstitutionCst(decimal e) { restitutionCst = e; }
     /// @}
 
     // ============================================================================
     /// @name Transformations
     // ============================================================================
     /// @{
+    void addAcceleration(const Vector3D& acc) { acceleration += acc; }
     void applyTranslation(const Vector3D& v_translation) { position += v_translation; }
     void applyRotation(const Vector3D& v_rotation);
     /**
@@ -145,9 +147,9 @@ public:
     void checkFixed()
     {
         if (mass <= 0_d)
-            isFixed = true;
+            fixed = true;
     }
-    bool isFixed() const { return isFixed; }
+    bool isFixed() const { return fixed; }
     void resetForces()
     {
         force.setToNull();

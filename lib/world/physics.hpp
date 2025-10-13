@@ -17,4 +17,5 @@ Vector3D computeFrictionForce(const Object& obj1, const Object& obj2, decimal mu
 Vector3D computeFrictionForce(const Object& obj1, const Object& obj2, decimal mu, decimal e, decimal k);
 Vector3D computeContactForce(const Object& obj1, const Object& obj2);
 Vector3D computeContactForce(const Object& obj1, const Object& obj2, decimal mu, decimal e, decimal k);
+
 } // namespace Physics

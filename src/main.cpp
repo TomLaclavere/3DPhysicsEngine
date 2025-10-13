@@ -1,3 +1,4 @@
+#include "objects/plane.hpp"
 #include "objects/sphere.hpp"
 #include "utilities/timer.cpp"
 #include "world/config.hpp"
@@ -41,8 +42,12 @@ int main(int argc, char** argv)
     // Initialize simulation
     Timer        initTimer;
     PhysicsWorld world(config);
-    auto*        sphere = new Sphere(Vector3D(0_d, 0_d, 0_d), 1_d, 1_d);
+    auto*        sphere = new Sphere(Vector3D(0_d, 0_d, 10_d), 1_d, 1_d);
+    auto*        ground = new Plane(Vector3D(0_d), Vector3D(0_d, 0_d, 0_d));
+    sphere->setIsFixed(false);
+
     world.addObject(sphere);
+    world.addObject(ground);
     world.start();
 
     std::cout << "Initializing world took: " << initTimer.elapsedMilliseconds() << " ms\n\n";
@@ -70,7 +75,7 @@ int main(int argc, char** argv)
         const Vector3D pos  = sphere->getPosition();
         const Vector3D vel  = sphere->getVelocity();
 
-        world.update(timeStep);
+        world.integrate(timeStep);
 
         if (counter % 100 == 0)
         {

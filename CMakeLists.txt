@@ -74,6 +74,7 @@ set(ENGINE_UTILITIES_SOURCE
 
 set(ENGINE_WORLD_SOURCES
     src/world/config.cpp
+    src/world/physics.cpp
     src/world/physicsWorld.cpp)
 
 set(ENGINE_ALL_SOURCES

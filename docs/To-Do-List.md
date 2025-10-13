@@ -4,6 +4,7 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 ## General Tasks
 
+- [ ] Remove Codacy
 - [ ] **Integrate :** method for all objects or for PhysicsWorld ? 
 - [x] Verify scripts/ (check parameters and re-compile conditions)
 

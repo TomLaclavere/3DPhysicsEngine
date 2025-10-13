@@ -70,6 +70,7 @@ public:
         , halfWidth { size[1] * 0.5_d }
     {
         updateLocalAxes();
+        checkFixed();
     }
 
     Plane(const Vector3D& position, const Vector3D& rotation, const Vector3D& size, const Vector3D& velocity,
@@ -78,6 +79,7 @@ public:
         : Object(position, rotation, size, velocity, acceleration, force, torque, mass)
     {
         updateLocalAxes();
+        checkFixed();
     }
 
     virtual ~Plane() = default;

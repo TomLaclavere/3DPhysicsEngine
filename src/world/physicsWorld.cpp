@@ -36,13 +36,12 @@ void PhysicsWorld::initialize()
 // ============================================================================
 //  Integration
 // ============================================================================
-// Semi-implicit Euler integrator for one object
-static void integrateSemiImplicit(Object* obj, decimal dt)
+void PhysicsWorld::integrateEuler(Object& obj, decimal dt)
 {
     // v_{t+dt} = v_t + a_t * dt
-    obj->setVelocity(obj->getVelocity() + obj->getAcceleration() * dt);
+    obj.setVelocity(obj.getVelocity() + obj.getAcceleration() * dt);
     // x_{t+dt} = x_t + v_{t+dt} * dt
-    obj->setPosition(obj->getPosition() + obj->getVelocity() * dt);
+    obj.setPosition(obj.getPosition() + obj.getVelocity() * dt);
 }
 void PhysicsWorld::integrate(decimal dt)
 {

@@ -26,7 +26,7 @@ decimal    Object::getStiffnessCst() const { return stiffnessCst; }
 decimal    Object::getRestitutionCst() const { return restitutionCst; }
 decimal    Object::getFrictionCst() const { return frictionCst; }
 ObjectType Object::getType() const { return ObjectType::Generic; }
-bool       Object::getIsFixed() const { return isFixed; }
+bool       Object::getIsFixed() const { return fixed; }
 
 // ============================================================================
 //  Setters

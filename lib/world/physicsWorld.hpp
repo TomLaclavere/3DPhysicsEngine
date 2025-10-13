@@ -67,7 +67,7 @@ public:
     // ============================================================================
     /// @{
 
-    /// Initialise PhysicalWorld
+    /// Initialize the physics world: reset objects, time step, and gravity.
     void initialize();
     void start() { isRunning = true; }
     void stop() { isRunning = false; }
@@ -80,10 +80,10 @@ public:
     // ============================================================================
     /// @{
 
-    /// @brief Integrate using Euler integration method.
+    /// Semi-implicit Euler integrator for one object
     void integrateEuler(Object& obj, decimal dt);
-    /// @brief Compute physical world at time t + dt.
-    /// @param dt Timestep parameter in second.
+    /// @brief Integrate all objects over one time step.
+    /// Resets accelerations, applies forces, and moves objects using semi-implicit Euler.
     void integrate(decimal dt);
     /// @}
 
@@ -92,14 +92,19 @@ public:
     // ============================================================================
     /// @{
 
-    /// Apply gravitational force to all Object.
+    /// Apply gravitational force to all movable objects.
     void applyGravityForces();
+    /// Apply spring forces on a single object due to another.
     void applySpringForces(Object& obj, Object& other);
+    /// Apply dampling forces on a single object due to another.
     void applyDamplingForces(Object& obj, Object& other);
+    /// Apply friction forces on a single object due to another.
     void applyFrictionForces(Object& obj, Object& other);
+    /// Apply contact forces (spring + damping + friction) between two objects.
     void applyContactForces(Object& obj, Object& other);
-    /// Avoid overlap by nullifying the acceleration and speed if collision occurs
+    /// Stop overlapping objects by zeroing their velocity and acceleration.
     void avoidOverlap(Object& obj, Object& other);
+    /// Compute and apply all forces for the current physics step.
     void applyForces();
     /// @}
 
@@ -108,8 +113,7 @@ public:
     // ============================================================================
     /// @{
 
-    /// @brief  Add Object in the PhysicaWorld.
-    /// @param obj Object instance pointer.
+    /// Add Object in the PhysicaWorld.
     void addObject(Object* obj)
     {
         if (obj)
@@ -129,6 +133,9 @@ public:
     /// @name Printing & Saving
     // ============================================================================
     /// @{
+
+    /// Print the current state of the physics world to stdout.
     void printState() const;
     void save();
+    /// @}
 };

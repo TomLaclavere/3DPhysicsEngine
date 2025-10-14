@@ -5,6 +5,10 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 ## General Tasks
 
 - [ ] Remove Codacy
+- [ ] Test Physics
+- [ ] Test PhysicsWorld
+- [ ] Build running test example to verify the physical accuracy of simulation
+  - [ ] Free Fall
 - [ ] **Integrate :** method for all objects or for PhysicsWorld ? 
 - [x] Verify scripts/ (check parameters and re-compile conditions)
 

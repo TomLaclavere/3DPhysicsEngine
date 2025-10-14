@@ -2,18 +2,16 @@ name: 3DPhysicsEngine CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   build-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        compiler: [gcc] # , clang]
+        compiler: [gcc]
 
     steps:
       - name: Checkout code
@@ -22,21 +20,12 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          if [ "${{ matrix.compiler }}" = "gcc" ]; then
-            sudo apt-get install -y cmake ninja-build libyaml-cpp-dev gcc g++ gcovr
-          else
-            sudo apt-get install -y cmake ninja-build libyaml-cpp-dev clang llvm
-          fi
+          sudo apt-get install -y cmake ninja-build libyaml-cpp-dev gcc g++ gcovr jq bc git
 
       - name: Set environment variables
         run: |
-          if [ "${{ matrix.compiler }}" = "gcc" ]; then
-            echo "CC=gcc" >> $GITHUB_ENV
-            echo "CXX=g++" >> $GITHUB_ENV
-          else
-            echo "CC=clang" >> $GITHUB_ENV
-            echo "CXX=clang++" >> $GITHUB_ENV
-          fi
+          echo "CC=gcc" >> $GITHUB_ENV
+          echo "CXX=g++" >> $GITHUB_ENV
 
       - name: Configure project
         run: |
@@ -53,14 +42,46 @@ jobs:
         run: ctest --test-dir build --output-on-failure -j$(nproc)
 
       - name: Generate coverage report
-        run: cmake --build build --target coverage-console
-
-      - name: Generate Codacy coverage report
         run: |
-          gcovr --root . --exclude-unreachable-branches --exclude-throw-branches --xml coverage.xml
+          mkdir -p coverage
+          gcovr --root . --json coverage/coverage.json --html-details coverage/coverage.html --xml coverage/coverage.xml \
+                --exclude-unreachable-branches --exclude-throw-branches --print-summary
 
-      - name: Upload coverage to Codacy
-        uses: codacy/codacy-coverage-reporter-action@v1
+      - name: Generate coverage badge
+        run: |
+          total_coverage=$(jq '.line_percent' coverage/coverage.json)
+          rounded=$(printf "%.0f" "$total_coverage")
+          color="red"
+          if (( $(echo "$rounded >= 90" | bc -l) )); then color="brightgreen";
+          elif (( $(echo "$rounded >= 75" | bc -l) )); then color="green";
+          elif (( $(echo "$rounded >= 50" | bc -l) )); then color="yellow";
+          fi
+
+          echo "{\"schemaVersion\":1,\"label\":\"coverage\",\"message\":\"${rounded}%\",\"color\":\"${color}\"}" > coverage/coverage-badge.json
+
+          # Simple SVG badge 
+          cat <<EOF > coverage/badge.svg
+          <svg xmlns="http://www.w3.org/2000/svg" width="120" height="20">
+            <rect width="70" height="20" fill="#555"/>
+            <rect x="70" width="50" height="20" fill="${color}"/>
+            <text x="35" y="14" fill="#fff" font-family="Verdana" font-size="11" text-anchor="middle">coverage</text>
+            <text x="95" y="14" fill="#fff" font-family="Verdana" font-size="11" text-anchor="middle">${rounded}%</text>
+          </svg>
+          EOF
+
+      - name: Commit and push badge
+        if: github.ref == 'refs/heads/main'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add coverage/badge.svg coverage/coverage-badge.json coverage/coverage.html
+          git commit -m "Update coverage badge [skip ci]" || echo "No changes to commit"
+          git push origin HEAD:main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload coverage report as artifact
+        uses: actions/upload-artifact@v4
         with:
-          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: coverage.xml
+          name: coverage-report
+          path: coverage/

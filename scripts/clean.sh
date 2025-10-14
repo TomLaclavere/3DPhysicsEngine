@@ -22,8 +22,9 @@ Options:
   -h, --help        Show this help message
 
 Behaviour:
-    - Safer than a raw `rm -rf`, warns if the directory looks suspicious.
-    - Defaults to `$BUILD_DIR` or `build/`.
+    - Safer than a raw `rm -rf`, validates target paths.
+    - Defaults to "$BUILD_DIR" or "build/".
+    - Prevents accidental deletion of critical system directories.
 
 Examples:
     # show help
@@ -51,11 +52,33 @@ while [[ $# -gt 0 ]]; do
 done
 
 # =====================================================================
+# Safety validation
+# =====================================================================
+# Normalize to absolute path
+ABS_BUILD_DIR="$(realpath -m "${BUILD_DIR}" 2>/dev/null || echo "${BUILD_DIR}")"
+
+if [[ -z "$ABS_BUILD_DIR" || "$ABS_BUILD_DIR" == "/" || "$ABS_BUILD_DIR" == "/home" || "$ABS_BUILD_DIR" == "/root" || "$ABS_BUILD_DIR" == "$HOME" ]]; then
+    echo "[ERROR] Refusing to remove unsafe directory: '$ABS_BUILD_DIR'"
+    exit 1
+fi
+
+# Warn if BUILD_DIR does not look like a subdirectory of the project
+PROJECT_ROOT="$(realpath "$(dirname "${BASH_SOURCE[0]}")/..")"
+if [[ "$ABS_BUILD_DIR" != "$PROJECT_ROOT"* ]]; then
+    echo "[WARNING] '$ABS_BUILD_DIR' is outside the project directory ($PROJECT_ROOT)."
+    read -p "Are you sure you want to delete it? [y/N] " confirm
+    if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
+        echo "[CANCELLED] No changes made."
+        exit 0
+    fi
+fi
+
+# =====================================================================
 # Perform cleaning
 # =====================================================================
 if [[ -d "$BUILD_DIR" ]]; then
     echo "[CLEAN] Removing build directory: $BUILD_DIR"
-    rm -rf "$BUILD_DIR"
+    rm -rf -- "$BUILD_DIR"
 else
     echo "[CLEAN] No build directory found at: $BUILD_DIR"
 fi

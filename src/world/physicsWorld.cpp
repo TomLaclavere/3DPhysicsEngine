@@ -53,7 +53,7 @@ void PhysicsWorld::integrate(decimal dt)
     // Reset accelerations
     for (auto* obj : objects)
     {
-        if (obj && !obj->isFixed())
+        if (obj)
         {
             obj->setAcceleration(Vector3D(0_d, 0_d, 0_d));
         }

@@ -118,7 +118,7 @@ public:
     void setTorque(const Vector3D& _torque);
     void setMass(const decimal _mass);
     void setIsFixed(bool b) { fixed = b; };
-    void setReconstitutionCst(decimal e) { restitutionCst = e; }
+    void setRestitutionCst(decimal e) { restitutionCst = e; }
     /// @}
 
     // ============================================================================
@@ -148,6 +148,8 @@ public:
     {
         if (mass <= 0_d)
             fixed = true;
+        else
+            fixed = false;
     }
     bool isFixed() const { return fixed; }
     void resetForces()

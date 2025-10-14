@@ -44,44 +44,36 @@ jobs:
       - name: Generate coverage report
         run: |
           mkdir -p coverage
-          gcovr --root . --json coverage/coverage.json --html-details coverage/coverage.html --xml coverage/coverage.xml \
-                --exclude-unreachable-branches --exclude-throw-branches --print-summary
+          # Generate JSON coverage report
+          gcovr -r . --json coverage/coverage.json
 
-      - name: Generate coverage badge
-        run: |
-          total_coverage=$(jq '.line_percent' coverage/coverage.json)
-          rounded=$(printf "%.0f" "$total_coverage")
-          color="red"
-          if (( $(echo "$rounded >= 90" | bc -l) )); then color="brightgreen";
-          elif (( $(echo "$rounded >= 75" | bc -l) )); then color="green";
-          elif (( $(echo "$rounded >= 50" | bc -l) )); then color="yellow";
+          # Extract numeric coverage (0–1 float) and convert to percentage
+          total_coverage=$(jq '.line_coverage' coverage/coverage.json)
+          if [[ -z "$total_coverage" || "$total_coverage" == "null" ]]; then
+            echo "Error: could not extract line_coverage from gcovr output"
+            cat coverage/coverage.json
+            exit 1
           fi
 
-          echo "{\"schemaVersion\":1,\"label\":\"coverage\",\"message\":\"${rounded}%\",\"color\":\"${color}\"}" > coverage/coverage-badge.json
+          # Convert float (e.g., 0.87) to percentage (87)
+          percent=$(awk "BEGIN {print int($total_coverage * 100)}")
 
-          # Simple SVG badge 
+          # Determine badge color
+          color="red"
+          if (( $(echo "$percent >= 90" | bc -l) )); then color="brightgreen";
+          elif (( $(echo "$percent >= 75" | bc -l) )); then color="green";
+          elif (( $(echo "$percent >= 50" | bc -l) )); then color="yellow";
+          fi
+
+          # Generate JSON badge metadata (for Shields.io-style)
+          echo "{\"schemaVersion\":1,\"label\":\"coverage\",\"message\":\"${percent}%\",\"color\":\"${color}\"}" > coverage/coverage-badge.json
+
+          # Generate simple SVG badge
           cat <<EOF > coverage/badge.svg
           <svg xmlns="http://www.w3.org/2000/svg" width="120" height="20">
             <rect width="70" height="20" fill="#555"/>
             <rect x="70" width="50" height="20" fill="${color}"/>
             <text x="35" y="14" fill="#fff" font-family="Verdana" font-size="11" text-anchor="middle">coverage</text>
-            <text x="95" y="14" fill="#fff" font-family="Verdana" font-size="11" text-anchor="middle">${rounded}%</text>
+            <text x="95" y="14" fill="#fff" font-family="Verdana" font-size="11" text-anchor="middle">${percent}%</text>
           </svg>
           EOF
-
-      - name: Commit and push badge
-        if: github.ref == 'refs/heads/main'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add coverage/badge.svg coverage/coverage-badge.json coverage/coverage.html
-          git commit -m "Update coverage badge [skip ci]" || echo "No changes to commit"
-          git push origin HEAD:main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload coverage report as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: coverage/

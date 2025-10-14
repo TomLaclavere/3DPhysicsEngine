@@ -1,4 +1,4 @@
 # config.yaml
-gravity: -9.81
+gravity: 9.81
 timestep: 0.01
 solverIters: 1000

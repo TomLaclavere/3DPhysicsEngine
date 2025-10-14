@@ -82,7 +82,7 @@ decimal Physics::dampingRatioFromRestitution(decimal e)
  * @param g Gravitational constant (usually -9.81).
  * @return Gravity acceleration as a 3D vector (along Z-axis).
  */
-Vector3D Physics::computeGravityAcc(decimal g) { return Vector3D(0_d, 0_d, g); }
+Vector3D Physics::computeGravityAcc(decimal g) { return Vector3D(0_d, 0_d, -g); }
 
 /**
  * @brief Compute gravitational force on a given object.
@@ -92,7 +92,7 @@ Vector3D Physics::computeGravityAcc(decimal g) { return Vector3D(0_d, 0_d, g); }
  */
 Vector3D Physics::computeGravityForce(decimal g, const Object& obj)
 {
-    return Vector3D(0_d, 0_d, obj.getMass() * g);
+    return Vector3D(0_d, 0_d, -obj.getMass() * g);
 }
 
 /**

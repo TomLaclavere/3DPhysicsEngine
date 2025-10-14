@@ -90,6 +90,13 @@ Vector3D max(const Vector3D& a, const Vector3D& b)
 {
     return Vector3D { std::max(a[0], b[0]), std::max(a[1], b[1]), std::max(a[2], b[2]) };
 }
+std::string Vector3D::formatVector() const
+{
+    std::ostringstream oss;
+    oss << std::scientific << std::setprecision(3) << "(" << std::setw(10) << v[0] << ", " << std::setw(10)
+        << v[1] << ", " << std::setw(10) << v[2] << ")";
+    return oss.str();
+}
 
 // ============================================================================
 //  Setters

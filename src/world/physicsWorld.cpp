@@ -55,7 +55,7 @@ void PhysicsWorld::integrate(decimal dt)
     {
         if (obj)
         {
-            obj->setAcceleration(Vector3D(0_d, 0_d, 0_d));
+            obj->setAcceleration(Vector3D(0_d));
         }
     }
 
@@ -79,7 +79,7 @@ void PhysicsWorld::applyGravityForces()
     {
         for (auto* obj : objects)
             if (obj && !obj->getIsFixed())
-                obj->addAcceleration(-gravityAcc);
+                obj->addAcceleration(gravityAcc);
     }
 }
 

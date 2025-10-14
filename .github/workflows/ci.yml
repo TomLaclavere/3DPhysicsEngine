@@ -2,18 +2,16 @@ name: 3DPhysicsEngine CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   build-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        compiler: [gcc] # , clang]
+        compiler: [gcc]
 
     steps:
       - name: Checkout code
@@ -22,21 +20,12 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          if [ "${{ matrix.compiler }}" = "gcc" ]; then
-            sudo apt-get install -y cmake ninja-build libyaml-cpp-dev gcc g++ gcovr
-          else
-            sudo apt-get install -y cmake ninja-build libyaml-cpp-dev clang llvm
-          fi
+          sudo apt-get install -y cmake ninja-build libyaml-cpp-dev gcc g++ gcovr jq bc git
 
       - name: Set environment variables
         run: |
-          if [ "${{ matrix.compiler }}" = "gcc" ]; then
-            echo "CC=gcc" >> $GITHUB_ENV
-            echo "CXX=g++" >> $GITHUB_ENV
-          else
-            echo "CC=clang" >> $GITHUB_ENV
-            echo "CXX=clang++" >> $GITHUB_ENV
-          fi
+          echo "CC=gcc" >> $GITHUB_ENV
+          echo "CXX=g++" >> $GITHUB_ENV
 
       - name: Configure project
         run: |
@@ -51,16 +40,3 @@ jobs:
 
       - name: Run tests
         run: ctest --test-dir build --output-on-failure -j$(nproc)
-
-      - name: Generate coverage report
-        run: cmake --build build --target coverage-console
-
-      - name: Generate Codacy coverage report
-        run: |
-          gcovr --root . --exclude-unreachable-branches --exclude-throw-branches --xml coverage.xml
-
-      - name: Upload coverage to Codacy
-        uses: codacy/codacy-coverage-reporter-action@v1
-        with:
-          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: coverage.xml

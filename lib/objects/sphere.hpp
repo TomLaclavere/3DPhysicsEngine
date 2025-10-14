@@ -43,11 +43,15 @@ public:
     {}
     Sphere(const Vector3D& position, const decimal& size, decimal mass)
         : Object(position, Vector3D(size), mass)
-    {}
+    {
+        checkFixed();
+    }
     Sphere(const Vector3D& position, const Vector3D& rotation, const decimal& size, const Vector3D& velocity,
            const Vector3D& acceleration, const Vector3D& force, const Vector3D& torque, decimal mass)
         : Object(position, rotation, Vector3D(size), velocity, acceleration, force, torque, mass)
-    {}
+    {
+        checkFixed();
+    }
     virtual ~Sphere() = default;
     /// @}
 

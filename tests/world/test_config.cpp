@@ -18,7 +18,7 @@ static std::string createTempConfigFile(const std::string& content)
 TEST(ConfigTest, DefaultValue)
 {
     Config& config = Config::get();
-    EXPECT_DECIMAL_EQ(config.getGravity(), 9.81_d);
+    EXPECT_DECIMAL_EQ(config.getGravity(), -9.81_d);
     EXPECT_DECIMAL_EQ(config.getTimeStep(), 0.01_d);
     EXPECT_EQ(config.getMaxIterations(), 10u);
 }
@@ -87,7 +87,7 @@ TEST(ConfigTest, OverrideFromCommandLineInvalid)
     config.overrideFromCommandLine(argc, const_cast<char**>(argv));
 
     // Values unchanged
-    EXPECT_DOUBLE_EQ(config.getGravity(), 9.81_d);
+    EXPECT_DOUBLE_EQ(config.getGravity(), -9.81_d);
     EXPECT_DOUBLE_EQ(config.getTimeStep(), 0.01_d);
     EXPECT_EQ(config.getMaxIterations(), 10);
 }

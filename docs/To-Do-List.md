@@ -4,7 +4,7 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 ## General Tasks
 
-- [ ] Remove Codacy
+- [x] Remove Codacy
 - [ ] Test Physics
 - [ ] Test PhysicsWorld
 - [ ] Build running test example to verify the physical accuracy of simulation

@@ -1,6 +1,6 @@
 #include "objects/plane.hpp"
 #include "objects/sphere.hpp"
-#include "utilities/timer.cpp"
+#include "src/utilities/timer.cpp"
 #include "world/config.hpp"
 #include "world/physicsWorld.hpp"
 
@@ -33,6 +33,7 @@ int main(int argc, char** argv)
     PhysicsWorld world(config);
     auto*        sphere = new Sphere(Vector3D(0_d, 0_d, 10_d), 1_d, 1_d);
     auto*        ground = new Plane(Vector3D(0_d), Vector3D(0_d, 0_d, 0_d));
+    sphere->setIsFixed(false);
 
     world.addObject(sphere);
     world.addObject(ground);

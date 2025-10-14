@@ -72,7 +72,13 @@ public:
     void start() { isRunning = true; }
     void stop() { isRunning = false; }
     /// Re-initialise PhysicsWorld
-    void reset() { initialize(); }
+    void resetAcc()
+    {
+        for (auto* obj : objects)
+        {
+            obj->setAcceleration(Vector3D(0_d));
+        }
+    }
     /// @}
 
     // ============================================================================

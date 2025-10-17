@@ -70,6 +70,14 @@ public:
     {
         checkFixed();
     }
+    Object(const Vector3D& position, const Vector3D& size, const Vector3D& velocity, decimal mass)
+        : position { position }
+        , size { size }
+        , velocity { velocity }
+        , mass { mass }
+    {
+        checkFixed();
+    }
     Object(const Vector3D& position, const Vector3D& rotation, const Vector3D& size, const Vector3D& velocity,
            const Vector3D& acceleration, const Vector3D& force, const Vector3D& torque, decimal mass)
         : position { position }

@@ -32,6 +32,7 @@ endif()
 # =============================================
 option(3DPE_BUILD_TESTS "Build unit tests" ON)
 option(3DPE_ENABLE_COVERAGE "Enable coverage reporting" ON)
+option(3DPE_BUILD_EXAMPLES "Build example applications" ON)
 option(3DPE_USE_DOUBLE_PRECISION "Compile using double precision floating values" OFF)
 option(3DPE_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
 
@@ -138,6 +139,32 @@ add_custom_target(run
     DEPENDS PhysicsEngine
     COMMENT "Running PhysicsEngine..."
 )
+
+# =============================================
+# Examples
+# =============================================
+if(3DPE_BUILD_EXAMPLES)
+    message(STATUS "Building examples")
+
+    # ---------------------------------------------
+    # Example: Free Fall Simulation
+    # ---------------------------------------------
+    add_executable(example_Free_Fall examples/Free_Fall/main.cpp)
+    target_link_libraries(example_Free_Fall PRIVATE 3DPhysicsEngine)
+    target_include_directories(example_Free_Fall PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+    set_target_properties(example_Free_Fall PROPERTIES
+        OUTPUT_NAME "Free_Fall"
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/examples
+        FOLDER "Examples"
+    )
+
+    add_custom_target(Free_Fall
+        COMMAND $<TARGET_FILE:example_Free_Fall>
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        DEPENDS example_Free_Fall
+        COMMENT "Running example: Free_Fall"
+    )
+endif()
 
 # =============================================
 # Testing Configuration

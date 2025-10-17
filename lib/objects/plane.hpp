@@ -45,7 +45,6 @@ public:
     {
         updateLocalAxes();
     }
-
     Plane(const Vector3D& position, const Vector3D& _normal)
         : Object(position)
         , normal(_normal.getNormalised())
@@ -53,7 +52,6 @@ public:
 
         updateLocalAxes();
     }
-
     Plane(const Vector3D& position, const Vector3D& size, const Vector3D& _normal)
         : Object(position, size)
         , normal(_normal.getNormalised())
@@ -62,7 +60,6 @@ public:
     {
         updateLocalAxes();
     }
-
     Plane(const Vector3D& position, const Vector3D& size, decimal mass, const Vector3D& _normal)
         : Object(position, size, mass)
         , normal(_normal.getNormalised())
@@ -72,7 +69,16 @@ public:
         updateLocalAxes();
         checkFixed();
     }
-
+    Plane(const Vector3D& position, const Vector3D& size, const Vector3D& velocity, decimal mass,
+          const Vector3D& _normal)
+        : Object(position, size, velocity, mass)
+        , normal(_normal.getNormalised())
+        , halfHeight { size[0] * 0.5_d }
+        , halfWidth { size[1] * 0.5_d }
+    {
+        updateLocalAxes();
+        checkFixed();
+    }
     Plane(const Vector3D& position, const Vector3D& rotation, const Vector3D& size, const Vector3D& velocity,
           const Vector3D& acceleration, const Vector3D& force, const Vector3D& torque, decimal mass,
           const Vector3D& _normal)

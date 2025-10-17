@@ -1,6 +1,7 @@
+#include "objects/aabb.hpp"
 #include "objects/plane.hpp"
 #include "objects/sphere.hpp"
-#include "src/utilities/timer.cpp"
+#include "utilities/timer.hpp"
 #include "world/config.hpp"
 #include "world/physicsWorld.hpp"
 
@@ -18,7 +19,7 @@ int main(int argc, char** argv)
     // Load configuration
     Timer   configTimer;
     Config& config = Config::get();
-    config.loadFromFile("src/config.yaml");
+    config.loadFromFile("examples/Free_Fall/config.yml");
     config.overrideFromCommandLine(argc, argv);
 
     std::cout << "----------------------------------------\n";
@@ -31,11 +32,18 @@ int main(int argc, char** argv)
     // Initialize simulation
     Timer        initTimer;
     PhysicsWorld world(config);
-    auto*        sphere = new Sphere(Vector3D(0_d, 0_d, 10_d), 1_d, 1_d);
-    auto*        ground = new Plane(Vector3D(0_d), Vector3D(0_d, 0_d, 0_d));
+    auto*        ground = new Plane(Vector3D(0_d), Vector3D(50_d, 50_d, 0_d), Vector3D(0_d, 0_d, 1_d));
+    auto*        sphere = new Sphere(Vector3D(0_d, 0_d, 20_d), 0.2_d, Vector3D(0_d, 0_d, -1_d), 1_d);
+    auto*        plane  = new Plane(Vector3D(10_d, 0_d, 15_d), Vector3D(1_d, 0.4_d, 0_d), Vector3D(0_d), 1_d,
+                                    Vector3D(0_d, 1_d, 0_d));
+    auto*        cube   = new AABB(Vector3D(0_d, 10_d, 10_d), Vector3D(0.15_d), Vector3D(0_d), 1_d);
     sphere->setIsFixed(false);
+    plane->setIsFixed(false);
+    cube->setIsFixed(false);
 
     world.addObject(sphere);
+    world.addObject(plane);
+    world.addObject(cube);
     world.addObject(ground);
     world.start();
 
@@ -66,7 +74,7 @@ int main(int argc, char** argv)
 
         world.integrate(timeStep);
 
-        if (counter % 100 == 0)
+        if (counter % 1 == 0)
         {
             std::cout << std::left << std::setw(col_time) << std::fixed << std::setprecision(3) << time
                       << std::setw(col_vec) << pos.formatVector() << std::setw(col_vec) << vel.formatVector()

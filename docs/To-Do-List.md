@@ -5,11 +5,10 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 ## General Tasks
 
 - [x] Remove Codacy
-- [ ] Test Physics
-- [ ] Test PhysicsWorld
-- [ ] Build running test example to verify the physical accuracy of simulation
-  - [ ] Free Fall
-- [ ] **Integrate :** method for all objects or for PhysicsWorld ? 
+- [x] Test Physics
+- [x] Test PhysicsWorld
+- [x] Build running test example to verify the physical accuracy of simulation
+  - [x] Free Fall
 - [x] Verify scripts/ (check parameters and re-compile conditions)
 
 ## Code Quality and Maintenance
@@ -25,7 +24,7 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 - [ ] **Parameter Management System**
   - [ ] Runtime parameter modification ?
   - [ ] Parameter validation and bounds checking
-  - [ ] Default fallback values
+  - [x] Default fallback values
 
 ### Runtime Control
 - [ ] **Simulation Control Commands**

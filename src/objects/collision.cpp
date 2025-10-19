@@ -253,41 +253,148 @@ bool collide<AABB, Plane>(const AABB& aabb, const Plane& plane)
 template <>
 bool collide<Plane, Plane>(const Plane& p1, const Plane& p2)
 {
-    const Vector3D n1 = p1.getNormal();
-    const Vector3D n2 = p2.getNormal();
+    const Vector3D n1 = p1.getNormal().getNormalised();
+    const Vector3D n2 = p2.getNormal().getNormalised();
 
-    // 1 - Check if planes are parallel
-    const decimal dot = std::abs(n1.dotProduct(n2));
-    if (commonMaths::approxEqual(dot, 1.0))
+    // raw cross and its squared norm
+    const Vector3D cross       = n1.crossProduct(n2);
+    const decimal  crossNormSq = cross.getNormSquare();
+
+    // --- 1) Parallel / coplanar check (cross ≈ 0 => parallel)
+    if (commonMaths::approxEqual(crossNormSq, 0_d))
     {
-        // Planes are parallel, check if they're coincident
-        const decimal d1 = n1.dotProduct(p1.getPosition());
-        const decimal d2 = n2.dotProduct(p2.getPosition());
-        return commonMaths::approxEqual(d1, d2);
+        // Check distance of a point of p2 to plane1: plane eq. n1·x = d1
+        const decimal d1   = n1.dotProduct(p1.getPosition());
+        const decimal dist = std::abs(n1.dotProduct(p2.getPosition()) - d1);
+
+        if (!commonMaths::approxEqual(dist, 0_d))
+        {
+            // distinct parallel planes -> no intersection
+            return false;
+        }
+
+        // Coplanar -> check rectangle-vs-rectangle overlap in the plane using SAT.
+        auto corner = [](const Plane& P, int su, int sv) -> Vector3D
+        {
+            return P.getPosition() + P.getU() * (su * P.getHalfWidth()) + P.getV() * (sv * P.getHalfHeight());
+        };
+
+        std::array<Vector3D, 4> A = { corner(p1, -1, -1), corner(p1, 1, -1), corner(p1, 1, 1),
+                                      corner(p1, -1, 1) };
+        std::array<Vector3D, 4> B = { corner(p2, -1, -1), corner(p2, 1, -1), corner(p2, 1, 1),
+                                      corner(p2, -1, 1) };
+
+        // axes to test: u1, v1, u2, v2 (all should lie in plane)
+        std::array<Vector3D, 4> axes = { p1.getU(), p1.getV(), p2.getU(), p2.getV() };
+
+        auto projectInterval = [&](const Vector3D& axis, const std::array<Vector3D, 4>& verts)
+        {
+            decimal mn = axis.dotProduct(verts[0]);
+            decimal mx = mn;
+            for (int i = 1; i < 4; ++i)
+            {
+                decimal v = axis.dotProduct(verts[i]);
+                if (v < mn)
+                    mn = v;
+                if (v > mx)
+                    mx = v;
+            }
+            return std::pair<decimal, decimal>(mn, mx);
+        };
+
+        for (const Vector3D& a : axes)
+        {
+            // skip degenerate axes
+            const decimal an = a.getNormSquare();
+            if (commonMaths::approxEqual(an, 0._d))
+                continue;
+
+            const Vector3D axis = a.getNormalised(); // make it unit for stable projection
+            auto           I1   = projectInterval(axis, A);
+            auto           I2   = projectInterval(axis, B);
+
+            // test interval overlap
+            if (commonMaths::approxSmallerThan(I1.second, I2.first) ||
+                commonMaths::approxSmallerThan(I2.second, I1.first))
+                return false; // separated on this axis -> no intersection
+        }
+        return true; // no separating axis -> coplanar rectangles overlap
     }
 
-    // 2 - Compute intersection line
-    Vector3D dir = p1.getNormal().crossProduct(p2.getNormal()).getNormalised();
+    // --- 2) Non-parallel case: compute intersection line L(t) = P0 + t * dir
+    // Use raw cross (not normalized) as direction vector (dir == cross)
+    const Vector3D dir = cross;
+    const decimal  d1  = n1.dotProduct(p1.getPosition()); // plane eq: n·x = d
+    const decimal  d2  = n2.dotProduct(p2.getPosition());
 
-    // Solve for a point on the line:
-    // n1.x = n1.P1, n2.x = n2.P2
-    decimal d1 = p1.getNormal().dotProduct(p1.getPosition());
-    decimal d2 = p2.getNormal().dotProduct(p2.getPosition());
+    // Point on the intersection line (exact formula):
+    // P0 = ((d1 * n2 - d2 * n1) × (n1 × n2)) / |n1 × n2|^2
+    const Vector3D numerator = (n2 * d1 - n1 * d2).crossProduct(cross);
+    const Vector3D P0        = numerator / crossNormSq;
 
-    // Find intersection point
-    Vector3D intersectionPoint = ((d1 * p2.getNormal() - (d2 * p1.getNormal())).crossProduct(dir)) /
-                                 (p1.getNormal().crossProduct(p2.getNormal())).getNormSquare();
-
-    // 3- Project that point into each plane’s local frame to see if it lies within their rectangles
-    auto inBounds = [](const Plane& P, const Vector3D& X)
+    // Helper: compute t-interval for which L(t) is inside rectangle P
+    auto interval_for_rect = [&](const Plane& P) -> std::optional<std::pair<decimal, decimal>>
     {
-        Vector3D local = X - P.getPosition();
-        decimal  s     = local.dotProduct(P.getU());
-        decimal  t     = local.dotProduct(P.getV());
-        return (std::abs(s) <= P.getHalfWidth()) && (std::abs(t) <= P.getHalfHeight());
+        const Vector3D C     = P.getPosition();
+        const Vector3D u     = P.getU().getNormalised();
+        const Vector3D v     = P.getV().getNormalised();
+        const decimal  halfU = P.getHalfWidth();
+        const decimal  halfV = P.getHalfHeight();
+
+        const decimal s0 = u.dotProduct(P0 - C);
+        const decimal su = u.dotProduct(dir);
+        const decimal t0 = v.dotProduct(P0 - C);
+        const decimal sv = v.dotProduct(dir);
+
+        auto axis_interval = [&](decimal s0_, decimal su_,
+                                 decimal half) -> std::optional<std::pair<decimal, decimal>>
+        {
+            if (commonMaths::approxEqual(su_, 0._d))
+            {
+                // line direction has zero projection on this axis: s = s0_ constant
+                if (commonMaths::approxSmallerOrEqualThan(std::abs(s0_), half))
+                    return std::make_pair(-INFINITY, INFINITY); // no constraint from this axis
+                else
+                    return std::nullopt; // never inside
+            }
+            // Solve |s0 + t*su| <= half  => t in [(-half - s0)/su , (half - s0)/su]
+            decimal t1 = (-half - s0_) / su_;
+            decimal t2 = (half - s0_) / su_;
+            if (t1 > t2)
+                std::swap(t1, t2);
+            return std::make_pair(t1, t2);
+        };
+
+        auto Iu = axis_interval(s0, su, halfU);
+        if (!Iu)
+            return std::nullopt;
+        auto Iv = axis_interval(t0, sv, halfV);
+        if (!Iv)
+            return std::nullopt;
+
+        // intersection of two intervals
+        decimal tmin = std::max(Iu->first, Iv->first);
+        decimal tmax = std::min(Iu->second, Iv->second);
+        if (commonMaths::approxGreaterThan(tmin, tmax))
+            return std::nullopt;
+        return std::make_pair(tmin, tmax);
     };
 
-    return inBounds(p1, intersectionPoint) && inBounds(p2, intersectionPoint);
+    auto I1 = interval_for_rect(p1);
+    if (!I1)
+        return false;
+    auto I2 = interval_for_rect(p2);
+    if (!I2)
+        return false;
+
+    // Do the interval overlap on t
+    decimal tmin = std::max(I1->first, I2->first);
+    decimal tmax = std::min(I1->second, I2->second);
+    if (commonMaths::approxGreaterThan(tmin, tmax))
+        return false;
+
+    // non-empty overlap => intersection (point or segment)
+    return true;
 }
 
 } // namespace Collision

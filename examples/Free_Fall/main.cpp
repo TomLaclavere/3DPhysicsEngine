@@ -47,39 +47,65 @@ int main(int argc, char** argv)
     world.addObject(ground);
     world.start();
 
+    // Contact times with the ground, computed in README.md
+    decimal analyticalContactTimeSphere = 1.915_d;
+    decimal analyticalContactTimePlane  = 1.737_d;
+    decimal analyticalContactTimeCube   = 1.420_d;
+
+    decimal simulationContactTimeSphere = 0_d;
+    decimal simulationContactTimePlane  = 0_d;
+    decimal simulationContactTimeCube   = 0_d;
+
     std::cout << "Initializing world took: " << initTimer.elapsedMilliseconds() << " ms\n\n";
 
     // Column widths
+    constexpr int col_obj  = 10;
     constexpr int col_time = 10;
     constexpr int col_vec  = 40;
     constexpr int col_step = 12;
 
     // Header
-    std::cout << std::left << std::setw(col_time) << "Time(s)" << std::setw(col_vec) << "Position(x,y,z)"
-              << std::setw(col_vec) << "Velocity(x,y,z)" << std::setw(col_step) << "Step (µs)\n";
-    std::cout << std::string(col_time + 2 * col_vec + col_step, '-') << "\n";
+    std::cout << std::left << std::setw(col_obj) << "Object" << std::setw(col_time) << "Time(s)"
+              << std::setw(col_vec) << "Position(x,y,z)" << std::setw(col_vec) << "Velocity(x,y,z)"
+              << std::setw(col_step) << "Step (µs)\n";
+    std::cout << std::string(col_obj + col_time + 2 * col_vec + col_step, '-') << "\n";
 
     // Simulation loop
     Timer         simulationTimer;
     const decimal timeStep = config.getTimeStep();
     const size_t  maxIter  = config.getMaxIterations();
+    size_t        counter  = 0;
 
-    for (size_t counter = 0; counter < maxIter; ++counter)
+    while (counter < maxIter && world.getIsRunning())
     {
         Timer stepTimer;
 
-        const decimal  time = counter * timeStep;
-        const Vector3D pos  = sphere->getPosition();
-        const Vector3D vel  = sphere->getVelocity();
+        const decimal time = counter * timeStep;
 
         world.integrate(timeStep);
 
-        if (counter % 1 == 0)
+        if (counter % 25 == 0)
         {
-            std::cout << std::left << std::setw(col_time) << std::fixed << std::setprecision(3) << time
-                      << std::setw(col_vec) << pos.formatVector() << std::setw(col_vec) << vel.formatVector()
-                      << std::right << std::setw(col_step) << stepTimer.elapsedMicroseconds() << "\n";
+            for (auto* obj : world.getObject())
+            {
+                if (!obj->isFixed())
+                    std::cout << std::left << std::setw(col_obj) << obj->getType() << std::setw(col_time)
+                              << std::fixed << std::setprecision(3) << time << std::setw(col_vec)
+                              << obj->getPosition().formatVector() << std::setw(col_vec)
+                              << obj->getVelocity().formatVector() << std::right << std::setw(col_step)
+                              << stepTimer.elapsedMicroseconds() << "\n";
+            }
+            std::cout << std::string(col_obj + col_time + 2 * col_vec + col_step, '--') << '\n';
         }
+
+        if (sphere->checkCollision(*ground) && simulationContactTimeSphere == 0_d)
+            simulationContactTimeSphere = time;
+        if (plane->checkCollision(*ground) && simulationContactTimePlane == 0_d)
+            simulationContactTimePlane = time;
+        if (cube->checkCollision(*ground) && simulationContactTimeCube == 0_d)
+            simulationContactTimeCube = time;
+
+        ++counter;
     }
 
     const double simTimeSec = simulationTimer.elapsedSeconds();
@@ -88,7 +114,35 @@ int main(int argc, char** argv)
     std::cout << "\nSimulation took: " << simTimeSec << " s\n";
     std::cout << "Average iteration time: " << avgStepUs << " µs\n";
     std::cout << "Total execution time: " << totalTimer.elapsedSeconds() << " s\n";
+    std::cout << '\n';
 
-    delete sphere;
+    // Verify Sphere contact times
+    std::cout << "Note : The time comparison are done with an approximation of 2 times the timestep value, "
+                 "in order to prevent numerical uncertainties. \n";
+    if (commonMaths::approxEqual(analyticalContactTimeSphere, simulationContactTimeSphere, 2 * timeStep))
+        std::cout << "Sphere : analytical and simulation times are compatible. Contact time = "
+                  << analyticalContactTimeSphere << " (s).\n";
+    else
+        std::cout << "Sphere : analytical and simulation times are not compatible. Analytical contact time = "
+                  << analyticalContactTimeSphere
+                  << " (s), and Simulation contact time = " << simulationContactTimeSphere << " (s).\n";
+    // Verify Plane contact times
+    if (commonMaths::approxEqual(analyticalContactTimePlane, simulationContactTimePlane, 2 * timeStep))
+        std::cout << "Plane : analytical and simulation times are compatible. Contact time = "
+                  << analyticalContactTimePlane << " (s).\n";
+    else
+        std::cout << "Plane : analytical and simulation times are not compatible. Analytical contact time = "
+                  << analyticalContactTimePlane
+                  << " (s), and Simulation contact time = " << simulationContactTimePlane << " (s).\n";
+    // Verify Cube contact times
+    if (commonMaths::approxEqual(analyticalContactTimeCube, simulationContactTimeCube, 2 * timeStep))
+        std::cout << "Cube : analytical and simulation times are compatible. Contact time = "
+                  << analyticalContactTimeCube << " (s).\n";
+    else
+        std::cout << "Cube : analytical and simulation times are not compatible. Analytical contact time = "
+                  << analyticalContactTimeCube
+                  << " (s), and Simulation contact time = " << simulationContactTimeCube << " (s).\n";
+
+    delete sphere, plane, cube;
     return 0;
 }

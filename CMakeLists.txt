@@ -71,7 +71,8 @@ set(ENGINE_OBJECT_SOURCES
 )
 
 set(ENGINE_UTILITIES_SOURCE
-    src/utilities/timer.cpp)
+    src/utilities/timer.cpp
+    src/utilities/command.cpp)
 
 set(ENGINE_WORLD_SOURCES
     src/world/config.cpp

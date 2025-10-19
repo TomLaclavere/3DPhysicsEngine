@@ -1,12 +1,46 @@
+#include "objects/aabb.hpp"
 #include "objects/plane.hpp"
 #include "objects/sphere.hpp"
-#include "utilities/timer.cpp"
+#include "utilities/command.hpp"
+#include "utilities/timer.hpp"
 #include "world/config.hpp"
 #include "world/physicsWorld.hpp"
 
 #include <chrono>
 #include <iomanip>
 #include <iostream>
+#include <utility>
+
+// ============================================================================
+// Helpers
+// ============================================================================
+void listObjects(const PhysicsWorld& world)
+{
+    std::cout << "Objects (" << world.getObjectCount() << "):\n";
+    for (size_t i = 0; i < world.getObjectCount(); ++i)
+    {
+        const Object* obj = world.getObject(i);
+        if (obj)
+            std::cout << "  [" << i << "] " << toString(obj->getType()) << " | pos=" << obj->getPosition()
+                      << " | vel=" << obj->getVelocity() << (obj->isFixed() ? " | fixed" : "") << "\n";
+    }
+}
+
+void showObject(const PhysicsWorld& world, size_t id)
+{
+    const Object* obj = world.getObject(id);
+    if (!obj)
+    {
+        std::cout << "No object with id " << id << "\n";
+        return;
+    }
+
+    std::cout << "Object [" << id << "]\n"
+              << "  Type: " << toString(obj->getType()) << "\n"
+              << "  Position: " << obj->getPosition() << "\n"
+              << "  Velocity: " << obj->getVelocity() << "\n"
+              << "  Fixed: " << std::boolalpha << obj->isFixed() << "\n";
+}
 
 // ============================================================================
 // Main entry point
@@ -23,63 +57,210 @@ int main(int argc, char** argv)
 
     std::cout << "----------------------------------------\n";
     std::cout << "Simulation Parameters:\n";
-    std::cout << "Gravity: " << config.getGravity() << " m/s²\n";
-    std::cout << "Timestep: " << config.getTimeStep() << " s\n";
-    std::cout << "Max iterations: " << config.getMaxIterations() << "\n";
-    std::cout << "Loading configuration took: " << configTimer.elapsedMilliseconds() << " ms\n";
+    std::cout << "  Gravity: " << config.getGravity() << " m/s²\n";
+    std::cout << "  Timestep: " << config.getTimeStep() << " s\n";
+    std::cout << "  Max iterations: " << config.getMaxIterations() << "\n";
+    std::cout << "  Config load time: " << configTimer.elapsedMilliseconds() << " ms\n";
+    std::cout << "----------------------------------------\n";
 
-    // Initialize simulation
-    Timer        initTimer;
     PhysicsWorld world(config);
-    auto*        sphere = new Sphere(Vector3D(0_d, 0_d, 10_d), 1_d, 1_d);
-    auto*        ground = new Plane(Vector3D(0_d), Vector3D(0_d, 0_d, 0_d));
+    world.initialize();
 
-    world.addObject(sphere);
-    world.addObject(ground);
-    world.start();
+    std::cout << "Enter 'help' to see available commands.\n";
 
-    std::cout << "Initializing world took: " << initTimer.elapsedMilliseconds() << " ms\n\n";
-
-    // Column widths
-    constexpr int col_time = 10;
-    constexpr int col_vec  = 40;
-    constexpr int col_step = 12;
-
-    // Header
-    std::cout << std::left << std::setw(col_time) << "Time(s)" << std::setw(col_vec) << "Position(x,y,z)"
-              << std::setw(col_vec) << "Velocity(x,y,z)" << std::setw(col_step) << "Step (µs)\n";
-    std::cout << std::string(col_time + 2 * col_vec + col_step, '-') << "\n";
-
-    // Simulation loop
-    Timer         simulationTimer;
-    const decimal timeStep = config.getTimeStep();
-    const size_t  maxIter  = config.getMaxIterations();
-
-    for (size_t counter = 0; counter < maxIter; ++counter)
+    while (true)
     {
-        Timer stepTimer;
+        std::cout << "\n> ";
+        std::string command;
+        std::getline(std::cin, command);
+        if (command.empty())
+            continue;
 
-        const decimal  time = counter * timeStep;
-        const Vector3D pos  = sphere->getPosition();
-        const Vector3D vel  = sphere->getVelocity();
-
-        world.integrate(timeStep);
-
-        if (counter % 100 == 0)
+        auto words = parseWords(command);
+        if (words.empty())
         {
-            std::cout << std::left << std::setw(col_time) << std::fixed << std::setprecision(3) << time
-                      << std::setw(col_vec) << pos.formatVector() << std::setw(col_vec) << vel.formatVector()
-                      << std::right << std::setw(col_step) << stepTimer.elapsedMicroseconds() << "\n";
+            printUsage();
+            continue;
+        }
+
+        const std::string action = popNext(words);
+
+        // === COMMANDS ===
+        if (action == "help" || action == "h")
+        {
+            printUsage();
+        }
+        else if (action == "exit" || action == "quit")
+        {
+            break;
+        }
+        else if (action == "init")
+        {
+            world.initialize();
+            std::cout << "World initialized.\n";
+        }
+        else if (action == "start")
+        {
+            world.start();
+            std::cout << "Simulation started.\n";
+        }
+        else if (action == "stop")
+        {
+            world.stop();
+            std::cout << "Simulation stopped.\n";
+        }
+        else if (action == "step")
+        {
+            if (words.empty())
+            {
+                std::cout << "Usage: step <dt>\n";
+                continue;
+            }
+            const decimal dt = std::stod(popNext(words));
+            world.integrate(dt);
+            std::cout << "Integrated one step of " << dt << "s.\n";
+        }
+        else if (action == "set")
+        {
+            if (words.empty())
+            {
+                std::cout << "Usage: set <dt|g|obj>\n";
+                continue;
+            }
+            const std::string what = popNext(words);
+
+            if (what == "dt")
+            {
+                const decimal value = std::stod(popNext(words));
+                world.setTimeStep(value);
+                std::cout << "Timestep set to " << value << "s.\n";
+            }
+            else if (what == "g")
+            {
+                const decimal value = std::stod(popNext(words));
+                world.setGravityCst(value);
+                world.setGravityAcc(Physics::computeGravityAcc(value));
+                std::cout << "Gravity set to " << value << " m/s².\n";
+            }
+            else if (what == "obj")
+            {
+                if (words.size() < 5)
+                {
+                    std::cout << "Usage: set obj <id> <pos|vel> <x> <y> <z>\n";
+                    continue;
+                }
+
+                size_t      id   = std::stoul(popNext(words));
+                std::string prop = popNext(words);
+                decimal     x    = std::stod(popNext(words));
+                decimal     y    = std::stod(popNext(words));
+                decimal     z    = std::stod(popNext(words));
+
+                Object* obj = world.getObject(id);
+                if (!obj)
+                {
+                    std::cout << "No object with id " << id << "\n";
+                    continue;
+                }
+
+                if (prop == "pos")
+                {
+                    obj->setPosition(Vector3D(x, y, z));
+                    std::cout << "Set position of object " << id << " to (" << x << ", " << y << ", " << z
+                              << ")\n";
+                }
+                else if (prop == "vel")
+                {
+                    obj->setVelocity(Vector3D(x, y, z));
+                    std::cout << "Set velocity of object " << id << " to (" << x << ", " << y << ", " << z
+                              << ")\n";
+                }
+                else
+                {
+                    std::cout << "Unknown property: " << prop << "\n";
+                }
+            }
+        }
+        else if (action == "add")
+        {
+            if (words.empty())
+            {
+                std::cout << "Usage: add <sphere|plane|AABB>\n";
+                continue;
+            }
+
+            const std::string type = popNext(words);
+            if (type == "sphere")
+            {
+                auto sphere = std::make_unique<Sphere>(Vector3D(0, 0, 10), // position
+                                                       0.2_d,              // size (radius)
+                                                       Vector3D(0, 0, 0),  // velocity
+                                                       1.0_d               // mass
+                );
+                world.addObject(sphere.release());
+                std::cout << "Added sphere with default parameters.\n";
+            }
+            else if (type == "plane")
+            {
+                auto plane = std::make_unique<Plane>(Vector3D(0, 0, 0), // position
+                                                     Vector3D(1, 1, 1), // size
+                                                     1.0_d,             // mass
+                                                     Vector3D(0, 1, 0)  // normal
+                );
+                world.addObject(plane.release());
+                std::cout << "Added plane with default parameters.\n";
+            }
+            else if (type == "AABB")
+            {
+                auto aabb = std::make_unique<AABB>(Vector3D(0, 0, 5), // position
+                                                   Vector3D(1, 1, 1), // size
+                                                   Vector3D(0, 0, 0), // velocity
+                                                   1.0_d              // mass
+                );
+                world.addObject(aabb.release());
+                std::cout << "Added AABB with default parameters.\n";
+            }
+            else
+            {
+                std::cout << "Unknown object type: " << type << "\n";
+            }
+        }
+        else if (action == "list")
+        {
+            listObjects(world);
+        }
+        else if (action == "show")
+        {
+            if (words.empty())
+            {
+                std::cout << "Usage: show <id>\n";
+                continue;
+            }
+            size_t id = std::stoul(popNext(words));
+            showObject(world, id);
+        }
+        else if (action == "del")
+        {
+            if (words.empty())
+            {
+                std::cout << "Usage: del <id>\n";
+                continue;
+            }
+            size_t id = std::stoul(popNext(words));
+            world.removeObject(world.getObject(id));
+            std::cout << "Removed object " << id << "\n";
+        }
+        else if (action == "print")
+        {
+            world.printState();
+        }
+        else
+        {
+            std::cout << "Unknown command: " << action << "\n";
+            printUsage();
         }
     }
 
-    const double simTimeSec = simulationTimer.elapsedSeconds();
-    const double avgStepUs  = simulationTimer.elapsedMicroseconds() / static_cast<double>(maxIter);
-
-    std::cout << "\nSimulation took: " << simTimeSec << " s\n";
-    std::cout << "Average iteration time: " << avgStepUs << " µs\n";
-    std::cout << "Total execution time: " << totalTimer.elapsedSeconds() << " s\n";
-
-    delete sphere;
+    std::cout << "Exiting simulation.\n";
     return 0;
 }

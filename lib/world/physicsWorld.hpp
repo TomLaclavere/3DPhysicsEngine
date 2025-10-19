@@ -132,6 +132,7 @@ public:
     /// Clear Object array
     void    clearObjects() { objects.clear(); }
     size_t  getObjectCount() const { return objects.size(); }
+    Object* getObject(size_t index) const { return (index < objects.size()) ? objects[index] : nullptr; }
     Object* getObject(size_t index) { return (index < objects.size()) ? objects[index] : nullptr; }
     std::vector<Object*> getObject() { return objects; }
     /// @}

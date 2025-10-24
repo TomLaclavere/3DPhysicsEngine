@@ -63,6 +63,7 @@ int main(int argc, char** argv)
     constexpr int col_time = 10;
     constexpr int col_vec  = 40;
     constexpr int col_step = 12;
+    size_t        n        = col_obj + col_time + 2 * col_vec + col_step;
 
     // Header
     std::cout << std::left << std::setw(col_obj) << "Object" << std::setw(col_time) << "Time(s)"
@@ -95,7 +96,7 @@ int main(int argc, char** argv)
                               << obj->getVelocity().formatVector() << std::right << std::setw(col_step)
                               << stepTimer.elapsedMicroseconds() << "\n";
             }
-            std::cout << std::string(col_obj + col_time + 2 * col_vec + col_step, '--') << '\n';
+            std::cout << std::string(n * 2, '-') << '\n';
         }
 
         if (sphere->checkCollision(*ground) && simulationContactTimeSphere == 0_d)

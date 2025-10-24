@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 
 /**
  * @file precision.hpp
@@ -22,6 +23,16 @@ using decimal = double;
 /// @brief Underlying floating-point type used when single precision is enabled.
 using decimal = float;
 #endif
+
+inline decimal stringToDecimal(std::string str)
+{
+    // Choose scientific if float, default if double — optional behavior
+#ifdef IS_USE_DOUBLE_PRECISION
+    return std::stod(str);
+#else
+    return std::stof(str);
+#endif
+}
 
 /**
  * @brief User-defined literal for decimal type from floating-point literal.

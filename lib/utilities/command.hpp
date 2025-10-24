@@ -1,7 +1,11 @@
+#include "precision.hpp"
+
+#include <algorithm>
 #include <deque>
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 void printUsage();

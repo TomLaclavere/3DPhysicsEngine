@@ -91,6 +91,8 @@ public:
     /// @brief Integrate all objects over one time step.
     /// Resets accelerations, applies forces, and moves objects using semi-implicit Euler.
     void integrate(decimal dt);
+    /// Run simulation over all iterations.
+    void run();
     /// @}
 
     // ============================================================================

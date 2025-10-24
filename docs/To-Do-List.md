@@ -4,12 +4,8 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 ## General Tasks
 
-- [x] Remove Codacy
-- [x] Test Physics
-- [x] Test PhysicsWorld
-- [x] Build running test example to verify the physical accuracy of simulation
-  - [x] Free Fall
-- [x] Verify scripts/ (check parameters and re-compile conditions)
+- [ ] Add printing method in PhysicsWorld
+- [ ] Improve Runtime commands
 
 ## Code Quality and Maintenance
 
@@ -81,6 +77,12 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 - [x] Use functions from common.hpp for comparison
 - [x] Unit test for Config
 - [x] Unit test for PhysicsWorld
+- [x] Remove Codacy
+- [x] Test Physics
+- [x] Test PhysicsWorld
+- [x] Build running test example to verify the physical accuracy of simulation
+  - [x] Free Fall
+- [x] Verify scripts/ (check parameters and re-compile conditions)
 
 ## Code Quality and Maintenance
 

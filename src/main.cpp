@@ -1,12 +1,14 @@
 #include "objects/aabb.hpp"
 #include "objects/plane.hpp"
 #include "objects/sphere.hpp"
+#include "precision.hpp"
 #include "utilities/command.hpp"
 #include "utilities/timer.hpp"
 #include "world/config.hpp"
 #include "world/physicsWorld.hpp"
 
 #include <chrono>
+#include <functional>
 #include <iomanip>
 #include <iostream>
 #include <utility>
@@ -63,11 +65,40 @@ int main(int argc, char** argv)
     std::cout << "  Config load time: " << configTimer.elapsedMilliseconds() << " ms\n";
     std::cout << "----------------------------------------\n";
 
+    // Initialise world
     PhysicsWorld world(config);
     world.initialize();
 
-    std::cout << "Enter 'help' to see available commands.\n";
+    // Define a property function type
+    using PropertySetter = std::function<void(Object*, const std::vector<std::string>& args)>;
+    static const std::unordered_map<std::string, PropertySetter> PROPERTY_SETTERS = {
+        // Vector properties (3 components)
+        { "pos", [](Object* obj, const auto& a)
+          { obj->setPosition({ stringToDecimal(a[0]), stringToDecimal(a[1]), stringToDecimal(a[2]) }); } },
+        { "vel", [](Object* obj, const auto& a)
+          { obj->setVelocity({ stringToDecimal(a[0]), stringToDecimal(a[1]), stringToDecimal(a[2]) }); } },
+        { "acc",
+          [](Object* obj, const auto& a) {
+              obj->setAcceleration({ stringToDecimal(a[0]), stringToDecimal(a[1]), stringToDecimal(a[2]) });
+          } },
+        { "rot", [](Object* obj, const auto& a)
+          { obj->setRotation({ stringToDecimal(a[0]), stringToDecimal(a[1]), stringToDecimal(a[2]) }); } },
 
+        // Scalar properties
+        { "mass", [](Object* obj, const auto& a) { obj->setMass(stringToDecimal(a[0])); } },
+
+        // Boolean properties
+        { "fixed",
+          [](Object* obj, const auto& a)
+          {
+              bool                                               b                = (a[0] == "1" || a[0] == "true" || a[0] == "yes");
+              obj->setIsFixed(b);
+          } },
+    };
+
+    // Start loop
+    std::cout << "Enter command:" << std::endl;
+    std::cout << "(Enter 'help' to see available commands.)" << std::endl;
     while (true)
     {
         std::cout << "\n> ";
@@ -92,6 +123,7 @@ int main(int argc, char** argv)
         }
         else if (action == "exit" || action == "quit")
         {
+            world.clearObjects();
             break;
         }
         else if (action == "init")
@@ -109,14 +141,18 @@ int main(int argc, char** argv)
             world.stop();
             std::cout << "Simulation stopped.\n";
         }
-        else if (action == "step")
+        else if (action == "run")
+        {
+            world.run();
+        }
+        else if (action == "integrate")
         {
             if (words.empty())
             {
-                std::cout << "Usage: step <dt>\n";
+                std::cout << "Usage: integrate <dt>\n";
                 continue;
             }
-            const decimal dt = std::stod(popNext(words));
+            const decimal dt = stringToDecimal(popNext(words));
             world.integrate(dt);
             std::cout << "Integrated one step of " << dt << "s.\n";
         }
@@ -131,30 +167,27 @@ int main(int argc, char** argv)
 
             if (what == "dt")
             {
-                const decimal value = std::stod(popNext(words));
+                const decimal value = stringToDecimal(popNext(words));
                 world.setTimeStep(value);
                 std::cout << "Timestep set to " << value << "s.\n";
             }
             else if (what == "g")
             {
-                const decimal value = std::stod(popNext(words));
+                const decimal value = stringToDecimal(popNext(words));
                 world.setGravityCst(value);
                 world.setGravityAcc(Physics::computeGravityAcc(value));
                 std::cout << "Gravity set to " << value << " m/s².\n";
             }
             else if (what == "obj")
             {
-                if (words.size() < 5)
+                if (words.size() < 2)
                 {
-                    std::cout << "Usage: set obj <id> <pos|vel> <x> <y> <z>\n";
+                    std::cout << "Usage: set obj <id> <property> [...values]\n";
                     continue;
                 }
 
                 size_t      id   = std::stoul(popNext(words));
                 std::string prop = popNext(words);
-                decimal     x    = std::stod(popNext(words));
-                decimal     y    = std::stod(popNext(words));
-                decimal     z    = std::stod(popNext(words));
 
                 Object* obj = world.getObject(id);
                 if (!obj)
@@ -163,22 +196,19 @@ int main(int argc, char** argv)
                     continue;
                 }
 
-                if (prop == "pos")
-                {
-                    obj->setPosition(Vector3D(x, y, z));
-                    std::cout << "Set position of object " << id << " to (" << x << ", " << y << ", " << z
-                              << ")\n";
-                }
-                else if (prop == "vel")
-                {
-                    obj->setVelocity(Vector3D(x, y, z));
-                    std::cout << "Set velocity of object " << id << " to (" << x << ", " << y << ", " << z
-                              << ")\n";
-                }
-                else
+                // Check if property exists
+                auto it = PROPERTY_SETTERS.find(prop);
+                if (it == PROPERTY_SETTERS.end())
                 {
                     std::cout << "Unknown property: " << prop << "\n";
+                    continue;
                 }
+
+                // Remaining parameters = arguments for the setter
+                std::vector<std::string> args(words.begin(), words.end());
+                it->second(obj, args);
+
+                std::cout << "Set " << prop << " on object " << id << "\n";
             }
         }
         else if (action == "add")

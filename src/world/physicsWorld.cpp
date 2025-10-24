@@ -46,7 +46,10 @@ void PhysicsWorld::integrateEuler(Object& obj, decimal dt)
 void PhysicsWorld::integrate(decimal dt)
 {
     if (!isRunning)
+    {
+        std::cout << "Simulation is not running. Run start() first." << std::endl;
         return;
+    }
 
     setTimeStep(dt);
 
@@ -68,6 +71,18 @@ void PhysicsWorld::integrate(decimal dt)
         if (!obj || obj->isFixed())
             continue;
         integrateEuler(*obj, dt);
+    }
+}
+void PhysicsWorld::run()
+{
+    const decimal timeStep = config.getTimeStep();
+    const size_t  maxIter  = config.getMaxIterations();
+    size_t        cpt      = 0;
+
+    while (cpt < maxIter && getIsRunning())
+    {
+        integrate(timeStep);
+        cpt++;
     }
 }
 

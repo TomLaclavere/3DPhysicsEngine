@@ -24,7 +24,8 @@ void listObjects(const PhysicsWorld& world)
         const Object* obj = world.getObject(i);
         if (obj)
             std::cout << "  [" << i << "] " << toString(obj->getType()) << " | pos=" << obj->getPosition()
-                      << " | vel=" << obj->getVelocity() << (obj->isFixed() ? " | fixed" : "") << "\n";
+                      << " | vel=" << obj->getVelocity()
+                      << " | fixed= " << (obj->isFixed() ? "True" : "False") << "\n";
     }
 }
 
@@ -45,7 +46,7 @@ void showObject(const PhysicsWorld& world, size_t id)
 }
 
 // ============================================================================
-// Main entry point
+// Main
 // ============================================================================
 int main(int argc, char** argv)
 {
@@ -78,7 +79,8 @@ int main(int argc, char** argv)
         { "vel", [](Object* obj, const auto& a)
           { obj->setVelocity({ stringToDecimal(a[0]), stringToDecimal(a[1]), stringToDecimal(a[2]) }); } },
         { "acc",
-          [](Object* obj, const auto& a) {
+          [](Object* obj, const auto& a)
+          {
               obj->setAcceleration({ stringToDecimal(a[0]), stringToDecimal(a[1]), stringToDecimal(a[2]) });
           } },
         { "rot", [](Object* obj, const auto& a)
@@ -116,21 +118,18 @@ int main(int argc, char** argv)
 
         const std::string action = popNext(words);
 
-        // === COMMANDS ===
+        // ======== COMMANDS ========
         if (action == "help" || action == "h")
         {
             printUsage();
         }
-        else if (action == "exit" || action == "quit")
+        else if (action == "exit" || action == "quit" || action == "q")
         {
             world.clearObjects();
             break;
         }
-        else if (action == "init")
-        {
-            world.initialize();
-            std::cout << "World initialized.\n";
-        }
+
+        // ======== Simulation ========
         else if (action == "start")
         {
             world.start();
@@ -143,6 +142,10 @@ int main(int argc, char** argv)
         }
         else if (action == "run")
         {
+            if (!world.getIsRunning())
+            {
+                std::cout << "Simulation is not running. Run start first." << std::endl;
+            }
             world.run();
         }
         else if (action == "integrate")
@@ -156,6 +159,17 @@ int main(int argc, char** argv)
             world.integrate(dt);
             std::cout << "Integrated one step of " << dt << "s.\n";
         }
+        else if (action == "print")
+        {
+            world.printState();
+        }
+        else if (action == "init")
+        {
+            world.initialize();
+            std::cout << "World initialized.\n";
+        }
+        // ======== World ========
+
         else if (action == "set")
         {
             if (words.empty())
@@ -280,10 +294,7 @@ int main(int argc, char** argv)
             world.removeObject(world.getObject(id));
             std::cout << "Removed object " << id << "\n";
         }
-        else if (action == "print")
-        {
-            world.printState();
-        }
+
         else
         {
             std::cout << "Unknown command: " << action << "\n";

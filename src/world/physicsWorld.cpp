@@ -2,6 +2,7 @@
 
 #include "world/physics.hpp"
 
+#include <iomanip>
 #include <iostream>
 
 // ============================================================================
@@ -79,10 +80,35 @@ void PhysicsWorld::run()
     const size_t  maxIter  = config.getMaxIterations();
     size_t        cpt      = 0;
 
+    // Printing
+    // Column widths
+    constexpr int col_obj = 10;
+    constexpr int col_vec = 40;
+    size_t        n       = col_obj + 2 * col_vec;
+
+    // Header
+    std::cout << std::left << std::setw(col_obj) << "Object" << std::setw(col_vec) << "Position(x,y,z)"
+              << std::setw(col_vec) << "Velocity(x,y,z)" << "\n";
+    std::cout << std::string(n, '-') << "\n";
+
     while (cpt < maxIter && getIsRunning())
     {
         integrate(timeStep);
         cpt++;
+
+        // Printing
+        if (cpt % 25 == 0)
+        {
+            for (auto* obj : getObject())
+            {
+                if (!obj->isFixed())
+                    std::cout << std::left << std::setw(col_obj) << obj->getType() << std::fixed
+                              << std::setprecision(3) << std::setw(col_vec)
+                              << obj->getPosition().formatVector() << std::setw(col_vec)
+                              << obj->getVelocity().formatVector() << "\n";
+            }
+            std::cout << std::string(n, '-') << '\n';
+        }
     }
 }
 

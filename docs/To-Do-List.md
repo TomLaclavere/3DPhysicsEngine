@@ -5,7 +5,8 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 ## General Tasks
 
 - [ ] Add printing method in PhysicsWorld
-- [ ] Improve Runtime commands
+  - [ ] Add print when simulation is running (see free fall example)
+  - [ ] Improve object printing
 
 ## Code Quality and Maintenance
 

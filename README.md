@@ -7,7 +7,7 @@
 [![C++](https://img.shields.io/badge/C++-23-blue?logo=c%2B%2B)](https://isocpp.org/)
 
 ## Project Overview
-A modular 3D physics engine built in modern C++, designed to combine scientific rigour with extreme performance. Inspired by the architecture and best practices of Project Chrono reactphysics3d, this engine aims to strengthen C++ expertise and HPC techniques by delivering a complete, extensible, and highly optimized simulation core.
+A modular 3D physics engine built in modern C++, designed to combine scientific rigour with performance. This engine aims to strengthen C++ expertise and HPC techniques by delivering a complete, extensible, and optimized simulation core.
 
 ## Goals
 
@@ -15,29 +15,31 @@ A modular 3D physics engine built in modern C++, designed to combine scientific 
 
    - Implement rigid bodies subject to gravity and external forces.
 
-   - Experiment with multiple time integrators (Euler, Verlet, semi-implicit).
+   - Experiment with multiple time integrators.
 
-2. Real-Time 3D Rendering
 
-    - Integrate OpenGL (using GLFW + GLAD) to visualize the scene.
-
-    - Provide a controllable camera system and debug interface (ImGui).
-
-3. Collision Detection & Constraints
+2. Collision Detection & Constraints
 
     - Broad-phase detection (spatial grid or tree) and narrow-phase (spheres, boxes, planes).
 
     - Impulse-based resolution with restitution and friction, plus rigid constraints (joints, springs).
 
+3. Advanced physics features
+    - Constraints : joints, pivots, ...
+
+    - Forces : drag, damping, spring, ...
+
+
 4. HPC Optimizations
 
-    - CPU Multithreading: std::thread / OpenMP for parallelizing the simulation.
+    - CPU Multithreading.
 
     - Intel TBB: to compare efficiency and load balancing.
 
-    - MPI: domain decomposition and halo exchange for distributed simulation.
+    - MPI.
 
-    - GPU Acceleration: CUDA/OpenCL offloading of critical phases (collision detection, constraint solver).
+    - GPU Acceleration.
+
 
 5. Benchmarking & Performance Analysis
 
@@ -46,6 +48,10 @@ A modular 3D physics engine built in modern C++, designed to combine scientific 
     - Automated benchmark scripts for each implementation (sequential, OpenMP, TBB, MPI, GPU).
 
     - Graphical reports and comparative analysis in the documentation.
+
+
+5. Real-Time 3D Rendering
+
 
 ## How to run ?
 

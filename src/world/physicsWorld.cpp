@@ -82,33 +82,36 @@ void PhysicsWorld::run()
 
     // Printing
     // Column widths
-    constexpr int col_obj = 10;
-    constexpr int col_vec = 40;
-    size_t        n       = col_obj + 2 * col_vec;
+    constexpr int col_obj  = 10;
+    constexpr int col_time = 10;
+    constexpr int col_vec  = 40;
+    size_t        n        = col_obj + col_time + 2 * col_vec;
 
     // Header
-    std::cout << std::left << std::setw(col_obj) << "Object" << std::setw(col_vec) << "Position(x,y,z)"
-              << std::setw(col_vec) << "Velocity(x,y,z)" << "\n";
+    std::cout << std::left << std::setw(col_obj) << "Object" << std::setw(col_time) << "Time(s)"
+              << std::setw(col_vec) << "Position(x,y,z)" << std::setw(col_vec) << "Velocity(x,y,z)" << "\n";
     std::cout << std::string(n, '-') << "\n";
 
-    while (cpt < maxIter && getIsRunning())
+    while (cpt < maxIter + 1 && getIsRunning())
     {
+        const decimal time = cpt * timeStep;
+
         integrate(timeStep);
-        cpt++;
 
         // Printing
-        if (cpt % 25 == 0)
+        if (cpt % 10 == 0)
         {
             for (auto* obj : getObject())
             {
                 if (!obj->isFixed())
-                    std::cout << std::left << std::setw(col_obj) << obj->getType() << std::fixed
-                              << std::setprecision(3) << std::setw(col_vec)
+                    std::cout << std::left << std::setw(col_obj) << obj->getType() << std::setw(col_time)
+                              << std::fixed << std::setprecision(3) << time << std::setw(col_vec)
                               << obj->getPosition().formatVector() << std::setw(col_vec)
                               << obj->getVelocity().formatVector() << "\n";
             }
             std::cout << std::string(n, '-') << '\n';
         }
+        cpt++;
     }
 }
 

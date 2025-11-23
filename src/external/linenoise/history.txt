@@ -1,0 +1,21 @@
+add sphere
+add plane
+set obj 1 fixed true
+set obj 1 fixed 1
+set obj 1 fixed 
+set obj 1 pos 0 0 0
+show
+list
+q
+add sphere
+clear
+reset
+init
+add sphere
+add plane
+show
+lst
+list
+set obj 1 fixed 1
+start
+run

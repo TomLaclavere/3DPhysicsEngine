@@ -8,9 +8,20 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
   - [ ] Add print when simulation is running (see free fall example)
   - [ ] Improve object printing
 
+- [ ] linenoise
+  - [ ] Clear history oldest lines in history when file achieve a given size when quitting
+  - [ ] Add autocompletion in a file when an unknown accepted command is entered 
+
 ## Code Quality and Maintenance
 
 ## Simulation Management
+
+### Data Management
+- [ ] **State Management**
+  - [ ] Simulation state serialization
+  - [ ] Checkpoint system
+  - [ ] State restoration
+  - [ ] Configuration presets
 
 ### Parameter Control
 - [ ] **Core Parameters Implementation**
@@ -22,6 +33,7 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
   - [ ] Runtime parameter modification ?
   - [ ] Parameter validation and bounds checking
   - [x] Default fallback values
+  - [ ] Add objects from yaml
 
 ### Runtime Control
 - [ ] **Simulation Control Commands**
@@ -45,19 +57,13 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
   - [ ] Tab completion
   - [ ] Help system
   - [ ] Error handling and feedback
+  - [ ] Make it works as a terminal 
 
 - [ ] **Parameter Display**
   - [ ] Current parameter values
   - [ ] Parameter modification history
   - [ ] Performance metrics
   - [ ] System status indicators
-
-### Data Management
-- [ ] **State Management**
-  - [ ] Simulation state serialization
-  - [ ] Checkpoint system
-  - [ ] State restoration
-  - [ ] Configuration presets
 
 ## CMake and Build System
 

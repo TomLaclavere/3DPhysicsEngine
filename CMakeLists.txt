@@ -79,12 +79,17 @@ set(ENGINE_WORLD_SOURCES
     src/world/physics.cpp
     src/world/physicsWorld.cpp)
 
+set(ENGINE_EXTERNAL_SOURCES
+    src/external/linenoise/linenoise.c
+)
+
 set(ENGINE_ALL_SOURCES
     ${ENGINE_CORE_SOURCES}
     ${ENGINE_MATH_SOURCES}
     ${ENGINE_OBJECT_SOURCES}
     ${ENGINE_UTILITIES_SOURCE}
     ${ENGINE_WORLD_SOURCES}
+    ${ENGINE_EXTERNAL_SOURCES}
 )
 
 # =============================================

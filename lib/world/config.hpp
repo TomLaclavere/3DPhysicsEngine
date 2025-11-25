@@ -31,7 +31,7 @@ struct Config
 {
 private:
     // Physical constants
-    decimal gravity = -9.81_d; // m/s^2
+    decimal gravity = 9.81_d; // m/s^2
 
     // Simulation parameters
     decimal      timeStep      = 0.01_d; // seconds

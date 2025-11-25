@@ -1,29 +1,121 @@
+#include "external/linenoise/hystory.hpp"
+#include "external/linenoise/linenoise.h"
+#include "objects/aabb.hpp"
 #include "objects/plane.hpp"
 #include "objects/sphere.hpp"
-#include "utilities/timer.cpp"
+#include "precision.hpp"
+#include "utilities/command.hpp"
+#include "utilities/timer.hpp"
 #include "world/config.hpp"
 #include "world/physicsWorld.hpp"
 
 #include <chrono>
+#include <cstring>
+#include <fstream>
+#include <functional>
 #include <iomanip>
 #include <iostream>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
-// ------------------------------------------------------------------------
-// Helper: format a Vector3D as a fixed-width string
-// ------------------------------------------------------------------------
-inline std::string formatVector(const Vector3D& v)
+std::string completionFilename = "./src/external/linenoise/completion.txt";
+const char* historyFilename    = "./src/external/linenoise/history.txt";
+
+// ============================================================================
+// Helpers
+// ============================================================================
+void listObjects(const PhysicsWorld& world)
 {
-    std::ostringstream oss;
-    oss << std::scientific << std::setprecision(3) << "(" << std::setw(10) << v[0] << ", " << std::setw(10)
-        << v[1] << ", " << std::setw(10) << v[2] << ")";
-    return oss.str();
+    std::cout << "Objects (" << world.getObjectCount() << "):\n";
+    for (size_t i = 0; i < world.getObjectCount(); ++i)
+    {
+        const Object* obj = world.getObject(i);
+        if (obj)
+            std::cout << "  [" << i << "] " << toString(obj->getType()) << " | pos=" << obj->getPosition()
+                      << " | vel=" << obj->getVelocity() << " | fixed=" << (obj->isFixed() ? "True" : "False")
+                      << "\n";
+    }
+}
+
+void showObject(const PhysicsWorld& world, size_t id)
+{
+    const Object* obj = world.getObject(id);
+    if (!obj)
+    {
+        std::cout << "No object with id " << id << "\n";
+        return;
+    }
+
+    std::cout << "Object [" << id << "]\n"
+              << "  Type: " << toString(obj->getType()) << "\n"
+              << "  Position: " << obj->getPosition() << "\n"
+              << "  Velocity: " << obj->getVelocity() << "\n"
+              << "  Fixed: " << std::boolalpha << obj->isFixed() << "\n";
 }
 
 // ============================================================================
-// Main entry point
+// Command enumeration for switch
+// ============================================================================
+enum class CommandType
+{
+    HELP,
+    EXIT,
+    START,
+    STOP,
+    RUN,
+    INTEGRATE,
+    PRINT,
+    INIT,
+    SET,
+    ADD,
+    LIST,
+    SHOW,
+    DEL,
+    UNKNOWN
+};
+
+CommandType commandFromString(const std::string& action)
+{
+    if (action == "help" || action == "h")
+        return CommandType::HELP;
+    if (action == "exit" || action == "quit" || action == "q")
+        return CommandType::EXIT;
+    if (action == "start")
+        return CommandType::START;
+    if (action == "stop")
+        return CommandType::STOP;
+    if (action == "run")
+        return CommandType::RUN;
+    if (action == "integrate")
+        return CommandType::INTEGRATE;
+    if (action == "print")
+        return CommandType::PRINT;
+    if (action == "init")
+        return CommandType::INIT;
+    if (action == "set")
+        return CommandType::SET;
+    if (action == "add")
+        return CommandType::ADD;
+    if (action == "list")
+        return CommandType::LIST;
+    if (action == "show")
+        return CommandType::SHOW;
+    if (action == "del")
+        return CommandType::DEL;
+    return CommandType::UNKNOWN;
+}
+
+// ============================================================================
+// Main
 // ============================================================================
 int main(int argc, char** argv)
 {
+    // Initialize history & completion helpers (wraps linenoise callbacks / loading)
+    initHistoryAndCompletion(historyFilename, completionFilename);
+
     Timer totalTimer;
 
     // Load configuration
@@ -34,64 +126,155 @@ int main(int argc, char** argv)
 
     std::cout << "----------------------------------------\n";
     std::cout << "Simulation Parameters:\n";
-    std::cout << "Gravity: " << config.getGravity() << " m/s²\n";
-    std::cout << "Timestep: " << config.getTimeStep() << " s\n";
-    std::cout << "Max iterations: " << config.getMaxIterations() << "\n";
-    std::cout << "Loading configuration took: " << configTimer.elapsedMilliseconds() << " ms\n";
+    std::cout << "  Gravity: " << config.getGravity() << " m/s²\n";
+    std::cout << "  Timestep: " << config.getTimeStep() << " s\n";
+    std::cout << "  Max iterations: " << config.getMaxIterations() << "\n";
+    std::cout << "  Config load time: " << configTimer.elapsedMilliseconds() << " ms\n";
+    std::cout << "----------------------------------------\n";
 
-    // Initialize simulation
-    Timer        initTimer;
     PhysicsWorld world(config);
-    auto*        sphere = new Sphere(Vector3D(0_d, 0_d, 10_d), 1_d, 1_d);
-    auto*        ground = new Plane(Vector3D(0_d), Vector3D(0_d, 0_d, 0_d));
-    sphere->setIsFixed(false);
+    world.initialize();
 
-    world.addObject(sphere);
-    world.addObject(ground);
-    world.start();
-
-    std::cout << "Initializing world took: " << initTimer.elapsedMilliseconds() << " ms\n\n";
-
-    // Column widths
-    constexpr int col_time = 10;
-    constexpr int col_vec  = 40;
-    constexpr int col_step = 12;
-
-    // Header
-    std::cout << std::left << std::setw(col_time) << "Time(s)" << std::setw(col_vec) << "Position(x,y,z)"
-              << std::setw(col_vec) << "Velocity(x,y,z)" << std::setw(col_step) << "Step (µs)\n";
-    std::cout << std::string(col_time + 2 * col_vec + col_step, '-') << "\n";
-
-    // Simulation loop
-    Timer         simulationTimer;
-    const decimal timeStep = config.getTimeStep();
-    const size_t  maxIter  = config.getMaxIterations();
-
-    for (size_t counter = 0; counter < maxIter; ++counter)
+    // Input loop
+    while (true)
     {
-        Timer stepTimer;
+        char* raw = linenoise("> ");
+        if (!raw)
+            break;
 
-        const decimal  time = counter * timeStep;
-        const Vector3D pos  = sphere->getPosition();
-        const Vector3D vel  = sphere->getVelocity();
+        std::string command(raw);
+        linenoiseFree(raw);
 
-        world.integrate(timeStep);
+        if (command.empty())
+            continue;
 
-        if (counter % 100 == 0)
+        // parse words after getting command
+        auto words = parseWords(command);
+        if (words.empty())
         {
-            std::cout << std::left << std::setw(col_time) << std::fixed << std::setprecision(3) << time
-                      << std::setw(col_vec) << formatVector(pos) << std::setw(col_vec) << formatVector(vel)
-                      << std::right << std::setw(col_step) << stepTimer.elapsedMicroseconds() << "\n";
+            printUsage();
+            continue;
         }
+
+        // Add command to hystory
+        linenoiseHistoryAdd(command.c_str());
+        linenoiseHistorySave(historyFilename);
+
+        const std::string actionStr = popNext(words);
+        CommandType       action    = commandFromString(actionStr);
+
+        // Indicator to know if the command was executed successfully
+        bool success = false;
+
+        switch (action)
+        {
+        case CommandType::HELP:
+            printUsage();
+            success = true;
+            break;
+
+        case CommandType::EXIT:
+            world.clearObjects();
+            trimHistory(historyFilename, 1000);
+            std::cout << "Exiting simulation.\n";
+            success = true;
+            return 0;
+
+        case CommandType::START:
+            world.start();
+            std::cout << "Simulation started.\n";
+            success = true;
+            break;
+
+        case CommandType::STOP:
+            world.stop();
+            std::cout << "Simulation stopped.\n";
+            success = true;
+            break;
+
+        case CommandType::RUN:
+            if (!world.getIsRunning())
+                std::cout << "Simulation is not running. Run start first.\n";
+            world.run();
+            success = true;
+            break;
+
+        case CommandType::INTEGRATE:
+            if (!words.empty())
+            {
+                const decimal dt = stringToDecimal(popNext(words));
+                world.integrate(dt);
+                std::cout << "Integrated one step of " << dt << "s.\n";
+                success = true;
+            }
+            else
+            {
+                std::cout << "Usage: integrate <dt>\n";
+            }
+            break;
+
+        case CommandType::PRINT:
+            world.printState();
+            success = true;
+            break;
+
+        case CommandType::INIT:
+            world.initialize();
+            std::cout << "World initialized.\n";
+            success = true;
+            break;
+
+        case CommandType::SET:
+            success = handleSetCommand(world, words);
+            break;
+
+        case CommandType::ADD: {
+            success = handleAddCommand(world, words);
+            break;
+        }
+
+        case CommandType::LIST:
+            listObjects(world);
+            success = true;
+            break;
+
+        case CommandType::SHOW:
+            if (!words.empty())
+            {
+                size_t id = std::stoul(popNext(words));
+                showObject(world, id);
+                success = true;
+            }
+            else
+            {
+                std::cout << "Usage: show <id>\n";
+            }
+            break;
+
+        case CommandType::DEL:
+            if (!words.empty())
+            {
+                size_t id = std::stoul(popNext(words));
+                world.removeObject(world.getObject(id));
+                std::cout << "Removed object " << id << "\n";
+                success = true;
+            }
+            else
+            {
+                std::cout << "Usage: del <id>\n";
+            }
+            break;
+
+        default:
+            std::cout << "Unknown command: " << actionStr << "\n";
+            printUsage();
+            break;
+        }
+
+        // Record successful command in history and completion (encapsulated)
+        if (success)
+            recordSuccessfulCommand(historyFilename, command);
     }
 
-    const double simTimeSec = simulationTimer.elapsedSeconds();
-    const double avgStepUs  = simulationTimer.elapsedMicroseconds() / static_cast<double>(maxIter);
-
-    std::cout << "\nSimulation took: " << simTimeSec << " s\n";
-    std::cout << "Average iteration time: " << avgStepUs << " µs\n";
-    std::cout << "Total execution time: " << totalTimer.elapsedSeconds() << " s\n";
-
-    delete sphere;
     return 0;
 }

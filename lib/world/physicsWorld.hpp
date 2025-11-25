@@ -3,7 +3,7 @@
  * @brief Definition of the Physical World used in physics simulation.
  *
  */
-
+#pragma once
 #include "mathematics/common.hpp"
 #include "objects/object.hpp"
 #include "world/config.hpp"
@@ -72,7 +72,13 @@ public:
     void start() { isRunning = true; }
     void stop() { isRunning = false; }
     /// Re-initialise PhysicsWorld
-    void reset() { initialize(); }
+    void resetAcc()
+    {
+        for (auto* obj : objects)
+        {
+            obj->setAcceleration(Vector3D(0_d));
+        }
+    }
     /// @}
 
     // ============================================================================
@@ -85,6 +91,8 @@ public:
     /// @brief Integrate all objects over one time step.
     /// Resets accelerations, applies forces, and moves objects using semi-implicit Euler.
     void integrate(decimal dt);
+    /// Run simulation over all iterations.
+    void run();
     /// @}
 
     // ============================================================================
@@ -126,7 +134,9 @@ public:
     /// Clear Object array
     void    clearObjects() { objects.clear(); }
     size_t  getObjectCount() const { return objects.size(); }
+    Object* getObject(size_t index) const { return (index < objects.size()) ? objects[index] : nullptr; }
     Object* getObject(size_t index) { return (index < objects.size()) ? objects[index] : nullptr; }
+    std::vector<Object*> getObject() { return objects; }
     /// @}
 
     // ============================================================================

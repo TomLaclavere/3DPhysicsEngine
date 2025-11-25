@@ -50,9 +50,10 @@
         - [x] **Design a way to define all the variables of the simulation :** 
           - [x] Parameters file (yaml)
           - [x] Command lines
+          - [x] Runtime commands
     - [x] **Time loop**
     - [x] **External forces :** gravity
-    - [ ] **Object management**
+    - [x] **Object management**
 - [ ] **Simple Motion :**
   - [x] **Linear Motion Basics**
     - [x] Position updates
@@ -62,8 +63,9 @@
     - [x] **Semi-implicit Euler** (basic) 
     - [x] **Time step handling**
     - [ ] **Verlet** (optional)
+    - [ ] **RK4** (optional)
 - [ ] **Fundamental Test :** Add examples repository to implement testing cases for basic physical situations
-  - [ ] **Free fall**
+  - [x] **Free fall**
   - [ ] **Projectile motion**
   - [ ] **Pendulum** (optional)
   - [ ] **Check Energy/momentum conservation**

@@ -84,6 +84,8 @@ public:
     Vector3D getAbsolute() const;
     /// Return a normalised copy of the vector. If zero-length, return null vector.
     Vector3D getNormalised() const;
+    /// Format a Vector3D as a fixed-width string
+    std::string formatVector() const;
     /// @}
 
     // ============================================================================

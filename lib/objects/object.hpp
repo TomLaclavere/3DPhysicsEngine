@@ -8,6 +8,7 @@
  */
 #pragma once
 #include "mathematics/vector.hpp"
+#include "ostream"
 #include "precision.hpp"
 
 enum class ObjectType
@@ -17,6 +18,23 @@ enum class ObjectType
     AABB,
     Plane
 };
+
+inline std::string toString(ObjectType type)
+{
+    switch (type)
+    {
+    case ObjectType::Generic:
+        return "Generic";
+    case ObjectType::Sphere:
+        return "Sphere";
+    case ObjectType::Plane:
+        return "Plane";
+    case ObjectType::AABB:
+        return "AABB";
+    default:
+        return "Unknown";
+    }
+}
 
 /**
  * @brief Object class representing a physical entity in the simulation.
@@ -66,6 +84,14 @@ public:
     Object(const Vector3D& position, const Vector3D& size, decimal mass)
         : position { position }
         , size { size }
+        , mass { mass }
+    {
+        checkFixed();
+    }
+    Object(const Vector3D& position, const Vector3D& size, const Vector3D& velocity, decimal mass)
+        : position { position }
+        , size { size }
+        , velocity { velocity }
         , mass { mass }
     {
         checkFixed();
@@ -173,3 +199,5 @@ public:
     virtual bool checkCollision(const Object& other) = 0; // Pure virtual
     /// @}
 };
+
+inline std::ostream& operator<<(std::ostream& os, ObjectType type) { return os << toString(type); }

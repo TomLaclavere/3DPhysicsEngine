@@ -4,17 +4,24 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 ## General Tasks
 
-- [ ] Remove Codacy
-- [ ] Test Physics
-- [ ] Test PhysicsWorld
-- [ ] Build running test example to verify the physical accuracy of simulation
-  - [ ] Free Fall
-- [ ] **Integrate :** method for all objects or for PhysicsWorld ? 
-- [x] Verify scripts/ (check parameters and re-compile conditions)
+- [x] Add printing method in PhysicsWorld
+  - [x] Add print when simulation is running (see free fall example)
+  - [x] Improve object printing
+
+- [x] linenoise
+  - [x] Clear the oldest lines in the history when the history file reaches a given size on quitting.
+  - [x] Add autocompletion and persist new accepted commands to a file when they are entered 
 
 ## Code Quality and Maintenance
 
 ## Simulation Management
+
+### Data Management
+- [ ] **State Management**
+  - [ ] Simulation state serialization
+  - [ ] Checkpoint system
+  - [ ] State restoration
+  - [ ] Configuration presets
 
 ### Parameter Control
 - [ ] **Core Parameters Implementation**
@@ -23,16 +30,17 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
   - [x] Maximum iteration count
 
 - [ ] **Parameter Management System**
-  - [ ] Runtime parameter modification ?
+  - [x] Runtime parameter modification ?
   - [ ] Parameter validation and bounds checking
-  - [ ] Default fallback values
+  - [x] Default fallback values
+  - [ ] Add objects from YAML
 
 ### Runtime Control
 - [ ] **Simulation Control Commands**
   - [ ] Start/Stop simulation
   - [ ] Pause/Resume functionality
   - [x] Step-by-step execution
-  - [ ] Reset to initial state
+  - [x] Reset to initial state
   - [ ] Emergency stop
 
 - [ ] **Runtime Interaction**
@@ -44,24 +52,18 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 ### User Interface
 - [ ] **Command Interface**
-  - [ ] Interactive command prompt
-  - [ ] Command history
-  - [ ] Tab completion
-  - [ ] Help system
+  - [x] Interactive command prompt
+  - [x] Command history
+  - [x] Tab completion
+  - [x] Help system
   - [ ] Error handling and feedback
+  - [x] Make it works as a terminal
 
 - [ ] **Parameter Display**
-  - [ ] Current parameter values
+  - [x] Current parameter values
   - [ ] Parameter modification history
   - [ ] Performance metrics
   - [ ] System status indicators
-
-### Data Management
-- [ ] **State Management**
-  - [ ] Simulation state serialization
-  - [ ] Checkpoint system
-  - [ ] State restoration
-  - [ ] Configuration presets
 
 ## CMake and Build System
 
@@ -82,6 +84,12 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 - [x] Use functions from common.hpp for comparison
 - [x] Unit test for Config
 - [x] Unit test for PhysicsWorld
+- [x] Remove Codacy
+- [x] Test Physics
+- [x] Test PhysicsWorld
+- [x] Build running test example to verify the physical accuracy of simulation
+  - [x] Free Fall
+- [x] Verify scripts/ (check parameters and re-compile conditions)
 
 ## Code Quality and Maintenance
 

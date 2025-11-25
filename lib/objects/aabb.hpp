@@ -43,6 +43,11 @@ public:
     {
         checkFixed();
     }
+    AABB(const Vector3D& position, const Vector3D& size, const Vector3D& velocity, decimal mass)
+        : Object(position, size, velocity, mass)
+    {
+        checkFixed();
+    }
     AABB(const Vector3D& position, const Vector3D& rotation, const Vector3D& size, const Vector3D& velocity,
          const Vector3D& acceleration, const Vector3D& force, const Vector3D& torque, decimal mass)
         : Object(position, rotation, size, velocity, acceleration, force, torque, mass)

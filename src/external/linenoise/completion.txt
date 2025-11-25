@@ -1,0 +1,27 @@
+add
+help
+start
+stop
+run
+integrate
+print
+init
+set 
+list
+show
+del
+sphere
+plane
+aabb
+fixed
+add sphere
+add aabb
+add plane
+set dt
+set gravity
+step
+reset
+quit
+exit
+q
+set obj 1 fixed 1

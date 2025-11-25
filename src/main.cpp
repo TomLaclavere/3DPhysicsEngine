@@ -1,3 +1,4 @@
+#include "external/linenoise/hystory.hpp"
 #include "external/linenoise/linenoise.h"
 #include "objects/aabb.hpp"
 #include "objects/plane.hpp"
@@ -55,49 +56,6 @@ void showObject(const PhysicsWorld& world, size_t id)
               << "  Fixed: " << std::boolalpha << obj->isFixed() << "\n";
 }
 
-void clearFile(const std::string& filename, std::size_t maxLines)
-{
-    std::cout << "Clearing history file..." << std::endl;
-    std::ifstream in(filename);
-    if (!in.is_open())
-    {
-        std::cout << "Incorrect history filename !" << std::endl;
-        return;
-    }
-
-    std::vector<std::string> lines;
-    std::string              line;
-
-    // Load all lines
-    while (std::getline(in, line))
-    {
-        lines.push_back(std::move(line));
-    }
-    in.close();
-
-    if (lines.size() <= maxLines)
-    {
-        std::cout << "File lines are below threshold, nothing to clear." << std::endl;
-        return;
-    }
-
-    // Keep only the last maxLines lines
-    std::vector<std::string> trimmed(lines.end() - maxLines, lines.end());
-
-    // Rewrite the file
-    std::ofstream out(filename, std::ios::trunc);
-    if (!out.is_open())
-    {
-        return;
-    }
-
-    for (const auto& s : trimmed)
-    {
-        out << s << '\n';
-    }
-    std::cout << "History file cleared !" << std::endl;
-}
-
 // ============================================================================
 // Command enumeration for switch
 // ============================================================================
@@ -151,83 +109,12 @@ CommandType commandFromString(const std::string& action)
 }
 
 // ============================================================================
-// Completion callback (linenoise)
-// ============================================================================
-void completionAdd(const std::string& filename, const std::string& command)
-{
-    // Use a set to avoid duplicates
-    std::unordered_set<std::string> commands;
-
-    // Read existing commands
-    std::ifstream in(filename);
-    if (in.is_open())
-    {
-        std::string line;
-        while (std::getline(in, line))
-        {
-            if (!line.empty())
-                commands.insert(line);
-        }
-        in.close();
-    }
-    else
-    {
-        std::cout << "Incorrect completion filename: " << filename << std::endl;
-    }
-
-    // Insert the new command if it does not already exist
-    if (!command.empty() && commands.find(command) == commands.end())
-    {
-        std::ofstream out(filename, std::ios::app);
-        if (out.is_open())
-        {
-            out << command << '\n';
-        }
-        else
-        {
-            std::cerr << "Failed to open completion file for writing: " << filename << std::endl;
-        }
-    }
-}
-
-void completionCallback(const char* prefix, linenoiseCompletions* lc)
-{
-    std::vector<std::string> allCommands;
-    allCommands.reserve(100);
-
-    // Load commands from file
-    {
-        std::ifstream in(completionFilename);
-        std::string   line;
-        if (in.is_open())
-        {
-            while (std::getline(in, line))
-            {
-                if (!line.empty())
-                    allCommands.push_back(line);
-            }
-        }
-    }
-
-    // Perform autocompletion
-    const size_t pLen = std::strlen(prefix);
-
-    for (const auto& cmd : allCommands)
-    {
-        if (cmd.size() >= pLen && std::strncmp(prefix, cmd.c_str(), pLen) == 0)
-        {
-            linenoiseAddCompletion(lc, cmd.c_str());
-        }
-    }
-}
-
-// ============================================================================
 // Main
 // ============================================================================
 int main(int argc, char** argv)
 {
-    linenoiseSetCompletionCallback(completionCallback);
-    linenoiseHistoryLoad(historyFilename);
+    // Initialize history & completion helpers (wraps linenoise callbacks / loading)
+    initHistoryAndCompletion(historyFilename, completionFilename);
 
     Timer totalTimer;
 
@@ -248,28 +135,6 @@ int main(int argc, char** argv)
     PhysicsWorld world(config);
     world.initialize();
 
-    using PropertySetter = std::function<void(Object*, const std::vector<std::string>& args)>;
-    static const std::unordered_map<std::string, PropertySetter> PROPERTY_SETTERS = {
-        { "pos", [](Object* obj, const auto& a)
-          { obj->setPosition({ stringToDecimal(a[0]), stringToDecimal(a[1]), stringToDecimal(a[2]) }); } },
-        { "vel", [](Object* obj, const auto& a)
-          { obj->setVelocity({ stringToDecimal(a[0]), stringToDecimal(a[1]), stringToDecimal(a[2]) }); } },
-        { "acc",
-          [](Object* obj, const auto& a)
-          {
-              obj->setAcceleration({ stringToDecimal(a[0]), stringToDecimal(a[1]), stringToDecimal(a[2]) });
-          } },
-        { "rot", [](Object* obj, const auto& a)
-          { obj->setRotation({ stringToDecimal(a[0]), stringToDecimal(a[1]), stringToDecimal(a[2]) }); } },
-        { "mass", [](Object* obj, const auto& a) { obj->setMass(stringToDecimal(a[0])); } },
-        { "fixed",
-          [](Object* obj, const auto& a)
-          {
-              bool                                               b                = (a[0] == "1" || a[0] == "true" || a[0] == "yes");
-              obj->setIsFixed(b);
-          } },
-    };
-
     // Input loop
     while (true)
     {
@@ -283,9 +148,7 @@ int main(int argc, char** argv)
         if (command.empty())
             continue;
 
-        linenoiseHistoryAdd(command.c_str());
-        linenoiseHistorySave(historyFilename);
-
+        // parse words after getting command
         auto words = parseWords(command);
         if (words.empty())
         {
@@ -293,10 +156,14 @@ int main(int argc, char** argv)
             continue;
         }
 
+        // Add command to hystory
+        linenoiseHistoryAdd(command.c_str());
+        linenoiseHistorySave(historyFilename);
+
         const std::string actionStr = popNext(words);
         CommandType       action    = commandFromString(actionStr);
 
-        // Indicateur pour savoir si la commande a été exécutée correctement
+        // Indicator to know if the command was executed successfully
         bool success = false;
 
         switch (action)
@@ -308,7 +175,7 @@ int main(int argc, char** argv)
 
         case CommandType::EXIT:
             world.clearObjects();
-            clearFile(std::string(1, *historyFilename), 1000);
+            trimHistory(historyFilename, 1000);
             std::cout << "Exiting simulation.\n";
             success = true;
             return 0;
@@ -358,79 +225,11 @@ int main(int argc, char** argv)
             break;
 
         case CommandType::SET:
-            if (!words.empty())
-            {
-                const std::string what = popNext(words);
-                if (what == "dt" && !words.empty())
-                {
-                    const decimal value = stringToDecimal(popNext(words));
-                    world.setTimeStep(value);
-                    std::cout << "Timestep set to " << value << "s.\n";
-                    success = true;
-                }
-                else if (what == "g" && !words.empty())
-                {
-                    const decimal value = stringToDecimal(popNext(words));
-                    world.setGravityCst(value);
-                    world.setGravityAcc(Physics::computeGravityAcc(value));
-                    std::cout << "Gravity set to " << value << " m/s².\n";
-                    success = true;
-                }
-                else if (what == "obj" && words.size() >= 2)
-                {
-                    size_t      id   = std::stoul(popNext(words));
-                    std::string prop = popNext(words);
-
-                    Object* obj = world.getObject(id);
-                    if (obj && PROPERTY_SETTERS.count(prop))
-                    {
-                        std::vector<std::string> args(words.begin(), words.end());
-                        PROPERTY_SETTERS.at(prop)(obj, args);
-                        std::cout << "Set " << prop << " on object " << id << "\n";
-                        success = true;
-                    }
-                    else
-                    {
-                        std::cout << "Invalid object id or property.\n";
-                    }
-                }
-            }
+            success = handleSetCommand(world, words);
             break;
 
         case CommandType::ADD: {
-            if (words.empty())
-            {
-                std::cout << "Usage: add <sphere|plane|AABB>\n";
-                break;
-            }
-            const std::string type = popNext(words);
-            if (type == "sphere")
-            {
-                auto sphere = std::make_unique<Sphere>(Vector3D(0, 0, 10), 0.2_d, Vector3D(0, 0, 0), 1.0_d);
-                world.addObject(sphere.release());
-                std::cout << "Added sphere.\n";
-                success = true;
-            }
-            else if (type == "plane")
-            {
-                auto plane =
-                    std::make_unique<Plane>(Vector3D(0, 0, 0), Vector3D(1, 1, 1), 1.0_d, Vector3D(0, 1, 0));
-                world.addObject(plane.release());
-                std::cout << "Added plane.\n";
-                success = true;
-            }
-            else if (type == "AABB")
-            {
-                auto aabb =
-                    std::make_unique<AABB>(Vector3D(0, 0, 5), Vector3D(1, 1, 1), Vector3D(0, 0, 0), 1.0_d);
-                world.addObject(aabb.release());
-                std::cout << "Added AABB.\n";
-                success = true;
-            }
-            else
-            {
-                std::cout << "Unknown object type: " << type << "\n";
-            }
+            success = handleAddCommand(world, words);
             break;
         }
 
@@ -472,9 +271,9 @@ int main(int argc, char** argv)
             break;
         }
 
-        // Ajouter au fichier de complétion **seulement si la commande a été exécutée avec succès**
+        // Record successful command in history and completion (encapsulated)
         if (success)
-            completionAdd(completionFilename, command);
+            recordSuccessfulCommand(historyFilename, command);
     }
 
     return 0;

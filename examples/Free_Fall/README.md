@@ -22,8 +22,6 @@ The gravitational acceleration on Earth is:
 
 g = 9.81 m/s²
 
-Copier le code
-
 From the fundamental law of dynamics (along the vertical axis):
 
 a = -g

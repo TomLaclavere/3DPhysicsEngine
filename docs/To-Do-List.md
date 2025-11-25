@@ -9,8 +9,8 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
   - [x] Improve object printing
 
 - [x] linenoise
-  - [x] Clear history oldest lines in history when file achieve a given size when quitting
-  - [x] Add autocompletion in a file when an unknown accepted command is entered 
+  - [x] Clear the oldest lines in the history when the history file reaches a given size on quitting.
+  - [x] Add autocompletion and persist new accepted commands to a file when they are entered 
 
 ## Code Quality and Maintenance
 
@@ -33,7 +33,7 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
   - [x] Runtime parameter modification ?
   - [ ] Parameter validation and bounds checking
   - [x] Default fallback values
-  - [ ] Add objects from yaml
+  - [ ] Add objects from YAML
 
 ### Runtime Control
 - [ ] **Simulation Control Commands**
@@ -57,7 +57,7 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
   - [x] Tab completion
   - [x] Help system
   - [ ] Error handling and feedback
-  - [x] Make it works as a terminal 
+  - [x] Make it works as a terminal
 
 - [ ] **Parameter Display**
   - [x] Current parameter values

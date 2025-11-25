@@ -4,13 +4,13 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 ## General Tasks
 
-- [ ] Add printing method in PhysicsWorld
-  - [ ] Add print when simulation is running (see free fall example)
-  - [ ] Improve object printing
+- [x] Add printing method in PhysicsWorld
+  - [x] Add print when simulation is running (see free fall example)
+  - [x] Improve object printing
 
-- [ ] linenoise
-  - [ ] Clear history oldest lines in history when file achieve a given size when quitting
-  - [ ] Add autocompletion in a file when an unknown accepted command is entered 
+- [x] linenoise
+  - [x] Clear history oldest lines in history when file achieve a given size when quitting
+  - [x] Add autocompletion in a file when an unknown accepted command is entered 
 
 ## Code Quality and Maintenance
 
@@ -30,7 +30,7 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
   - [x] Maximum iteration count
 
 - [ ] **Parameter Management System**
-  - [ ] Runtime parameter modification ?
+  - [x] Runtime parameter modification ?
   - [ ] Parameter validation and bounds checking
   - [x] Default fallback values
   - [ ] Add objects from yaml
@@ -40,7 +40,7 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
   - [ ] Start/Stop simulation
   - [ ] Pause/Resume functionality
   - [x] Step-by-step execution
-  - [ ] Reset to initial state
+  - [x] Reset to initial state
   - [ ] Emergency stop
 
 - [ ] **Runtime Interaction**
@@ -52,15 +52,15 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 ### User Interface
 - [ ] **Command Interface**
-  - [ ] Interactive command prompt
-  - [ ] Command history
-  - [ ] Tab completion
-  - [ ] Help system
+  - [x] Interactive command prompt
+  - [x] Command history
+  - [x] Tab completion
+  - [x] Help system
   - [ ] Error handling and feedback
-  - [ ] Make it works as a terminal 
+  - [x] Make it works as a terminal 
 
 - [ ] **Parameter Display**
-  - [ ] Current parameter values
+  - [x] Current parameter values
   - [ ] Parameter modification history
   - [ ] Performance metrics
   - [ ] System status indicators

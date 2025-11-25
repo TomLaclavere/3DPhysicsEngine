@@ -7,7 +7,7 @@
 [![C++](https://img.shields.io/badge/C++-23-blue?logo=c%2B%2B)](https://isocpp.org/)
 
 ## Project Overview
-A modular 3D physics engine built in modern C++, designed to combine scientific rigour with performance. This engine aims to strengthen C++ expertise and HPC techniques by delivering a complete, extensible, and optimized simulation core.
+A modular 3D physics engine built in modern C++, designed to combine scientific rigour with extreme performance. Inspired by the architecture and best practices of Project Chrono reactphysics3d, this engine aims to strengthen C++ expertise and HPC techniques by delivering a complete, extensible, and highly optimized simulation core.
 
 ## How to run ?
 

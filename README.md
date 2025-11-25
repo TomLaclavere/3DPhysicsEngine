@@ -9,50 +9,6 @@
 ## Project Overview
 A modular 3D physics engine built in modern C++, designed to combine scientific rigour with performance. This engine aims to strengthen C++ expertise and HPC techniques by delivering a complete, extensible, and optimized simulation core.
 
-## Goals
-
-1. Basic Physical Simulation
-
-   - Implement rigid bodies subject to gravity and external forces.
-
-   - Experiment with multiple time integrators.
-
-
-2. Collision Detection & Constraints
-
-    - Broad-phase detection (spatial grid or tree) and narrow-phase (spheres, boxes, planes).
-
-    - Impulse-based resolution with restitution and friction, plus rigid constraints (joints, springs).
-
-3. Advanced physics features
-    - Constraints : joints, pivots, ...
-
-    - Forces : drag, damping, spring, ...
-
-
-4. HPC Optimizations
-
-    - CPU Multithreading.
-
-    - Intel TBB: to compare efficiency and load balancing.
-
-    - MPI.
-
-    - GPU Acceleration.
-
-
-5. Benchmarking & Performance Analysis
-
-    - Stress-test scenarios (hundreds to thousands of bodies, stacked piles, complex systems).
-
-    - Automated benchmark scripts for each implementation (sequential, OpenMP, TBB, MPI, GPU).
-
-    - Graphical reports and comparative analysis in the documentation.
-
-
-5. Real-Time 3D Rendering
-
-
 ## How to run ?
 
 ```

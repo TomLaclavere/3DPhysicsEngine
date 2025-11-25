@@ -3,7 +3,7 @@
  * @brief Definition of the Physical World used in physics simulation.
  *
  */
-
+#pragma once
 #include "mathematics/common.hpp"
 #include "objects/object.hpp"
 #include "world/config.hpp"

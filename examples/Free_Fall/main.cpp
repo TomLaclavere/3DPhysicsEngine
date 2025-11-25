@@ -144,6 +144,7 @@ int main(int argc, char** argv)
                   << analyticalContactTimeCube
                   << " (s), and Simulation contact time = " << simulationContactTimeCube << " (s).\n";
 
-    delete sphere, plane, cube;
+    world.clearObjects();
+
     return 0;
 }

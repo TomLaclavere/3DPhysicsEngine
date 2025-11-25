@@ -81,6 +81,7 @@ set(ENGINE_WORLD_SOURCES
 
 set(ENGINE_EXTERNAL_SOURCES
     src/external/linenoise/linenoise.c
+    src/external/linenoise/hystory.cpp
 )
 
 set(ENGINE_ALL_SOURCES

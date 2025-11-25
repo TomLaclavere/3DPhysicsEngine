@@ -19,3 +19,9 @@ list
 set obj 1 fixed 1
 start
 run
+add sphere
+add plane
+set obj 1 fixed 1
+start
+run
+q

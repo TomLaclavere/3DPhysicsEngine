@@ -4,10 +4,14 @@
 #include "objects/plane.hpp"
 #include "objects/sphere.hpp"
 
+#include <functional>
 #include <iostream>
 #include <memory>
+#include <sstream>
 
-// Utility functions
+// ============================================================================
+// Commands string utilities
+// ============================================================================
 void printUsage()
 {
     std::cout
@@ -87,6 +91,10 @@ std::vector<std::string> consumeNames(std::deque<std::string>& words)
     return names;
 }
 
+// ============================================================================
+// Commands handler
+// ============================================================================
+/// @brief Map property name: setter callback used by handleSetCommand.
 using PropertySetter = std::function<void(Object*, const std::vector<std::string>&)>;
 
 static const std::unordered_map<std::string, PropertySetter> PROPERTY_SETTERS = {
@@ -173,6 +181,9 @@ bool handleAddCommand(PhysicsWorld& world, std::deque<std::string>& words)
     return false;
 }
 
+// ============================================================================
+// Arguments parser
+// ============================================================================
 void setVector3Property(Object* obj, const std::vector<std::string>&         args,
                         void (Object::*setter)(const Vector3D&), const char* name)
 {

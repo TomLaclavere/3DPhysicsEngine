@@ -101,7 +101,7 @@ int main(int argc, char** argv)
 
         const decimal time = counter * timeStep;
 
-        world.integrate(timeStep);
+        world.integrate();
 
         if (counter % 1000 == 0)
         {

@@ -16,6 +16,7 @@ Config& Config::get()
 decimal      Config::getGravity() const { return gravity; }
 decimal      Config::getTimeStep() const { return timeStep; }
 unsigned int Config::getMaxIterations() const { return maxIterations; }
+std::string  Config::getSolver() const { return solver; }
 
 // ============================================================================
 //  Loading Methods

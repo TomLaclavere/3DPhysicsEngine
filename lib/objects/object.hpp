@@ -196,7 +196,7 @@ public:
 
     /// @brief Check for collision with another object.
     /// This is a pure virtual functions that must be implemented by derived classes.
-    virtual bool checkCollision(const Object& other) = 0; // Pure virtual
+    virtual bool checkCollision(const Object& other) { return false; }
     /// @}
 };
 

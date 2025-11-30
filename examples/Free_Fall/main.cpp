@@ -82,7 +82,7 @@ int main(int argc, char** argv)
     std::cout << std::left << std::setw(col_obj) << "Object" << std::setw(col_time) << "Time(s)"
               << std::setw(col_vec) << "Position(x,y,z)" << std::setw(col_vec) << "Velocity(x,y,z)"
               << std::setw(col_step) << "Step (µs)\n";
-    std::cout << std::string(col_obj + col_time + 2 * col_vec + col_step, '-') << "\n";
+    std::cout << std::string(n, '-') << "\n";
 
     // Simulation loop
     Timer         simulationTimer;
@@ -96,7 +96,7 @@ int main(int argc, char** argv)
 
         const decimal time = counter * timeStep;
 
-        world.integrate(timeStep);
+        world.integrate();
 
         if (counter % 25 == 0)
         {
@@ -109,7 +109,7 @@ int main(int argc, char** argv)
                               << obj->getVelocity().formatVector() << std::right << std::setw(col_step)
                               << stepTimer.elapsedMicroseconds() << "\n";
             }
-            std::cout << std::string(n * 2, '-') << '\n';
+            std::cout << std::string(n, '-') << '\n';
         }
 
         if (sphere->checkCollision(*ground) && simulationContactTimeSphere == 0_d)

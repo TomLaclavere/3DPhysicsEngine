@@ -1,5 +1,6 @@
 #include "world/physicsWorld.hpp"
 
+#include "world/integrateRK4.hpp"
 #include "world/physics.hpp"
 
 #include <iomanip>
@@ -17,6 +18,7 @@ Vector3D PhysicsWorld::getGravityAcc() const { return gravityAcc; }
 // ============================================================================
 //  Setters
 // ============================================================================
+void PhysicsWorld::setSolver(std::string _solver) { solver = _solver; }
 void PhysicsWorld::setTimeStep(decimal ind) { timeStep = ind; }
 void PhysicsWorld::setGravityCst(decimal g) { gravityCst = g; }
 void PhysicsWorld::setGravityAcc(const Vector3D& acc) { gravityAcc = acc; }
@@ -29,6 +31,7 @@ void PhysicsWorld::initialize()
     isRunning = false;
     objects.clear();
 
+    solver     = config.getSolver();
     timeStep   = config.getTimeStep();
     gravityCst = config.getGravity();
     gravityAcc = Physics::computeGravityAcc(gravityCst);
@@ -44,7 +47,33 @@ void PhysicsWorld::integrateEuler(Object& obj, decimal dt)
     // x_{t+dt} = x_t + v_{t+dt} * dt
     obj.setPosition(obj.getPosition() + obj.getVelocity() * dt);
 }
-void PhysicsWorld::integrate(decimal dt)
+void PhysicsWorld::integrateRK4(Object& obj, decimal dt)
+{
+    Derivative k1, k2, k3, k4;
+
+    // k1
+    k1.derivativeX = obj.getVelocity();
+    k2.derivativeV = obj.getAcceleration();
+
+    // k2
+    k2 = evaluate(obj, k1, dt * 0.5_d);
+
+    // k3
+    k3 = evaluate(obj, k2, dt * 0.5_d);
+
+    // k4
+    k4 = evaluate(obj, k3, dt);
+
+    // Weighted average derivative
+    Vector3D dxdt =
+        (k1.derivativeX + (2_d * k2.derivativeX) + (2_d * k3.derivativeX) + k4.derivativeX) * (1_d / 6_d);
+    Vector3D dvdt =
+        (k1.derivativeV + (2_d * k2.derivativeV) + (2_d * k3.derivativeV) + k4.derivativeV) * (1_d / 6_d);
+
+    obj.setPosition(obj.getPosition() + dxdt * dt);
+    obj.setVelocity(obj.getVelocity() + dvdt * dt);
+}
+void PhysicsWorld::integrate()
 {
     if (!isRunning)
     {
@@ -52,7 +81,7 @@ void PhysicsWorld::integrate(decimal dt)
         return;
     }
 
-    setTimeStep(dt);
+    setTimeStep(timeStep);
 
     // Reset accelerations
     for (auto* obj : objects)
@@ -71,7 +100,19 @@ void PhysicsWorld::integrate(decimal dt)
     {
         if (!obj || obj->isFixed())
             continue;
-        integrateEuler(*obj, dt);
+        if (solver == "Euler")
+        {
+            integrateEuler(*obj, timeStep);
+        }
+        else if (solver == "RK4")
+        {
+            integrateRK4(*obj, timeStep);
+        }
+        else
+        {
+            std::cout << "The following solver is not implemented : " << solver << std::endl;
+            std::cout << "Please use one of the following solver : Euler, RK4 ." << std::endl;
+        }
     }
 }
 void PhysicsWorld::run()
@@ -96,7 +137,7 @@ void PhysicsWorld::run()
     {
         const decimal time = cpt * timeStep;
 
-        integrate(timeStep);
+        integrate();
 
         // Printing
         if (cpt % 10 == 0)

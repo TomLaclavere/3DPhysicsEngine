@@ -66,7 +66,7 @@
     - [ ] **RK4** (optional)
 - [ ] **Fundamental Test :** Add examples repository to implement testing cases for basic physical situations
   - [x] **Free fall**
-  - [ ] **Projectile motion**
+  - [x] **Projectile motion**
   - [ ] **Pendulum** (optional)
   - [ ] **Check Energy/momentum conservation**
 - [ ] **Performance Benchmark**

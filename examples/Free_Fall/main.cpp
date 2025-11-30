@@ -1,3 +1,16 @@
+/**
+ * @file main.cpp
+ *
+ * @brief Free Fall Simulation
+ *
+ * This file is building a physical world to test the free fall under Earth gravity (without atmosphere, for
+ * now) on the objects implemented in the simulation. Its goal is to compare the time where these objects hit
+ * the ground between this simulation and the analytical computation. It will then allows to verify the
+ * physical coherence of this simulation, as well as the collision code for each objects.
+ * @see examples/Free_Fall/README.md for complete explation.
+ *
+ */
+
 #include "objects/aabb.hpp"
 #include "objects/plane.hpp"
 #include "objects/sphere.hpp"

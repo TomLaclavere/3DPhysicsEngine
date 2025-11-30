@@ -171,6 +171,25 @@ if(3DPE_BUILD_EXAMPLES)
         DEPENDS example_Free_Fall
         COMMENT "Running example: Free_Fall"
     )
+
+    # ---------------------------------------------
+    # Example: Projectiles Simulation
+    # ---------------------------------------------
+    add_executable(example_Projectiles examples/Projectiles/main.cpp)
+    target_link_libraries(example_Projectiles PRIVATE 3DPhysicsEngine)
+    target_include_directories(example_Projectiles PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+    set_target_properties(example_Projectiles PROPERTIES
+        OUTPUT_NAME "Projectiles"
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/examples
+        FOLDER "Examples"
+    )
+
+    add_custom_target(Projectiles
+        COMMAND $<TARGET_FILE:example_Projectiles>
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        DEPENDS example_Projectiles
+        COMMENT "Running example: Projectiles"
+    )
 endif()
 
 # =============================================

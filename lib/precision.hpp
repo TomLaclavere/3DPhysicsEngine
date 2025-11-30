@@ -1,4 +1,5 @@
 #pragma once
+#include <limits>
 #include <string>
 
 /**
@@ -57,3 +58,16 @@ constexpr decimal operator""_d(long double val) { return static_cast<decimal>(va
  * @endcode
  */
 constexpr decimal operator""_d(unsigned long long val) { return static_cast<decimal>(val); }
+
+/**
+ * @brief Machine epsilon for the current @ref decimal type.
+ *
+ * Defined as `std::numeric_limits<decimal>::epsilon()`.
+ * This represents the smallest increment such that
+ * `1.0 + PRECISION_MACHINE != 1.0`.
+ *
+ * Useful for:
+ * - Approximate comparisons of floating-point numbers.
+ * - Stability thresholds in numerical algorithms.
+ */
+const decimal PRECISION_MACHINE = std::numeric_limits<decimal>::epsilon();

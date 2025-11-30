@@ -203,7 +203,7 @@ int main(int argc, char** argv)
             if (!words.empty())
             {
                 const decimal dt = stringToDecimal(popNext(words));
-                world.integrate(dt);
+                world.integrate();
                 std::cout << "Integrated one step of " << dt << "s.\n";
                 success = true;
             }

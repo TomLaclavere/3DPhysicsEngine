@@ -7,6 +7,7 @@
 #include "mathematics/common.hpp"
 #include "objects/object.hpp"
 #include "world/config.hpp"
+#include "world/integrateRK4.hpp"
 #include "world/physics.hpp"
 
 #include <vector>
@@ -25,10 +26,11 @@ private:
     Config&              config = Config::get();
     std::vector<Object*> objects;
 
-    bool     isRunning  = false;
-    decimal  timeStep   = config.getTimeStep();
-    decimal  gravityCst = config.getGravity();
-    Vector3D gravityAcc = Physics::computeGravityAcc(gravityCst);
+    bool        isRunning  = false;
+    std::string solver     = config.getSolver();
+    decimal     timeStep   = config.getTimeStep();
+    decimal     gravityCst = config.getGravity();
+    Vector3D    gravityAcc = Physics::computeGravityAcc(gravityCst);
 
 public:
     // ============================================================================
@@ -57,6 +59,7 @@ public:
     /// @name Setters
     // ============================================================================
     /// @{
+    void setSolver(std::string solver);
     void setTimeStep(decimal step);
     void setGravityCst(decimal g);
     void setGravityAcc(const Vector3D& acc);
@@ -86,11 +89,13 @@ public:
     // ============================================================================
     /// @{
 
-    /// Semi-implicit Euler integrator for one object
+    /// Semi-implicit Euler integrator for one object.
     void integrateEuler(Object& obj, decimal dt);
+    /// Runge-Kutta 4 integrator for one object.
+    void integrateRK4(Object& obj, decimal dt);
     /// @brief Integrate all objects over one time step.
     /// Resets accelerations, applies forces, and moves objects using semi-implicit Euler.
-    void integrate(decimal dt);
+    void integrate();
     /// Run simulation over all iterations.
     void run();
     /// @}

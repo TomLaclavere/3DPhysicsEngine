@@ -80,7 +80,7 @@ TEST_F(PhysicsWorldTest, UpdateDoesNothingWhenNotRunning)
     world.stop();
     obj1.setVelocity(Vector3D(1_d, 0_d, 0_d));
     obj1.setAcceleration(Vector3D(0_d, 1_d, 0_d));
-    world.integrate(0.1_d);
+    world.integrate();
     EXPECT_VECTOR_EQ(obj1.getPosition(), Vector3D(0_d, 0_d, 0_d)); // unchanged
 }
 
@@ -112,7 +112,7 @@ TEST_F(PhysicsWorldTest, IntegrateEulerSkipsNullObjects)
 {
     world.resetAcc();
     world.addObject(nullptr); // explicit null coverage
-    world.integrate(world.getTimeStep());
+    world.integrate();
 
     SUCCEED();
 }

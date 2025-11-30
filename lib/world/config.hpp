@@ -10,22 +10,8 @@
 
 #include "precision.hpp"
 
-#include <limits>
 #include <stdexcept>
 #include <string>
-
-/**
- * @brief Machine epsilon for the current @ref decimal type.
- *
- * Defined as `std::numeric_limits<decimal>::epsilon()`.
- * This represents the smallest increment such that
- * `1.0 + PRECISION_MACHINE != 1.0`.
- *
- * Useful for:
- * - Approximate comparisons of floating-point numbers.
- * - Stability thresholds in numerical algorithms.
- */
-const decimal PRECISION_MACHINE = std::numeric_limits<decimal>::epsilon();
 
 struct Config
 {
@@ -36,6 +22,7 @@ private:
     // Simulation parameters
     decimal      timeStep      = 0.01_d; // seconds
     unsigned int maxIterations = 10;     // max iterations for physics solver
+    std::string  solver        = "Euler";
 
     /// Singleton constructor
     Config() = default;
@@ -55,6 +42,7 @@ public:
     decimal        getGravity() const;
     decimal        getTimeStep() const;
     unsigned int   getMaxIterations() const;
+    std::string    getSolver() const;
     /// @}
 
     // ============================================================================

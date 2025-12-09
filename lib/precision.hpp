@@ -17,7 +17,7 @@
  * @endcode
  */
 
-#ifdef IS_USE_DOUBLE_PRECISION
+#ifdef IS_DOUBLE_PRECISION
 /// @brief Underlying floating-point type used when double precision is enabled.
 using decimal = double;
 #else
@@ -28,7 +28,7 @@ using decimal = float;
 inline decimal stringToDecimal(std::string str)
 {
     // Choose scientific if float, default if double — optional behavior
-#ifdef IS_USE_DOUBLE_PRECISION
+#ifdef IS_DOUBLE_PRECISION
     return std::stod(str);
 #else
     return std::stof(str);

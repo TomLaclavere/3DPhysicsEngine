@@ -4,9 +4,11 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 ## General Tasks
 
+- [ ] RK4 : I have an offset in contact time with RK4 -> need to understand what is happening
 - [ ] Improve collision algorithm (precision)
   - [x] Look at different collision algorithms
   - [x] Improve integration method (to higher order)
+  - [ ] Implement Broad-Phase algorithms
   - [ ] Implement continuous collision detection (CCD)
   - [ ] Add penetration instead of freezing objects when a collision is detected
 - [ ] Add script to run examples

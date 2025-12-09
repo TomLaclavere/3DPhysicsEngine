@@ -30,10 +30,22 @@ decimal         Plane::getHalfHeight() const { return halfHeight; }
 // ============================================================================
 void Plane::updateLocalAxes()
 {
-    // Choose an arbitrary vector not parallel to the normal
-    Vector3D ref = (std::abs(normal[0]) < 0.9_d) ? Vector3D(1_d, 0_d, 0_d) : Vector3D(0_d, 0_d, 1_d);
-    u            = (normal.crossProduct(ref)).getNormalised();
-    v            = (u.crossProduct(normal)).getNormalised();
+    Vector3D n = normal; // already normalized externally
+
+    // 1. Pick a vector not parallel to n
+    Vector3D tangent;
+    if (std::abs(n[0]) < 0.9_d)
+        tangent = Vector3D(1_d, 0_d, 0_d);
+    else
+        tangent = Vector3D(0_d, 1_d, 0_d);
+
+    // 2. First tangent = orthogonalized against n
+    u = tangent - n * tangent.dotProduct(n);
+    u = u.getNormalised();
+
+    // 3. Second tangent = orthogonal to both
+    v = n.crossProduct(u);
+    v = v.getNormalised();
 }
 Vector3D Plane::projectPoint(const Vector3D& point) const
 {

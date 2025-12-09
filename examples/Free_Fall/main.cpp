@@ -35,6 +35,7 @@ int main(int argc, char** argv)
     config.loadFromFile("examples/Free_Fall/config.yml");
     config.overrideFromCommandLine(argc, argv);
 
+    std::cout << "Machine epsilon: " << PRECISION_MACHINE << "\n";
     std::cout << "----------------------------------------\n";
     std::cout << "Simulation Parameters:\n";
     std::cout << "Gravity: " << config.getGravity() << " m/s²\n";

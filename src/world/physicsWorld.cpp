@@ -102,6 +102,7 @@ void PhysicsWorld::integrate()
             continue;
         if (solver == "Euler")
         {
+            // std::cout << "I am using Euler" << std::endl;
             integrateEuler(*obj, timeStep);
         }
         else if (solver == "RK4")

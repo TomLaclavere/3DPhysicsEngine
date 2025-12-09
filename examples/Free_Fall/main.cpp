@@ -40,6 +40,7 @@ int main(int argc, char** argv)
     std::cout << "Gravity: " << config.getGravity() << " m/s²\n";
     std::cout << "Timestep: " << config.getTimeStep() << " s\n";
     std::cout << "Max iterations: " << config.getMaxIterations() << "\n";
+    std::cout << "Solver: " << config.getSolver() << std::endl;
     std::cout << "Loading configuration took: " << configTimer.elapsedMilliseconds() << " ms\n";
 
     // Initialize simulation
@@ -140,6 +141,7 @@ int main(int argc, char** argv)
         std::cout << "Sphere : analytical and simulation times are not compatible. Analytical contact time = "
                   << analyticalContactTimeSphere
                   << " (s), and Simulation contact time = " << simulationContactTimeSphere << " (s).\n";
+    std::cout << analyticalContactTimeSphere - simulationContactTimeSphere << std::endl;
     // Verify Plane contact times
     if (commonMaths::approxEqual(analyticalContactTimePlane, simulationContactTimePlane, 2 * timeStep))
         std::cout << "Plane : analytical and simulation times are compatible. Contact time = "
@@ -148,6 +150,7 @@ int main(int argc, char** argv)
         std::cout << "Plane : analytical and simulation times are not compatible. Analytical contact time = "
                   << analyticalContactTimePlane
                   << " (s), and Simulation contact time = " << simulationContactTimePlane << " (s).\n";
+    std::cout << analyticalContactTimePlane - simulationContactTimePlane << std::endl;
     // Verify Cube contact times
     if (commonMaths::approxEqual(analyticalContactTimeCube, simulationContactTimeCube, 2 * timeStep))
         std::cout << "Cube : analytical and simulation times are compatible. Contact time = "
@@ -156,7 +159,7 @@ int main(int argc, char** argv)
         std::cout << "Cube : analytical and simulation times are not compatible. Analytical contact time = "
                   << analyticalContactTimeCube
                   << " (s), and Simulation contact time = " << simulationContactTimeCube << " (s).\n";
-
+    std::cout << analyticalContactTimeCube - simulationContactTimeCube << std::endl;
     world.clearObjects();
 
     return 0;

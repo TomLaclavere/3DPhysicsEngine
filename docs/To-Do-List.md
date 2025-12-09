@@ -6,7 +6,7 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 - [ ] Improve collision algorithm (precision)
   - [x] Look at different collision algorithms
-  - [ ] Improve integration method (to higher order)
+  - [x] Improve integration method (to higher order)
   - [ ] Implement continuous collision detection (CCD)
   - [ ] Add penetration instead of freezing objects when a collision is detected
 - [ ] Add script to run examples

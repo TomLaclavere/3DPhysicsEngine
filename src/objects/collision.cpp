@@ -129,8 +129,8 @@ bool collide<Sphere, Plane>(const Sphere& sphere, const Plane& plane)
     const Vector3D delta        = closestPoint - sphereCenter;
     const decimal  dist2        = delta.dotProduct(delta);
 
-    std::cerr << "dist2 : " << std::scientific << dist2 << std::endl;
-    std::cerr << "Radius**2 : " << std::scientific << sphere.getRadius() * sphere.getRadius() << std::endl;
+    // std::cerr << "dist2 : " << std::scientific << dist2 << std::endl;
+    // std::cerr << "Radius**2 : " << std::scientific << sphere.getRadius() * sphere.getRadius() << std::endl;
 
     // Collision if within radius
     return commonMaths::approxSmallerOrEqualThan(dist2, sphere.getRadius() * sphere.getRadius());

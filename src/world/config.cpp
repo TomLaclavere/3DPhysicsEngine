@@ -33,6 +33,8 @@ void Config::loadFromFile(const std::string& path)
             timeStep = node["timestep"].as<decimal>();
         if (node["solverIters"])
             maxIterations = node["solverIters"].as<unsigned>();
+        if (node["solver"])
+            solver = node["solver"].as<std::string>();
     }
     catch (const std::exception& e)
     {
@@ -57,6 +59,10 @@ void Config::overrideFromCommandLine(int argc, char** argv)
         else if (arg == "--iters" && i + 1 < argc)
         {
             maxIterations = std::stoi(argv[++i]);
+        }
+        else if (arg == "--solver" && i + 1 < argc)
+        {
+            solver = std::string(argv[++i]);
         }
     }
 }

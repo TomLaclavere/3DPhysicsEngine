@@ -91,6 +91,8 @@ public:
 
     /// Semi-implicit Euler integrator for one object.
     void integrateEuler(Object& obj, decimal dt);
+    /// Verlet integrator for one object.
+    void integrateVerlet(Object& obj, decimal dt);
     /// Runge-Kutta 4 integrator for one object.
     void integrateRK4(Object& obj, decimal dt);
     /// @brief Integrate all objects over one time step.
@@ -105,6 +107,8 @@ public:
     // ============================================================================
     /// @{
 
+    /// Apply gravitational force to one object.
+    void applyGravityForce(Object& obj);
     /// Apply gravitational force to all movable objects.
     void applyGravityForces();
     /// Apply spring forces on a single object due to another.
@@ -117,6 +121,8 @@ public:
     void applyContactForces(Object& obj, Object& other);
     /// Stop overlapping objects by zeroing their velocity and acceleration.
     void avoidOverlap(Object& obj, Object& other);
+    /// Compute and apply all forces for the curent physics step on one Object.
+    void computeAcceleration(Object& obj);
     /// Compute and apply all forces for the current physics step.
     void applyForces();
     /// @}

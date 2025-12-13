@@ -10,8 +10,8 @@
 
 struct Derivative
 {
-    Vector3D derivativeX;
-    Vector3D derivativeV;
+    Vector3D derivativeX; // d(position)/dit = velicity
+    Vector3D derivativeV; // d(vitesse)/dt = acceleration
 };
 
 Derivative evaluate(const Object& obj, const Derivative& d, decimal dt);

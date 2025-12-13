@@ -53,14 +53,11 @@ void PhysicsWorld::integrateRK4(Object& obj, decimal dt)
 
     // k1
     k1.derivativeX = obj.getVelocity();
-    k2.derivativeV = obj.getAcceleration();
-
+    k1.derivativeV = obj.getAcceleration();
     // k2
     k2 = evaluate(obj, k1, dt * 0.5_d);
-
     // k3
     k3 = evaluate(obj, k2, dt * 0.5_d);
-
     // k4
     k4 = evaluate(obj, k3, dt);
 

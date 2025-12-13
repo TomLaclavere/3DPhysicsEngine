@@ -64,7 +64,7 @@ int main(int argc, char** argv)
 
     // Contact times with the ground, computed in README.md and computation.ipynb
     decimal analyticalContactTimeSphere = 1.914861584038593_d;
-    decimal analyticalContactTimePlane  = 1.7370461294569486_d;
+    decimal analyticalContactTimePlane  = 1.71935080084044_d;
     decimal analyticalContactTimeCube   = 1.4202506550265581_d;
 
     decimal simulationContactTimeSphere = 0_d;

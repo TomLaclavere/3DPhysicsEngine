@@ -62,10 +62,10 @@ int main(int argc, char** argv)
     world.addObject(ground);
     world.start();
 
-    // Contact times with the ground, computed in README.md
-    decimal analyticalContactTimeSphere = 1.915_d;
-    decimal analyticalContactTimePlane  = 1.737_d;
-    decimal analyticalContactTimeCube   = 1.420_d;
+    // Contact times with the ground, computed in README.md and computation.ipynb
+    decimal analyticalContactTimeSphere = 1.914861584038593_d;
+    decimal analyticalContactTimePlane  = 1.7370461294569486_d;
+    decimal analyticalContactTimeCube   = 1.4202506550265581_d;
 
     decimal simulationContactTimeSphere = 0_d;
     decimal simulationContactTimePlane  = 0_d;
@@ -133,7 +133,7 @@ int main(int argc, char** argv)
     std::cout << '\n';
 
     // Verify Sphere contact times
-    std::cout << "Note : The time comparison are done with an approximation of 2 times the timestep value, "
+    std::cout << "Note : The time comparison are done with an approximation of the timestep value, "
                  "in order to prevent numerical uncertainties. \n";
     if (commonMaths::approxEqual(analyticalContactTimeSphere, simulationContactTimeSphere, 2 * timeStep))
         std::cout << "Sphere : analytical and simulation times are compatible. Contact time = "

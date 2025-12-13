@@ -4,6 +4,7 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 ## General Tasks
 
+- [ ] Check bug with Plane in Free_Fall
 - [ ] Add script to run examples
 
 ## Code Quality and Maintenance
@@ -19,7 +20,7 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 ### Parameter Control
 - [ ] **Core Parameters Implementation**
-  - [ ] Integration method selection
+  - [x] Integration method selection
   - [x] Collision detection precision
   - [x] Maximum iteration count
 

@@ -54,16 +54,16 @@
     - [x] **Time loop**
     - [x] **External forces :** gravity
     - [x] **Object management**
-- [ ] **Simple Motion :**
+- [x] **Simple Motion :**
   - [x] **Linear Motion Basics**
     - [x] Position updates
     - [x] Velocity updates
     - [x] Basic force application
-  - [ ] **Basic Integration**
+  - [x] **Basic Integration**
     - [x] **Semi-implicit Euler** (basic) 
     - [x] **Time step handling**
-    - [ ] **Verlet** (optional)
-    - [ ] **RK4** (optional)
+    - [x] **Verlet** (optional)
+    - [x] **RK4** (optional)
 - [ ] **Fundamental Test :** Add examples repository to implement testing cases for basic physical situations
   - [x] **Free fall**
   - [x] **Projectile motion**

@@ -63,12 +63,12 @@ int main(int argc, char** argv)
     world.start();
 
     // Contact times with the ground, computed in README.md
-    decimal  analyticalContactTimeSphere   = 0.534_d;
-    decimal  analyticalContactTimePlane    = 20.395_d;
-    decimal  analyticalContactTimeCube     = 10.212_d;
-    Vector3D analyticalFinalPositionSphere = Vector3D(534.250_d, 0_d, 0_d);
+    decimal  analyticalContactTimeSphere   = 0.5342499768054424_d;
+    decimal  analyticalContactTimePlane    = 20.39535670016235_d;
+    decimal  analyticalContactTimeCube     = 10.212231941071188_d;
+    Vector3D analyticalFinalPositionSphere = Vector3D(534.249977_d, 0_d, 0_d);
     Vector3D analyticalFinalPositionPlane  = Vector3D(10_d, 0_d, 0_d);
-    Vector3D analyticalFinalPositionCube   = Vector3D(0_d, 520.612_d, 0_d);
+    Vector3D analyticalFinalPositionCube   = Vector3D(0_d, 520.611597_d, 0_d);
 
     decimal simulationContactTimeSphere = 0_d;
     decimal simulationContactTimePlane  = 0_d;

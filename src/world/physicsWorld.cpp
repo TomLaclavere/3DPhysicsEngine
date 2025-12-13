@@ -47,6 +47,23 @@ void PhysicsWorld::integrateEuler(Object& obj, decimal dt)
     // x_{t+dt} = x_t + v_{t+dt} * dt
     obj.setPosition(obj.getPosition() + obj.getVelocity() * dt);
 }
+void PhysicsWorld::integrateVerlet(Object& obj, decimal dt)
+{
+    // Store current acceleration
+    Vector3D currentAcc = obj.getAcceleration();
+
+    // position
+    Vector3D nextPos = obj.getPosition() + obj.getVelocity() * dt + obj.getAcceleration() * (0.5_d * dt * dt);
+    obj.setPosition(nextPos);
+
+    // acceleration from new position
+    computeAcceleration(obj);
+    Vector3D nextAcc = obj.getAcceleration();
+
+    // velocity
+    Vector3D nextVel = obj.getVelocity() + (currentAcc + nextAcc) * (0.5_d * dt);
+    obj.setVelocity(nextVel);
+}
 void PhysicsWorld::integrateRK4(Object& obj, decimal dt)
 {
     Derivative k1, k2, k3, k4;
@@ -99,8 +116,11 @@ void PhysicsWorld::integrate()
             continue;
         if (solver == "Euler")
         {
-            // std::cout << "I am using Euler" << std::endl;
             integrateEuler(*obj, timeStep);
+        }
+        else if (solver == "Verlet")
+        {
+            integrateVerlet(*obj, timeStep);
         }
         else if (solver == "RK4")
         {
@@ -157,12 +177,16 @@ void PhysicsWorld::run()
 // ============================================================================
 //  Force application
 // ============================================================================
+void PhysicsWorld::applyGravityForce(Object& obj)
+{
+    if (!obj.isFixed())
+        obj.addAcceleration(gravityAcc);
+}
 void PhysicsWorld::applyGravityForces()
 {
     {
         for (auto* obj : objects)
-            if (obj && !obj->getIsFixed())
-                obj->addAcceleration(gravityAcc);
+            applyGravityForce(*obj);
     }
 }
 
@@ -225,7 +249,27 @@ void PhysicsWorld::avoidOverlap(Object& obj, Object& other)
         other.setVelocity(Vector3D(0_d));
     }
 }
+void PhysicsWorld::computeAcceleration(Object& obj)
+{
+    // Reset Acceleration
+    obj.setAcceleration(Vector3D(0_d));
 
+    // Apply gravity
+    applyGravityForce(obj);
+
+    // Contact forces
+    for (auto* other : objects)
+    {
+        if (!other || other == &obj)
+            continue;
+
+        if (obj.checkCollision(*other))
+        {
+            // TODO applyContactForces(obj, *other)
+            avoidOverlap(obj, *other);
+        }
+    }
+}
 void PhysicsWorld::applyForces()
 {
     // 1. Gravity (applies to all objects)
@@ -248,7 +292,7 @@ void PhysicsWorld::applyForces()
             // Only apply contact forces if objects are colliding
             if (obj1->checkCollision(*obj2))
             {
-                // applyContactForces(*obj1, *obj2);
+                // TODO applyContactForces(*obj1, *obj2);
                 avoidOverlap(*obj1, *obj2);
             }
         }

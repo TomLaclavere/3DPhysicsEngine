@@ -30,10 +30,11 @@ endif()
 # =============================================
 # Project Options
 # =============================================
-option(3DPE_BUILD_TESTS "Build unit tests" ON)
-option(3DPE_ENABLE_COVERAGE "Enable coverage reporting" ON)
-option(3DPE_BUILD_EXAMPLES "Build example applications" ON)
 option(3DPE_USE_DOUBLE_PRECISION "Compile using double precision floating values" OFF)
+option(3DPE_BUILD_EXAMPLES "Build example applications" ON)
+option(3DPE_BUILD_TESTS "Build unit tests" ON)
+option(3DPE_BUILD_BENCHMARKS "Build benchmark applications" ON)
+option(3DPE_ENABLE_COVERAGE "Enable coverage reporting" ON)
 option(3DPE_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
 
 # Advanced options
@@ -81,7 +82,7 @@ set(ENGINE_WORLD_SOURCES
 
 set(ENGINE_EXTERNAL_SOURCES
     src/external/linenoise/linenoise.c
-    src/external/linenoise/hystory.cpp
+    src/external/linenoise/history.cpp
 )
 
 set(ENGINE_ALL_SOURCES
@@ -170,6 +171,25 @@ if(3DPE_BUILD_EXAMPLES)
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         DEPENDS example_Free_Fall
         COMMENT "Running example: Free_Fall"
+    )
+
+    # ---------------------------------------------
+    # Example: Projectiles Simulation
+    # ---------------------------------------------
+    add_executable(example_Projectiles examples/Projectiles/main.cpp)
+    target_link_libraries(example_Projectiles PRIVATE 3DPhysicsEngine)
+    target_include_directories(example_Projectiles PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+    set_target_properties(example_Projectiles PROPERTIES
+        OUTPUT_NAME "Projectiles"
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/examples
+        FOLDER "Examples"
+    )
+
+    add_custom_target(Projectiles
+        COMMAND $<TARGET_FILE:example_Projectiles>
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        DEPENDS example_Projectiles
+        COMMENT "Running example: Projectiles"
     )
 endif()
 

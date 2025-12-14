@@ -1,9 +1,24 @@
 #include "world/physicsWorld.hpp"
 
+#include "world/integrateRK4.hpp"
 #include "world/physics.hpp"
 
 #include <iomanip>
 #include <iostream>
+
+// ============================================================================
+//  Solvers
+// ============================================================================
+static Solver parseSolver(const std::string& name)
+{
+    if (name == "Euler")
+        return Solver::Euler;
+    if (name == "Verlet")
+        return Solver::Verlet;
+    if (name == "RK4")
+        return Solver::RK4;
+    return Solver::Unknown;
+}
 
 // ============================================================================
 //  Getters
@@ -17,6 +32,7 @@ Vector3D PhysicsWorld::getGravityAcc() const { return gravityAcc; }
 // ============================================================================
 //  Setters
 // ============================================================================
+void PhysicsWorld::setSolver(std::string _solver) { solver = parseSolver(_solver); }
 void PhysicsWorld::setTimeStep(decimal ind) { timeStep = ind; }
 void PhysicsWorld::setGravityCst(decimal g) { gravityCst = g; }
 void PhysicsWorld::setGravityAcc(const Vector3D& acc) { gravityAcc = acc; }
@@ -29,6 +45,7 @@ void PhysicsWorld::initialize()
     isRunning = false;
     objects.clear();
 
+    solver     = parseSolver(config.getSolver());
     timeStep   = config.getTimeStep();
     gravityCst = config.getGravity();
     gravityAcc = Physics::computeGravityAcc(gravityCst);
@@ -44,7 +61,62 @@ void PhysicsWorld::integrateEuler(Object& obj, decimal dt)
     // x_{t+dt} = x_t + v_{t+dt} * dt
     obj.setPosition(obj.getPosition() + obj.getVelocity() * dt);
 }
-void PhysicsWorld::integrate(decimal dt)
+void PhysicsWorld::integrateVerlet(Object& obj, decimal dt)
+{
+    // Store current acceleration
+    Vector3D currentAcc = obj.getAcceleration();
+
+    // position
+    Vector3D nextPos = obj.getPosition() + obj.getVelocity() * dt + obj.getAcceleration() * (0.5_d * dt * dt);
+    obj.setPosition(nextPos);
+
+    // acceleration from new position
+    computeAcceleration(obj);
+    Vector3D nextAcc = obj.getAcceleration();
+
+    // velocity
+    Vector3D nextVel = obj.getVelocity() + (currentAcc + nextAcc) * (0.5_d * dt);
+    obj.setVelocity(nextVel);
+}
+Derivative PhysicsWorld::evaluateRK4(const Object& obj, const Derivative& d, decimal dt)
+{
+    Object tmp = obj; // copy object state
+
+    tmp.setPosition(obj.getPosition() + d.derivativeX * dt);
+    tmp.setVelocity(obj.getVelocity() + d.derivativeV * dt);
+
+    // Recompute acceleration for the intermediate state
+    computeAcceleration(tmp);
+
+    Derivative out;
+    out.derivativeX = tmp.getVelocity();
+    out.derivativeV = tmp.getAcceleration();
+    return out;
+}
+void PhysicsWorld::integrateRK4(Object& obj, decimal dt)
+{
+    Derivative k1, k2, k3, k4;
+
+    // k1
+    k1.derivativeX = obj.getVelocity();
+    k1.derivativeV = obj.getAcceleration();
+    // k2
+    k2 = evaluateRK4(obj, k1, dt * 0.5_d);
+    // k3
+    k3 = evaluateRK4(obj, k2, dt * 0.5_d);
+    // k4
+    k4 = evaluateRK4(obj, k3, dt);
+
+    // Weighted average derivative
+    Vector3D dxdt =
+        (k1.derivativeX + (2_d * k2.derivativeX) + (2_d * k3.derivativeX) + k4.derivativeX) * (1_d / 6_d);
+    Vector3D dvdt =
+        (k1.derivativeV + (2_d * k2.derivativeV) + (2_d * k3.derivativeV) + k4.derivativeV) * (1_d / 6_d);
+
+    obj.setPosition(obj.getPosition() + dxdt * dt);
+    obj.setVelocity(obj.getVelocity() + dvdt * dt);
+}
+void PhysicsWorld::integrate()
 {
     if (!isRunning)
     {
@@ -52,12 +124,12 @@ void PhysicsWorld::integrate(decimal dt)
         return;
     }
 
-    setTimeStep(dt);
+    setTimeStep(timeStep);
 
     // Reset accelerations
     for (auto* obj : objects)
     {
-        if (obj)
+        if (obj || !obj->isFixed())
         {
             obj->setAcceleration(Vector3D(0_d));
         }
@@ -71,7 +143,22 @@ void PhysicsWorld::integrate(decimal dt)
     {
         if (!obj || obj->isFixed())
             continue;
-        integrateEuler(*obj, dt);
+        switch (solver)
+        {
+        case Solver::Euler:
+            integrateEuler(*obj, timeStep);
+            break;
+        case Solver::Verlet:
+            integrateVerlet(*obj, timeStep);
+            break;
+        case Solver::RK4:
+            integrateRK4(*obj, timeStep);
+            break;
+        case Solver::Unknown:
+            std::cout << "The following solver is not implemented : " << config.getSolver() << '\n';
+            std::cout << "Please use one of the following solver : Euler, Verlet, RK4.\n";
+            break;
+        }
     }
 }
 void PhysicsWorld::run()
@@ -88,42 +175,53 @@ void PhysicsWorld::run()
     size_t        n        = col_obj + col_time + 2 * col_vec;
 
     // Header
-    std::cout << std::left << std::setw(col_obj) << "Object" << std::setw(col_time) << "Time(s)"
-              << std::setw(col_vec) << "Position(x,y,z)" << std::setw(col_vec) << "Velocity(x,y,z)" << "\n";
-    std::cout << std::string(n, '-') << "\n";
+    if (config.getVerbose())
+    {
+        std::cout << std::left << std::setw(col_obj) << "Object" << std::setw(col_time) << "Time(s)"
+                  << std::setw(col_vec) << "Position(x,y,z)" << std::setw(col_vec) << "Velocity(x,y,z)"
+                  << "\n";
+        std::cout << std::string(n, '-') << "\n";
+    }
 
     while (cpt < maxIter + 1 && getIsRunning())
     {
         const decimal time = cpt * timeStep;
 
-        integrate(timeStep);
+        integrate();
 
         // Printing
-        if (cpt % 10 == 0)
+        if (config.getVerbose())
         {
-            for (auto* obj : getObject())
+            if (cpt % 10 == 0)
             {
-                if (!obj->isFixed())
-                    std::cout << std::left << std::setw(col_obj) << obj->getType() << std::setw(col_time)
-                              << std::fixed << std::setprecision(3) << time << std::setw(col_vec)
-                              << obj->getPosition().formatVector() << std::setw(col_vec)
-                              << obj->getVelocity().formatVector() << "\n";
+                for (auto* obj : getObject())
+                {
+                    if (!obj->isFixed())
+                        std::cout << std::left << std::setw(col_obj) << obj->getType() << std::setw(col_time)
+                                  << std::fixed << std::setprecision(3) << time << std::setw(col_vec)
+                                  << obj->getPosition().formatVector() << std::setw(col_vec)
+                                  << obj->getVelocity().formatVector() << "\n";
+                }
+                std::cout << std::string(n, '-') << '\n';
             }
-            std::cout << std::string(n, '-') << '\n';
+            cpt++;
         }
-        cpt++;
     }
 }
 
 // ============================================================================
 //  Force application
 // ============================================================================
+void PhysicsWorld::applyGravityForce(Object& obj)
+{
+    if (&obj && !obj.getIsFixed())
+        obj.addAcceleration(gravityAcc);
+}
 void PhysicsWorld::applyGravityForces()
 {
     {
         for (auto* obj : objects)
-            if (obj && !obj->getIsFixed())
-                obj->addAcceleration(gravityAcc);
+            applyGravityForce(*obj);
     }
 }
 
@@ -186,7 +284,27 @@ void PhysicsWorld::avoidOverlap(Object& obj, Object& other)
         other.setVelocity(Vector3D(0_d));
     }
 }
+void PhysicsWorld::computeAcceleration(Object& obj)
+{
+    // Reset Acceleration
+    obj.setAcceleration(Vector3D(0_d));
 
+    // Apply gravity
+    applyGravityForce(obj);
+
+    // Contact forces
+    for (auto* other : objects)
+    {
+        if (!other || other == &obj)
+            continue;
+
+        if (obj.checkCollision(*other))
+        {
+            // TODO applyContactForces(obj, *other)
+            avoidOverlap(obj, *other);
+        }
+    }
+}
 void PhysicsWorld::applyForces()
 {
     // 1. Gravity (applies to all objects)
@@ -209,7 +327,7 @@ void PhysicsWorld::applyForces()
             // Only apply contact forces if objects are colliding
             if (obj1->checkCollision(*obj2))
             {
-                // applyContactForces(*obj1, *obj2);
+                // TODO applyContactForces(*obj1, *obj2);
                 avoidOverlap(*obj1, *obj2);
             }
         }

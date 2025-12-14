@@ -358,8 +358,6 @@ Quaternion3D crossProduct(const Quaternion3D& lhs, const Quaternion3D& rhs)
 // ============================================================================
 //  Utilities
 // ============================================================================
-Quaternion3D           min(const Quaternion3D&, const Quaternion3D&);
-Quaternion3D           max(const Quaternion3D&, const Quaternion3D&);
 std::array<decimal, 4> eulerAngles_to_Quaternion(decimal angleX, decimal angleY, decimal angleZ)
 {
     std::array<decimal, 4> quaternionElements;

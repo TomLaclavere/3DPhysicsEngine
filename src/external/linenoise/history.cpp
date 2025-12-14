@@ -7,12 +7,24 @@
 #include <unordered_set>
 #include <vector>
 
+/// @brief Path to the file storing known completion commands.
 static std::string g_completionFilename;
 
+/**
+ * @brief Add a command to the completion file if it does not already exist.
+ *
+ * The file is treated as a set of unique commands (one per line).
+ * The command is appended only if it is non-empty and not already present.
+ *
+ * @param filename Path to the completion file.
+ * @param command  Command to record for future autocompletion.
+ */
 static void completionAdd(const std::string& filename, const std::string& command)
 {
     std::unordered_set<std::string> commands;
     std::ifstream                   in(filename);
+
+    // Load existing commands
     if (in.is_open())
     {
         std::string line;
@@ -21,6 +33,7 @@ static void completionAdd(const std::string& filename, const std::string& comman
                 commands.insert(line);
     }
 
+    // Append command if new
     if (!command.empty() && !commands.count(command))
     {
         std::ofstream out(filename, std::ios::app);
@@ -29,11 +42,23 @@ static void completionAdd(const std::string& filename, const std::string& comman
     }
 }
 
+/**
+ * @brief linenoise completion callback.
+ *
+ * This function is called by linenoise whenever the user presses the
+ * completion key (usually TAB). It loads all known commands from the
+ * completion file and suggests those matching the given prefix.
+ *
+ * @param prefix The current input buffer.
+ * @param lc     linenoise completion list to populate.
+ */
 static void completionCallback(const char* prefix, linenoiseCompletions* lc)
 {
     std::vector<std::string> allCommands;
     std::ifstream            in(g_completionFilename);
     std::string              line;
+
+    // Load all known completion commands
     if (in.is_open())
     {
         while (std::getline(in, line))
@@ -41,6 +66,7 @@ static void completionCallback(const char* prefix, linenoiseCompletions* lc)
                 allCommands.push_back(line);
     }
 
+    // Match prefix
     const size_t pLen = std::strlen(prefix);
     for (const auto& cmd : allCommands)
         if (cmd.size() >= pLen && std::strncmp(prefix, cmd.c_str(), pLen) == 0)
@@ -54,14 +80,12 @@ void initHistoryAndCompletion(const char* historyFilename, const std::string& co
     linenoiseHistoryLoad(historyFilename);
 }
 
-void recordSuccessfulCommand(const char* historyFilename, const std::string& command)
-{
-    completionAdd(g_completionFilename, command);
-}
+void recordSuccessfulCommand(const std::string& command) { completionAdd(g_completionFilename, command); }
 
 void trimHistory(const char* historyFilename, std::size_t maxLines)
 {
     std::cout << "Clearing history file..." << std::endl;
+
     std::ifstream in(historyFilename);
     if (!in.is_open())
     {
@@ -79,6 +103,7 @@ void trimHistory(const char* historyFilename, std::size_t maxLines)
     }
     in.close();
 
+    // Nothing to do if under threshold
     if (lines.size() <= maxLines)
     {
         std::cout << "File lines are below threshold, nothing to clear." << std::endl;
@@ -88,7 +113,7 @@ void trimHistory(const char* historyFilename, std::size_t maxLines)
     // Keep only the last maxLines lines
     std::vector<std::string> trimmed(lines.end() - maxLines, lines.end());
 
-    // Rewrite the file
+    // Rewrite history file
     std::ofstream out(historyFilename, std::ios::trunc);
     if (!out.is_open())
     {

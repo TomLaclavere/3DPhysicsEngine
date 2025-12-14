@@ -44,7 +44,7 @@
 -----------------------------------------------------------------------------------------------------------
 
 ## Phase 3: Rigid Body Dynamics & Physics World
-  - [ ] **Core Setup :** 
+  - [x] **Core Setup :** 
     - [x] **Physical constants**
         - [x] Define and implement physical constants
         - [x] **Design a way to define all the variables of the simulation :** 
@@ -54,27 +54,50 @@
     - [x] **Time loop**
     - [x] **External forces :** gravity
     - [x] **Object management**
-- [ ] **Simple Motion :**
+- [x] **Simple Motion :**
   - [x] **Linear Motion Basics**
     - [x] Position updates
     - [x] Velocity updates
     - [x] Basic force application
-  - [ ] **Basic Integration**
+  - [x] **Basic Integration**
     - [x] **Semi-implicit Euler** (basic) 
     - [x] **Time step handling**
-    - [ ] **Verlet** (optional)
-    - [ ] **RK4** (optional)
-- [ ] **Fundamental Test :** Add examples repository to implement testing cases for basic physical situations
+    - [x] **Verlet** (optional)
+    - [x] **RK4** (optional)
+- [x] **Fundamental Test :** Add examples repository to implement testing cases for basic physical situations
   - [x] **Free fall**
-  - [ ] **Projectile motion**
-  - [ ] **Pendulum** (optional)
-  - [ ] **Check Energy/momentum conservation**
-- [ ] **Performance Benchmark**
+  - [x] **Projectile motion**
+- [x] **Validation & Release :**
+  - [x] **Standard testing :** reference scenes, physical validity, ...
+  - [ ] **Documentation :**
+    - [x] *Doxygen & GitHub Pages*
+    - [x] *Installation & Usage guides*
+    - [x] *GitHub notes*
+    - [ ] *Unit testing*
+
+-----------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+
+## Phase 4: Collisions
+IMPORTANT: this is only brainstormed ideas, needs to be reorganised in the future !
+- [ ] **Brainstorm on ROADMAP**
+- [ ] **Brainstorm on To-Do-List**
+- [ ] **Collision Detection :**
+  - [ ] **Broad-Phase :** BVH (large N) | Uniform Grid (Small N) | Sweep-and-Prune (medium N) -> researches needed
+  - [ ] **Narrow Phase :**
+    - [ ] Sphere - Plan
+    - [ ] Sphere - Sphere
+    - [ ] AABB - AABB
+- [ ] **Collision Response :**
+  - [ ] **Impulse resolution**
+  - [ ] **Restitution coefficient** (bounciness)
+  - [ ] **Basic friction**
 - [ ] **Validation & Release :**
   - [ ] **Standard testing :** reference scenes, physical validity, ...
+  - [ ] **Check Energy/momentum conservation**
   - [ ] **Documentation :**
     - [ ] *Doxygen & GitHub Pages*
-    - [ ] *Performance report*
     - [ ] *Installation & Usage guides*
     - [ ] *GitHub notes*
 
@@ -82,7 +105,7 @@
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
 
-## Phase 4: Rotations & Angular Dynamics
+## Phase 5: Rotations & Angular Dynamics
 - [ ] **Brainstorm on ROADMAP**
 - [ ] **Brainstorm on To-Do-List**
 - [ ] **Extend RigidBody :**
@@ -101,38 +124,14 @@
     - [ ] *Installation & Usage guides*
     - [ ] *GitHub notes*
 
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
 
-## Phase 5: Collisions
-IMPORTANT: this is only brainstormed ideas, need to be reorganise in the future !
-- [ ] **Brainstorm on ROADMAP**
-- [ ] **Brainstorm on To-Do-List**
-- [ ] **Collision Detection :**
-  - [ ] **Broad-Phase :** BVH (large N) | Uniform Grid (Small N) | Sweep-and-Prune (medium N) -> researches needed
-  - [ ] **Narrow Phase :**
-    - [ ] Sphere - Plan
-    - [ ] Sphere - Sphere
-    - [ ] AABB - AABB
-- [ ] **Collision Response :**
-  - [ ] **Impulse resolution**
-  - [ ] **Restitution coefficient** (bounciness)
-  - [ ] **Basic friction**
-- [ ] **Validation & Release :**
-  - [ ] **Standard testing :** reference scenes, physical validity, ...
-  - [ ] **Documentation :**
-    - [ ] *Doxygen & GitHub Pages*
-    - [ ] *Performance report*
-    - [ ] *Installation & Usage guides*
-    - [ ] *GitHub notes*
 
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
 
 ## Phase 5.5: Advanced Physics features (optional)
-IMPORTANT: this is only brainstormed ideas, need to be reorganise in the future !
+IMPORTANT: this is only brainstormed ideas, needs to be reorganised in the future !
 - [ ] **Brainstorm on ROADMAP**
 - [ ] **Brainstorm on To-Do-List**
 - [ ] **Constraints :**
@@ -162,7 +161,7 @@ IMPORTANT: this is only brainstormed ideas, need to be reorganise in the future 
 -----------------------------------------------------------------------------------------------------------
 
 ## Phase 6: Visualization
-IMPORTANT: this is only brainstormed ideas, need to be reorganise in the future !
+IMPORTANT: this is only brainstormed ideas, needs to be reorganised in the future !
 - [ ] **Brainstorm on ROADMAP**
 - [ ] **Brainstorm on To-Do-List**
 - [ ] **Choice of Graphics Layer :**
@@ -192,7 +191,7 @@ IMPORTANT: this is only brainstormed ideas, need to be reorganise in the future 
 -----------------------------------------------------------------------------------------------------------
 
 ## Phase 7: First Optimisation (CPU & Memory)
-IMPORTANT: this is only brainstormed ideas, need to be reorganise in the future !
+IMPORTANT: this is only brainstormed ideas, needs to be reorganised in the future !
 - [ ] **Brainstorm on ROADMAP**
 - [ ] **Brainstorm on To-Do-List**
 - [ ] **CPU Optimisation**
@@ -220,7 +219,7 @@ IMPORTANT: this is only brainstormed ideas, need to be reorganise in the future 
 -----------------------------------------------------------------------------------------------------------
 
 ## Phase 8: Second Optimisation (GPU)   
-IMPORTANT: this is only brainstormed ideas, need to be reorganise in the future !
+IMPORTANT: this is only brainstormed ideas, needs to be reorganised in the future !
 - [ ] **Brainstorm on ROADMAP**
 - [ ] **Brainstorm on To-Do-List**
 - [ ] **GPU Implementation** 
@@ -248,6 +247,6 @@ IMPORTANT: this is only brainstormed ideas, need to be reorganise in the future 
 -----------------------------------------------------------------------------------------------------------
 
 ## Phase 9: Portage Fortran ?
-IMPORTANT: this is only brainstormed ideas, need to be reorganise in the future !
+IMPORTANT: this is only brainstormed ideas, needs to be reorganised in the future !
 - [ ] **Brainstorm on ROADMAP**
 - [ ] **Brainstorm on To-Do-List**

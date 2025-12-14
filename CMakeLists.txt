@@ -30,11 +30,11 @@ endif()
 # =============================================
 # Project Options
 # =============================================
-option(3DPE_BUILD_TESTS "Build unit tests" ON)
-option(3DPE_ENABLE_COVERAGE "Enable coverage reporting" ON)
-option(3DPE_BUILD_EXAMPLES "Build example applications" ON)
-option(3DPE_BUILD_BENCHMARKS "Build benchmark applications" ON)
 option(3DPE_USE_DOUBLE_PRECISION "Compile using double precision floating values" OFF)
+option(3DPE_BUILD_EXAMPLES "Build example applications" ON)
+option(3DPE_BUILD_TESTS "Build unit tests" ON)
+option(3DPE_BUILD_BENCHMARKS "Build benchmark applications" ON)
+option(3DPE_ENABLE_COVERAGE "Enable coverage reporting" ON)
 option(3DPE_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
 
 # Advanced options

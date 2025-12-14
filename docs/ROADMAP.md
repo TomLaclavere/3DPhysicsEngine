@@ -44,7 +44,7 @@
 -----------------------------------------------------------------------------------------------------------
 
 ## Phase 3: Rigid Body Dynamics & Physics World
-  - [ ] **Core Setup :** 
+  - [x] **Core Setup :** 
     - [x] **Physical constants**
         - [x] Define and implement physical constants
         - [x] **Design a way to define all the variables of the simulation :** 
@@ -67,8 +67,6 @@
 - [ ] **Fundamental Test :** Add examples repository to implement testing cases for basic physical situations
   - [x] **Free fall**
   - [x] **Projectile motion**
-  - [ ] **Pendulum** (optional)
-  - [ ] **Check Energy/momentum conservation**
 - [ ] **Performance Benchmark**
 - [ ] **Validation & Release :**
   - [ ] **Standard testing :** reference scenes, physical validity, ...
@@ -82,7 +80,34 @@
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
 
-## Phase 4: Rotations & Angular Dynamics
+## Phase 4: Collisions
+IMPORTANT: this is only brainstormed ideas, need to be reorganise in the future !
+- [ ] **Brainstorm on ROADMAP**
+- [ ] **Brainstorm on To-Do-List**
+- [ ] **Collision Detection :**
+  - [ ] **Broad-Phase :** BVH (large N) | Uniform Grid (Small N) | Sweep-and-Prune (medium N) -> researches needed
+  - [ ] **Narrow Phase :**
+    - [ ] Sphere - Plan
+    - [ ] Sphere - Sphere
+    - [ ] AABB - AABB
+- [ ] **Collision Response :**
+  - [ ] **Impulse resolution**
+  - [ ] **Restitution coefficient** (bounciness)
+  - [ ] **Basic friction**
+- [ ] **Validation & Release :**
+  - [ ] **Standard testing :** reference scenes, physical validity, ...
+  - [ ] **Check Energy/momentum conservation**
+  - [ ] **Documentation :**
+    - [ ] *Doxygen & GitHub Pages*
+    - [ ] *Performance report*
+    - [ ] *Installation & Usage guides*
+    - [ ] *GitHub notes*
+
+-----------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+
+## Phase 5: Rotations & Angular Dynamics
 - [ ] **Brainstorm on ROADMAP**
 - [ ] **Brainstorm on To-Do-List**
 - [ ] **Extend RigidBody :**
@@ -101,31 +126,7 @@
     - [ ] *Installation & Usage guides*
     - [ ] *GitHub notes*
 
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
 
-## Phase 5: Collisions
-IMPORTANT: this is only brainstormed ideas, need to be reorganise in the future !
-- [ ] **Brainstorm on ROADMAP**
-- [ ] **Brainstorm on To-Do-List**
-- [ ] **Collision Detection :**
-  - [ ] **Broad-Phase :** BVH (large N) | Uniform Grid (Small N) | Sweep-and-Prune (medium N) -> researches needed
-  - [ ] **Narrow Phase :**
-    - [ ] Sphere - Plan
-    - [ ] Sphere - Sphere
-    - [ ] AABB - AABB
-- [ ] **Collision Response :**
-  - [ ] **Impulse resolution**
-  - [ ] **Restitution coefficient** (bounciness)
-  - [ ] **Basic friction**
-- [ ] **Validation & Release :**
-  - [ ] **Standard testing :** reference scenes, physical validity, ...
-  - [ ] **Documentation :**
-    - [ ] *Doxygen & GitHub Pages*
-    - [ ] *Performance report*
-    - [ ] *Installation & Usage guides*
-    - [ ] *GitHub notes*
 
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------

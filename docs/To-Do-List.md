@@ -4,8 +4,8 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 ## General Tasks
 
-- [x] Check bug with Plane in Free_Fall
-- [ ] Add script to run examples
+- [ ] Improve Config to be more general 
+- [ ] Add verbose parameter
 
 ## Code Quality and Maintenance
 

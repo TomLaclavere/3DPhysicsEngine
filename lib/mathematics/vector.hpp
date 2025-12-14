@@ -136,7 +136,7 @@ public:
     bool operator<=(const Vector3D&) const;
     bool operator>(const Vector3D&) const;
     bool operator>=(const Vector3D&) const;
-    bool approxEqual(const Vector3D&, decimal) const;
+    bool approxEqual(const Vector3D&, decimal = PRECISION_MACHINE) const;
 
     /// @}
 

@@ -79,7 +79,7 @@
 -----------------------------------------------------------------------------------------------------------
 
 ## Phase 4: Collisions
-IMPORTANT: this is only brainstormed ideas, need to be reorganise in the future !
+IMPORTANT: this is only brainstormed ideas, needs to be reorganised in the future !
 - [ ] **Brainstorm on ROADMAP**
 - [ ] **Brainstorm on To-Do-List**
 - [ ] **Collision Detection :**
@@ -130,7 +130,7 @@ IMPORTANT: this is only brainstormed ideas, need to be reorganise in the future 
 -----------------------------------------------------------------------------------------------------------
 
 ## Phase 5.5: Advanced Physics features (optional)
-IMPORTANT: this is only brainstormed ideas, need to be reorganise in the future !
+IMPORTANT: this is only brainstormed ideas, needs to be reorganised in the future !
 - [ ] **Brainstorm on ROADMAP**
 - [ ] **Brainstorm on To-Do-List**
 - [ ] **Constraints :**
@@ -160,7 +160,7 @@ IMPORTANT: this is only brainstormed ideas, need to be reorganise in the future 
 -----------------------------------------------------------------------------------------------------------
 
 ## Phase 6: Visualization
-IMPORTANT: this is only brainstormed ideas, need to be reorganise in the future !
+IMPORTANT: this is only brainstormed ideas, needs to be reorganised in the future !
 - [ ] **Brainstorm on ROADMAP**
 - [ ] **Brainstorm on To-Do-List**
 - [ ] **Choice of Graphics Layer :**
@@ -190,7 +190,7 @@ IMPORTANT: this is only brainstormed ideas, need to be reorganise in the future 
 -----------------------------------------------------------------------------------------------------------
 
 ## Phase 7: First Optimisation (CPU & Memory)
-IMPORTANT: this is only brainstormed ideas, need to be reorganise in the future !
+IMPORTANT: this is only brainstormed ideas, needs to be reorganised in the future !
 - [ ] **Brainstorm on ROADMAP**
 - [ ] **Brainstorm on To-Do-List**
 - [ ] **CPU Optimisation**
@@ -218,7 +218,7 @@ IMPORTANT: this is only brainstormed ideas, need to be reorganise in the future 
 -----------------------------------------------------------------------------------------------------------
 
 ## Phase 8: Second Optimisation (GPU)   
-IMPORTANT: this is only brainstormed ideas, need to be reorganise in the future !
+IMPORTANT: this is only brainstormed ideas, needs to be reorganised in the future !
 - [ ] **Brainstorm on ROADMAP**
 - [ ] **Brainstorm on To-Do-List**
 - [ ] **GPU Implementation** 
@@ -246,6 +246,6 @@ IMPORTANT: this is only brainstormed ideas, need to be reorganise in the future 
 -----------------------------------------------------------------------------------------------------------
 
 ## Phase 9: Portage Fortran ?
-IMPORTANT: this is only brainstormed ideas, need to be reorganise in the future !
+IMPORTANT: this is only brainstormed ideas, needs to be reorganised in the future !
 - [ ] **Brainstorm on ROADMAP**
 - [ ] **Brainstorm on To-Do-List**

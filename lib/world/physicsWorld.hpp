@@ -12,6 +12,16 @@
 
 #include <vector>
 
+enum class Solver
+{
+    Euler,
+    Verlet,
+    RK4,
+    Unknown
+};
+
+Solver solver = Solver::Euler; // default
+
 /**
  * @class PhysicsWorld
  * @brief Represents the Physical World for physics simulation.
@@ -26,11 +36,11 @@ private:
     Config&              config = Config::get();
     std::vector<Object*> objects;
 
-    bool        isRunning  = false;
-    std::string solver     = config.getSolver();
-    decimal     timeStep   = config.getTimeStep();
-    decimal     gravityCst = config.getGravity();
-    Vector3D    gravityAcc = Physics::computeGravityAcc(gravityCst);
+    bool     isRunning = false;
+    Solver   solver;
+    decimal  timeStep   = config.getTimeStep();
+    decimal  gravityCst = config.getGravity();
+    Vector3D gravityAcc = Physics::computeGravityAcc(gravityCst);
 
 public:
     // ============================================================================
@@ -59,7 +69,7 @@ public:
     /// @name Setters
     // ============================================================================
     /// @{
-    void setSolver(std::string solver);
+    void setSolver(std::string _solver);
     void setTimeStep(decimal step);
     void setGravityCst(decimal g);
     void setGravityAcc(const Vector3D& acc);
@@ -94,7 +104,8 @@ public:
     /// Verlet integrator for one object.
     void integrateVerlet(Object& obj, decimal dt);
     /// Runge-Kutta 4 integrator for one object.
-    void integrateRK4(Object& obj, decimal dt);
+    Derivative evaluateRK4(const Object& obj, const Derivative& d, decimal dt);
+    void       integrateRK4(Object& obj, decimal dt);
     /// @brief Integrate all objects over one time step.
     /// Resets accelerations, applies forces, and moves objects using semi-implicit Euler.
     void integrate();

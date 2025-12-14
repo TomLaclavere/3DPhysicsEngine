@@ -1,6 +1,6 @@
 # Goal
 
-The goal of this example is to demonstrate the robustness of the projectile free fale simulation implemented in `3DPhysicsEngine`.
+The goal of this example is to demonstrate the robustness of the projectile free fall simulation implemented in `3DPhysicsEngine`.
 
 ---
 

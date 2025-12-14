@@ -7,9 +7,18 @@
 #include "mathematics/common.hpp"
 #include "objects/object.hpp"
 #include "world/config.hpp"
+#include "world/integrateRK4.hpp"
 #include "world/physics.hpp"
 
 #include <vector>
+
+enum class Solver
+{
+    Euler,
+    Verlet,
+    RK4,
+    Unknown
+};
 
 /**
  * @class PhysicsWorld
@@ -25,7 +34,8 @@ private:
     Config&              config = Config::get();
     std::vector<Object*> objects;
 
-    bool     isRunning  = false;
+    bool     isRunning = false;
+    Solver   solver;
     decimal  timeStep   = config.getTimeStep();
     decimal  gravityCst = config.getGravity();
     Vector3D gravityAcc = Physics::computeGravityAcc(gravityCst);
@@ -57,6 +67,7 @@ public:
     /// @name Setters
     // ============================================================================
     /// @{
+    void setSolver(std::string _solver);
     void setTimeStep(decimal step);
     void setGravityCst(decimal g);
     void setGravityAcc(const Vector3D& acc);
@@ -86,11 +97,16 @@ public:
     // ============================================================================
     /// @{
 
-    /// Semi-implicit Euler integrator for one object
+    /// Semi-implicit Euler integrator for one object.
     void integrateEuler(Object& obj, decimal dt);
+    /// Verlet integrator for one object.
+    void integrateVerlet(Object& obj, decimal dt);
+    /// Runge-Kutta 4 integrator for one object.
+    Derivative evaluateRK4(const Object& obj, const Derivative& d, decimal dt);
+    void       integrateRK4(Object& obj, decimal dt);
     /// @brief Integrate all objects over one time step.
     /// Resets accelerations, applies forces, and moves objects using semi-implicit Euler.
-    void integrate(decimal dt);
+    void integrate();
     /// Run simulation over all iterations.
     void run();
     /// @}
@@ -100,6 +116,8 @@ public:
     // ============================================================================
     /// @{
 
+    /// Apply gravitational force to one object.
+    void applyGravityForce(Object& obj);
     /// Apply gravitational force to all movable objects.
     void applyGravityForces();
     /// Apply spring forces on a single object due to another.
@@ -112,6 +130,8 @@ public:
     void applyContactForces(Object& obj, Object& other);
     /// Stop overlapping objects by zeroing their velocity and acceleration.
     void avoidOverlap(Object& obj, Object& other);
+    /// Compute and apply all forces for the curent physics step on one Object.
+    void computeAcceleration(Object& obj);
     /// Compute and apply all forces for the current physics step.
     void applyForces();
     /// @}

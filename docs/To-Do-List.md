@@ -4,13 +4,9 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 ## General Tasks
 
-- [x] Add printing method in PhysicsWorld
-  - [x] Add print when simulation is running (see free fall example)
-  - [x] Improve object printing
-
-- [x] linenoise
-  - [x] Clear the oldest lines in the history when the history file reaches a given size on quitting.
-  - [x] Add autocompletion and persist new accepted commands to a file when they are entered 
+- [ ] Improve Config to be more general 
+- [x] Add verbose parameter
+- [ ] Unit testing
 
 ## Code Quality and Maintenance
 
@@ -25,7 +21,7 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 ### Parameter Control
 - [ ] **Core Parameters Implementation**
-  - [ ] Integration method selection
+  - [x] Integration method selection
   - [x] Collision detection precision
   - [x] Maximum iteration count
 
@@ -90,6 +86,13 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 - [x] Build running test example to verify the physical accuracy of simulation
   - [x] Free Fall
 - [x] Verify scripts/ (check parameters and re-compile conditions)
+- [x] Add printing method in PhysicsWorld
+  - [x] Add print when simulation is running (see free fall example)
+  - [x] Improve object printing
+
+- [x] linenoise
+  - [x] Clear the oldest lines in the history when the history file reaches a given size on quitting.
+  - [x] Add autocompletion and persist new accepted commands to a file when they are entered 
 
 ## Code Quality and Maintenance
 

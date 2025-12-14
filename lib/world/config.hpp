@@ -1,6 +1,6 @@
 /**
  * @file precision_constants.hpp
- * @brief Defines numerical precision  and physical constants for the physics/math engine.
+ * @brief Defines numerical precision and physical constants for the physics/math engine.
  *
  * This file centralizes tolerance values and machine precision
  * used in floating-point comparisons and stability checks.
@@ -10,22 +10,8 @@
 
 #include "precision.hpp"
 
-#include <limits>
 #include <stdexcept>
 #include <string>
-
-/**
- * @brief Machine epsilon for the current @ref decimal type.
- *
- * Defined as `std::numeric_limits<decimal>::epsilon()`.
- * This represents the smallest increment such that
- * `1.0 + PRECISION_MACHINE != 1.0`.
- *
- * Useful for:
- * - Approximate comparisons of floating-point numbers.
- * - Stability thresholds in numerical algorithms.
- */
-const decimal PRECISION_MACHINE = std::numeric_limits<decimal>::epsilon();
 
 struct Config
 {
@@ -36,6 +22,8 @@ private:
     // Simulation parameters
     decimal      timeStep      = 0.01_d; // seconds
     unsigned int maxIterations = 10;     // max iterations for physics solver
+    std::string  solver        = "Euler";
+    bool         verbose       = true;
 
     /// Singleton constructor
     Config() = default;
@@ -55,6 +43,8 @@ public:
     decimal        getGravity() const;
     decimal        getTimeStep() const;
     unsigned int   getMaxIterations() const;
+    std::string    getSolver() const;
+    bool           getVerbose() const;
     /// @}
 
     // ============================================================================
@@ -81,6 +71,8 @@ public:
             throw std::invalid_argument("Max iterations must be positive");
         maxIterations = max;
     }
+    void setSolver(std::string sol) { solver = sol; }
+    void setVerbose(bool verb) { verbose = verb; }
     /// @}
 
     // ============================================================================

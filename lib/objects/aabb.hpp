@@ -6,7 +6,6 @@
  * axis. It inherit from Object.
  */
 #pragma once
-#include "aabb.hpp"
 #include "object.hpp"
 #include "precision.hpp"
 

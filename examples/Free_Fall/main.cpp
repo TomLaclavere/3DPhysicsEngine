@@ -1,3 +1,16 @@
+/**
+ * @file main.cpp
+ *
+ * @brief Free Fall Simulation
+ *
+ * This file is building a physical world to test the free fall under Earth gravity (without atmosphere, for
+ * now) on the objects implemented in the simulation. Its goal is to compare the time where these objects hit
+ * the ground between this simulation and the analytical computation. It will then allows to verify the
+ * physical coherence of this simulation, as well as the collision code for each objects.
+ * @see examples/Free_Fall/README.md for complete explation.
+ *
+ */
+
 #include "objects/aabb.hpp"
 #include "objects/plane.hpp"
 #include "objects/sphere.hpp"
@@ -27,6 +40,7 @@ int main(int argc, char** argv)
     std::cout << "Gravity: " << config.getGravity() << " m/s²\n";
     std::cout << "Timestep: " << config.getTimeStep() << " s\n";
     std::cout << "Max iterations: " << config.getMaxIterations() << "\n";
+    std::cout << "Solver: " << config.getSolver() << std::endl;
     std::cout << "Loading configuration took: " << configTimer.elapsedMilliseconds() << " ms\n";
 
     // Initialize simulation
@@ -47,10 +61,10 @@ int main(int argc, char** argv)
     world.addObject(ground);
     world.start();
 
-    // Contact times with the ground, computed in README.md
-    decimal analyticalContactTimeSphere = 1.915_d;
-    decimal analyticalContactTimePlane  = 1.737_d;
-    decimal analyticalContactTimeCube   = 1.420_d;
+    // Contact times with the ground, computed in README.md and computation.ipynb
+    decimal analyticalContactTimeSphere = 1.914861584038593_d;
+    decimal analyticalContactTimePlane  = 1.71935080084044_d;
+    decimal analyticalContactTimeCube   = 1.4202506550265581_d;
 
     decimal simulationContactTimeSphere = 0_d;
     decimal simulationContactTimePlane  = 0_d;
@@ -69,7 +83,7 @@ int main(int argc, char** argv)
     std::cout << std::left << std::setw(col_obj) << "Object" << std::setw(col_time) << "Time(s)"
               << std::setw(col_vec) << "Position(x,y,z)" << std::setw(col_vec) << "Velocity(x,y,z)"
               << std::setw(col_step) << "Step (µs)\n";
-    std::cout << std::string(col_obj + col_time + 2 * col_vec + col_step, '-') << "\n";
+    std::cout << std::string(n, '-') << "\n";
 
     // Simulation loop
     Timer         simulationTimer;
@@ -83,7 +97,7 @@ int main(int argc, char** argv)
 
         const decimal time = counter * timeStep;
 
-        world.integrate(timeStep);
+        world.integrate();
 
         if (counter % 25 == 0)
         {
@@ -96,7 +110,7 @@ int main(int argc, char** argv)
                               << obj->getVelocity().formatVector() << std::right << std::setw(col_step)
                               << stepTimer.elapsedMicroseconds() << "\n";
             }
-            std::cout << std::string(n * 2, '-') << '\n';
+            std::cout << std::string(n, '-') << '\n';
         }
 
         if (sphere->checkCollision(*ground) && simulationContactTimeSphere == 0_d)
@@ -118,7 +132,7 @@ int main(int argc, char** argv)
     std::cout << '\n';
 
     // Verify Sphere contact times
-    std::cout << "Note : The time comparison are done with an approximation of 2 times the timestep value, "
+    std::cout << "Note : The time comparison are done with an approximation of the timestep value, "
                  "in order to prevent numerical uncertainties. \n";
     if (commonMaths::approxEqual(analyticalContactTimeSphere, simulationContactTimeSphere, 2 * timeStep))
         std::cout << "Sphere : analytical and simulation times are compatible. Contact time = "
@@ -127,6 +141,7 @@ int main(int argc, char** argv)
         std::cout << "Sphere : analytical and simulation times are not compatible. Analytical contact time = "
                   << analyticalContactTimeSphere
                   << " (s), and Simulation contact time = " << simulationContactTimeSphere << " (s).\n";
+    std::cout << analyticalContactTimeSphere - simulationContactTimeSphere << std::endl;
     // Verify Plane contact times
     if (commonMaths::approxEqual(analyticalContactTimePlane, simulationContactTimePlane, 2 * timeStep))
         std::cout << "Plane : analytical and simulation times are compatible. Contact time = "
@@ -135,6 +150,7 @@ int main(int argc, char** argv)
         std::cout << "Plane : analytical and simulation times are not compatible. Analytical contact time = "
                   << analyticalContactTimePlane
                   << " (s), and Simulation contact time = " << simulationContactTimePlane << " (s).\n";
+    std::cout << analyticalContactTimePlane - simulationContactTimePlane << std::endl;
     // Verify Cube contact times
     if (commonMaths::approxEqual(analyticalContactTimeCube, simulationContactTimeCube, 2 * timeStep))
         std::cout << "Cube : analytical and simulation times are compatible. Contact time = "
@@ -143,7 +159,7 @@ int main(int argc, char** argv)
         std::cout << "Cube : analytical and simulation times are not compatible. Analytical contact time = "
                   << analyticalContactTimeCube
                   << " (s), and Simulation contact time = " << simulationContactTimeCube << " (s).\n";
-
+    std::cout << analyticalContactTimeCube - simulationContactTimeCube << std::endl;
     world.clearObjects();
 
     return 0;

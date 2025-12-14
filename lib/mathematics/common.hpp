@@ -1,11 +1,9 @@
 /**
  * @file common.hpp
- * @brief Utility function for approximate floating-point comparison.
+ * @brief Utility functions for approximate floating-point comparison.
  *
- * Provides a helper to compare two `decimal` values (float or double, depending
+ * Provides helpers to compare two `decimal` values (float or double, depending
  * on `precision.hpp`) with a tolerance.
- *
- * Part of the math foundation utilities of the physics engine.
  *
  */
 
@@ -15,6 +13,7 @@
 #include "world/config.hpp"
 
 #include <cmath>
+#include <limits>
 
 namespace commonMaths {
 
@@ -28,68 +27,59 @@ namespace commonMaths {
  * @param precision Tolerance (defaults to `PRECISION_MACHINE`).
  * @return true if the two values are approximately equal.
  */
-inline bool approxEqual(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE)
+inline bool approxEqual(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE) noexcept
 {
-    return (std::abs(lhs - rhs) <= precision);
+    // If any value is NaN, treat as not equal.
+    if (!std::isfinite(lhs) || !std::isfinite(rhs) || !std::isfinite(precision))
+        return false;
+    return std::abs(lhs - rhs) <= precision;
 }
 
 /**
- * @brief Compare two floating-point numbers for approximate greater than.
+ * @brief True if lhs is (significantly) greater than rhs.
  *
- * Uses an absolute difference check: `lhs < rhs + precision`.
- *
- * @param lhs Left value.
- * @param rhs Right value.
- * @param precision Tolerance (defaults to `PRECISION_MACHINE`).
- * @return true if lhs is approximatevely greater than rhs, false otherwise.
+ * Checks `lhs > rhs + precision`.
  */
-inline bool approxGreaterThan(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE)
+inline bool approxGreaterThan(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE) noexcept
 {
+    if (!std::isfinite(lhs) || !std::isfinite(rhs) || !std::isfinite(precision))
+        return false;
     return lhs > rhs + precision;
 }
 
 /**
- * @brief Compare two floating-point numbers for approximate smaller than.
+ * @brief True if lhs is (significantly) smaller than rhs.
  *
- * Uses an absolute difference check: `lhs > rhs + precision`.
- *
- * @param lhs Left value.
- * @param rhs Right value.
- * @param precision Tolerance (defaults to `PRECISION_MACHINE`).
- * @return true if lhs is approximatevely smaller than rhs, false otherwise.
+ * Checks `lhs < rhs - precision`.
  */
-inline bool approxSmallerThan(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE)
+inline bool approxSmallerThan(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE) noexcept
 {
-    return lhs < rhs + precision;
+    if (!std::isfinite(lhs) || !std::isfinite(rhs) || !std::isfinite(precision))
+        return false;
+    return lhs < rhs - precision;
 }
 
 /**
- * @brief Compare two floating-point numbers for approximate greater or equal than.
+ * @brief True if lhs is greater than or approximately equal to rhs.
  *
- * Uses an absolute difference check: `lhs <= rhs + precision`.
- *
- * @param lhs Left value.
- * @param rhs Right value.
- * @param precision Tolerance (defaults to `PRECISION_MACHINE`).
- * @return true if lhs is approximatevely greater or equal than rhs, false otherwise.
+ * Checks `lhs >= rhs - precision`.
  */
-inline bool approxGreaterOrEqualThan(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE)
+inline bool approxGreaterOrEqualThan(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE) noexcept
 {
-    return lhs >= rhs + precision;
+    if (!std::isfinite(lhs) || !std::isfinite(rhs) || !std::isfinite(precision))
+        return false;
+    return lhs >= rhs - precision;
 }
 
 /**
- * @brief Compare two floating-point numbers for approximate smaller or equal than.
+ * @brief True if lhs is smaller than or approximately equal to rhs.
  *
- * Uses an absolute difference check: `lhs >= rhs + precision`.
- *
- * @param lhs Left value.
- * @param rhs Right value.
- * @param precision Tolerance (defaults to `PRECISION_MACHINE`).
- * @return true if lhs is approximatevely qmaller or equal than rhs, false otherwise.
+ * Checks `lhs <= rhs + precision`.
  */
-inline bool approxSmallerOrEqualThan(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE)
+inline bool approxSmallerOrEqualThan(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE) noexcept
 {
+    if (!std::isfinite(lhs) || !std::isfinite(rhs) || !std::isfinite(precision))
+        return false;
     return lhs <= rhs + precision;
 }
 

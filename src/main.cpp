@@ -1,4 +1,4 @@
-#include "external/linenoise/hystory.hpp"
+#include "external/linenoise/history.hpp"
 #include "external/linenoise/linenoise.h"
 #include "objects/aabb.hpp"
 #include "objects/plane.hpp"
@@ -203,7 +203,8 @@ int main(int argc, char** argv)
             if (!words.empty())
             {
                 const decimal dt = stringToDecimal(popNext(words));
-                world.integrate(dt);
+                world.setTimeStep(dt);
+                world.integrate();
                 std::cout << "Integrated one step of " << dt << "s.\n";
                 success = true;
             }
@@ -273,7 +274,7 @@ int main(int argc, char** argv)
 
         // Record successful command in history and completion (encapsulated)
         if (success)
-            recordSuccessfulCommand(historyFilename, command);
+            recordSuccessfulCommand(command);
     }
 
     return 0;

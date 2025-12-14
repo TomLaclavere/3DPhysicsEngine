@@ -1,6 +1,6 @@
 /**
  * @file quaternion.hpp
- * @brief Quaternion class and operations for 3D rotations and algebra.
+ * @brief Quaternion class and operations for physics/mathematical computations.
  *
  * Provides a quaternion representation (real + imaginary part), along with
  * constructors, utilities, algebraic operations, and conversion helpers.
@@ -231,8 +231,6 @@ Quaternion3D crossProduct(const Quaternion3D&, const Quaternion3D&);
 /// @name Utilities
 // ============================================================================
 /// @{
-Quaternion3D min(const Quaternion3D&, const Quaternion3D&);
-Quaternion3D max(const Quaternion3D&, const Quaternion3D&);
 /// Compute quaternion from the three Euler angles. Used to implement constructors.
 std::array<decimal, 4> eulerAngles_to_Quaternion(decimal angleX, decimal angleY, decimal angleZ);
 /// @}

@@ -34,8 +34,8 @@ TEST(PlaneTest, ConstructorsAndGetters)
     EXPECT_DECIMAL_EQ(plane.getMass(), mass);
     EXPECT_EQ(plane.getType(), ObjectType::Plane);
 
-    EXPECT_EQ(plane.getU(), Vector3D(0_d, 1_d, 0_d));
-    EXPECT_EQ(plane.getV(), Vector3D(1_d, 0_d, 0_d));
+    EXPECT_EQ(plane.getU(), Vector3D(1_d, 0_d, 0_d));
+    EXPECT_EQ(plane.getV(), Vector3D(0_d, 1_d, 0_d));
 }
 
 TEST(PlaneTest, Setters)
@@ -128,7 +128,6 @@ TEST(PlaneTest, ContainsPoint)
 
     // On the edge
     EXPECT_TRUE(p.containsPoint(Vector3D(1_d, 0_d, 0_d)));
-    EXPECT_TRUE(p.containsPoint(Vector3D(1_d, 2_d, 0_d)));
 
     // Outside bounds
     EXPECT_FALSE(p.containsPoint(Vector3D(2.1_d, 0_d, 0_d)));

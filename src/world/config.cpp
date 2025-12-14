@@ -16,6 +16,8 @@ Config& Config::get()
 decimal      Config::getGravity() const { return gravity; }
 decimal      Config::getTimeStep() const { return timeStep; }
 unsigned int Config::getMaxIterations() const { return maxIterations; }
+std::string  Config::getSolver() const { return solver; }
+bool         Config::getVerbose() const { return verbose; }
 
 // ============================================================================
 //  Loading Methods
@@ -32,6 +34,10 @@ void Config::loadFromFile(const std::string& path)
             timeStep = node["timestep"].as<decimal>();
         if (node["solverIters"])
             maxIterations = node["solverIters"].as<unsigned>();
+        if (node["solver"])
+            solver = node["solver"].as<std::string>();
+        if (node["verbose"])
+            verbose = node["verbose"].as<bool>();
     }
     catch (const std::exception& e)
     {
@@ -56,6 +62,10 @@ void Config::overrideFromCommandLine(int argc, char** argv)
         else if (arg == "--iters" && i + 1 < argc)
         {
             maxIterations = std::stoi(argv[++i]);
+        }
+        else if (arg == "--solver" && i + 1 < argc)
+        {
+            solver = std::string(argv[++i]);
         }
     }
 }

@@ -20,6 +20,7 @@ make -j$(nproc)
 CMake takes multiple parameters to define different compilations :
 - `-D3DPE_USE_CLANG` : uses clang++ to compile. By default, CMake uses g++.
 - `-D3DPE_USE_DOUBLE_PRECISION` : uses double precision. By default, use simple float precision.
+- `-D3DPE_BUILD_EXAMPLES` : compiles the unit example repository. To run an example, the executables are accessible at : `./build/examples/`.
 - `-D3DPE_BUILD_TESTS` : compiles the unit testing repository. To run the test, you can use : `ctest -j$(nproc)`.
 - `-D3DPE_ENABLE_COVERAGE` : allows performing coverage analysis. Two options are available, to run after build : `make coverage` which will save a detailed coverage reports as HTML file at the following location : `build/coverage_report/`; and `make coverage-console` to print the results in the console. Be careful: `gcovr` needs to be installed for GCC compilation.
 

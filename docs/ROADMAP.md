@@ -64,15 +64,15 @@
     - [x] **Time step handling**
     - [x] **Verlet** (optional)
     - [x] **RK4** (optional)
-- [ ] **Fundamental Test :** Add examples repository to implement testing cases for basic physical situations
+- [x] **Fundamental Test :** Add examples repository to implement testing cases for basic physical situations
   - [x] **Free fall**
   - [x] **Projectile motion**
-- [ ] **Validation & Release :**
+- [x] **Validation & Release :**
   - [x] **Standard testing :** reference scenes, physical validity, ...
-  - [ ] **Documentation :**
-    - [ ] *Doxygen & GitHub Pages*
-    - [ ] *Installation & Usage guides*
-    - [ ] *GitHub notes*
+  - [x] **Documentation :**
+    - [x] *Doxygen & GitHub Pages*
+    - [x] *Installation & Usage guides*
+    - [x] *GitHub notes*
 
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
@@ -96,8 +96,7 @@ IMPORTANT: this is only brainstormed ideas, need to be reorganise in the future 
   - [ ] **Standard testing :** reference scenes, physical validity, ...
   - [ ] **Check Energy/momentum conservation**
   - [ ] **Documentation :**
-    - [ ] *Doxygen & GitHub Pages*
-    - [ ] *Performance report*
+    - [x] *Doxygen & GitHub Pages*
     - [ ] *Installation & Usage guides*
     - [ ] *GitHub notes*
 

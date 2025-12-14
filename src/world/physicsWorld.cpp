@@ -147,9 +147,13 @@ void PhysicsWorld::run()
     size_t        n        = col_obj + col_time + 2 * col_vec;
 
     // Header
-    std::cout << std::left << std::setw(col_obj) << "Object" << std::setw(col_time) << "Time(s)"
-              << std::setw(col_vec) << "Position(x,y,z)" << std::setw(col_vec) << "Velocity(x,y,z)" << "\n";
-    std::cout << std::string(n, '-') << "\n";
+    if (config.getVerbose())
+    {
+        std::cout << std::left << std::setw(col_obj) << "Object" << std::setw(col_time) << "Time(s)"
+                  << std::setw(col_vec) << "Position(x,y,z)" << std::setw(col_vec) << "Velocity(x,y,z)"
+                  << "\n";
+        std::cout << std::string(n, '-') << "\n";
+    }
 
     while (cpt < maxIter + 1 && getIsRunning())
     {
@@ -158,19 +162,22 @@ void PhysicsWorld::run()
         integrate();
 
         // Printing
-        if (cpt % 10 == 0)
+        if (config.getVerbose())
         {
-            for (auto* obj : getObject())
+            if (cpt % 10 == 0)
             {
-                if (!obj->isFixed())
-                    std::cout << std::left << std::setw(col_obj) << obj->getType() << std::setw(col_time)
-                              << std::fixed << std::setprecision(3) << time << std::setw(col_vec)
-                              << obj->getPosition().formatVector() << std::setw(col_vec)
-                              << obj->getVelocity().formatVector() << "\n";
+                for (auto* obj : getObject())
+                {
+                    if (!obj->isFixed())
+                        std::cout << std::left << std::setw(col_obj) << obj->getType() << std::setw(col_time)
+                                  << std::fixed << std::setprecision(3) << time << std::setw(col_vec)
+                                  << obj->getPosition().formatVector() << std::setw(col_vec)
+                                  << obj->getVelocity().formatVector() << "\n";
+                }
+                std::cout << std::string(n, '-') << '\n';
             }
-            std::cout << std::string(n, '-') << '\n';
+            cpt++;
         }
-        cpt++;
     }
 }
 

@@ -23,6 +23,7 @@ private:
     decimal      timeStep      = 0.01_d; // seconds
     unsigned int maxIterations = 10;     // max iterations for physics solver
     std::string  solver        = "Euler";
+    bool         verbose       = true;
 
     /// Singleton constructor
     Config() = default;
@@ -43,6 +44,7 @@ public:
     decimal        getTimeStep() const;
     unsigned int   getMaxIterations() const;
     std::string    getSolver() const;
+    bool           getVerbose() const;
     /// @}
 
     // ============================================================================
@@ -69,6 +71,8 @@ public:
             throw std::invalid_argument("Max iterations must be positive");
         maxIterations = max;
     }
+    void setSolver(std::string sol) { solver = sol; }
+    void setVerbose(bool verb) { verbose = verb; }
     /// @}
 
     // ============================================================================

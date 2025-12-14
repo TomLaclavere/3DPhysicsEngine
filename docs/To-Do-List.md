@@ -5,7 +5,7 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 ## General Tasks
 
 - [ ] Improve Config to be more general 
-- [ ] Add verbose parameter
+- [x] Add verbose parameter
 
 ## Code Quality and Maintenance
 

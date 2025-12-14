@@ -1,6 +1,6 @@
 /**
  * @file precision_constants.hpp
- * @brief Defines numerical precision  and physical constants for the physics/math engine.
+ * @brief Defines numerical precision and physical constants for the physics/math engine.
  *
  * This file centralizes tolerance values and machine precision
  * used in floating-point comparisons and stability checks.

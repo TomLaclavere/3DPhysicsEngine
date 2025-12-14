@@ -7,6 +7,20 @@
 #include <iostream>
 
 // ============================================================================
+//  Solvers
+// ============================================================================
+static Solver parseSolver(const std::string& name)
+{
+    if (name == "Euler")
+        return Solver::Euler;
+    if (name == "Verlet")
+        return Solver::Verlet;
+    if (name == "RK4")
+        return Solver::RK4;
+    return Solver::Unknown;
+}
+
+// ============================================================================
 //  Getters
 // ============================================================================
 Config&  PhysicsWorld::getConfig() const { return config; }
@@ -18,7 +32,7 @@ Vector3D PhysicsWorld::getGravityAcc() const { return gravityAcc; }
 // ============================================================================
 //  Setters
 // ============================================================================
-void PhysicsWorld::setSolver(std::string _solver) { solver = _solver; }
+void PhysicsWorld::setSolver(std::string _solver) { solver = parseSolver(_solver); }
 void PhysicsWorld::setTimeStep(decimal ind) { timeStep = ind; }
 void PhysicsWorld::setGravityCst(decimal g) { gravityCst = g; }
 void PhysicsWorld::setGravityAcc(const Vector3D& acc) { gravityAcc = acc; }
@@ -31,7 +45,7 @@ void PhysicsWorld::initialize()
     isRunning = false;
     objects.clear();
 
-    solver     = config.getSolver();
+    solver     = parseSolver(config.getSolver());
     timeStep   = config.getTimeStep();
     gravityCst = config.getGravity();
     gravityAcc = Physics::computeGravityAcc(gravityCst);
@@ -64,6 +78,21 @@ void PhysicsWorld::integrateVerlet(Object& obj, decimal dt)
     Vector3D nextVel = obj.getVelocity() + (currentAcc + nextAcc) * (0.5_d * dt);
     obj.setVelocity(nextVel);
 }
+Derivative PhysicsWorld::evaluateRK4(const Object& obj, const Derivative& d, decimal dt)
+{
+    Object tmp = obj; // copy object state
+
+    tmp.setPosition(obj.getPosition() + d.derivativeX * dt);
+    tmp.setVelocity(obj.getVelocity() + d.derivativeV * dt);
+
+    // Recompute acceleration for the intermediate state
+    computeAcceleration(tmp);
+
+    Derivative out;
+    out.derivativeX = tmp.getVelocity();
+    out.derivativeV = tmp.getAcceleration();
+    return out;
+}
 void PhysicsWorld::integrateRK4(Object& obj, decimal dt)
 {
     Derivative k1, k2, k3, k4;
@@ -72,11 +101,11 @@ void PhysicsWorld::integrateRK4(Object& obj, decimal dt)
     k1.derivativeX = obj.getVelocity();
     k1.derivativeV = obj.getAcceleration();
     // k2
-    k2 = evaluate(obj, k1, dt * 0.5_d);
+    k2 = evaluateRK4(obj, k1, dt * 0.5_d);
     // k3
-    k3 = evaluate(obj, k2, dt * 0.5_d);
+    k3 = evaluateRK4(obj, k2, dt * 0.5_d);
     // k4
-    k4 = evaluate(obj, k3, dt);
+    k4 = evaluateRK4(obj, k3, dt);
 
     // Weighted average derivative
     Vector3D dxdt =
@@ -100,7 +129,7 @@ void PhysicsWorld::integrate()
     // Reset accelerations
     for (auto* obj : objects)
     {
-        if (obj)
+        if (obj || !obj->isFixed())
         {
             obj->setAcceleration(Vector3D(0_d));
         }
@@ -114,22 +143,21 @@ void PhysicsWorld::integrate()
     {
         if (!obj || obj->isFixed())
             continue;
-        if (solver == "Euler")
+        switch (solver)
         {
+        case Solver::Euler:
             integrateEuler(*obj, timeStep);
-        }
-        else if (solver == "Verlet")
-        {
+            break;
+        case Solver::Verlet:
             integrateVerlet(*obj, timeStep);
-        }
-        else if (solver == "RK4")
-        {
+            break;
+        case Solver::RK4:
             integrateRK4(*obj, timeStep);
-        }
-        else
-        {
-            std::cout << "The following solver is not implemented : " << solver << std::endl;
-            std::cout << "Please use one of the following solver : Euler, RK4 ." << std::endl;
+            break;
+        case Solver::Unknown:
+            std::cout << "The following solver is not implemented : " << config.getSolver() << '\n';
+            std::cout << "Please use one of the following solver : Euler, Verlet, RK4.\n";
+            break;
         }
     }
 }
@@ -186,7 +214,7 @@ void PhysicsWorld::run()
 // ============================================================================
 void PhysicsWorld::applyGravityForce(Object& obj)
 {
-    if (!obj.isFixed())
+    if (&obj || !obj.isFixed())
         obj.addAcceleration(gravityAcc);
 }
 void PhysicsWorld::applyGravityForces()

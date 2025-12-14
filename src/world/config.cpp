@@ -67,9 +67,5 @@ void Config::overrideFromCommandLine(int argc, char** argv)
         {
             solver = std::string(argv[++i]);
         }
-        else if (arg == "--verbose" && i + 1 < argc)
-        {
-            verbose = bool(argv[++i]);
-        }
     }
 }

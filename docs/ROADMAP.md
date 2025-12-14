@@ -69,10 +69,11 @@
   - [x] **Projectile motion**
 - [x] **Validation & Release :**
   - [x] **Standard testing :** reference scenes, physical validity, ...
-  - [x] **Documentation :**
+  - [ ] **Documentation :**
     - [x] *Doxygen & GitHub Pages*
     - [x] *Installation & Usage guides*
     - [x] *GitHub notes*
+    - [ ] *Unit testing*
 
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
@@ -96,7 +97,7 @@ IMPORTANT: this is only brainstormed ideas, needs to be reorganised in the futur
   - [ ] **Standard testing :** reference scenes, physical validity, ...
   - [ ] **Check Energy/momentum conservation**
   - [ ] **Documentation :**
-    - [x] *Doxygen & GitHub Pages*
+    - [ ] *Doxygen & GitHub Pages*
     - [ ] *Installation & Usage guides*
     - [ ] *GitHub notes*
 

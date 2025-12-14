@@ -67,12 +67,10 @@
 - [ ] **Fundamental Test :** Add examples repository to implement testing cases for basic physical situations
   - [x] **Free fall**
   - [x] **Projectile motion**
-- [ ] **Performance Benchmark**
 - [ ] **Validation & Release :**
-  - [ ] **Standard testing :** reference scenes, physical validity, ...
+  - [x] **Standard testing :** reference scenes, physical validity, ...
   - [ ] **Documentation :**
     - [ ] *Doxygen & GitHub Pages*
-    - [ ] *Performance report*
     - [ ] *Installation & Usage guides*
     - [ ] *GitHub notes*
 

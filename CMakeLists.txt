@@ -77,13 +77,12 @@ set(ENGINE_UTILITIES_SOURCE
 
 set(ENGINE_WORLD_SOURCES
     src/world/config.cpp
-    src/world/integrateRK4.cpp
     src/world/physics.cpp
     src/world/physicsWorld.cpp)
 
 set(ENGINE_EXTERNAL_SOURCES
     src/external/linenoise/linenoise.c
-    src/external/linenoise/hystory.cpp
+    src/external/linenoise/history.cpp
 )
 
 set(ENGINE_ALL_SOURCES

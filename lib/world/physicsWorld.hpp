@@ -20,8 +20,6 @@ enum class Solver
     Unknown
 };
 
-Solver solver = Solver::Euler; // default
-
 /**
  * @class PhysicsWorld
  * @brief Represents the Physical World for physics simulation.

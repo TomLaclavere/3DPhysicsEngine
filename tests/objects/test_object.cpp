@@ -76,4 +76,8 @@ TEST(ObjectTest, setters)
 
     // Check getType
     EXPECT_EQ(obj.getType(), ObjectType::Generic);
+
+    // ID
+    obj.setId(3);
+    EXPECT_EQ(obj.getId(), 3);
 }

@@ -59,7 +59,8 @@ private:
     decimal  restitutionCst = 0_d;
     decimal  frictionCst    = 0_d;
 
-    bool fixed = true;
+    bool         fixed = true;
+    unsigned int id;
 
 public:
     /// @brief Constructions can be done with various levels of details.
@@ -98,6 +99,7 @@ public:
     decimal            getFrictionCst() const;
     virtual ObjectType getType() const;
     bool               getIsFixed() const;
+    unsigned int       getId() const { return id; }
     /// @}
 
     // ============================================================================
@@ -116,6 +118,7 @@ public:
     void setRestitutionCst(decimal e);
     void setFrictionCst(decimal mu);
     void setIsFixed(bool b);
+    void setId(unsigned int _id) { id = _id; }
 
     /// @}
 

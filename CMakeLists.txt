@@ -238,6 +238,7 @@ if(3DPE_ENABLE_COVERAGE AND 3DPE_BUILD_TESTS)
                 target_link_libraries(3DPhysicsEngine PRIVATE --coverage)
 
                 set(GCOVR_COMMON_OPTS
+                    --exclude '.*\.hpp'
                     --exclude-unreachable-branches
                     --exclude-throw-branches
                     --root=${CMAKE_SOURCE_DIR}

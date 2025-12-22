@@ -239,6 +239,7 @@ if(3DPE_ENABLE_COVERAGE AND 3DPE_BUILD_TESTS)
 
                 set(GCOVR_COMMON_OPTS
                     --exclude '.*\.hpp'
+                    --exclude ".*/linenoise/.*"
                     --exclude-unreachable-branches
                     --exclude-throw-branches
                     --root=${CMAKE_SOURCE_DIR}

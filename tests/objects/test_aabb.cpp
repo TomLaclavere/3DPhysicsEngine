@@ -31,6 +31,12 @@ TEST(AABBTest, ConstructorsAndGetters)
 
     EXPECT_EQ(aabb.getMin(), position - size * 0.5_d);
     EXPECT_EQ(aabb.getMax(), position + size * 0.5_d);
+
+    AABB aabb_(position, size, mass);
+    EXPECT_EQ(aabb_.getTorque(), Vector3D());
+
+    AABB aabb_test(position, size, velocity, mass);
+    EXPECT_EQ(aabb_test.getRotation(), Vector3D());
 }
 
 TEST(AABBTest, Setters)
@@ -90,6 +96,12 @@ TEST(AABBTest, AABBCollision)
 
     EXPECT_TRUE(aabb1.checkCollision(aabb2));  // Overlapping
     EXPECT_FALSE(aabb1.checkCollision(aabb3)); // Not overlapping
+
+    // Test over others dimensions
+    AABB aabbY(Vector3D(0_d, 10_d, 0_d), Vector3D(2_d, 2_d, 2_d));
+    AABB aabbZ(Vector3D(0_d, 0_d, -10_d), Vector3D(2_d, 2_d, 2_d));
+    EXPECT_FALSE(aabb1.checkCollision(aabbY));
+    EXPECT_FALSE(aabb1.checkCollision(aabbZ));
 }
 
 TEST(AABBTest, AABBSphereCollision)

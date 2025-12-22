@@ -28,11 +28,16 @@ bool     PhysicsWorld::getIsRunning() const { return isRunning; }
 decimal  PhysicsWorld::getTimeStep() const { return timeStep; }
 decimal  PhysicsWorld::getGravityCst() const { return gravityCst; }
 Vector3D PhysicsWorld::getGravityAcc() const { return gravityAcc; }
+Solver   PhysicsWorld::getSolver() const { return solver; }
 
 // ============================================================================
 //  Setters
 // ============================================================================
-void PhysicsWorld::setSolver(std::string _solver) { solver = parseSolver(_solver); }
+void PhysicsWorld::setSolver(std::string _solver)
+{
+    solver = parseSolver(_solver);
+    config.setSolver(_solver);
+}
 void PhysicsWorld::setTimeStep(decimal ind) { timeStep = ind; }
 void PhysicsWorld::setGravityCst(decimal g) { gravityCst = g; }
 void PhysicsWorld::setGravityAcc(const Vector3D& acc) { gravityAcc = acc; }

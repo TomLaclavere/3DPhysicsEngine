@@ -22,8 +22,7 @@
  */
 decimal Physics::reducedMass(decimal m1, decimal m2)
 {
-    if (commonMaths::approxSmallerOrEqualThan(m1, decimal(0)) ||
-        commonMaths::approxSmallerOrEqualThan(m2, decimal(0)))
+    if (commonMaths::approxSmallerOrEqualThan(m1, 0_d) || commonMaths::approxSmallerOrEqualThan(m2, 0_d))
         return 0_d;
     return (m1 * m2) / (m1 + m2);
 }
@@ -43,9 +42,9 @@ decimal Physics::reducedMass(decimal m1, decimal m2)
  */
 decimal Physics::effectiveStiffness(decimal k1, decimal k2)
 {
-    if (commonMaths::approxSmallerOrEqualThan(k1, decimal(0)))
+    if (commonMaths::approxSmallerOrEqualThan(k1, 0_d))
         return k2;
-    if (commonMaths::approxSmallerOrEqualThan(k2, decimal(0)))
+    if (commonMaths::approxSmallerOrEqualThan(k2, 0_d))
         return k1;
     return (k1 * k2) / (k1 + k2);
 }
@@ -111,7 +110,7 @@ Vector3D Physics::computeSpringForce(const Object& obj1, const Object& obj2)
 {
     Vector3D r = obj2.getPosition() - obj1.getPosition();
     decimal  k = effectiveStiffness(obj1.getStiffnessCst(), obj2.getStiffnessCst());
-    if (commonMaths::approxEqual(k, decimal(0)) || r.isNull())
+    if (commonMaths::approxEqual(k, 0_d) || r.isNull())
         return Vector3D(0_d);
     return -k * r;
 }
@@ -127,7 +126,7 @@ Vector3D Physics::computeSpringForce(const Object& obj1, const Object& obj2)
 Vector3D Physics::computeSpringForce(const Object& obj1, const Object& obj2, decimal k)
 {
     Vector3D r = obj2.getPosition() - obj1.getPosition();
-    if (commonMaths::approxEqual(k, decimal(0)) || r.isNull())
+    if (commonMaths::approxEqual(k, 0_d) || r.isNull())
         return Vector3D(0_d);
     return -k * r;
 }
@@ -148,7 +147,7 @@ Vector3D Physics::computeDampingForce(const Object& obj1, const Object& obj2)
 {
     decimal k_rel = effectiveStiffness(obj1.getStiffnessCst(), obj2.getStiffnessCst());
     decimal mu    = reducedMass(obj1.getMass(), obj2.getMass());
-    if (commonMaths::approxEqual(k_rel, decimal(0)) || commonMaths::approxEqual(mu, decimal(0)))
+    if (commonMaths::approxEqual(k_rel, 0_d) || commonMaths::approxEqual(mu, 0_d))
         return Vector3D(0_d);
 
     decimal e    = std::sqrt(obj1.getRestitutionCst() * obj2.getRestitutionCst());
@@ -177,7 +176,7 @@ Vector3D Physics::computeDampingForce(const Object& obj1, const Object& obj2, de
 {
     decimal k_rel = effectiveStiffness(obj1.getStiffnessCst(), obj2.getStiffnessCst());
     decimal mu    = reducedMass(obj1.getMass(), obj2.getMass());
-    if (commonMaths::approxEqual(k_rel, decimal(0)) || commonMaths::approxEqual(mu, decimal(0)))
+    if (commonMaths::approxEqual(k_rel, 0_d) || commonMaths::approxEqual(mu, 0_d))
         return Vector3D(0_d);
 
     decimal zeta = dampingRatioFromRestitution(e);
@@ -205,7 +204,7 @@ Vector3D Physics::computeDampingForce(const Object& obj1, const Object& obj2, de
 Vector3D Physics::computeDampingForce(const Object& obj1, const Object& obj2, decimal e, decimal k)
 {
     decimal mu = reducedMass(obj1.getMass(), obj2.getMass());
-    if (commonMaths::approxEqual(k, decimal(0)) || commonMaths::approxEqual(mu, decimal(0)))
+    if (commonMaths::approxEqual(k, 0_d) || commonMaths::approxEqual(mu, 0_d))
         return Vector3D(0_d);
 
     decimal zeta = dampingRatioFromRestitution(e);
@@ -273,7 +272,7 @@ Vector3D Physics::computeFrictionForce(const Object& obj1, const Object& obj2)
 Vector3D Physics::computeFrictionForce(const Object& obj1, const Object& obj2, decimal mu)
 {
     Vector3D r = obj2.getPosition() - obj1.getPosition();
-    if (r.isNull() || commonMaths::approxEqual(mu, decimal(0)))
+    if (r.isNull() || commonMaths::approxEqual(mu, 0_d))
         return Vector3D(0_d);
 
     Vector3D n     = r.getNormalised();
@@ -284,7 +283,7 @@ Vector3D Physics::computeFrictionForce(const Object& obj1, const Object& obj2, d
 
     Vector3D normalForce = computeNormalForce(obj1, obj2);
     decimal  normalMag   = normalForce.getNorm();
-    if (commonMaths::approxEqual(normalMag, decimal(0)))
+    if (commonMaths::approxEqual(normalMag, 0_d))
         return Vector3D(0_d);
 
     return -mu * normalMag * v_tan.getNormalised();
@@ -303,7 +302,7 @@ Vector3D Physics::computeFrictionForce(const Object& obj1, const Object& obj2, d
                                        decimal k)
 {
     Vector3D r = obj2.getPosition() - obj1.getPosition();
-    if (r.isNull() || commonMaths::approxEqual(mu, decimal(0)))
+    if (r.isNull() || commonMaths::approxEqual(mu, 0_d))
         return Vector3D(0_d);
 
     Vector3D n     = r.getNormalised();
@@ -314,7 +313,7 @@ Vector3D Physics::computeFrictionForce(const Object& obj1, const Object& obj2, d
 
     Vector3D normalForce = computeNormalForce(obj1, obj2, e, k);
     decimal  normalMag   = normalForce.getNorm();
-    if (commonMaths::approxEqual(normalMag, decimal(0)))
+    if (commonMaths::approxEqual(normalMag, 0_d))
         return Vector3D(0_d);
 
     return -mu * normalMag * v_tan.getNormalised();

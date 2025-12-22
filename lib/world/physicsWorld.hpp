@@ -61,6 +61,7 @@ public:
     decimal  getTimeStep() const;
     decimal  getGravityCst() const;
     Vector3D getGravityAcc() const;
+    Solver   getSolver() const;
     /// @}
 
     // ============================================================================

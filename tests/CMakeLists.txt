@@ -68,7 +68,8 @@ add_engine_test(object_test
 )
 
 add_engine_test(utility_test
-    utilities/test_timer.cpp)
+    utilities/test_timer.cpp
+    utilities/test_command.cpp)
 
 add_engine_test(world_test
     world/test_config.cpp

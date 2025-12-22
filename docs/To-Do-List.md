@@ -20,7 +20,7 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
   - [ ] Configuration presets
 
 ### Parameter Control
-- [ ] **Core Parameters Implementation**
+- [x] **Core Parameters Implementation**
   - [x] Integration method selection
   - [x] Collision detection precision
   - [x] Maximum iteration count

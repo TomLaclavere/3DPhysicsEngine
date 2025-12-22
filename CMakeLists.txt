@@ -58,6 +58,7 @@ endif()
 # Source Files Groups
 # =============================================
 set(ENGINE_MATH_SOURCES
+    src/mathematics/common.cpp
     src/mathematics/vector.cpp
     src/mathematics/matrix.cpp
     src/mathematics/quaternion.cpp

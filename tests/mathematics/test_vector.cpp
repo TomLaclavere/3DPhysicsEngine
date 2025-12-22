@@ -296,4 +296,5 @@ TEST(Vector3D_Test, Printing)
     std::stringstream ss;
     ss << v;
     EXPECT_EQ(ss.str(), "(1.000e+00 , 2.000e+00 , 3.000e+00)");
+    EXPECT_EQ(v.formatVector(), "( 1.000e+00,  2.000e+00,  3.000e+00)");
 }

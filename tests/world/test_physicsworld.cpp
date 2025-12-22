@@ -34,8 +34,23 @@ protected:
 };
 
 // ============================================================================
-//  Tests
+//  Test
 // ============================================================================
+TEST_F(PhysicsWorldTest, SetSolverParses)
+{
+    world.setSolver("Euler");
+    EXPECT_EQ(world.getSolver(), Solver::Euler);
+
+    world.setSolver("Verlet");
+    EXPECT_EQ(world.getSolver(), Solver::Verlet);
+
+    world.setSolver("RK4");
+    EXPECT_EQ(world.getSolver(), Solver::RK4);
+
+    world.setSolver("gkjrehogidrjlgmksj");
+    EXPECT_EQ(world.getSolver(), Solver::Unknown);
+    world.integrate(); // should not throw
+}
 
 TEST_F(PhysicsWorldTest, InitializeSetsConfigValues)
 {
@@ -52,6 +67,7 @@ TEST_F(PhysicsWorldTest, InitializeSetsConfigValues)
 
     Config::get().overrideFromCommandLine(argc, argv);
     world.initialize();
+    Config& config = world.getConfig();
 
     EXPECT_FALSE(world.getIsRunning());
     EXPECT_DECIMAL_EQ(world.getObjectCount(), 0);
@@ -115,4 +131,109 @@ TEST_F(PhysicsWorldTest, IntegrateEulerSkipsNullObjects)
     world.integrate();
 
     SUCCEED();
+}
+
+TEST_F(PhysicsWorldTest, IntegrateVerlet)
+{
+    world.resetAcc();
+    world.start();
+    world.setTimeStep(0.1_d);
+    world.setGravityAcc(Vector3D(0_d, 0_d, -9.81_d));
+
+    obj1.setPosition(Vector3D(0_d, 0_d, 10_d));
+    obj1.setVelocity(Vector3D(0_d, 0_d, 0_d));
+    obj1.setAcceleration(Vector3D(0_d, 0_d, -9.81_d));
+
+    world.integrateVerlet(obj1, world.getTimeStep());
+
+    EXPECT_LT(obj1.getPosition().getZ(), 10_d);
+    EXPECT_LT(obj1.getVelocity().getZ(), 0_d);
+
+    world.setSolver("Verlet");
+    world.integrate();
+
+    EXPECT_LT(obj1.getPosition().getZ(), 10_d);
+    EXPECT_LT(obj1.getVelocity().getZ(), 0_d);
+}
+
+TEST_F(PhysicsWorldTest, IntegrateRK4)
+{
+    world.resetAcc();
+    world.start();
+    world.setTimeStep(0.1_d);
+    world.setGravityAcc(Vector3D(0_d, 0_d, -9.81_d));
+
+    obj1.setPosition(Vector3D(0_d, 0_d, 10_d));
+    obj1.setVelocity(Vector3D(0_d, 0_d, 0_d));
+    obj1.setAcceleration(Vector3D(0_d, 0_d, -9.81_d));
+
+    world.integrateRK4(obj1, world.getTimeStep());
+
+    EXPECT_LT(obj1.getPosition().getZ(), 10_d);
+    EXPECT_LT(obj1.getVelocity().getZ(), 0_d);
+
+    world.setSolver("RK4");
+    world.integrate();
+
+    EXPECT_LT(obj1.getPosition().getZ(), 10_d);
+    EXPECT_LT(obj1.getVelocity().getZ(), 0_d);
+}
+
+TEST_F(PhysicsWorldTest, IntegrateSkipsFixedAndNullObjects)
+{
+    world.resetAcc();
+    world.start();
+    world.setTimeStep(0.1_d);
+
+    obj2.setIsFixed(true);    // should be skipped
+    world.addObject(nullptr); // null object should be skipped
+
+    EXPECT_NO_THROW(world.integrate());
+}
+
+TEST_F(PhysicsWorldTest, ApplyContactForcesAvoidsOverlap)
+{
+    DummyObject objA, objB;
+    objA.setPosition(Vector3D(0_d, 0_d, 0_d));
+    objB.setPosition(Vector3D(0_d, 0_d, 0_d)); // colliding
+
+    objA.setIsFixed(false);
+    objB.setIsFixed(false);
+
+    world.addObject(&objA);
+    world.addObject(&objB);
+
+    world.computeAcceleration(objA);
+    world.computeAcceleration(objB);
+
+    EXPECT_VECTOR_EQ(objA.getVelocity(), Vector3D(0_d));
+    EXPECT_VECTOR_EQ(objB.getVelocity(), Vector3D(0_d));
+}
+
+TEST_F(PhysicsWorldTest, RunLoopExecutesWithoutError)
+{
+    world.start();
+    world.setTimeStep(0.1_d);
+    Config::get().overrideFromCommandLine(1, nullptr); // minimal
+
+    EXPECT_NO_THROW(world.run());
+}
+
+TEST_F(PhysicsWorldTest, Collision)
+{
+    DummyObject objA, objB, objFixed;
+    objA.setPosition(Vector3D(0_d));
+    objB.setPosition(Vector3D(0_d)); // colliding
+    objFixed.setPosition(Vector3D(0_d));
+    objFixed.setIsFixed(true);
+
+    world.addObject(&objA);
+    world.addObject(&objB);
+    world.addObject(&objFixed);
+
+    world.applyForces();
+
+    EXPECT_VECTOR_EQ(objA.getAcceleration(), Vector3D(0_d));
+    EXPECT_VECTOR_EQ(objB.getAcceleration(), Vector3D(0_d));
+    EXPECT_VECTOR_EQ(objFixed.getAcceleration(), Vector3D(0_d));
 }

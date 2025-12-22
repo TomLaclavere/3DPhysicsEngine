@@ -21,6 +21,7 @@ TEST(ConfigTest, DefaultValue)
     EXPECT_DECIMAL_EQ(config.getGravity(), 9.81_d);
     EXPECT_DECIMAL_EQ(config.getTimeStep(), 0.01_d);
     EXPECT_EQ(config.getMaxIterations(), 10u);
+    EXPECT_TRUE(config.getVerbose());
 }
 
 TEST(ConfigTest, LoadFromFile)
@@ -30,6 +31,8 @@ TEST(ConfigTest, LoadFromFile)
         gravity: 15.2
         timestep: 0.005
         solverIters: 50
+        solver: Euler
+        verbose: true
     )";
     std::string path1 = createTempConfigFile(yaml1);
 
@@ -39,6 +42,8 @@ TEST(ConfigTest, LoadFromFile)
     EXPECT_DECIMAL_EQ(config1.getGravity(), 15.2);
     EXPECT_DECIMAL_EQ(config1.getTimeStep(), 0.005);
     EXPECT_EQ(config1.getMaxIterations(), 50u);
+    EXPECT_EQ(config1.getSolver(), "Euler");
+    EXPECT_TRUE(config1.getVerbose());
 
     std::remove(path1.c_str());
 
@@ -76,6 +81,7 @@ TEST(ConfigTest, OverrideFromCommandLine)
     EXPECT_DECIMAL_EQ(config.getTimeStep(), 0.002_d);   // unchanged
     EXPECT_DECIMAL_EQ(config.getMaxIterations(), 200u); // unchanged
 }
+
 TEST(ConfigTest, OverrideFromCommandLineInvalid)
 {
     Config& config = Config::get();
@@ -90,4 +96,15 @@ TEST(ConfigTest, OverrideFromCommandLineInvalid)
     EXPECT_DOUBLE_EQ(config.getGravity(), 9.81_d);
     EXPECT_DOUBLE_EQ(config.getTimeStep(), 0.01_d);
     EXPECT_EQ(config.getMaxIterations(), 10);
+
+    // Test valid args
+    const char* _argv[] = { "program", "--gravity", "1.62", "--solver", "RK4", "--timestep", "0.005" };
+    int         _argc   = sizeof(_argv) / sizeof(_argv[0]);
+
+    config.overrideFromCommandLine(_argc, const_cast<char**>(_argv));
+
+    // Values changed
+    EXPECT_DOUBLE_EQ(config.getGravity(), 1.62_d);
+    EXPECT_DOUBLE_EQ(config.getTimeStep(), 0.005_d);
+    EXPECT_EQ(config.getSolver(), "RK4");
 }

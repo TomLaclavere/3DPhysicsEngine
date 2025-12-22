@@ -72,6 +72,7 @@ add_engine_test(utility_test
 
 add_engine_test(world_test
     world/test_config.cpp
+    world/test_physics.cpp
     world/test_physicsworld.cpp)
 
 # =============================================

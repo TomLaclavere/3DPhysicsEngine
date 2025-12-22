@@ -27,60 +27,34 @@ namespace commonMaths {
  * @param precision Tolerance (defaults to `PRECISION_MACHINE`).
  * @return true if the two values are approximately equal.
  */
-inline bool approxEqual(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE) noexcept
-{
-    // If any value is NaN, treat as not equal.
-    if (!std::isfinite(lhs) || !std::isfinite(rhs) || !std::isfinite(precision))
-        return false;
-    return std::abs(lhs - rhs) <= precision;
-}
+bool approxEqual(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE);
 
 /**
  * @brief True if lhs is (significantly) greater than rhs.
  *
  * Checks `lhs > rhs + precision`.
  */
-inline bool approxGreaterThan(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE) noexcept
-{
-    if (!std::isfinite(lhs) || !std::isfinite(rhs) || !std::isfinite(precision))
-        return false;
-    return lhs > rhs + precision;
-}
+bool approxGreaterThan(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE);
 
 /**
  * @brief True if lhs is (significantly) smaller than rhs.
  *
  * Checks `lhs < rhs - precision`.
  */
-inline bool approxSmallerThan(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE) noexcept
-{
-    if (!std::isfinite(lhs) || !std::isfinite(rhs) || !std::isfinite(precision))
-        return false;
-    return lhs < rhs - precision;
-}
+bool approxSmallerThan(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE);
 
 /**
  * @brief True if lhs is greater than or approximately equal to rhs.
  *
  * Checks `lhs >= rhs - precision`.
  */
-inline bool approxGreaterOrEqualThan(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE) noexcept
-{
-    if (!std::isfinite(lhs) || !std::isfinite(rhs) || !std::isfinite(precision))
-        return false;
-    return lhs >= rhs - precision;
-}
+bool approxGreaterOrEqualThan(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE);
 
 /**
  * @brief True if lhs is smaller than or approximately equal to rhs.
  *
  * Checks `lhs <= rhs + precision`.
  */
-inline bool approxSmallerOrEqualThan(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE) noexcept
-{
-    if (!std::isfinite(lhs) || !std::isfinite(rhs) || !std::isfinite(precision))
-        return false;
-    return lhs <= rhs + precision;
-}
+bool approxSmallerOrEqualThan(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE);
 
 } // namespace commonMaths

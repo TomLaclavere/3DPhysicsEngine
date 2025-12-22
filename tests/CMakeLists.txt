@@ -54,6 +54,7 @@ endfunction()
 # =============================================
 
 add_engine_test(mathematics_test
+    mathematics/test_common.cpp
     mathematics/test_vector.cpp
     mathematics/test_matrix.cpp
     mathematics/test_quaternion.cpp

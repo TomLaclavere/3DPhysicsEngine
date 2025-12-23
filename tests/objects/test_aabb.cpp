@@ -4,6 +4,7 @@
 #include "objects/sphere.hpp"
 #include "test_functions.hpp"
 
+#include <cmath>
 #include <gtest/gtest.h>
 
 TEST(AABBTest, ConstructorsAndGetters)

@@ -27,7 +27,7 @@ Options:
   -h, --help            Show this help
 
 Behavior:
-  - Coverage is automatically enabled unless explicitly disabled with `-D3DPE_ENABLE_COVERAGE=OFF`.
+  - Coverage is automatically enabled unless explicitly disabled with `-DD3DPE_ENABLE_COVERAGE=OFF`.
   - HTML reports are generated under: `build/coverage_report/coverage_report.html`.
   - The script will try to open the report automatically on Linux (`xdg-open`) or macOS (`open`) if `--open` is provided.
 
@@ -72,12 +72,12 @@ done
 # =====================================================================
 HAS_COVERAGE_FLAG=false
 for a in "${CMAKE_ARGS[@]}"; do
-    if [[ "$a" == "-DCOVERAGE="* ]] || [[ "$a" == "-DCOVERAGE" ]]; then
+    if [[ "$a" == "-D3DPE_ENABLE_COVERAGE="* ]] || [[ "$a" == "-D3DPE_ENABLE_COVERAGE" ]]; then
         HAS_COVERAGE_FLAG=true
         break
     fi
 done
-$HAS_COVERAGE_FLAG || CMAKE_ARGS+=("-DCOVERAGE=ON")
+$HAS_COVERAGE_FLAG || CMAKE_ARGS+=("-D3DPE_ENABLE_COVERAGE=ON")
 
 # =====================================================================
 # Build project with coverage enabled

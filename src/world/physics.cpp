@@ -1,5 +1,7 @@
 #include "world/physics.hpp"
 
+#include "mathematics/common.hpp"
+
 #include <algorithm>
 #include <cmath>
 

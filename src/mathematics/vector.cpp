@@ -26,38 +26,10 @@
 #include <functional>
 #include <iomanip>
 #include <iostream>
-#include <stdexcept>
-
-// ============================================================================
-//  Constructors
-// ============================================================================
-Vector3D::Vector3D(decimal value)
-    : v { value, value, value }
-{}
-Vector3D::Vector3D(decimal x, decimal y, decimal z)
-    : v { x, y, z }
-{}
-Vector3D::Vector3D(const Vector3D& newv)
-    : v { newv.v }
-{}
-
-// ============================================================================
-//  Getters
-// ============================================================================
-decimal                Vector3D::getX() const { return v[0]; }
-decimal                Vector3D::getY() const { return v[1]; }
-decimal                Vector3D::getZ() const { return v[2]; }
-std::array<decimal, 3> Vector3D::getV() const { return v; }
 
 // ============================================================================
 //  Utilities
 // ============================================================================
-void Vector3D::absolute()
-{
-    v[0] = std::fabs(v[0]);
-    v[1] = std::fabs(v[1]);
-    v[2] = std::fabs(v[2]);
-}
 void Vector3D::normalise()
 {
     decimal n = getNorm();
@@ -66,175 +38,43 @@ void Vector3D::normalise()
     else
         *this /= n;
 }
-decimal  Vector3D::getNormSquare() const { return v[0] * v[0] + v[1] * v[1] + v[2] * v[2]; }
 decimal  Vector3D::getNorm() const { return std::sqrt(getNormSquare()); }
-decimal  Vector3D::getMinValue() const { return std::min({ v[0], v[1], v[2] }); }
-decimal  Vector3D::getMaxValue() const { return std::max({ v[0], v[1], v[2] }); }
-Vector3D Vector3D::getAbsolute() const
-{
-    Vector3D absV = Vector3D((*this));
-    absV.absolute();
-    return absV;
-}
 Vector3D Vector3D::getNormalised() const
 {
     Vector3D normalisedV = Vector3D((*this));
     normalisedV.normalise();
     return normalisedV;
 }
-Vector3D min(const Vector3D& a, const Vector3D& b)
-{
-    return Vector3D { std::min(a[0], b[0]), std::min(a[1], b[1]), std::min(a[2], b[2]) };
-}
-Vector3D max(const Vector3D& a, const Vector3D& b)
-{
-    return Vector3D { std::max(a[0], b[0]), std::max(a[1], b[1]), std::max(a[2], b[2]) };
-}
-std::string Vector3D::formatVector() const
-{
-    std::ostringstream oss;
-    oss << std::scientific << std::setprecision(3) << "(" << std::setw(10) << v[0] << ", " << std::setw(10)
-        << v[1] << ", " << std::setw(10) << v[2] << ")";
-    return oss.str();
-}
-
-// ============================================================================
-//  Setters
-// ============================================================================
-void Vector3D::setX(decimal x_) { v[0] = x_; }
-void Vector3D::setY(decimal y_) { v[1] = y_; }
-void Vector3D::setZ(decimal z_) { v[2] = z_; }
-void Vector3D::setToNull() { v = { 0, 0, 0 }; }
-void Vector3D::setAllValues(decimal s) { v = { s, s, s }; }
-void Vector3D::setAllValues(decimal x_, decimal y_, decimal z_) { v = { x_, y_, z_ }; }
-
-// ============================================================================
-//  Property Checks
-// ============================================================================
-bool Vector3D::isNull() const { return commonMaths::approxEqual(getNormSquare(), decimal(0)); }
-bool Vector3D::isLengthEqual(decimal val) const { return commonMaths::approxEqual(getNormSquare(), val); }
-bool Vector3D::isFinite() const { return std::isfinite(v[0]) && std::isfinite(v[1]) && std::isfinite(v[2]); }
-bool Vector3D::isNormalised() const { return commonMaths::approxEqual(getNorm(), decimal(1)); }
 
 // ============================================================================
 //  Vector Operations
 // ============================================================================
-decimal Vector3D::dotProduct(const Vector3D& other) const
-{
-    return v[0] * other[0] + v[1] * other[1] + v[2] * other[2];
-}
 decimal  dotProduct(const Vector3D& lhs, const Vector3D& rhs) { return lhs.dotProduct(rhs); }
-Vector3D Vector3D::crossProduct(const Vector3D& other) const
-{
-    return Vector3D { v[1] * other[2] - v[2] * other[1], v[2] * other[0] - v[0] * other[2],
-                      v[0] * other[1] - v[1] * other[0] };
-}
 Vector3D crossProduct(const Vector3D& lhs, const Vector3D& rhs) { return lhs.crossProduct(rhs); }
-
-// ============================================================================
-//  Comparison Operators
-// ============================================================================
-bool Vector3D::operator==(const Vector3D& other) const
-{
-    return commonMaths::approxEqual(v[0], other[0]) && commonMaths::approxEqual(v[1], other[1]) &&
-           commonMaths::approxEqual(v[2], other[2]);
-}
-bool Vector3D::operator!=(const Vector3D& other) const { return !(*this == other); }
-bool Vector3D::operator<(const Vector3D& other) const
-{
-    if (v[0] > other[0])
-        return false;
-    if (v[1] > other[1])
-        return false;
-    return v[2] < other[2];
-}
-bool Vector3D::operator<=(const Vector3D& other) const
-{
-    if (v[0] > other[0])
-        return false;
-    if (v[1] > other[1])
-        return false;
-    return v[2] <= other[2];
-}
-bool Vector3D::operator>(const Vector3D& other) const
-{
-    if (v[0] < other[0])
-        return false;
-    if (v[1] < other[1])
-        return false;
-    return v[2] > other[2];
-}
-bool Vector3D::operator>=(const Vector3D& other) const
-{
-    if (v[0] < other[0])
-        return false;
-    if (v[1] < other[1])
-        return false;
-    return v[2] >= other[2];
-}
-bool Vector3D::approxEqual(const Vector3D& other, decimal p) const
-{
-    return commonMaths::approxEqual(v[0], other[0], p) && commonMaths::approxEqual(v[1], other[1], p) &&
-           commonMaths::approxEqual(v[2], other[2], p);
-}
 
 // ============================================================================
 //  Element Access Operators
 // ============================================================================
 /// @param i Index of the component (0, 1, or 2).
 /// @return Reference to the component at index `i`.
-decimal& Vector3D::at(int i)
+decimal& Vector3D::at(std::size_t i)
 {
-    if (i < 0 || i >= 3)
+    if (i >= 3)
         throw std::out_of_range("Vector3D index out of range");
     return v[i];
 }
 /// @param i Index of the component (0, 1, or 2).
 /// @return Value of the component at index `i`.
-decimal Vector3D::at(int i) const
+decimal Vector3D::at(std::size_t i) const
 {
-    if (i < 0 || i >= 3)
+    if (i >= 3)
         throw std::out_of_range("Vector3D index out of range");
     return v[i];
 }
-/// @param i Index of the component (0, 1, or 2). If out of range, behavior is undefined.
-/// @return Reference to the component at index `i`.
-decimal& Vector3D::operator()(int i) { return v[i]; }
-/// @param i Index of the component (0, 1, or 2). If out of range, behavior is undefined.
-/// @return Value of the component at index `i`.
-decimal Vector3D::operator()(int i) const { return v[i]; }
-/// @param i Index of the component (0, 1, or 2). If out of range, behavior is undefined.
-/// @return Reference to the component at index `i`.
-decimal& Vector3D::operator[](int i) { return v[i]; }
-/// @param i Index of the component (0, 1, or 2). If out of range, behavior is undefined.
-/// @return Value of the component at index `i`.
-decimal Vector3D::operator[](int i) const { return v[i]; }
 
 // ============================================================================
 //  In-Place Arithmetic Operators
 // ============================================================================
-Vector3D  Vector3D::operator-() const { return Vector3D { -v[0], -v[1], -v[2] }; }
-Vector3D& Vector3D::operator+=(const Vector3D& other)
-{
-    v[0] += other[0];
-    v[1] += other[1];
-    v[2] += other[2];
-    return *this;
-}
-Vector3D& Vector3D::operator-=(const Vector3D& other)
-{
-    v[0] -= other[0];
-    v[1] -= other[1];
-    v[2] -= other[2];
-    return *this;
-}
-Vector3D& Vector3D::operator*=(const Vector3D& other)
-{
-    v[0] *= other[0];
-    v[1] *= other[1];
-    v[2] *= other[2];
-    return *this;
-}
 Vector3D& Vector3D::operator/=(const Vector3D& other)
 {
     if (commonMaths::approxEqual(other[0], decimal(0)) || commonMaths::approxEqual(other[1], decimal(0)) ||
@@ -243,27 +83,6 @@ Vector3D& Vector3D::operator/=(const Vector3D& other)
     v[0] /= other[0];
     v[1] /= other[1];
     v[2] /= other[2];
-    return *this;
-}
-Vector3D& Vector3D::operator+=(decimal s)
-{
-    v[0] += s;
-    v[1] += s;
-    v[2] += s;
-    return *this;
-}
-Vector3D& Vector3D::operator-=(decimal s)
-{
-    v[0] -= s;
-    v[1] -= s;
-    v[2] -= s;
-    return *this;
-}
-Vector3D& Vector3D::operator*=(decimal s)
-{
-    v[0] *= s;
-    v[1] *= s;
-    v[2] *= s;
     return *this;
 }
 Vector3D& Vector3D::operator/=(decimal s)
@@ -277,18 +96,6 @@ Vector3D& Vector3D::operator/=(decimal s)
 //  Free Arithmetic Operators
 // ============================================================================
 // Vector3D op Vector3D
-Vector3D operator+(const Vector3D& lhs, const Vector3D& rhs)
-{
-    return applyVector(lhs, rhs, std::plus<decimal>());
-}
-Vector3D operator-(const Vector3D& lhs, const Vector3D& rhs)
-{
-    return applyVector(lhs, rhs, std::minus<decimal>());
-}
-Vector3D operator*(const Vector3D& lhs, const Vector3D& rhs)
-{
-    return applyVector(lhs, rhs, std::multiplies<decimal>());
-}
 Vector3D operator/(const Vector3D& lhs, const Vector3D& rhs)
 {
     if (commonMaths::approxEqual(rhs[0], decimal(0)) || commonMaths::approxEqual(rhs[1], decimal(0)) ||
@@ -298,12 +105,6 @@ Vector3D operator/(const Vector3D& lhs, const Vector3D& rhs)
 }
 
 // Vector3D op decimal
-Vector3D operator+(const Vector3D& lhs, decimal rhs) { return applyVector(lhs, rhs, std::plus<decimal>()); }
-Vector3D operator-(const Vector3D& lhs, decimal rhs) { return applyVector(lhs, rhs, std::minus<decimal>()); }
-Vector3D operator*(const Vector3D& lhs, decimal rhs)
-{
-    return applyVector(lhs, rhs, std::multiplies<decimal>());
-}
 Vector3D operator/(const Vector3D& lhs, decimal rhs)
 {
     if (commonMaths::approxEqual(rhs, decimal(0)))
@@ -313,12 +114,6 @@ Vector3D operator/(const Vector3D& lhs, decimal rhs)
 
 // Decimal op Vector3D
 // Vector3D op decimal
-Vector3D operator+(decimal lhs, const Vector3D& rhs) { return applyVector(lhs, rhs, std::plus<decimal>()); }
-Vector3D operator-(decimal lhs, const Vector3D& rhs) { return applyVector(lhs, rhs, std::minus<decimal>()); }
-Vector3D operator*(decimal lhs, const Vector3D& rhs)
-{
-    return applyVector(lhs, rhs, std::multiplies<decimal>());
-}
 Vector3D operator/(decimal lhs, const Vector3D& rhs)
 {
     if (commonMaths::approxEqual(rhs[0], decimal(0)) || commonMaths::approxEqual(rhs[1], decimal(0)) ||

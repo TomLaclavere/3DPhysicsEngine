@@ -13,6 +13,7 @@
  */
 #include "objects/plane.hpp"
 
+#include "mathematics/common.hpp"
 #include "objects/collision.hpp"
 
 // ============================================================================

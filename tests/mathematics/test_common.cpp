@@ -1,8 +1,8 @@
 #include "mathematics/common.hpp"
 #include "test_functions.hpp"
 
+#include <cmath>
 #include <gtest/gtest.h>
-#include <limits>
 
 TEST(Common_Test, Approx_Equal)
 {

@@ -12,6 +12,7 @@
  *
  */
 
+#include "mathematics/math_io.hpp"
 #include "objects/aabb.hpp"
 #include "objects/plane.hpp"
 #include "objects/sphere.hpp"
@@ -110,8 +111,8 @@ int main(int argc, char** argv)
                 if (!obj->isFixed())
                     std::cout << std::left << std::setw(col_obj) << obj->getType() << std::setw(col_time)
                               << std::fixed << std::setprecision(3) << time << std::setw(col_vec)
-                              << obj->getPosition().formatVector() << std::setw(col_vec)
-                              << obj->getVelocity().formatVector() << std::right << std::setw(col_step)
+                              << formatVector(obj->getPosition()) << std::setw(col_vec)
+                              << formatVector(obj->getVelocity()) << std::right << std::setw(col_step)
                               << stepTimer.elapsedMicroseconds() << "\n";
             }
             std::cout << std::string(n, '-') << '\n';

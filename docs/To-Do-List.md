@@ -6,7 +6,7 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 - [ ] Improve Config to be more general 
 - [x] Add verbose parameter
-- [ ] Unit testing
+- [x] Unit testing
 
 ## Code Quality and Maintenance
 

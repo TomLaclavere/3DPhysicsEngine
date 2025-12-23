@@ -9,6 +9,10 @@ project(3DPhysicsEngine
     HOMEPAGE_URL "https://github.com/TomLaclavere/3DPhysicsEngine"
 )
 
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 # Set policies to avoid warnings and ensure modern behavior
 cmake_policy(SET CMP0077 NEW)
 
@@ -58,10 +62,10 @@ endif()
 # Source Files Groups
 # =============================================
 set(ENGINE_MATH_SOURCES
-    src/mathematics/common.cpp
     src/mathematics/vector.cpp
     src/mathematics/matrix.cpp
     src/mathematics/quaternion.cpp
+    src/mathematics/math_io.cpp
 )
 
 set(ENGINE_OBJECT_SOURCES

@@ -417,12 +417,3 @@ TEST_F(CommandUtilitiesTest, ParseWords_EdgeCases)
     deque<string> result3     = parseWords(longCommand);
     EXPECT_GE(result3.size(), 6);
 }
-
-// ============================================================================
-// Main function for running tests
-// ============================================================================
-int main(int argc, char** argv)
-{
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}

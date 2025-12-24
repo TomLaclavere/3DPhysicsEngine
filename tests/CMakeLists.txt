@@ -54,6 +54,7 @@ endfunction()
 # =============================================
 
 add_engine_test(mathematics_test
+    mathematics/test_common.cpp
     mathematics/test_vector.cpp
     mathematics/test_matrix.cpp
     mathematics/test_quaternion.cpp
@@ -67,10 +68,12 @@ add_engine_test(object_test
 )
 
 add_engine_test(utility_test
-    utilities/test_timer.cpp)
+    utilities/test_timer.cpp
+    utilities/test_command.cpp)
 
 add_engine_test(world_test
     world/test_config.cpp
+    world/test_physics.cpp
     world/test_physicsworld.cpp)
 
 # =============================================

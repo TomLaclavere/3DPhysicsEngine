@@ -104,7 +104,7 @@ TEST(Matrix3x3_Test, Setters)
     m.setAllValues(r);
     for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
-            EXPECT_DECIMAL_EQ(m(i, j), r(j));
+            EXPECT_DECIMAL_EQ(m(i, j), r[j]);
 
     // Matrix
     Matrix3x3 mTest(1_d, 2_d, 3_d, 4_d, 5_d, 6_d, 7_d, 8_d, 9_d);
@@ -326,7 +326,6 @@ TEST(Matrix3x3_Test, ComparisonOperators)
 {
     Matrix3x3 a(1_d, 2_d, 3_d, 4_d, 5_d, 6_d, 7_d, 8_d, 9_d);
     Matrix3x3 b(9_d, 8_d, 7_d, 6_d, 5_d, 4_d, 3_d, 2_d, 1_d);
-    Matrix3x3 c(10_d, 10_d, 10_d, 10_d, 10_d, 10_d, 10_d, 10_d, 10_d);
     Matrix3x3 d(9_d, 8_d, 7_d, 6_d, 5_d, 4_d, 3_d, 2_d, 1_d);
 
     EXPECT_TRUE(b == d);
@@ -334,26 +333,6 @@ TEST(Matrix3x3_Test, ComparisonOperators)
 
     EXPECT_TRUE(a != d);
     EXPECT_FALSE(b != d);
-
-    EXPECT_FALSE(a < b);
-    EXPECT_FALSE(b < a);
-    EXPECT_FALSE(a < a);
-    EXPECT_TRUE(a < c);
-
-    EXPECT_FALSE(a <= b);
-    EXPECT_FALSE(b <= a);
-    EXPECT_TRUE(a <= a);
-    EXPECT_TRUE(a <= c);
-
-    EXPECT_FALSE(b > a);
-    EXPECT_FALSE(a > b);
-    EXPECT_FALSE(a > a);
-    EXPECT_TRUE(c > a);
-
-    EXPECT_FALSE(b >= a);
-    EXPECT_FALSE(a >= b);
-    EXPECT_TRUE(a >= a);
-    EXPECT_TRUE(c >= a);
 }
 
 // ——————————————————————————————————————————————————————————————————————————

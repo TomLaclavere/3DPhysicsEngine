@@ -12,6 +12,48 @@
 #include "objects/object.hpp"
 
 // ============================================================================
+//  Constructors / Destructors
+// ============================================================================
+Object::Object(decimal mass)
+    : mass { mass } {};
+Object::Object(const Vector3D& position)
+    : position { position }
+{}
+Object::Object(const Vector3D& position, const Vector3D& size)
+    : position { position }
+    , size { size }
+{}
+Object::Object(const Vector3D& position, const Vector3D& size, decimal mass)
+    : position { position }
+    , size { size }
+    , mass { mass }
+{
+    checkFixed();
+}
+Object::Object(const Vector3D& position, const Vector3D& size, const Vector3D& velocity, decimal mass)
+    : position { position }
+    , size { size }
+    , velocity { velocity }
+    , mass { mass }
+{
+    checkFixed();
+}
+Object::Object(const Vector3D& position, const Vector3D& rotation, const Vector3D& size,
+               const Vector3D& velocity, const Vector3D& acceleration, const Vector3D& force,
+               const Vector3D& torque, decimal mass)
+    : position { position }
+    , rotation { rotation }
+    , size { size }
+    , velocity { velocity }
+    , acceleration { acceleration }
+    , force { force }
+    , torque { torque }
+    , mass { mass }
+{
+    checkFixed();
+}
+
+// ============================================================================
 //  Getters
 // ============================================================================
 Vector3D   Object::getPosition() const { return position; }
@@ -43,10 +85,21 @@ void Object::setMass(const decimal _mass)
     mass = _mass;
     checkFixed();
 }
+void Object::setStiffnessCst(decimal k) { stiffnessCst = k; }
+void Object::setRestitutionCst(decimal e) { restitutionCst = e; }
+void Object::setFrictionCst(decimal mu) { frictionCst = mu; }
+void Object::setIsFixed(bool b) { fixed = b; }
 
 // ============================================================================
-//  Apply forces / torques
+//  Physics
 // ============================================================================
+void Object::checkFixed()
+{
+    if (mass <= 0_d)
+        fixed = true;
+    else
+        fixed = false;
+}
 /**
  * Default implementation uses simple Euler integration.
  * Can be overridden by derived classes for more complex behaviors.

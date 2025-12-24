@@ -69,11 +69,11 @@
   - [x] **Projectile motion**
 - [x] **Validation & Release :**
   - [x] **Standard testing :** reference scenes, physical validity, ...
-  - [ ] **Documentation :**
+  - [x] **Documentation :**
     - [x] *Doxygen & GitHub Pages*
     - [x] *Installation & Usage guides*
     - [x] *GitHub notes*
-    - [ ] *Unit testing*
+    - [x] *Unit testing*
 
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------

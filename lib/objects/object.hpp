@@ -9,7 +9,6 @@
 #pragma once
 #include "mathematics/vector.hpp"
 #include "ostream"
-#include "precision.hpp"
 
 enum class ObjectType
 {

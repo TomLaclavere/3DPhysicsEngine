@@ -4,7 +4,6 @@
  *
  */
 #pragma once
-#include "mathematics/common.hpp"
 #include "objects/object.hpp"
 #include "world/config.hpp"
 #include "world/integrateRK4.hpp"

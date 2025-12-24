@@ -7,7 +7,6 @@
  */
 #pragma once
 #include "object.hpp"
-#include "precision.hpp"
 
 // Forward declaration
 struct Sphere;

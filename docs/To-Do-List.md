@@ -4,10 +4,6 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 ## General Tasks
 
-- [ ] Improve Config to be more general 
-- [x] Add verbose parameter
-- [x] Unit testing
-
 ## Code Quality and Maintenance
 
 ## Simulation Management

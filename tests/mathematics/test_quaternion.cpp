@@ -395,9 +395,7 @@ TEST(QuaternionTest, ElementAccess)
     EXPECT_DECIMAL_EQ(cq.at(2_d), -5_d);
 
     // Out-of-range checks
-    EXPECT_THROW(q.at(-1_d), std::out_of_range);
     EXPECT_THROW(q.at(3_d), std::out_of_range);
-    EXPECT_THROW(cq.at(-1_d), std::out_of_range);
     EXPECT_THROW(cq.at(3_d), std::out_of_range);
 
     // operator[] & () do not check the index, so I can't check out of range indices

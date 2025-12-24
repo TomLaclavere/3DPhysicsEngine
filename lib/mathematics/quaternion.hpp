@@ -20,6 +20,7 @@
 #include "vector.hpp"
 
 #include <array>
+#include <cmath>
 
 /**
  * @defgroup QuaternionMaths
@@ -52,25 +53,41 @@ public:
     /// @name Constructors
     // ============================================================================
     /// @{
-    Quaternion3D() = default;
-    Quaternion3D(decimal _x, decimal _y, decimal _z, decimal _w);
-    Quaternion3D(const Vector3D& _v, decimal _w);
-    Quaternion3D(decimal w, const Vector3D& v);
+    constexpr Quaternion3D() = default;
+    constexpr Quaternion3D(decimal _x, decimal _y, decimal _z, decimal _w) noexcept
+        : v { Vector3D(_x, _y, _z) }
+        , w { _w }
+    {}
+    constexpr Quaternion3D(const Vector3D& _v, decimal _w) noexcept
+        : v { _v }
+        , w { _w }
+    {}
+    constexpr Quaternion3D(decimal _w, const Vector3D& _v) noexcept
+        : Quaternion3D(_v, _w)
+    {}
     /// Constructor from rotation matrix.
     explicit Quaternion3D(const Matrix3x3& m);
     /// Constructor from Euler angles.
-    Quaternion3D(decimal angleX, decimal angleY, decimal angleZ);
+    constexpr Quaternion3D(decimal angleX, decimal angleY, decimal angleZ) noexcept
+    {
+        std::array<decimal, 4> quaternionElements = eulerAngles_to_Quaternion(angleX, angleY, angleZ);
+
+        w = quaternionElements[0];
+        v = Vector3D(quaternionElements[1], quaternionElements[2], quaternionElements[3]);
+    }
     /// Constructor from Euler angles.
-    explicit Quaternion3D(const Vector3D& eulerAngles);
+    constexpr explicit Quaternion3D(const Vector3D& eulerAngles) noexcept
+        : Quaternion3D(eulerAngles[0], eulerAngles[1], eulerAngles[2])
+    {}
     /// @}
 
     // ============================================================================
     /// @name Getters
     // ============================================================================
     /// @{
-    decimal  getRealPart() const;
-    Vector3D getImaginaryPart() const;
-    decimal  getImaginaryPartElement(int index) const;
+    constexpr decimal  getRealPart() const noexcept { return w; }
+    constexpr Vector3D getImaginaryPart() const noexcept { return v; }
+    constexpr decimal  getImaginaryPartElement(std::size_t index) const noexcept { return v[index]; }
 
     /// @}
 
@@ -80,56 +97,146 @@ public:
     /// @{
 
     /// In-place conjugate (negate imaginary part).
-    void conjugate();
+    constexpr void conjugate() noexcept { v = -v; }
     /// In-place normalise. If zero-length quaternion, becomes null quaternion.
     void normalise();
     /// In-place inverse (conjugate then normalise).
     void inverse();
     /// Squared Euclidean norm. Cheaper than `getNorm()`.
-    decimal getNormSquare() const;
+    constexpr decimal getNormSquare() const noexcept { return w * w + v.getNormSquare(); }
     /// Euclidean norm.
     decimal getNorm() const;
     /// Return identity quaternion (0, 0, 0, 1).
-    static Quaternion3D getIdentity() { return Quaternion3D(0, 0, 0, 1); };
+    constexpr static Quaternion3D getIdentity() noexcept { return Quaternion3D(0, 0, 0, 1); };
     /// Return null quaternion (0, 0, 0, 0).
-    static Quaternion3D getNull() { return Quaternion3D(0, 0, 0, 0); };
+    constexpr static Quaternion3D getNull() noexcept { return Quaternion3D(0, 0, 0, 0); };
     /// Return a conjugated copy of the quaternion.
-    Quaternion3D getConjugate() const;
+    constexpr Quaternion3D getConjugate() const noexcept
+    {
+        Quaternion3D q = *this;
+        q.conjugate();
+        return q;
+    }
     /// Return a normalised copy of the quaternion.
     Quaternion3D getNormalise() const;
     /// Return an inverted copy of the quaternion.
     Quaternion3D getInverse() const;
-    Matrix3x3    getRotationMatrix() const;
+    Matrix3x3    getRotationMatrix() const
+    {
+        decimal x = v[0];
+        decimal y = v[1];
+        decimal z = v[2];
+
+        decimal xx = x * x;
+        decimal yy = y * y;
+        decimal zz = z * z;
+        decimal xy = x * y;
+        decimal xz = x * z;
+        decimal yz = y * z;
+        decimal wx = w * x;
+        decimal wy = w * y;
+        decimal wz = w * z;
+
+        return Matrix3x3(1 - 2 * (yy + zz), 2 * (xy - wz), 2 * (xz + wy), 2 * (xy + wz), 1 - 2 * (xx + zz),
+                         2 * (yz - wx), 2 * (xz - wy), 2 * (yz + wx), 1 - 2 * (xx + yy));
+    }
+    /// Compute quaternion from the three Euler angles. Used to implement constructors.
+    constexpr std::array<decimal, 4> eulerAngles_to_Quaternion(decimal angleX, decimal angleY,
+                                                               decimal angleZ) noexcept
+    {
+        std::array<decimal, 4> quaternionElements;
+
+        decimal cosX = std::cos(angleX * decimal(0.5));
+        decimal sinX = std::sin(angleX * decimal(0.5));
+        decimal cosY = std::cos(angleY * decimal(0.5));
+        decimal sinY = std::sin(angleY * decimal(0.5));
+        decimal cosZ = std::cos(angleZ * decimal(0.5));
+        decimal sinZ = std::sin(angleZ * decimal(0.5));
+
+        decimal w = cosX * cosY * cosZ + sinX * sinY * sinZ;
+        decimal x = sinX * cosY * cosZ - cosX * sinY * sinZ;
+        decimal y = cosX * sinY * cosZ + sinX * cosY * sinZ;
+        decimal z = cosX * cosY * sinZ - sinX * sinY * sinZ;
+
+        quaternionElements[0] = w;
+        quaternionElements[1] = x;
+        quaternionElements[2] = y;
+        quaternionElements[3] = z;
+
+        return quaternionElements;
+    }
     /// @}
 
     // ============================================================================
     /// @name Setters
     // ============================================================================
     /// @{
-    void setRealPart(decimal value);
-    void setImaginaryPart(decimal, decimal, decimal);
-    void setImaginaryPart(const Vector3D& newv);
-    void setToNull();
-    void setToIdentity();
-    void setAllValues(decimal, decimal, decimal, decimal);
-    void setAllValues(const Vector3D&, decimal);
-    void setAllValues(decimal, const Vector3D&);
+    constexpr void setRealPart(decimal value) noexcept { w = value; }
+    constexpr void setImaginaryPart(decimal newx, decimal newy, decimal newz) noexcept
+    {
+        v = Vector3D(newx, newy, newz);
+    }
+    constexpr void setImaginaryPart(const Vector3D& newv) noexcept { v = newv; }
+    constexpr void setToNull() noexcept
+    {
+        w = 0;
+        v.setToNull();
+    }
+    constexpr void setToIdentity() noexcept
+    {
+        w    = 1;
+        v[0] = 0;
+        v[1] = 0;
+        v[2] = 0;
+    }
+    constexpr void setAllValues(decimal newx, decimal newy, decimal newz, decimal neww) noexcept
+    {
+        w    = neww;
+        v[0] = newx;
+        v[1] = newy;
+        v[2] = newz;
+    }
+    constexpr void setAllValues(const Vector3D& newv, decimal neww) noexcept
+    {
+        w = neww;
+        v = newv;
+    }
+    constexpr void setAllValues(decimal neww, const Vector3D& newv) noexcept
+    {
+        w = neww;
+        v = newv;
+    }
     /// Set all values from rotation matrix.
-    void setAllValues(const Matrix3x3&);
+    constexpr void setAllValues(const Matrix3x3& m) noexcept { *this = Quaternion3D(m); }
     /// Set all values from the three Euler angles.
-    void setAllValues(decimal, decimal, decimal);
+    constexpr void setAllValues(decimal newangleX, decimal newangleY, decimal newangleZ) noexcept
+    {
+        std::array<decimal, 4> quaternionElements =
+            eulerAngles_to_Quaternion(newangleX, newangleY, newangleZ);
+
+        w    = quaternionElements[0];
+        v[0] = quaternionElements[1];
+        v[1] = quaternionElements[2];
+        v[2] = quaternionElements[3];
+    }
     /// Set all values from the three Euler angles.
-    void setAllValues(const Vector3D&);
+    constexpr void setAllValues(const Vector3D& newangles) noexcept
+    {
+        setAllValues(newangles[0], newangles[1], newangles[2]);
+    }
     /// @}
 
     // ============================================================================
     /// @name Property Checks
     // ============================================================================
     /// @{
-    bool isFinite() const;
-    bool isZero() const;
-    bool isUnit() const;
-    bool isIdentity() const;
+    constexpr bool isFinite() const noexcept { return (commonMaths::isFinite(w) && v.isFinite()); }
+    constexpr bool isZero() const noexcept { return (commonMaths::approxEqual(w, decimal(0)) && v.isNull()); }
+    bool           isUnit() const;
+    constexpr bool isIdentity() const noexcept
+    {
+        return (commonMaths::approxEqual(w, decimal(1)) && v.isNull());
+    }
     bool isInvertible() const;
     bool isOrthogonal() const;
     bool isNormalised() const;
@@ -139,8 +246,15 @@ public:
     /// @name Quaternion Operations
     // ============================================================================
     /// @{
-    decimal      dotProduct(const Quaternion3D&) const;
-    Quaternion3D crossProduct(const Quaternion3D&) const;
+    constexpr decimal dotProduct(const Quaternion3D& other) const noexcept
+    {
+        return w * other.w + v.dotProduct(other.v);
+    }
+    constexpr Quaternion3D crossProduct(const Quaternion3D& other) const noexcept
+    {
+        return Quaternion3D(w * other.v + other.w * v + v.crossProduct(other.v),
+                            w * other.w - v.dotProduct(other.v));
+    }
     /// @}
 
     /// Element-wise comparisons.
@@ -148,13 +262,18 @@ public:
     /// @name Comparisons Operators
     // ============================================================================
     /// @{
-    bool operator==(const Quaternion3D&) const;
-    bool operator!=(const Quaternion3D&) const;
-    bool operator<(const Quaternion3D&) const;
-    bool operator<=(const Quaternion3D&) const;
-    bool operator>(const Quaternion3D&) const;
-    bool operator>=(const Quaternion3D&) const;
-    bool approxEqual(const Quaternion3D&, decimal) const;
+    constexpr bool operator==(const Quaternion3D& other) const noexcept
+    {
+        return commonMaths::approxEqual(w, other.w) && v == other.v;
+    }
+    constexpr bool operator!=(const Quaternion3D& other) const noexcept
+    {
+        return !commonMaths::approxEqual(w, other.w) || v != other.v;
+    }
+    constexpr bool approxEqual(const Quaternion3D& other, decimal d) const noexcept
+    {
+        return (commonMaths::approxEqual(w, other.w, d) && v.approxEqual(other.v, d));
+    }
     /// @}
 
     /// Imaginary part element access operator. Rely on `Vector3D` operators.
@@ -164,17 +283,13 @@ public:
     /// @{
 
     /// Access quaternion element with index range checking.
-    decimal& at(int);
+    decimal& at(std::size_t);
     /// Access quaternion element with index range checking (const version).
-    decimal at(int) const;
+    decimal at(std::size_t) const;
     /// Access quaternion element without index range checking.
-    decimal& operator()(int);
+    decimal& operator[](std::size_t i) { return v[i]; }
     /// Access quaternion element without index range checking (const version).
-    decimal operator()(int) const;
-    /// Access quaternion element without index range checking.
-    decimal& operator[](int);
-    /// Access quaternion element without index range checking (const version).
-    decimal operator[](int) const;
+    decimal operator[](std::size_t i) const { return v[i]; }
     /// @}
 
     /// Element-wise arithmetic operators (in-place).
@@ -184,15 +299,45 @@ public:
     /// @{
 
     /// Negate each element of the quaternion.
-    Quaternion3D& operator-();
-    Quaternion3D& operator+=(const Quaternion3D&);
-    Quaternion3D& operator-=(const Quaternion3D&);
-    Quaternion3D& operator*=(const Quaternion3D&);
+    constexpr Quaternion3D  operator-() noexcept { return Quaternion3D(-v, -w); }
+    constexpr Quaternion3D& operator+=(const Quaternion3D& other) noexcept
+    {
+        w += other.w;
+        v += other.v;
+        return (*this);
+    }
+    constexpr Quaternion3D& operator-=(const Quaternion3D& other) noexcept
+    {
+        w -= other.w;
+        v -= other.v;
+        return (*this);
+    }
+    constexpr Quaternion3D& operator*=(const Quaternion3D& other) noexcept
+    {
+        w *= other.w;
+        v *= other.v;
+        return (*this);
+    }
     /// Element-wise division by another quaternion. Throw `std::invalid_argument` on division by zero.
-    Quaternion3D& operator/=(const Quaternion3D&);
-    Quaternion3D& operator+=(decimal);
-    Quaternion3D& operator-=(decimal);
-    Quaternion3D& operator*=(decimal);
+    Quaternion3D&           operator/=(const Quaternion3D&);
+    constexpr Quaternion3D& operator+=(decimal scalar) noexcept
+    {
+        w += scalar;
+        v += scalar;
+        return (*this);
+    }
+    constexpr Quaternion3D& operator-=(decimal scalar) noexcept
+    {
+        w -= scalar;
+        v -= scalar;
+        return (*this);
+    }
+    constexpr Quaternion3D& operator*=(decimal scalar) noexcept
+    {
+        w *= scalar;
+        v *= scalar;
+        return (*this);
+    }
     /// Element-wise division by a decimal. Throw `std::invalid_argument` on division by zero.
     Quaternion3D& operator/=(decimal);
     /// @}
@@ -205,13 +350,22 @@ public:
 
     /// Apply a binary operation element-wise between two quaternions.
     template <class F>
-    static Quaternion3D apply(const Quaternion3D& A, const Quaternion3D& B, F&& func);
+    constexpr static Quaternion3D apply(const Quaternion3D& A, const Quaternion3D& B, F&& func) noexcept
+    {
+        return Quaternion3D(func(A.w, B.w), applyVector(A.v, B.v, func));
+    }
     /// Apply a binary operation element-wise between a quaternion and a decimal.
     template <class F>
-    static Quaternion3D apply(const Quaternion3D& A, decimal s, F&& func);
+    constexpr static Quaternion3D apply(const Quaternion3D& A, decimal s, F&& func) noexcept
+    {
+        return Quaternion3D(func(A.w, s), applyVector(A.v, s, func));
+    }
     /// Apply a binary operation element-wise between a decimal and a quaternion.
     template <class F>
-    static Quaternion3D apply(decimal s, const Quaternion3D& A, F&& func);
+    constexpr static Quaternion3D apply(decimal s, const Quaternion3D& A, F&& func) noexcept
+    {
+        return Quaternion3D(func(s, A.w), applyVector(s, A.v, func));
+    }
     /// @}
 };
 
@@ -223,16 +377,18 @@ public:
 /// @name Quaternion operations
 // ============================================================================
 /// @{
-decimal      dotProduct(const Quaternion3D&, const Quaternion3D&);
-Quaternion3D crossProduct(const Quaternion3D&, const Quaternion3D&);
-/// @}
-
-// ============================================================================
-/// @name Utilities
-// ============================================================================
-/// @{
-/// Compute quaternion from the three Euler angles. Used to implement constructors.
-std::array<decimal, 4> eulerAngles_to_Quaternion(decimal angleX, decimal angleY, decimal angleZ);
+constexpr decimal dotProduct(const Quaternion3D& lhs, const Quaternion3D& rhs) noexcept
+{
+    return lhs.getRealPart() * rhs.getRealPart() + dotProduct(lhs.getImaginaryPart(), rhs.getImaginaryPart());
+}
+constexpr Quaternion3D crossProduct(const Quaternion3D& lhs, const Quaternion3D& rhs) noexcept
+{
+    decimal real =
+        lhs.getRealPart() * rhs.getRealPart() - lhs.getImaginaryPart().dotProduct(rhs.getImaginaryPart());
+    Vector3D img = lhs.getRealPart() * rhs.getImaginaryPart() + rhs.getRealPart() * lhs.getImaginaryPart() +
+                   lhs.getImaginaryPart().crossProduct(rhs.getImaginaryPart());
+    return Quaternion3D(img, real);
+}
 /// @}
 
 /// Element-wise arithmetic operations.
@@ -240,21 +396,48 @@ std::array<decimal, 4> eulerAngles_to_Quaternion(decimal angleX, decimal angleY,
 /// @name Operators
 // ============================================================================
 /// @{
-Quaternion3D operator+(const Quaternion3D&, const Quaternion3D&);
-Quaternion3D operator-(const Quaternion3D&, const Quaternion3D&);
-Quaternion3D operator*(const Quaternion3D&, const Quaternion3D&);
+constexpr Quaternion3D operator+(const Quaternion3D& lhs, const Quaternion3D& rhs) noexcept
+{
+    return Quaternion3D::apply(lhs, rhs, std::plus<decimal>());
+}
+constexpr Quaternion3D operator-(const Quaternion3D& lhs, const Quaternion3D& rhs) noexcept
+{
+    return Quaternion3D::apply(lhs, rhs, std::minus<decimal>());
+}
+constexpr Quaternion3D operator*(const Quaternion3D& lhs, const Quaternion3D& rhs) noexcept
+{
+    return Quaternion3D::apply(lhs, rhs, std::multiplies<decimal>());
+}
 /// Element-wise division by another quaternion. Throw `std::invalid_argument` on division by zero.
 Quaternion3D operator/(const Quaternion3D&, const Quaternion3D&);
 
-Quaternion3D operator+(const Quaternion3D&, decimal);
-Quaternion3D operator-(const Quaternion3D&, decimal);
-Quaternion3D operator*(const Quaternion3D&, decimal);
+constexpr Quaternion3D operator+(const Quaternion3D& lhs, decimal rhs) noexcept
+{
+    return Quaternion3D::apply(lhs, rhs, std::plus<decimal>());
+}
+constexpr Quaternion3D operator-(const Quaternion3D& lhs, decimal rhs) noexcept
+{
+    return Quaternion3D::apply(lhs, rhs, std::minus<decimal>());
+}
+constexpr Quaternion3D operator*(const Quaternion3D& lhs, decimal rhs) noexcept
+{
+    return Quaternion3D::apply(lhs, rhs, std::multiplies<decimal>());
+}
 /// Element-wise division by a decimal. Throw `std::invalid_argument` on division by zero.
 Quaternion3D operator/(const Quaternion3D&, decimal);
 
-Quaternion3D operator+(decimal, const Quaternion3D&);
-Quaternion3D operator-(decimal, const Quaternion3D&);
-Quaternion3D operator*(decimal, const Quaternion3D&);
+constexpr Quaternion3D operator+(decimal lhs, const Quaternion3D& rhs) noexcept
+{
+    return Quaternion3D::apply(lhs, rhs, std::plus<decimal>());
+}
+constexpr Quaternion3D operator-(decimal lhs, const Quaternion3D& rhs) noexcept
+{
+    return Quaternion3D::apply(lhs, rhs, std::minus<decimal>());
+}
+constexpr Quaternion3D operator*(decimal lhs, const Quaternion3D& rhs) noexcept
+{
+    return Quaternion3D::apply(lhs, rhs, std::multiplies<decimal>());
+}
 /// Element-wise division by a decimal. Throw `std::invalid_argument` on division by zero.
 Quaternion3D operator/(decimal, const Quaternion3D&);
 /// @}

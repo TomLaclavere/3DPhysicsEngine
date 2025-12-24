@@ -1,21 +1,35 @@
 /**
  * @file common.hpp
- * @brief Utility functions for approximate floating-point comparison.
+ * @brief Utility functions for common maths and approximate floating-point comparison.
  *
  * Provides helpers to compare two `decimal` values (float or double, depending
- * on `precision.hpp`) with a tolerance.
+ * on `precision.hpp`) with a tolerance. It includes constexpr function to test if numbers are finite and not
+ * Nan, allowing each comparison to be constexpr.
  *
  */
 
 #pragma once
 
 #include "precision.hpp"
-#include "world/config.hpp"
 
-#include <cmath>
 #include <limits>
 
 namespace commonMaths {
+
+/// @brief constexpr std::fabs function
+constexpr decimal absVal(decimal d) { return d < 0 ? -d : d; }
+
+/**
+ * @brief consexpr check for isFinite
+ *
+ * @param d
+ * @return true
+ * @return false if NaN or infinite
+ */
+constexpr bool isFinite(decimal d) noexcept
+{
+    return d == d && d != std::numeric_limits<decimal>::infinity();
+}
 
 /**
  * @brief Compare two floating-point numbers for approximate equality.
@@ -27,24 +41,18 @@ namespace commonMaths {
  * @param precision Tolerance (defaults to `PRECISION_MACHINE`).
  * @return true if the two values are approximately equal.
  */
-inline bool approxEqual(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE) noexcept
+constexpr bool approxEqual(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE) noexcept
 {
-    // If any value is NaN, treat as not equal.
-    if (!std::isfinite(lhs) || !std::isfinite(rhs) || !std::isfinite(precision))
-        return false;
-    return std::abs(lhs - rhs) <= precision;
+    return isFinite(lhs) && isFinite(rhs) && isFinite(precision) && ((absVal(lhs - rhs) <= precision));
 }
-
 /**
  * @brief True if lhs is (significantly) greater than rhs.
  *
  * Checks `lhs > rhs + precision`.
  */
-inline bool approxGreaterThan(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE) noexcept
+constexpr bool approxGreaterThan(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE) noexcept
 {
-    if (!std::isfinite(lhs) || !std::isfinite(rhs) || !std::isfinite(precision))
-        return false;
-    return lhs > rhs + precision;
+    return isFinite(lhs) && isFinite(rhs) && isFinite(precision) && (lhs > rhs + precision);
 }
 
 /**
@@ -52,11 +60,9 @@ inline bool approxGreaterThan(decimal lhs, decimal rhs, decimal precision = PREC
  *
  * Checks `lhs < rhs - precision`.
  */
-inline bool approxSmallerThan(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE) noexcept
+constexpr bool approxSmallerThan(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE) noexcept
 {
-    if (!std::isfinite(lhs) || !std::isfinite(rhs) || !std::isfinite(precision))
-        return false;
-    return lhs < rhs - precision;
+    return isFinite(lhs) && isFinite(rhs) && isFinite(precision) && (lhs < rhs - precision);
 }
 
 /**
@@ -64,11 +70,10 @@ inline bool approxSmallerThan(decimal lhs, decimal rhs, decimal precision = PREC
  *
  * Checks `lhs >= rhs - precision`.
  */
-inline bool approxGreaterOrEqualThan(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE) noexcept
+constexpr bool approxGreaterOrEqualThan(decimal lhs, decimal rhs,
+                                        decimal precision = PRECISION_MACHINE) noexcept
 {
-    if (!std::isfinite(lhs) || !std::isfinite(rhs) || !std::isfinite(precision))
-        return false;
-    return lhs >= rhs - precision;
+    return isFinite(lhs) && isFinite(rhs) && isFinite(precision) && (lhs >= rhs - precision);
 }
 
 /**
@@ -76,11 +81,10 @@ inline bool approxGreaterOrEqualThan(decimal lhs, decimal rhs, decimal precision
  *
  * Checks `lhs <= rhs + precision`.
  */
-inline bool approxSmallerOrEqualThan(decimal lhs, decimal rhs, decimal precision = PRECISION_MACHINE) noexcept
+constexpr bool approxSmallerOrEqualThan(decimal lhs, decimal rhs,
+                                        decimal precision = PRECISION_MACHINE) noexcept
 {
-    if (!std::isfinite(lhs) || !std::isfinite(rhs) || !std::isfinite(precision))
-        return false;
-    return lhs <= rhs + precision;
+    return isFinite(lhs) && isFinite(rhs) && isFinite(precision) && (lhs <= rhs + precision);
 }
 
 } // namespace commonMaths

@@ -1,4 +1,3 @@
-#include "mathematics/common.hpp"
 #include "mathematics/vector.hpp"
 #include "test_functions.hpp"
 
@@ -64,15 +63,6 @@ TEST(Vector3D_Test, Utilies)
     v0.setToNull();
     v0.normalise();
     EXPECT_VECTOR_EQ(v0, Vector3D(0_d, 0_d, 0_d));
-}
-
-TEST(Vector3D_Test, StaticMinMaxFunctions)
-{
-    Vector3D a(1_d, 5_d, 3_d), b(2_d, 4_d, 6_d);
-    Vector3D mn = min(a, b);
-    Vector3D mx = max(a, b);
-    EXPECT_VECTOR_EQ(mn, Vector3D(1_d, 4_d, 3_d));
-    EXPECT_VECTOR_EQ(mx, Vector3D(2_d, 5_d, 6_d));
 }
 
 // ——————————————————————————————————————————————————————————————————————————
@@ -159,27 +149,6 @@ TEST(Vector3D_Test, ComparisonOperators)
     EXPECT_FALSE(u.approxEqual(v, 1e-5_d));
     Vector3D u_(1.001_d, 1.0001_d, 3.0001_d);
     Vector3D u__(1.001_d, 2.0001_d, 1.0001_d);
-
-    // Higher & Smaller
-    EXPECT_TRUE(u < v);
-    EXPECT_FALSE(u < u_);
-    EXPECT_FALSE(u < u__);
-    EXPECT_FALSE(v < u);
-
-    EXPECT_TRUE(u <= v);
-    EXPECT_TRUE(u <= u);
-    EXPECT_FALSE(u <= u_);
-    EXPECT_FALSE(u <= u__);
-    EXPECT_FALSE(v <= u);
-
-    EXPECT_TRUE(v > u);
-    EXPECT_FALSE(u_ > u);
-    EXPECT_FALSE(u > v);
-
-    EXPECT_TRUE(v >= u);
-    EXPECT_TRUE(u >= u);
-    EXPECT_FALSE(u_ >= u);
-    EXPECT_FALSE(u >= v);
 }
 
 // ——————————————————————————————————————————————————————————————————————————
@@ -190,17 +159,7 @@ TEST(Vector3D_Test, ElementAccessChecked)
     Vector3D       v(1_d, 2_d, 3_d);
     const Vector3D u(4_d, 5_d, 6_d);
 
-    // operator()(int) const and non-const
-    EXPECT_DECIMAL_EQ(v(0_d), 1_d);
-    EXPECT_DECIMAL_EQ(v(1_d), 2_d);
-    EXPECT_DECIMAL_EQ(v(2_d), 3_d);
-
-    EXPECT_DECIMAL_EQ(u(0_d), 4_d);
-    EXPECT_DECIMAL_EQ(u(1_d), 5_d);
-    EXPECT_DECIMAL_EQ(u(2_d), 6_d);
-
     // operator[] const and non-const
-
     EXPECT_DECIMAL_EQ(v[0_d], 1_d);
     EXPECT_DECIMAL_EQ(v[1_d], 2_d);
     EXPECT_DECIMAL_EQ(v[2_d], 3_d);
@@ -209,13 +168,9 @@ TEST(Vector3D_Test, ElementAccessChecked)
     EXPECT_DECIMAL_EQ(u[1_d], 5_d);
     EXPECT_DECIMAL_EQ(u[2_d], 6_d);
 
-    v(1_d) = 42.0_d;
-    EXPECT_DECIMAL_EQ(v(1_d), 42.0_d);
-
     // operator at const and non-const
-
     EXPECT_DECIMAL_EQ(v.at(0_d), 1_d);
-    EXPECT_DECIMAL_EQ(v.at(1_d), 42_d);
+    EXPECT_DECIMAL_EQ(v.at(1_d), 2_d);
     EXPECT_DECIMAL_EQ(v.at(2_d), 3_d);
 
     EXPECT_DECIMAL_EQ(u.at(0_d), 4_d);
@@ -223,12 +178,10 @@ TEST(Vector3D_Test, ElementAccessChecked)
     EXPECT_DECIMAL_EQ(u.at(2_d), 6_d);
 
     // Out-of-range checks
-    EXPECT_THROW(v.at(-1_d), std::out_of_range);
     EXPECT_THROW(v.at(3_d), std::out_of_range);
-    EXPECT_THROW(u.at(-1_d), std::out_of_range);
     EXPECT_THROW(u.at(3_d), std::out_of_range);
 
-    // operator[] & () do not check the index, so I can't check out of range indices
+    // operator[] does not check the index, so I can't check out of range indices
 }
 
 // ——————————————————————————————————————————————————————————————————————————

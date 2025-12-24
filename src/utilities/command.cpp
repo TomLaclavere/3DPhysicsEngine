@@ -44,14 +44,13 @@ void printUsage()
 
 std::deque<std::string> parseWords(const std::string& command)
 {
-    auto words = std::deque<std::string> {};
-
-    auto str = std::stringstream { command };
-    while (str.good())
+    std::deque<std::string> words;
+    std::istringstream      iss(command);
+    std::string             token;
+    while (iss >> token)
     {
-        str >> words.emplace_back();
+        words.push_back(std::move(token));
     }
-
     return words;
 }
 
@@ -71,7 +70,15 @@ std::string popNext(std::deque<std::string>& words)
 
 bool isValidName(const std::string& name)
 {
-    return !name.empty() && std::all_of(name.begin(), name.end(), [](char c) { return std::isalnum(c); });
+    if (name.empty())
+        return false;
+
+    // First character must be a letter
+    if (!std::isalpha(static_cast<unsigned char>(name[0])))
+        return false;
+
+    // Remaining characters must be alphanumeric
+    return std::all_of(name.begin() + 1, name.end(), [](unsigned char c) { return std::isalnum(c); });
 }
 
 std::vector<std::string> consumeNames(std::deque<std::string>& words)

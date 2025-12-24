@@ -9,6 +9,10 @@ project(3DPhysicsEngine
     HOMEPAGE_URL "https://github.com/TomLaclavere/3DPhysicsEngine"
 )
 
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 # Set policies to avoid warnings and ensure modern behavior
 cmake_policy(SET CMP0077 NEW)
 
@@ -61,6 +65,7 @@ set(ENGINE_MATH_SOURCES
     src/mathematics/vector.cpp
     src/mathematics/matrix.cpp
     src/mathematics/quaternion.cpp
+    src/mathematics/math_io.cpp
 )
 
 set(ENGINE_OBJECT_SOURCES
@@ -237,6 +242,8 @@ if(3DPE_ENABLE_COVERAGE AND 3DPE_BUILD_TESTS)
                 target_link_libraries(3DPhysicsEngine PRIVATE --coverage)
 
                 set(GCOVR_COMMON_OPTS
+                    --exclude '.*\.hpp'
+                    --exclude ".*/linenoise/.*"
                     --exclude-unreachable-branches
                     --exclude-throw-branches
                     --root=${CMAKE_SOURCE_DIR}

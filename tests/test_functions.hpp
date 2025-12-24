@@ -10,8 +10,8 @@
 #define EXPECT_DECIMAL_EQ(a, b)                                                              \
     do                                                                                       \
     {                                                                                        \
-        decimal _a = (a);                                                                    \
-        decimal _b = (b);                                                                    \
+        decimal _a = a;                                                                      \
+        decimal _b = b;                                                                      \
         if (!commonMaths::approxEqual(_a, _b, PRECISION_MACHINE))                            \
         {                                                                                    \
             ADD_FAILURE_AT(__FILE__, __LINE__)                                               \

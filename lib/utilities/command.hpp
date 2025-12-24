@@ -4,7 +4,6 @@
  */
 #pragma once
 #include "objects/object.hpp"
-#include "precision.hpp"
 #include "world/physicsWorld.hpp"
 
 #include <deque>

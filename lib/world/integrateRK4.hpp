@@ -6,7 +6,6 @@
  */
 #pragma once
 #include "mathematics/vector.hpp"
-#include "objects/object.hpp"
 
 struct Derivative
 {

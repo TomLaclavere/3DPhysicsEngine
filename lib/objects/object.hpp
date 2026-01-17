@@ -9,7 +9,6 @@
 #pragma once
 #include "mathematics/vector.hpp"
 #include "ostream"
-#include "precision.hpp"
 
 enum class ObjectType
 {
@@ -59,7 +58,8 @@ private:
     decimal  restitutionCst = 0_d;
     decimal  frictionCst    = 0_d;
 
-    bool fixed = true;
+    bool         fixed = true;
+    unsigned int id;
 
 public:
     /// @brief Constructions can be done with various levels of details.
@@ -71,44 +71,13 @@ public:
     /// @{
 
     Object() = default;
-    Object(decimal mass)
-        : mass { mass }
-    {}
-    Object(const Vector3D& position)
-        : position { position }
-    {}
-    Object(const Vector3D& position, const Vector3D& size)
-        : position { position }
-        , size { size }
-    {}
-    Object(const Vector3D& position, const Vector3D& size, decimal mass)
-        : position { position }
-        , size { size }
-        , mass { mass }
-    {
-        checkFixed();
-    }
-    Object(const Vector3D& position, const Vector3D& size, const Vector3D& velocity, decimal mass)
-        : position { position }
-        , size { size }
-        , velocity { velocity }
-        , mass { mass }
-    {
-        checkFixed();
-    }
+    Object(decimal mass);
+    Object(const Vector3D& position);
+    Object(const Vector3D& position, const Vector3D& size);
+    Object(const Vector3D& position, const Vector3D& size, decimal mass);
+    Object(const Vector3D& position, const Vector3D& size, const Vector3D& velocity, decimal mass);
     Object(const Vector3D& position, const Vector3D& rotation, const Vector3D& size, const Vector3D& velocity,
-           const Vector3D& acceleration, const Vector3D& force, const Vector3D& torque, decimal mass)
-        : position { position }
-        , rotation { rotation }
-        , size { size }
-        , velocity { velocity }
-        , acceleration { acceleration }
-        , force { force }
-        , torque { torque }
-        , mass { mass }
-    {
-        checkFixed();
-    }
+           const Vector3D& acceleration, const Vector3D& force, const Vector3D& torque, decimal mass);
     virtual ~Object() = default;
     /// @}
 
@@ -129,6 +98,7 @@ public:
     decimal            getFrictionCst() const;
     virtual ObjectType getType() const;
     bool               getIsFixed() const;
+    unsigned int       getId() const { return id; }
     /// @}
 
     // ============================================================================
@@ -143,8 +113,12 @@ public:
     void setForce(const Vector3D& _force);
     void setTorque(const Vector3D& _torque);
     void setMass(const decimal _mass);
-    void setIsFixed(bool b) { fixed = b; };
-    void setRestitutionCst(decimal e) { restitutionCst = e; }
+    void setStiffnessCst(decimal k);
+    void setRestitutionCst(decimal e);
+    void setFrictionCst(decimal mu);
+    void setIsFixed(bool b);
+    void setId(unsigned int _id) { id = _id; }
+
     /// @}
 
     // ============================================================================
@@ -170,13 +144,7 @@ public:
     /// @name Physics
     // ============================================================================
     /// @{
-    void checkFixed()
-    {
-        if (mass <= 0_d)
-            fixed = true;
-        else
-            fixed = false;
-    }
+    void checkFixed();
     bool isFixed() const { return fixed; }
     void resetForces()
     {

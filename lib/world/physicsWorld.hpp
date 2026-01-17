@@ -4,21 +4,14 @@
  *
  */
 #pragma once
-#include "mathematics/common.hpp"
 #include "objects/object.hpp"
 #include "world/config.hpp"
 #include "world/integrateRK4.hpp"
 #include "world/physics.hpp"
+#include "world/solver.hpp"
 
+#include <algorithm>
 #include <vector>
-
-enum class Solver
-{
-    Euler,
-    Verlet,
-    RK4,
-    Unknown
-};
 
 /**
  * @class PhysicsWorld
@@ -61,6 +54,7 @@ public:
     decimal  getTimeStep() const;
     decimal  getGravityCst() const;
     Vector3D getGravityAcc() const;
+    Solver   getSolver() const;
     /// @}
 
     // ============================================================================

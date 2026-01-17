@@ -4,7 +4,7 @@
  *
  * This file provides the concrete implementations of collision checks involving Spheres:
  * - Sphere vs. Sphere
- * - Sphere vs. AABB
+ * - Sphere vs. Sphere
  * - Sphere vs. Plane
  *
  * It also implements the polymorphic collision check used by the Object hierarchy.
@@ -13,7 +13,8 @@
  */
 #include "objects/sphere.hpp"
 
-#include "objects/collision.hpp"
+#include "collision/broad_collision.hpp"
+#include "collision/narrow_collision.hpp"
 
 // ============================================================================
 //  Getters
@@ -27,57 +28,78 @@ decimal    Sphere::getRadius() const { return getDiameter() * 0.5_d; }
 //  Collision
 // ============================================================================
 /**
- * @brief Checks collision between two spheres.
- *
- * Collision occurs if the distance between centers is less than or equal
- * to the sum of their radii.
- *
- * @param sphere Sphere to test against.
- * @return true if the spheres intersect, false otherwise.
+ * @brief Checks broad collision between two Sphere.s
  */
-bool Sphere::sphereCollision(const Sphere& sphere) { return Collision::collide(*this, sphere); }
+bool Sphere::checkSphereCollision(const Sphere& Sphere) { return BroadCollision::isColliding(*this, Sphere); }
 
 /**
- * @brief Checks collision between a sphere and an axis-aligned bounding box (AABB).
- *
- * Collision occurs if the closest point on the AABB to the sphere center is smalled than the sphere radius.
- *
- * @param aabb AABB to test against.
- * @return true if the sphere and AABB intersect, false otherwise.
+ * @brief Checks broad collision between an Sphere and an AABB.
  */
-bool Sphere::sphereAABBCollision(const AABB& aabb) { return Collision::collide(*this, aabb); }
+bool Sphere::checkSphereAABBCollision(const AABB& aabb) { return BroadCollision::isColliding(*this, aabb); }
 
 /**
- * @brief Checks collision between a sphere and a finite plane.
- *
- * Collision occurs if the sphere's center-to-plane distance is smaller than the sphere radius, and if the
- * projection of the sphere center onto the plane lies within its rectangle bounds.
- *
- * @param plane Plane to test against.
- * @return true if the sphere and plane intersect, false otherwise.
+ * @brief Checks broad collision between an Sphere and a finite plane.
  */
-bool Sphere::spherePlaneCollision(const Plane& plane) { return Collision::collide(*this, plane); }
+bool Sphere::checkSpherePlaneCollision(const Plane& plane)
+{
+    return BroadCollision::isColliding(*this, plane);
+}
 
 /**
- * @brief Polymorphic collision detection against another Object.
- *
- * Dispatches to the appropriate collision method depending on the type of
- * the other object.
- * Only collision between Sphere, AABB, and Plane are implemented.
- *
- * @param other Object to test against.
- * @return true if the objects intersect, false otherwise.
+ * @brief Polymorphic broad collision detection against another Object.
  */
 bool Sphere::checkCollision(const Object& other)
 {
     switch (other.getType())
     {
     case ObjectType::Sphere:
-        return Sphere::sphereCollision(static_cast<const Sphere&>(other));
+        return Sphere::checkSphereCollision(static_cast<const Sphere&>(other));
     case ObjectType::AABB:
-        return Sphere::sphereAABBCollision(static_cast<const AABB&>(other));
+        return Sphere::checkSphereAABBCollision(static_cast<const AABB&>(other));
     case ObjectType::Plane:
-        return Sphere::spherePlaneCollision(static_cast<const Plane&>(other));
+        return Sphere::checkSpherePlaneCollision(static_cast<const Plane&>(other));
+    default:
+        return false;
+    }
+}
+
+/**
+ * @brief Checks narrow collision between two Sphere.
+ */
+bool Sphere::computeSphereCollision(const Sphere& Sphere, Contact& contact)
+{
+    return NarrowCollision::computeContact(*this, Sphere, contact);
+}
+
+/**
+ * @brief Checks narrow collision between an Sphere and a sphere.
+ */
+bool Sphere::computeSphereAABBCollision(const AABB& aabb, Contact& contact)
+{
+    return NarrowCollision::computeContact(*this, aabb, contact);
+}
+
+/**
+ * @brief Checks narrow collision between an Sphere and a finite plane.
+ */
+bool Sphere::computeSpherePlaneCollision(const Plane& plane, Contact& contact)
+{
+    return NarrowCollision::computeContact(*this, plane, contact);
+}
+
+/**
+ * @brief Polymorphic narrow collision detection against another Object.
+ */
+bool Sphere::computeCollision(const Object& other, Contact& contact)
+{
+    switch (other.getType())
+    {
+    case ObjectType::Sphere:
+        return Sphere::computeSphereCollision(static_cast<const Sphere&>(other), contact);
+    case ObjectType::AABB:
+        return Sphere::computeSphereAABBCollision(static_cast<const AABB&>(other), contact);
+    case ObjectType::Plane:
+        return Sphere::computeSpherePlaneCollision(static_cast<const Plane&>(other), contact);
     default:
         return false;
     }

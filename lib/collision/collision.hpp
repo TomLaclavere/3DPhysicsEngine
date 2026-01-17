@@ -5,13 +5,14 @@
  * Provides type-specific and generic interfaces to test collisions between
  * objects used in the physics simulation (Sphere, AABB, Plane).
  *
- * The `collide<T1, T2>` function is the generic entry point.
+ * The `computeContact<T1, T2>` function is the generic entry point.
  * Symmetric overloads are automatically generated to avoid code duplication.
  */
 
 #pragma once
 
 #include "aabb.hpp"
+#include "contact.hpp"
 #include "plane.hpp"
 #include "sphere.hpp"
 
@@ -33,7 +34,7 @@ namespace Collision {
  * @return true if objects intersect, false otherwise.
  */
 template <typename T1, typename T2>
-bool collide(const T1& a, const T2& b);
+bool computeContact(const T1& a, const T2& b, Contact& contact);
 
 // ============================================================================
 // Explicit specializations
@@ -41,45 +42,45 @@ bool collide(const T1& a, const T2& b);
 
 // --- Sphere vs Sphere ---
 template <>
-bool collide<Sphere, Sphere>(const Sphere&, const Sphere&);
+bool computeContact<Sphere, Sphere>(const Sphere&, const Sphere&, Contact& contact);
 
 // --- Sphere vs Plane ---
 template <>
-bool collide<Sphere, Plane>(const Sphere&, const Plane&);
+bool computeContact<Sphere, Plane>(const Sphere&, const Plane&, Contact& contact);
 
 // --- Sphere vs AABB ---
 template <>
-bool collide<Sphere, AABB>(const Sphere&, const AABB&);
+bool computeContact<Sphere, AABB>(const Sphere&, const AABB&, Contact& contact);
 
 // --- AABB vs AABB ---
 template <>
-bool collide<AABB, AABB>(const AABB&, const AABB&);
+bool computeContact<AABB, AABB>(const AABB&, const AABB&, Contact& contact);
 
 // --- AABB vs Plane ---
 template <>
-bool collide<AABB, Plane>(const AABB&, const Plane&);
+bool computeContact<AABB, Plane>(const AABB&, const Plane&, Contact& contact);
 
 // --- Plane vs Plane ---
 template <>
-bool collide<Plane, Plane>(const Plane&, const Plane&);
+bool computeContact<Plane, Plane>(const Plane&, const Plane&, Contact& contact);
 
 // Symmetric versions (defined in terms of the asymmetric ones)
 template <>
-inline bool collide<Plane, Sphere>(const Plane& a, const Sphere& b)
+inline bool computeContact<Plane, Sphere>(const Plane& a, const Sphere& b, Contact& contact)
 {
-    return collide(b, a);
+    return computeContact(b, a, contact);
 }
 
 template <>
-inline bool collide<AABB, Sphere>(const AABB& a, const Sphere& b)
+inline bool computeContact<AABB, Sphere>(const AABB& a, const Sphere& b, Contact& contact)
 {
-    return collide(b, a);
+    return computeContact(b, a, contact);
 }
 
 template <>
-inline bool collide<Plane, AABB>(const Plane& a, const AABB& b)
+inline bool computeContact<Plane, AABB>(const Plane& a, const AABB& b, Contact& contact)
 {
-    return collide(b, a);
+    return computeContact(b, a, contact);
 }
 
 } // namespace Collision

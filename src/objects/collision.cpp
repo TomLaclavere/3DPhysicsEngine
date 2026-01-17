@@ -7,12 +7,9 @@
  * @see collision.hpp
  */
 
-#include "objects/collision.hpp"
+#include "collision.hpp"
 
 #include "mathematics/common.hpp"
-#include "objects/aabb.hpp"
-#include "objects/plane.hpp"
-#include "objects/sphere.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -34,13 +31,31 @@ namespace Collision {
  * @return true if the spheres intersect, false otherwise.
  */
 template <>
-bool collide<Sphere, Sphere>(const Sphere& s1, const Sphere& s2)
+bool computeContact<Sphere, Sphere>(const Sphere& s1, const Sphere& s2, Contact& contact)
 {
     const Vector3D diff  = s2.getCenter() - s1.getCenter();
     const decimal  dist2 = diff.getNormSquare();
     const decimal  rSum  = s1.getRadius() + s2.getRadius();
 
-    return commonMaths::approxSmallerOrEqualThan(dist2, rSum * rSum);
+    if (commonMaths::approxGreaterOrEqualThan(dist2, rSum * rSum))
+    {
+        return false;
+    }
+
+    const decimal dist = std::sqrt(dist2);
+
+    // Compute normal and penetration
+    Vector3D normal     = (commonMaths::approxGreaterThan(dist, 0_d)) ? diff / dist : Vector3D(1, 0, 0);
+    contact.normal      = normal;
+    contact.penetration = rSum - dist;
+
+    // Compute contact point
+    contact.position = s1.getCenter() + normal * s1.getRadius();
+
+    contact.A = &s1;
+    contact.B = &s2;
+
+    return true;
 }
 
 // ============================================================================
@@ -56,11 +71,12 @@ bool collide<Sphere, Sphere>(const Sphere& s1, const Sphere& s2)
  * @return true if the sphere and AABB intersect, false otherwise.
  */
 template <>
-bool collide<Sphere, AABB>(const Sphere& sphere, const AABB& aabb)
+bool computeContact<Sphere, AABB>(const Sphere& sphere, const AABB& aabb, Contact& contact)
 {
     const Vector3D center = sphere.getCenter();
     const Vector3D min    = aabb.getMin();
     const Vector3D max    = aabb.getMax();
+    const decimal  radius = sphere.getRadius();
 
     // Find the closest point on AABB to sphere center
     Vector3D closestPoint;
@@ -68,12 +84,70 @@ bool collide<Sphere, AABB>(const Sphere& sphere, const AABB& aabb)
     closestPoint[1] = std::max(min[1], std::min(center[1], max[1]));
     closestPoint[2] = std::max(min[2], std::min(center[2], max[2]));
 
-    // Check if closest point is inside sphere
-    const Vector3D diff   = center - closestPoint;
-    const decimal  dist2  = diff.getNormSquare();
-    const decimal  radius = sphere.getRadius();
+    Vector3D delta = center - closestPoint;
+    decimal  dist2 = delta.getNormSquare();
 
-    return commonMaths::approxSmallerOrEqualThan(dist2, radius * radius);
+    // Standard case : sphere inside AABB
+    if (dist2 > 0_d)
+    {
+        if (commonMaths::approxGreaterThan(dist2, radius * radius))
+            return false;
+
+        const decimal dist = std::sqrt(dist2);
+
+        contact.normal      = delta / dist;
+        contact.penetration = radius - dist;
+        contact.position    = closestPoint;
+    }
+    // Special case : sphere's center inside AABB
+    else
+    {
+        // Find closest face
+        const decimal dxMin = center[0] - min[0];
+        const decimal dxMax = max[0] - center[0];
+        const decimal dyMin = center[1] - min[1];
+        const decimal dyMax = max[1] - center[1];
+        const decimal dzMin = center[2] - min[2];
+        const decimal dzMax = max[2] - center[2];
+
+        decimal  minDist = dxMin;
+        Vector3D normal(-1, 0, 0);
+
+        if (dxMax < minDist)
+        {
+            minDist = dxMax;
+            normal  = Vector3D(1, 0, 0);
+        }
+        if (dyMin < minDist)
+        {
+            minDist = dyMin;
+            normal  = Vector3D(0, -1, 0);
+        }
+        if (dyMax < minDist)
+        {
+            minDist = dyMax;
+            normal  = Vector3D(0, 1, 0);
+        }
+        if (dzMin < minDist)
+        {
+            minDist = dzMin;
+            normal  = Vector3D(0, 0, -1);
+        }
+        if (dzMax < minDist)
+        {
+            minDist = dzMax;
+            normal  = Vector3D(0, 0, 1);
+        }
+
+        contact.normal      = normal;
+        contact.penetration = radius + minDist;
+        contact.position    = center - normal * minDist;
+    }
+
+    contact.A = &sphere;
+    contact.B = &aabb;
+
+    return true;
 }
 
 // ============================================================================
@@ -90,14 +164,15 @@ bool collide<Sphere, AABB>(const Sphere& sphere, const AABB& aabb)
  * @return true if the sphere and plane intersect, false otherwise.
  */
 template <>
-bool collide<Sphere, Plane>(const Sphere& sphere, const Plane& plane)
+bool computeContact<Sphere, Plane>(const Sphere& sphere, const Plane& plane, Contact& contact)
 {
+    Vector3D        n            = plane.getNormal();
     const Vector3D& sphereCenter = sphere.getCenter();
     const decimal   sphereRadius = sphere.getRadius();
 
     // 1. Check distance using plane equation
     const Vector3D planeToSphere = sphereCenter - plane.getPosition();
-    const decimal  signedDist    = planeToSphere.dotProduct(plane.getNormal());
+    const decimal  signedDist    = planeToSphere.dotProduct(n);
 
     // Early exit: sphere completely behind or too far in front
     if (signedDist < -sphereRadius || signedDist > sphereRadius)
@@ -106,7 +181,7 @@ bool collide<Sphere, Plane>(const Sphere& sphere, const Plane& plane)
     }
 
     // 2. Project onto plane and check bounds with radius padding
-    const Vector3D proj  = sphereCenter - signedDist * plane.getNormal();
+    const Vector3D proj  = sphereCenter - signedDist * n;
     const Vector3D local = proj - plane.getPosition();
 
     const decimal s = local.dotProduct(plane.getU());
@@ -129,11 +204,17 @@ bool collide<Sphere, Plane>(const Sphere& sphere, const Plane& plane)
     const Vector3D delta        = closestPoint - sphereCenter;
     const decimal  dist2        = delta.dotProduct(delta);
 
-    // std::cerr << "dist2 : " << std::scientific << dist2 << std::endl;
-    // std::cerr << "Radius**2 : " << std::scientific << sphere.getRadius() * sphere.getRadius() << std::endl;
-
     // Collision if within radius
-    return commonMaths::approxSmallerOrEqualThan(dist2, sphere.getRadius() * sphere.getRadius());
+    if (commonMaths::approxGreaterOrEqualThan(dist2, sphere.getRadius() * sphere.getRadius()))
+        return false;
+
+    decimal dist        = delta.getNorm();
+    contact.normal      = (commonMaths::approxGreaterThan(dist, 0_d)) ? delta / dist : -n;
+    contact.penetration = sphere.getRadius() - dist;
+    contact.position    = closestPoint;
+    contact.A           = &sphere;
+    contact.B           = &plane;
+    return true;
 }
 
 // ============================================================================
@@ -149,20 +230,63 @@ bool collide<Sphere, Plane>(const Sphere& sphere, const Plane& plane)
  * @return true if the AABBs intersect, false otherwise.
  */
 template <>
-bool collide<AABB, AABB>(const AABB& a1, const AABB& a2)
+bool computeContact<AABB, AABB>(const AABB& a1, const AABB& a2, Contact& contact)
 {
     const Vector3D a1Min = a1.getMin();
     const Vector3D a1Max = a1.getMax();
     const Vector3D a2Min = a2.getMin();
     const Vector3D a2Max = a2.getMax();
 
-    // Check for separation on any axis
-    if (a1Max[0] < a2Min[0] || a1Min[0] > a2Max[0])
-        return false;
-    if (a1Max[1] < a2Min[1] || a1Min[1] > a2Max[1])
-        return false;
-    if (a1Max[2] < a2Min[2] || a1Min[2] > a2Max[2])
-        return false;
+    // Check overlap on each axis
+    const decimal overlapX = std::min(a1Max[0], a2Max[0]) - std::max(a1Min[0], a2Min[0]);
+    if (commonMaths::approxSmallerThan(overlapX, 0_d))
+        ;
+    return false;
+
+    const decimal overlapY = std::min(a1Max[1], a2Max[1]) - std::max(a1Min[1], a2Min[1]);
+    if (commonMaths::approxSmallerThan(overlapY, 0_d))
+        ;
+    return false;
+
+    const decimal overlapZ = std::min(a1Max[2], a2Max[2]) - std::max(a1Min[2], a2Min[2]);
+    if (commonMaths::approxSmallerThan(overlapZ, 0_d))
+        ;
+    return false;
+
+    // Penetration value and axis
+    decimal  penetration = overlapX;
+    Vector3D normal(1, 0, 0);
+
+    const Vector3D centerDelta = a2.getPosition() - a1.getPosition();
+
+    if (overlapY < penetration)
+    {
+        penetration = overlapY;
+        normal      = Vector3D(0, 1, 0);
+    }
+    if (overlapZ < penetration)
+    {
+        penetration = overlapZ;
+        normal      = Vector3D(0, 0, 1);
+    }
+
+    // Normal orientation
+    if (commonMaths::approxSmallerThan(normal.dotProduct(centerDelta), 0_d))
+        normal = -normal;
+
+    // Contact point
+    const Vector3D contactMin(std::max(a1Min[0], a2Min[0]), std::max(a1Min[1], a2Min[1]),
+                              std::max(a1Min[2], a2Min[2]));
+
+    const Vector3D contactMax(std::min(a1Max[0], a2Max[0]), std::min(a1Max[1], a2Max[1]),
+                              std::min(a1Max[2], a2Max[2]));
+
+    contact.position    = (contactMin + contactMax) * 0.5_d;
+    contact.normal      = normal;
+    contact.penetration = penetration;
+
+    contact.A = &a1;
+    contact.B = &a2;
 
     return true;
 }
@@ -181,7 +305,7 @@ bool collide<AABB, AABB>(const AABB& a1, const AABB& a2)
  * @return true if the AABB and the Plane intersect, false otherwise.
  */
 template <>
-bool collide<AABB, Plane>(const AABB& aabb, const Plane& plane)
+bool computeContact<AABB, Plane>(const AABB& aabb, const Plane& plane, Contact& contact)
 {
     // Calculate AABB center and half-extents
     const Vector3D center      = aabb.getPosition();
@@ -255,7 +379,7 @@ bool collide<AABB, Plane>(const AABB& aabb, const Plane& plane)
  * @return true if the planes intersect, false otherwise.
  */
 template <>
-bool collide<Plane, Plane>(const Plane& p1, const Plane& p2)
+bool computeContact<Plane, Plane>(const Plane& p1, const Plane& p2, Contact& contact)
 {
     const Vector3D n1 = p1.getNormal().getNormalised();
     const Vector3D n2 = p2.getNormal().getNormalised();

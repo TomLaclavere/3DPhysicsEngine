@@ -140,12 +140,40 @@ TEST(PlaneTest, ContainsPoint)
 
 TEST(PlaneTest, planeCollision)
 {
-    Plane plane1(Vector3D(0_d, 0_d, 0_d), Vector3D(10_d, 10_d, 0_d), Vector3D(0_d, 0_d, 1_d));
-    Plane plane2(Vector3D(0_d, 0_d, 0.5_d), Vector3D(10_d, 10_d, 0_d), Vector3D(0_d, 1_d, 0_d));
-    Plane plane3(Vector3D(3_d, 3_d, 3_d));
+    // Very long function to test: decomposition of the different paths
 
-    EXPECT_TRUE(plane1.checkCollision(plane2));  // Overlapping
-    EXPECT_FALSE(plane1.checkCollision(plane3)); // Not overlapping
+    Plane plane(Vector3D(0_d, 0_d, 0_d), Vector3D(2_d), Vector3D(0_d, 0_d, 1_d));
+
+    // 1) Parallel / coplanar check
+    // Distinct parallel planes
+    EXPECT_FALSE(
+        plane.checkCollision(Plane(Vector3D(0_d, 0_d, 2_d), Vector3D(2_d), Vector3D(0_d, 0_d, 1_d))));
+
+    // Coplanar planes too far
+    EXPECT_FALSE(
+        plane.checkCollision(Plane(Vector3D(5_d, 0_d, 0_d), Vector3D(2_d), Vector3D(0_d, 0_d, 1_d))));
+
+    // Coplanar planes intersecting
+    EXPECT_TRUE(
+        plane.checkCollision(Plane(Vector3D(0_d, -1_d, 0_d), Vector3D(2_d), Vector3D(0_d, 0_d, 1_d))));
+
+    // 2) Non-parallel check
+    // Intersection at center
+    EXPECT_TRUE(plane.checkCollision(Plane(Vector3D(0_d), Vector3D(2_d), Vector3D(1_d, 0_d, 0_d))));
+
+    // Not intersecting over X
+    EXPECT_FALSE(
+        plane.checkCollision(Plane(Vector3D(5_d, 0_d, 0_d), Vector3D(2_d), Vector3D(0_d, 1_d, 0_d))));
+    // Not intersecting over Y
+    EXPECT_FALSE(
+        plane.checkCollision(Plane(Vector3D(0_d, 4_d, 0_d), Vector3D(2_d), Vector3D(0_d, 1_d, 0_d))));
+    // Not intersecting over Z
+    EXPECT_FALSE(
+        plane.checkCollision(Plane(Vector3D(0_d, 0_d, -3_d), Vector3D(2_d), Vector3D(0_d, 1_d, 0_d))));
+    // Intersecting at border
+    EXPECT_TRUE(plane.checkCollision(Plane(Vector3D(2_d, 0_d, 0_d), Vector3D(2_d), Vector3D(0_d, 0_d, 1_d))));
+    // Intersecting at angle
+    EXPECT_TRUE(plane.checkCollision(Plane(Vector3D(2_d, 2_d, 0_d), Vector3D(2_d), Vector3D(0_d, 0_d, 1_d))));
 }
 
 TEST(PlaneTest, PlaneSphereCollision)

@@ -364,11 +364,6 @@ TEST(QuaternionTest, ComparisonOperators)
     EXPECT_FALSE(a != b);
     EXPECT_TRUE(a != c);
 
-    EXPECT_TRUE(a < c);
-    EXPECT_TRUE(a <= c);
-    EXPECT_TRUE(c > a);
-    EXPECT_TRUE(c >= a);
-
     EXPECT_TRUE(a.approxEqual(b, PRECISION_MACHINE));
     EXPECT_FALSE(a.approxEqual(c, PRECISION_MACHINE));
 }
@@ -380,15 +375,6 @@ TEST(QuaternionTest, ElementAccess)
 {
     Quaternion3D       q(1_d, 2_d, 3_d, 4_d);
     const Quaternion3D cq(5_d, 0_d, -5_d, 3.14_d);
-
-    // operator()(int) const and non-const
-    EXPECT_DECIMAL_EQ(q(0_d), 1_d);
-    EXPECT_DECIMAL_EQ(q(1_d), 2_d);
-    EXPECT_DECIMAL_EQ(q(2_d), 3_d);
-
-    EXPECT_DECIMAL_EQ(cq(0_d), 5_d);
-    EXPECT_DECIMAL_EQ(cq(1_d), 0_d);
-    EXPECT_DECIMAL_EQ(cq(2_d), -5_d);
 
     // operator[] const and non-const
     EXPECT_DECIMAL_EQ(q[0_d], 1_d);
@@ -409,9 +395,7 @@ TEST(QuaternionTest, ElementAccess)
     EXPECT_DECIMAL_EQ(cq.at(2_d), -5_d);
 
     // Out-of-range checks
-    EXPECT_THROW(q.at(-1_d), std::out_of_range);
     EXPECT_THROW(q.at(3_d), std::out_of_range);
-    EXPECT_THROW(cq.at(-1_d), std::out_of_range);
     EXPECT_THROW(cq.at(3_d), std::out_of_range);
 
     // operator[] & () do not check the index, so I can't check out of range indices

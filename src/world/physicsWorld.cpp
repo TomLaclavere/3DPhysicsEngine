@@ -1,5 +1,6 @@
 #include "world/physicsWorld.hpp"
 
+#include "mathematics/math_io.hpp"
 #include "world/integrateRK4.hpp"
 #include "world/physics.hpp"
 
@@ -28,11 +29,16 @@ bool     PhysicsWorld::getIsRunning() const { return isRunning; }
 decimal  PhysicsWorld::getTimeStep() const { return timeStep; }
 decimal  PhysicsWorld::getGravityCst() const { return gravityCst; }
 Vector3D PhysicsWorld::getGravityAcc() const { return gravityAcc; }
+Solver   PhysicsWorld::getSolver() const { return solver; }
 
 // ============================================================================
 //  Setters
 // ============================================================================
-void PhysicsWorld::setSolver(std::string _solver) { solver = parseSolver(_solver); }
+void PhysicsWorld::setSolver(std::string _solver)
+{
+    solver = parseSolver(_solver);
+    config.setSolver(_solver);
+}
 void PhysicsWorld::setTimeStep(decimal ind) { timeStep = ind; }
 void PhysicsWorld::setGravityCst(decimal g) { gravityCst = g; }
 void PhysicsWorld::setGravityAcc(const Vector3D& acc) { gravityAcc = acc; }
@@ -199,8 +205,8 @@ void PhysicsWorld::run()
                     if (!obj->isFixed())
                         std::cout << std::left << std::setw(col_obj) << obj->getType() << std::setw(col_time)
                                   << std::fixed << std::setprecision(3) << time << std::setw(col_vec)
-                                  << obj->getPosition().formatVector() << std::setw(col_vec)
-                                  << obj->getVelocity().formatVector() << "\n";
+                                  << formatVector(obj->getPosition()) << std::setw(col_vec)
+                                  << formatVector(obj->getVelocity()) << "\n";
                 }
                 std::cout << std::string(n, '-') << '\n';
             }
@@ -224,7 +230,6 @@ void PhysicsWorld::applyGravityForces()
             applyGravityForce(*obj);
     }
 }
-
 void PhysicsWorld::applySpringForces(Object& obj, Object& other)
 {
     if (!obj.getIsFixed())
@@ -233,7 +238,6 @@ void PhysicsWorld::applySpringForces(Object& obj, Object& other)
         obj.addAcceleration(springForce / obj.getMass());
     }
 }
-
 void PhysicsWorld::applyDamplingForces(Object& obj, Object& other)
 {
     if (!obj.getIsFixed())
@@ -242,7 +246,6 @@ void PhysicsWorld::applyDamplingForces(Object& obj, Object& other)
         obj.addAcceleration(dampingForce / obj.getMass());
     }
 }
-
 void PhysicsWorld::applyFrictionForces(Object& obj, Object& other)
 {
     if (!obj.getIsFixed())
@@ -251,7 +254,6 @@ void PhysicsWorld::applyFrictionForces(Object& obj, Object& other)
         obj.addAcceleration(frictionForce / obj.getMass());
     }
 }
-
 void PhysicsWorld::applyContactForces(Object& obj, Object& other)
 {
     if (obj.getIsFixed() && other.getIsFixed())
@@ -267,7 +269,6 @@ void PhysicsWorld::applyContactForces(Object& obj, Object& other)
     if (!other.getIsFixed())
         other.addAcceleration(-totalForce / other.getMass());
 }
-
 void PhysicsWorld::avoidOverlap(Object& obj, Object& other)
 {
     if (obj.getIsFixed() && other.getIsFixed() || !obj.checkCollision(other))
@@ -347,6 +348,7 @@ void PhysicsWorld::printState() const
     std::cout << "  Running: " << std::boolalpha << isRunning << "\n";
     std::cout << "  TimeStep: " << timeStep << " s\n";
     std::cout << "  Gravity: " << gravityCst << " m/s²\n";
+    std::cout << "  Solver: " << solver << "\n";
     std::cout << "  Objects: " << objects.size() << "\n";
 
     // Print each object's state

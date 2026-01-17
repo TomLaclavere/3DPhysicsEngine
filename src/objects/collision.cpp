@@ -170,7 +170,7 @@ bool computeContact<Sphere, Plane>(const Sphere& sphere, const Plane& plane, Con
     const Vector3D& sphereCenter = sphere.getCenter();
     const decimal   sphereRadius = sphere.getRadius();
 
-    // 1. Check distance using plane equation
+    // 1) Check distance using plane equation
     const Vector3D planeToSphere = sphereCenter - plane.getPosition();
     const decimal  signedDist    = planeToSphere.dotProduct(n);
 
@@ -180,8 +180,8 @@ bool computeContact<Sphere, Plane>(const Sphere& sphere, const Plane& plane, Con
         return false;
     }
 
-    // 2. Project onto plane and check bounds with radius padding
-    const Vector3D proj  = sphereCenter - signedDist * n;
+    // 2) Project onto plane and check bounds with radius padding
+    const Vector3D proj  = sphereCenter - signedDist * plane.getNormal();
     const Vector3D local = proj - plane.getPosition();
 
     const decimal s = local.dotProduct(plane.getU());
@@ -196,7 +196,7 @@ bool computeContact<Sphere, Plane>(const Sphere& sphere, const Plane& plane, Con
         return false;
     }
 
-    // 3. Exact distance to clamped point
+    // 3) Exact distance to clamped point
     const decimal clampedS = std::clamp(s, -plane.getHalfWidth(), plane.getHalfWidth());
     const decimal clampedT = std::clamp(t, -plane.getHalfHeight(), plane.getHalfHeight());
 
@@ -388,7 +388,7 @@ bool computeContact<Plane, Plane>(const Plane& p1, const Plane& p2, Contact& con
     const Vector3D cross       = n1.crossProduct(n2);
     const decimal  crossNormSq = cross.getNormSquare();
 
-    // --- 1) Parallel / coplanar check (cross ≈ 0 => parallel)
+    // 1) Parallel / coplanar check (cross ≈ 0 => parallel)
     if (commonMaths::approxEqual(crossNormSq, 0_d))
     {
         // Check distance of a point of p2 to plane1: plane eq. n1·x = d1
@@ -449,7 +449,7 @@ bool computeContact<Plane, Plane>(const Plane& p1, const Plane& p2, Contact& con
         return true; // no separating axis -> coplanar rectangles overlap
     }
 
-    // --- 2) Non-parallel case: compute intersection line L(t) = P0 + t * dir
+    // 2) Non-parallel case: compute intersection line L(t) = P0 + t * dir
     // Use raw cross (not normalized) as direction vector (dir == cross)
     const Vector3D dir = cross;
     const decimal  d1  = n1.dotProduct(p1.getPosition()); // plane eq: n·x = d

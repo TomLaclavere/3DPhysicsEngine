@@ -10,7 +10,7 @@
 #include "object.hpp"
 
 // Forward declaration
-struct Sphere;
+struct Plane;
 struct AABB;
 
 /**
@@ -21,7 +21,7 @@ struct AABB;
  * Plane is defined by its position (center), its normal direction, and the size along
  * the two tangent axis computed from normal direction.
  *
- * The Plane supports collision detection with other Planes, Spheres, and AABBs.
+ * The Plane supports collision detection with other Planes, Planes, and AABBs.
  */
 struct Plane : public Object
 {
@@ -141,13 +141,22 @@ public:
     // ============================================================================
     /// @{
 
-    /// Check collision between two Planes.
-    bool planeCollision(const Plane& other);
-    /// Check collision between a Plane and a Sphere.
-    bool planeSphereCollision(const Sphere& sphere);
-    /// Check collision between a Plane and an AABB.
-    bool planeAABBCollision(const AABB& aabb);
-    /// Check collision with another Object.
-    bool checkCollision(const Object& other) override;
+    /// Check broad collision between two Planes.
+    bool checkPlaneCollision(const Plane& Plane);
+    /// Check broad collision between a Plane and an AABB.
+    bool checkPlaneAABBCollision(const AABB& aabb);
+    /// Check broad collision between a Plane and a Plane
+    bool checkPlaneSphereCollision(const Sphere& sphere);
+    /// Check broad collision with another Object.
+    virtual bool checkCollision(const Object& other) override;
+
+    /// Check narrow collision between two Planes.
+    bool computePlaneCollision(const Plane& Plane, Contact& contact);
+    /// Check narrow collision between a Plane and an AABB.
+    bool computePlaneAABBCollision(const AABB& aabb, Contact& contact);
+    /// Check narrow collision between a Plane and a Plane.
+    bool computePlaneSphereCollision(const Sphere& sphere, Contact& contact);
+    /// Check narrow collision with another Object.
+    virtual bool computeCollision(const Object& other, Contact& contact) override;
     /// @}
 };

@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "collision.hpp"
+#include "narrow_collision.hpp"
 
 void positionCorrection(Object& A, Object& B);
 

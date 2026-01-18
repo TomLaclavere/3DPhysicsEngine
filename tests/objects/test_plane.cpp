@@ -142,88 +142,94 @@ TEST(PlaneTest, planeCollision)
 {
     // Very long function to test: decomposition of the different paths
 
-    Plane plane(Vector3D(0_d, 0_d, 0_d), Vector3D(2_d), Vector3D(0_d, 0_d, 1_d));
+    Plane   plane(Vector3D(0_d, 0_d, 0_d), Vector3D(2_d), Vector3D(0_d, 0_d, 1_d));
+    Contact contact;
 
     // 1) Parallel / coplanar check
     // Distinct parallel planes
-    EXPECT_FALSE(
-        plane.checkCollision(Plane(Vector3D(0_d, 0_d, 2_d), Vector3D(2_d), Vector3D(0_d, 0_d, 1_d))));
+    EXPECT_FALSE(plane.computeCollision(
+        Plane(Vector3D(0_d, 0_d, 2_d), Vector3D(2_d), Vector3D(0_d, 0_d, 1_d)), contact));
 
     // Coplanar planes too far
-    EXPECT_FALSE(
-        plane.checkCollision(Plane(Vector3D(5_d, 0_d, 0_d), Vector3D(2_d), Vector3D(0_d, 0_d, 1_d))));
+    EXPECT_FALSE(plane.computeCollision(
+        Plane(Vector3D(5_d, 0_d, 0_d), Vector3D(2_d), Vector3D(0_d, 0_d, 1_d)), contact));
 
     // Coplanar planes intersecting
-    EXPECT_TRUE(
-        plane.checkCollision(Plane(Vector3D(0_d, -1_d, 0_d), Vector3D(2_d), Vector3D(0_d, 0_d, 1_d))));
+    EXPECT_TRUE(plane.computeCollision(
+        Plane(Vector3D(0_d, -1_d, 0_d), Vector3D(2_d), Vector3D(0_d, 0_d, 1_d)), contact));
 
     // 2) Non-parallel check
     // Intersection at center
-    EXPECT_TRUE(plane.checkCollision(Plane(Vector3D(0_d), Vector3D(2_d), Vector3D(1_d, 0_d, 0_d))));
+    EXPECT_TRUE(
+        plane.computeCollision(Plane(Vector3D(0_d), Vector3D(2_d), Vector3D(1_d, 0_d, 0_d)), contact));
 
     // Not intersecting over X
-    EXPECT_FALSE(
-        plane.checkCollision(Plane(Vector3D(5_d, 0_d, 0_d), Vector3D(2_d), Vector3D(0_d, 1_d, 0_d))));
+    EXPECT_FALSE(plane.computeCollision(
+        Plane(Vector3D(5_d, 0_d, 0_d), Vector3D(2_d), Vector3D(0_d, 1_d, 0_d)), contact));
     // Not intersecting over Y
-    EXPECT_FALSE(
-        plane.checkCollision(Plane(Vector3D(0_d, 4_d, 0_d), Vector3D(2_d), Vector3D(0_d, 1_d, 0_d))));
+    EXPECT_FALSE(plane.computeCollision(
+        Plane(Vector3D(0_d, 4_d, 0_d), Vector3D(2_d), Vector3D(0_d, 1_d, 0_d)), contact));
     // Not intersecting over Z
-    EXPECT_FALSE(
-        plane.checkCollision(Plane(Vector3D(0_d, 0_d, -3_d), Vector3D(2_d), Vector3D(0_d, 1_d, 0_d))));
+    EXPECT_FALSE(plane.computeCollision(
+        Plane(Vector3D(0_d, 0_d, -3_d), Vector3D(2_d), Vector3D(0_d, 1_d, 0_d)), contact));
     // Intersecting at border
-    EXPECT_TRUE(plane.checkCollision(Plane(Vector3D(2_d, 0_d, 0_d), Vector3D(2_d), Vector3D(0_d, 0_d, 1_d))));
+    EXPECT_TRUE(plane.computeCollision(Plane(Vector3D(2_d, 0_d, 0_d), Vector3D(2_d), Vector3D(0_d, 0_d, 1_d)),
+                                       contact));
     // Intersecting at angle
-    EXPECT_TRUE(plane.checkCollision(Plane(Vector3D(2_d, 2_d, 0_d), Vector3D(2_d), Vector3D(0_d, 0_d, 1_d))));
+    EXPECT_TRUE(plane.computeCollision(Plane(Vector3D(2_d, 2_d, 0_d), Vector3D(2_d), Vector3D(0_d, 0_d, 1_d)),
+                                       contact));
 }
 
 TEST(PlaneTest, PlaneSphereCollision)
 {
-    Plane plane(Vector3D(0_d, 0_d, 0_d), Vector3D(4_d, 4_d, 0_d), Vector3D(0_d, 0_d, 1_d));
+    Plane   plane(Vector3D(0_d, 0_d, 0_d), Vector3D(4_d, 4_d, 0_d), Vector3D(0_d, 0_d, 1_d));
+    Contact contact;
 
     // Sphere intersecting the plane from the front
     Sphere sphereIntersecting(Vector3D(0_d, 0_d, 0.5_d), 1_d); // Center at z=0.5, radius=1
-    EXPECT_TRUE(plane.checkCollision(sphereIntersecting));
+    EXPECT_TRUE(plane.computeCollision(sphereIntersecting, contact));
 
     // Sphere completely above plane (no intersection)
     Sphere sphereAbove(Vector3D(0_d, 0_d, 2.5_d), 1_d); // Center at z=2.5, radius=1 → distance > radius
-    EXPECT_FALSE(plane.checkCollision(sphereAbove));
+    EXPECT_FALSE(plane.computeCollision(sphereAbove, contact));
 
     // Sphere completely behind plane (one-sided collision = no intersection)
     Sphere sphereBehind(Vector3D(0_d, 0_d, -2.5_d), 1_d);
-    EXPECT_FALSE(plane.checkCollision(sphereBehind));
+    EXPECT_FALSE(plane.computeCollision(sphereBehind, contact));
 
     // Sphere touching the edge from front side
     Sphere sphereTouchingEdge(Vector3D(2_d, 0_d, 0.5_d), 1_d); // At right edge, intersecting in Z
-    EXPECT_TRUE(plane.checkCollision(sphereTouchingEdge));
+    EXPECT_TRUE(plane.computeCollision(sphereTouchingEdge, contact));
 
     // Sphere touching the corner from front side
     Sphere sphereTouchingCorner(Vector3D(2_d, 2_d, 0.5_d), 1_d);
-    EXPECT_TRUE(plane.checkCollision(sphereTouchingCorner));
+    EXPECT_TRUE(plane.computeCollision(sphereTouchingCorner, contact));
 
     // Sphere outside plane bounds in X direction
     Sphere sphereOutsideX(Vector3D(3_d, 0_d, 0.5_d), 1_d); // Too far right
-    EXPECT_FALSE(plane.checkCollision(sphereOutsideX));
+    EXPECT_FALSE(plane.computeCollision(sphereOutsideX, contact));
 
     // Sphere outside plane bounds in Y direction
     Sphere sphereOutsideY(Vector3D(0_d, 3_d, 0.5_d), 1_d); // Too far up
-    EXPECT_FALSE(plane.checkCollision(sphereOutsideY));
+    EXPECT_FALSE(plane.computeCollision(sphereOutsideY, contact));
 
     // Large sphere containing the entire plane
     Sphere sphereContainingPlane(Vector3D(0_d, 0_d, 0_d), 5_d);
-    EXPECT_TRUE(plane.checkCollision(sphereContainingPlane));
+    EXPECT_TRUE(plane.computeCollision(sphereContainingPlane, contact));
 
     // Zero-radius sphere exactly on plane surface within bounds
     Sphere sphereZeroRadiusOnPlane(Vector3D(0_d, 0_d, 0_d), 0_d);
-    EXPECT_TRUE(plane.checkCollision(sphereZeroRadiusOnPlane));
+    EXPECT_TRUE(plane.computeCollision(sphereZeroRadiusOnPlane, contact));
 
     // Zero-radius sphere outside plane bounds
     Sphere sphereZeroRadiusOutside(Vector3D(3_d, 0_d, 0_d), 0_d);
-    EXPECT_FALSE(plane.checkCollision(sphereZeroRadiusOutside));
+    EXPECT_FALSE(plane.computeCollision(sphereZeroRadiusOutside, contact));
 }
 
 TEST(PlaneTest, planeAABBCollision)
 {
-    AABB aabb(Vector3D(0_d, 0_d, 0_d), Vector3D(2_d, 2_d, 2_d));
+    AABB    aabb(Vector3D(0_d, 0_d, 0_d), Vector3D(2_d, 2_d, 2_d));
+    Contact contact;
 
     // Basic cases
     Plane planeAbove(Vector3D(0_d, 0_d, 3_d));
@@ -234,13 +240,13 @@ TEST(PlaneTest, planeAABBCollision)
     Plane planeRightOut(Vector3D(5_d, 0_d, 0_d));
     Plane planeRightIn(Vector3D(1.5_d, 0_d, 0_d));
 
-    EXPECT_FALSE(planeAbove.checkCollision(aabb));
-    EXPECT_FALSE(planeBelow.checkCollision(aabb));
-    EXPECT_TRUE(planeCenter.checkCollision(aabb));
-    EXPECT_FALSE(planeLeftOut.checkCollision(aabb));
-    EXPECT_FALSE(planeRightOut.checkCollision(aabb));
-    EXPECT_TRUE(planeLeftIn.checkCollision(aabb));
-    EXPECT_TRUE(planeRightIn.checkCollision(aabb));
+    EXPECT_FALSE(planeAbove.computeCollision(aabb, contact));
+    EXPECT_FALSE(planeBelow.computeCollision(aabb, contact));
+    EXPECT_TRUE(planeCenter.computeCollision(aabb, contact));
+    EXPECT_FALSE(planeLeftOut.computeCollision(aabb, contact));
+    EXPECT_FALSE(planeRightOut.computeCollision(aabb, contact));
+    EXPECT_TRUE(planeLeftIn.computeCollision(aabb, contact));
+    EXPECT_TRUE(planeRightIn.computeCollision(aabb, contact));
 
     // Edge cases
     Plane planeUp(Vector3D(0_d, 0_d, 1_d));
@@ -248,25 +254,26 @@ TEST(PlaneTest, planeAABBCollision)
     Plane planeLeft(Vector3D(-2_d, 0_d, 0_d));
     Plane planeRight(Vector3D(2_d, 0_d, 0_d));
 
-    EXPECT_TRUE(planeUp.checkCollision(aabb));
-    EXPECT_TRUE(planeDown.checkCollision(aabb));
-    EXPECT_TRUE(planeLeft.checkCollision(aabb));
-    EXPECT_TRUE(planeRight.checkCollision(aabb));
+    EXPECT_TRUE(planeUp.computeCollision(aabb, contact));
+    EXPECT_TRUE(planeDown.computeCollision(aabb, contact));
+    EXPECT_TRUE(planeLeft.computeCollision(aabb, contact));
+    EXPECT_TRUE(planeRight.computeCollision(aabb, contact));
 }
 
 // Dummy class to simulate an unknown object type
 struct DummyObject : public Object
 {
     ObjectType getType() const override { return ObjectType::Generic; }
-    bool       checkCollision(const Object&) override { return false; }
+    bool       computeCollision(const Object&, Contact& contact) override { return false; }
 };
 
-TEST(PlaneTest, CheckCollision_DefaultCase)
+TEST(PlaneTest, computeCollision_DefaultCase)
 {
     Plane       plane(Vector3D(0_d, 0_d, 0_d), Vector3D(1_d, 1_d, 1_d));
     DummyObject dummy;
+    Contact     contact;
 
-    bool result = plane.checkCollision(dummy);
+    bool result = plane.computeCollision(dummy, contact);
 
     EXPECT_FALSE(result); // Default case should return false
 }

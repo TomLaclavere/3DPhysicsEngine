@@ -10,7 +10,7 @@
 #include "object.hpp"
 
 // Forward declaration
-struct Plane;
+struct Sphere;
 struct AABB;
 
 /**

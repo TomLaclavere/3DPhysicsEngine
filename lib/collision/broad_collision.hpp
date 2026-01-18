@@ -8,10 +8,10 @@
 
 #pragma once
 
-#include "aabb.hpp"
-#include "collision/contact.hpp"
-#include "plane.hpp"
-#include "sphere.hpp"
+#include "contact.hpp"
+#include "objects/aabb.hpp"
+#include "objects/plane.hpp"
+#include "objects/sphere.hpp"
 
 namespace BroadCollision {
 

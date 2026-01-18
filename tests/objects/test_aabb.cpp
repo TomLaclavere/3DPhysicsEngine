@@ -91,32 +91,34 @@ TEST(AABBTest, integrate)
 
 TEST(AABBTest, AABBCollision)
 {
-    AABB aabb1(Vector3D(0_d, 0_d, 0_d), Vector3D(2_d, 2_d, 2_d));
-    AABB aabb2(Vector3D(1_d, 1_d, 1_d), Vector3D(2_d, 2_d, 2_d));
-    AABB aabb3(Vector3D(3_d, 3_d, 3_d), Vector3D(2_d, 2_d, 2_d));
+    AABB    aabb1(Vector3D(0_d, 0_d, 0_d), Vector3D(2_d, 2_d, 2_d));
+    AABB    aabb2(Vector3D(1_d, 1_d, 1_d), Vector3D(2_d, 2_d, 2_d));
+    AABB    aabb3(Vector3D(3_d, 3_d, 3_d), Vector3D(2_d, 2_d, 2_d));
+    Contact contact;
 
-    EXPECT_TRUE(aabb1.checkCollision(aabb2));  // Overlapping
-    EXPECT_FALSE(aabb1.checkCollision(aabb3)); // Not overlapping
+    EXPECT_TRUE(aabb1.computeCollision(aabb2, contact));  // Overlapping
+    EXPECT_FALSE(aabb1.computeCollision(aabb3, contact)); // Not overlapping
 
     // Test over others dimensions
     AABB aabbY(Vector3D(0_d, 10_d, 0_d), Vector3D(2_d, 2_d, 2_d));
     AABB aabbZ(Vector3D(0_d, 0_d, -10_d), Vector3D(2_d, 2_d, 2_d));
-    EXPECT_FALSE(aabb1.checkCollision(aabbY));
-    EXPECT_FALSE(aabb1.checkCollision(aabbZ));
+    EXPECT_FALSE(aabb1.computeCollision(aabbY, contact));
+    EXPECT_FALSE(aabb1.computeCollision(aabbZ, contact));
 }
 
 TEST(AABBTest, AABBSphereCollision)
 {
-    AABB aabb(Vector3D(0_d, 0_d, 0_d), Vector3D(2_d, 2_d, 2_d));
+    AABB    aabb(Vector3D(0_d, 0_d, 0_d), Vector3D(2_d, 2_d, 2_d));
+    Contact contact;
 
     // Basic cases
     Sphere sphere_inside(Vector3D(1_d, 1_d, 1_d), 0.5_d);
     Sphere sphere_outside(Vector3D(4_d, 4_d, 4_d), 1_d);
     Sphere sphereTouchingFace(Vector3D(3_d, 1_d, 1_d), 4_d);
 
-    EXPECT_TRUE(aabb.checkCollision(sphere_inside));
-    EXPECT_FALSE(aabb.checkCollision(sphere_outside));
-    EXPECT_TRUE(aabb.checkCollision(sphereTouchingFace));
+    EXPECT_TRUE(aabb.computeCollision(sphere_inside, contact));
+    EXPECT_FALSE(aabb.computeCollision(sphere_outside, contact));
+    EXPECT_TRUE(aabb.computeCollision(sphereTouchingFace, contact));
 
     // Edge cases
     Sphere sphereTouching_edge(Vector3D(1_d + 1_d / std::sqrt(2.0_d), 1_d + 1_d / std::sqrt(2.0_d), 1_d),
@@ -125,8 +127,8 @@ TEST(AABBTest, AABBSphereCollision)
         Vector3D(1_d + 1_d / std::sqrt(3.0_d), 1_d + 1_d / std::sqrt(3.0_d), 1_d + 1_d / std::sqrt(3.0_d)),
         2_d);
 
-    EXPECT_TRUE(aabb.checkCollision(sphereTouching_edge));
-    EXPECT_TRUE(aabb.checkCollision(sphereTouchingCorner));
+    EXPECT_TRUE(aabb.computeCollision(sphereTouching_edge, contact));
+    EXPECT_TRUE(aabb.computeCollision(sphereTouchingCorner, contact));
 
     // Special cases
     Sphere sphereContainingAabb(Vector3D(1_d, 1_d, 1_d), 2_d);
@@ -136,21 +138,22 @@ TEST(AABBTest, AABBSphereCollision)
     decimal offset = r / std::sqrt(3.0_d);
     Sphere  sphereAtCorner(Vector3D(1_d + offset, 1_d + offset, 1_d + offset), 0.1_d);
 
-    EXPECT_TRUE(aabb.checkCollision(sphereContainingAabb));
-    EXPECT_TRUE(aabb.checkCollision(sphere_zeroRadius));
-    EXPECT_TRUE(aabb.checkCollision(sphereAtCorner));
+    EXPECT_TRUE(aabb.computeCollision(sphereContainingAabb, contact));
+    EXPECT_TRUE(aabb.computeCollision(sphere_zeroRadius, contact));
+    EXPECT_TRUE(aabb.computeCollision(sphereAtCorner, contact));
 
     // Negative coordinate cases
     Sphere sphere_negative_outside(Vector3D(-2_d, -2_d, -2_d), 1_d);
     Sphere sphere_negativeTouching(Vector3D(-1_d, 1_d, 1_d), 1_d);
 
-    EXPECT_FALSE(aabb.checkCollision(sphere_negative_outside));
-    EXPECT_TRUE(aabb.checkCollision(sphere_negativeTouching));
+    EXPECT_FALSE(aabb.computeCollision(sphere_negative_outside, contact));
+    EXPECT_TRUE(aabb.computeCollision(sphere_negativeTouching, contact));
 }
 
-TEST(AABBTest, aabbPlaneCollision)
+TEST(AABBTest, AABBPlaneCollision)
 {
-    AABB aabb(Vector3D(0_d, 0_d, 0_d), Vector3D(2_d, 2_d, 2_d));
+    AABB    aabb(Vector3D(0_d, 0_d, 0_d), Vector3D(2_d, 2_d, 2_d));
+    Contact contact;
 
     // Basic cases
     Plane planeAbove(Vector3D(0_d, 0_d, 3_d));
@@ -161,13 +164,13 @@ TEST(AABBTest, aabbPlaneCollision)
     Plane planeRightOut(Vector3D(5_d, 0_d, 0_d));
     Plane planeRightIn(Vector3D(1.5_d, 0_d, 0_d));
 
-    EXPECT_FALSE(aabb.checkCollision(planeAbove));
-    EXPECT_FALSE(aabb.checkCollision(planeBelow));
-    EXPECT_TRUE(aabb.checkCollision(planeCenter));
-    EXPECT_FALSE(aabb.checkCollision(planeLeftOut));
-    EXPECT_FALSE(aabb.checkCollision(planeRightOut));
-    EXPECT_TRUE(aabb.checkCollision(planeLeftIn));
-    EXPECT_TRUE(aabb.checkCollision(planeRightIn));
+    EXPECT_FALSE(aabb.computeCollision(planeAbove, contact));
+    EXPECT_FALSE(aabb.computeCollision(planeBelow, contact));
+    EXPECT_TRUE(aabb.computeCollision(planeCenter, contact));
+    EXPECT_FALSE(aabb.computeCollision(planeLeftOut, contact));
+    EXPECT_FALSE(aabb.computeCollision(planeRightOut, contact));
+    EXPECT_TRUE(aabb.computeCollision(planeLeftIn, contact));
+    EXPECT_TRUE(aabb.computeCollision(planeRightIn, contact));
 
     // Edge cases
     Plane planeUp(Vector3D(0_d, 0_d, 1_d));
@@ -175,25 +178,26 @@ TEST(AABBTest, aabbPlaneCollision)
     Plane planeLeft(Vector3D(-2_d, 0_d, 0_d));
     Plane planeRight(Vector3D(2_d, 0_d, 0_d));
 
-    EXPECT_TRUE(aabb.checkCollision(planeUp));
-    EXPECT_TRUE(aabb.checkCollision(planeDown));
-    EXPECT_TRUE(aabb.checkCollision(planeLeft));
-    EXPECT_TRUE(aabb.checkCollision(planeRight));
+    EXPECT_TRUE(aabb.computeCollision(planeUp, contact));
+    EXPECT_TRUE(aabb.computeCollision(planeDown, contact));
+    EXPECT_TRUE(aabb.computeCollision(planeLeft, contact));
+    EXPECT_TRUE(aabb.computeCollision(planeRight, contact));
 }
 
 // Dummy class to simulate an unknown object type
 struct DummyObject : public Object
 {
     ObjectType getType() const override { return ObjectType::Generic; }
-    bool       checkCollision(const Object&) override { return false; }
+    bool       computeCollision(const Object&, Contact& contact) override { return false; }
 };
 
-TEST(AABB, CheckCollision_DefaultCase)
+TEST(AABB, computeCollision_DefaultCase)
 {
     AABB        box(Vector3D(0_d, 0_d, 0_d), Vector3D(1_d, 1_d, 1_d));
     DummyObject dummy;
+    Contact     contact;
 
-    bool result = box.checkCollision(dummy);
+    bool result = box.computeCollision(dummy, contact);
 
     EXPECT_FALSE(result); // Default case should return false
 }

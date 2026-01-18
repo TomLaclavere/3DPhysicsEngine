@@ -138,7 +138,33 @@ TEST(PlaneTest, ContainsPoint)
 //  Collisions
 // ——————————————————————————————————————————————————————————————————————————
 
-TEST(PlaneTest, planeCollision)
+TEST(PlaneTest, BroadPlaneCollision)
+{
+    // Very long function to test: decomposition of the different paths
+
+    Plane   plane(Vector3D(0_d, 0_d, 0_d), Vector3D(2_d), Vector3D(0_d, 0_d, 1_d));
+    Contact contact;
+
+    // Coplanar planes intersecting
+    EXPECT_TRUE(
+        plane.checkCollision(Plane(Vector3D(0_d, -1_d, 0_d), Vector3D(2_d), Vector3D(0_d, 0_d, 1_d))));
+
+    // Non-parallel check
+    // Intersection at center
+    EXPECT_TRUE(plane.checkCollision(Plane(Vector3D(0_d), Vector3D(2_d), Vector3D(1_d, 0_d, 0_d))));
+
+    // Intersecting at border
+    EXPECT_TRUE(plane.checkCollision(Plane(Vector3D(2_d, 0_d, 0_d), Vector3D(2_d), Vector3D(0_d, 0_d, 1_d))));
+    // Intersecting at angle
+    EXPECT_TRUE(plane.checkCollision(Plane(Vector3D(2_d, 2_d, 0_d), Vector3D(2_d), Vector3D(0_d, 0_d, 1_d))));
+
+    // Test collisions which would be false in narrow phase
+    Plane planeCoplanar(Vector3D(3_d, 0_d, 0_d));
+    EXPECT_TRUE(planeCoplanar.checkCollision(plane));
+    EXPECT_FALSE(planeCoplanar.computeCollision(plane, contact));
+}
+
+TEST(PlaneTest, NarrowPlaneCollision)
 {
     // Very long function to test: decomposition of the different paths
 
@@ -180,7 +206,38 @@ TEST(PlaneTest, planeCollision)
                                        contact));
 }
 
-TEST(PlaneTest, PlaneSphereCollision)
+TEST(PlaneTest, BroadPlaneSphereCollision)
+{
+    Plane   plane(Vector3D(0_d, 0_d, 0_d), Vector3D(4_d, 4_d, 0_d), Vector3D(0_d, 0_d, 1_d));
+    Contact contact;
+
+    // Sphere intersecting the plane from the front
+    Sphere sphereIntersecting(Vector3D(0_d, 0_d, 0.5_d), 1_d); // Center at z=0.5, radius=1
+    EXPECT_TRUE(plane.checkCollision(sphereIntersecting));
+
+    // Sphere touching the edge from front side
+    Sphere sphereTouchingEdge(Vector3D(2_d, 0_d, 0.5_d), 1_d); // At right edge, intersecting in Z
+    EXPECT_TRUE(plane.checkCollision(sphereTouchingEdge));
+
+    // Sphere touching the corner from front side
+    Sphere sphereTouchingCorner(Vector3D(2_d, 2_d, 0.5_d), 1_d);
+    EXPECT_TRUE(plane.checkCollision(sphereTouchingCorner));
+
+    // Large sphere containing the entire plane
+    Sphere sphereContainingPlane(Vector3D(0_d, 0_d, 0_d), 5_d);
+    EXPECT_TRUE(plane.checkCollision(sphereContainingPlane));
+
+    // Zero-radius sphere exactly on plane surface within bounds
+    Sphere sphereZeroRadiusOnPlane(Vector3D(0_d, 0_d, 0_d), 0_d);
+    EXPECT_TRUE(plane.checkCollision(sphereZeroRadiusOnPlane));
+
+    // Test collisions which would be false in narrow phase
+    Sphere sphereSamePlan(Vector3D(3_d, 0_d, 0_d));
+    EXPECT_TRUE(plane.checkCollision(sphereSamePlan));
+    EXPECT_FALSE(plane.computeCollision(sphereSamePlan, contact));
+}
+
+TEST(PlaneTest, NarrowPlaneSphereCollision)
 {
     Plane   plane(Vector3D(0_d, 0_d, 0_d), Vector3D(4_d, 4_d, 0_d), Vector3D(0_d, 0_d, 1_d));
     Contact contact;
@@ -226,7 +283,42 @@ TEST(PlaneTest, PlaneSphereCollision)
     EXPECT_FALSE(plane.computeCollision(sphereZeroRadiusOutside, contact));
 }
 
-TEST(PlaneTest, planeAABBCollision)
+TEST(PlaneTest, BroadPlaneAABBCollision)
+{
+    AABB    aabb(Vector3D(0_d, 0_d, 0_d), Vector3D(2_d, 2_d, 2_d));
+    Contact contact;
+
+    // Basic cases
+    Plane planeAbove(Vector3D(0_d, 0_d, 3_d));
+    Plane planeBelow(Vector3D(0_d, 0_d, -3_d));
+    Plane planeCenter(Vector3D(0_d, 0_d, 0_d));
+    Plane planeLeftIn(Vector3D(-1.5_d, 0_d, 0_d));
+    Plane planeRightIn(Vector3D(1.5_d, 0_d, 0_d));
+
+    EXPECT_FALSE(planeAbove.checkCollision(aabb));
+    EXPECT_FALSE(planeBelow.checkCollision(aabb));
+    EXPECT_TRUE(planeCenter.checkCollision(aabb));
+    EXPECT_TRUE(planeLeftIn.checkCollision(aabb));
+    EXPECT_TRUE(planeRightIn.checkCollision(aabb));
+
+    // Edge cases
+    Plane planeUp(Vector3D(0_d, 0_d, 1_d));
+    Plane planeDown(Vector3D(0_d, 0_d, -1_d));
+    Plane planeLeft(Vector3D(-2_d, 0_d, 0_d));
+    Plane planeRight(Vector3D(2_d, 0_d, 0_d));
+
+    EXPECT_TRUE(planeUp.checkCollision(aabb));
+    EXPECT_TRUE(planeDown.checkCollision(aabb));
+    EXPECT_TRUE(planeLeft.checkCollision(aabb));
+    EXPECT_TRUE(planeRight.checkCollision(aabb));
+
+    // Test collisions which would be false in narrow phase
+    Plane planeClose(Vector3D(3_d, 0_d, 0_d));
+    EXPECT_TRUE(planeClose.checkCollision(aabb));
+    EXPECT_FALSE(planeClose.computeCollision(aabb, contact));
+}
+
+TEST(PlaneTest, NarrowPlaneAABBCollision)
 {
     AABB    aabb(Vector3D(0_d, 0_d, 0_d), Vector3D(2_d, 2_d, 2_d));
     Contact contact;

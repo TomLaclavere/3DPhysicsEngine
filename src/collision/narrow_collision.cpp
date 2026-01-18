@@ -10,7 +10,7 @@
 //  Sphere vs Sphere
 // ============================================================================
 /**
- * @brief Checks collision between two spheres.
+ * @brief Check narrow collision between two spheres and compute contact properties.
  *
  * Collision occurs if the distance between centers is less than or equal
  * to the sum of their radii.
@@ -50,9 +50,12 @@ bool NarrowCollision::computeContact(const Sphere& s1, const Sphere& s2, Contact
 //  Sphere vs AABB
 // ============================================================================
 /**
- * @brief Checks collision between a sphere and an axis-aligned bounding box (AABB).
+ * @brief Check narrow collision between a sphere and an axis-aligned bounding box (AABB) and compute contact
+ * properties.
  *
- * Collision occurs if the closest point on the AABB to the sphere center is smalled than the sphere radius.
+ * Collision occurs if the closest point on the AABB to the sphere center is smaller than the sphere radius.
+ * Test for the two different cases : sphere inside AABB and sphere's center inside AABB. The second needs a
+ * special treatment
  *
  * @param sphere Sphere instance.
  * @param aabb AABB instance.
@@ -100,27 +103,27 @@ bool NarrowCollision::computeContact(const Sphere& sphere, const AABB& aabb, Con
         decimal  minDist = dxMin;
         Vector3D normal(-1, 0, 0);
 
-        if (dxMax < minDist)
+        if (commonMaths::approxSmallerThan(dxMax, minDist))
         {
             minDist = dxMax;
             normal  = Vector3D(1, 0, 0);
         }
-        if (dyMin < minDist)
+        if (commonMaths::approxSmallerThan(dyMin, minDist))
         {
             minDist = dyMin;
             normal  = Vector3D(0, -1, 0);
         }
-        if (dyMax < minDist)
+        if (commonMaths::approxSmallerThan(dyMax, minDist))
         {
             minDist = dyMax;
             normal  = Vector3D(0, 1, 0);
         }
-        if (dzMin < minDist)
+        if (commonMaths::approxSmallerThan(dzMin, minDist))
         {
             minDist = dzMin;
             normal  = Vector3D(0, 0, -1);
         }
-        if (dzMax < minDist)
+        if (commonMaths::approxSmallerThan(dzMax, minDist))
         {
             minDist = dzMax;
             normal  = Vector3D(0, 0, 1);
@@ -141,7 +144,7 @@ bool NarrowCollision::computeContact(const Sphere& sphere, const AABB& aabb, Con
 //  Sphere vs Plane
 // ============================================================================
 /**
- * @brief Checks collision between a sphere and a finite plane.
+ * @brief Check narrow collision between a sphere and a finite plane and compute contact properties.
  *
  * Collision occurs if the sphere's center-to-plane distance is smaller than the sphere radius, and if the
  * projection of the sphere center onto the plane lies within its rectangle bounds.
@@ -209,9 +212,9 @@ bool NarrowCollision::computeContact(const Sphere& sphere, const Plane& plane, C
 //  AABB vs AABB
 // ============================================================================
 /**
- * @brief Checks collision between two aabb.
+ * @brief Check narrow collision between two aabb.
  *
- * Collision occurs if they overlap on each axis simultaneously.
+ * Collision occurs if they overlap on each axis simultaneously and compute contact properties.
  *
  * @param a1 AABB instance.
  * @param a2 AABB instance.
@@ -279,7 +282,7 @@ bool NarrowCollision::computeContact(const AABB& a1, const AABB& a2, Contact& co
 //  AABB vs Plane
 // ============================================================================
 /**
- * @brief Checks collision between an aabb and a finite plane.
+ * @brief Check narrow collision between an aabb and a finite plane and compute contact properties.
  *
  * Collision occurs if the signed distance from the AABB to the plane is less than or equal to the projection
  * radius of the AABB onto the plane normal.
@@ -336,7 +339,7 @@ bool NarrowCollision::computeContact(const AABB& aabb, const Plane& plane, Conta
 //  Plane vs Plane
 // ============================================================================
 /**
- * @brief Checks collision between two finite planes.
+ * @brief Check narrow collision between two finite planes and compute contact properties.
  *
  * Collision occurs if the associated infinite planes intersects (they are not parallel), and if the
  * intersection line passes through both rectangles' bounds.

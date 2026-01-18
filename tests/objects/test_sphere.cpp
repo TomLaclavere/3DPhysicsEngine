@@ -96,9 +96,44 @@ TEST(SphereTest, SphereCollision)
     EXPECT_TRUE(sphere.computeCollision(sphere_inside, contact));   // Overlapping
     EXPECT_FALSE(sphere.computeCollision(sphere_outside, contact)); // Not overlapping
     EXPECT_TRUE(sphere.computeCollision(sphereTouching, contact));  // Just touching
+
+    EXPECT_TRUE(sphere.checkCollision(sphere_inside));   // Overlapping
+    EXPECT_FALSE(sphere.checkCollision(sphere_outside)); // Not overlapping
+    EXPECT_TRUE(sphere.checkCollision(sphereTouching));  // Just touching
 }
 
-TEST(SphereTest, SpherePlaneCollision)
+TEST(SphereTest, BroadSpherePlaneCollision)
+{
+    Plane   plane(Vector3D(0_d, 0_d, 0_d), Vector3D(4_d, 4_d, 0_d), Vector3D(0_d, 0_d, 1_d));
+    Contact contact;
+
+    // Sphere intersecting the plane from the front
+    Sphere sphereIntersecting(Vector3D(0_d, 0_d, 0.5_d), 1_d); // Center at z=0.5, radius=1
+    EXPECT_TRUE(sphereIntersecting.checkCollision(plane));
+
+    // Sphere touching the edge from front side
+    Sphere sphereTouchingEdge(Vector3D(2_d, 0_d, 0.5_d), 1_d); // At right edge, intersecting in Z
+    EXPECT_TRUE(sphereTouchingEdge.checkCollision(plane));
+
+    // Sphere touching the corner from front side
+    Sphere sphereTouchingCorner(Vector3D(2_d, 2_d, 0.5_d), 1_d);
+    EXPECT_TRUE(sphereTouchingCorner.checkCollision(plane));
+
+    // Large sphere containing the entire plane
+    Sphere sphereContainingPlane(Vector3D(0_d, 0_d, 0_d), 5_d);
+    EXPECT_TRUE(sphereContainingPlane.checkCollision(plane));
+
+    // Zero-radius sphere exactly on plane surface within bounds
+    Sphere sphereZeroRadiusOnPlane(Vector3D(0_d, 0_d, 0_d), 0_d);
+    EXPECT_TRUE(sphereZeroRadiusOnPlane.checkCollision(plane));
+
+    // Test collisions which would be false in narrow phase
+    Sphere sphereSamePlan(Vector3D(7_d, 0_d, 0_d));
+    EXPECT_TRUE(sphereSamePlan.checkCollision(plane));
+    EXPECT_FALSE(sphereSamePlan.computeCollision(plane, contact));
+}
+
+TEST(SphereTest, NarrowSpherePlaneCollision)
 {
     Plane   plane(Vector3D(0_d, 0_d, 0_d), Vector3D(4_d, 4_d, 0_d), Vector3D(0_d, 0_d, 1_d));
     Contact contact;

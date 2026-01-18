@@ -1,4 +1,4 @@
-#include "narrow_collision.hpp"
+#include "collision/narrow_collision.hpp"
 
 #include "mathematics/common.hpp"
 
@@ -25,7 +25,7 @@ bool NarrowCollision::computeContact(const Sphere& s1, const Sphere& s2, Contact
     const decimal  dist2 = diff.getNormSquare();
     const decimal  rSum  = s1.getRadius() + s2.getRadius();
 
-    if (commonMaths::approxGreaterOrEqualThan(dist2, rSum * rSum))
+    if (commonMaths::approxGreaterThan(dist2, rSum * rSum))
     {
         return false;
     }
@@ -152,16 +152,17 @@ bool NarrowCollision::computeContact(const Sphere& sphere, const AABB& aabb, Con
  */
 bool NarrowCollision::computeContact(const Sphere& sphere, const Plane& plane, Contact& contact)
 {
-    Vector3D        n            = plane.getNormal();
-    const Vector3D& sphereCenter = sphere.getCenter();
-    const decimal   sphereRadius = sphere.getRadius();
+    Vector3D       n            = plane.getNormal();
+    const Vector3D sphereCenter = sphere.getCenter();
+    const decimal  sphereRadius = sphere.getRadius();
 
     // 1) Check distance using plane equation
     const Vector3D planeToSphere = sphereCenter - plane.getPosition();
     const decimal  signedDist    = planeToSphere.dotProduct(n);
 
     // Early exit: sphere completely behind or too far in front
-    if (signedDist < -sphereRadius || signedDist > sphereRadius)
+    if (commonMaths::approxSmallerThan(signedDist, -sphereRadius) ||
+        commonMaths::approxGreaterThan(signedDist, sphereRadius))
     {
         return false;
     }
@@ -177,7 +178,8 @@ bool NarrowCollision::computeContact(const Sphere& sphere, const Plane& plane, C
     const decimal effectiveHalfWidth  = plane.getHalfWidth() + sphereRadius;
     const decimal effectiveHalfHeight = plane.getHalfHeight() + sphereRadius;
 
-    if (commonMaths::absVal(s) > effectiveHalfWidth || commonMaths::absVal(t) > effectiveHalfHeight)
+    if (commonMaths::approxGreaterThan(commonMaths::absVal(s), effectiveHalfWidth) ||
+        commonMaths::approxGreaterThan(commonMaths::absVal(t), effectiveHalfHeight))
     {
         return false;
     }
@@ -191,7 +193,7 @@ bool NarrowCollision::computeContact(const Sphere& sphere, const Plane& plane, C
     const decimal  dist2        = delta.dotProduct(delta);
 
     // Collision if within radius
-    if (commonMaths::approxGreaterOrEqualThan(dist2, sphere.getRadius() * sphere.getRadius()))
+    if (commonMaths::approxGreaterThan(dist2, sphere.getRadius() * sphere.getRadius()))
         return false;
 
     decimal dist        = delta.getNorm();
@@ -225,18 +227,15 @@ bool NarrowCollision::computeContact(const AABB& a1, const AABB& a2, Contact& co
     // Check overlap on each axis
     const decimal overlapX = std::min(a1Max[0], a2Max[0]) - std::max(a1Min[0], a2Min[0]);
     if (commonMaths::approxSmallerThan(overlapX, 0_d))
-        ;
-    return false;
+        return false;
 
     const decimal overlapY = std::min(a1Max[1], a2Max[1]) - std::max(a1Min[1], a2Min[1]);
     if (commonMaths::approxSmallerThan(overlapY, 0_d))
-        ;
-    return false;
+        return false;
 
     const decimal overlapZ = std::min(a1Max[2], a2Max[2]) - std::max(a1Min[2], a2Min[2]);
     if (commonMaths::approxSmallerThan(overlapZ, 0_d))
-        ;
-    return false;
+        return false;
 
     // Penetration value and axis
     decimal  penetration = overlapX;
@@ -291,44 +290,42 @@ bool NarrowCollision::computeContact(const AABB& a1, const AABB& a2, Contact& co
  */
 bool NarrowCollision::computeContact(const AABB& aabb, const Plane& plane, Contact& contact)
 {
-    const Vector3D center      = aabb.getPosition();
-    const Vector3D halfExtents = aabb.getHalfExtents();
-    const Vector3D n           = plane.getNormal();
+    const Vector3D C = aabb.getPosition();
+    const Vector3D E = aabb.getHalfExtents();
 
-    // Projection
-    const decimal r = halfExtents[0] * commonMaths::absVal(n[0]) +
-                      halfExtents[1] * commonMaths::absVal(n[1]) + halfExtents[2] * commonMaths::absVal(n[2]);
+    const Vector3D N = plane.getNormal().getNormalised();
+    const Vector3D U = plane.getU().getNormalised();
+    const Vector3D V = plane.getV().getNormalised();
 
-    // Distance
-    const decimal distance = (center - plane.getPosition()).dotProduct(n);
+    // AABB vs infinite plane
+    const decimal r = E[0] * commonMaths::absVal(N[0]) + E[1] * commonMaths::absVal(N[1]) +
+                      E[2] * commonMaths::absVal(N[2]);
 
-    if (commonMaths::absVal(distance) > r)
+    const decimal dist = (C - plane.getPosition()).dotProduct(N);
+
+    if (commonMaths::approxGreaterThan(commonMaths::absVal(dist), r))
         return false;
 
-    // AABB closest pont to plane
-    Vector3D support = center;
-    support[0] -= halfExtents[0] * commonMaths::absVal(n[0]);
-    support[1] -= halfExtents[1] * commonMaths::absVal(n[1]);
-    support[2] -= halfExtents[2] * commonMaths::absVal(n[2]);
+    // Project AABB onto plane local axes
+    const Vector3D d = C - plane.getPosition();
 
-    // Projection on Plane
-    const decimal supportDist = (support - plane.getPosition()).dotProduct(n);
+    const decimal s0 = d.dotProduct(U);
+    const decimal t0 = d.dotProduct(V);
 
-    const Vector3D projected = support - supportDist * n;
+    const decimal rs = E[0] * commonMaths::absVal(U[0]) + E[1] * commonMaths::absVal(U[1]) +
+                       E[2] * commonMaths::absVal(U[2]);
 
-    // Test collision
-    const Vector3D local = projected - plane.getPosition();
-    const decimal  s     = local.dotProduct(plane.getU());
-    const decimal  t     = local.dotProduct(plane.getV());
+    const decimal rt = E[0] * commonMaths::absVal(V[0]) + E[1] * commonMaths::absVal(V[1]) +
+                       E[2] * commonMaths::absVal(V[2]);
 
-    if (commonMaths::approxGreaterThan(commonMaths::absVal(s), plane.getHalfWidth()) ||
-        commonMaths::approxGreaterThan(commonMaths::absVal(t), plane.getHalfHeight()))
+    if (commonMaths::approxGreaterThan(commonMaths::absVal(s0), plane.getHalfWidth() + rs) ||
+        commonMaths::approxGreaterThan(commonMaths::absVal(t0), plane.getHalfHeight() + rt))
         return false;
 
     // Contact
-    contact.normal      = commonMaths::approxSmallerThan(distance, 0_d) ? -n : n;
-    contact.penetration = r - commonMaths::absVal(distance);
-    contact.position    = projected;
+    contact.normal      = (dist < 0_d) ? -N : N;
+    contact.penetration = r - commonMaths::absVal(dist);
+    contact.position    = C - dist * N;
     contact.A           = &aabb;
     contact.B           = &plane;
 
@@ -353,98 +350,110 @@ bool NarrowCollision::computeContact(const Plane& p1, const Plane& p2, Contact& 
     const Vector3D n1 = p1.getNormal().getNormalised();
     const Vector3D n2 = p2.getNormal().getNormalised();
 
-    // Check parallel planes
-    const Vector3D cross       = n1.crossProduct(n2);
-    const decimal  crossNormSq = cross.getNormSquare();
+    const Vector3D dir  = n1.crossProduct(n2);
+    const decimal  dir2 = dir.getNormSquare();
 
-    if (commonMaths::approxEqual(crossNormSq, 0_d))
+    // Parallel / coplanar
+    if (commonMaths::approxEqual(dir2, 0_d))
     {
-        // Parallel planes
-        const decimal d1   = n1.dotProduct(p1.getPosition());
-        const decimal dist = commonMaths::absVal(n1.dotProduct(p2.getPosition()) - d1);
-
-        if (!commonMaths::approxEqual(dist, 0_d))
+        const decimal d = n1.dotProduct(p2.getPosition() - p1.getPosition());
+        if (!commonMaths::approxEqual(d, 0_d))
             return false;
 
-        // Coplanar: approximate contact at center of overlap
-        Vector3D center1    = p1.getPosition();
-        Vector3D center2    = p2.getPosition();
-        contact.position    = (center1 + center2) * 0.5_d;
-        contact.normal      = n2;
+        // Coplanar rectangles
+        auto corner = [](const Plane& P, int su, int sv)
+        {
+            return P.getPosition() + P.getU() * (su * P.getHalfWidth()) + P.getV() * (sv * P.getHalfHeight());
+        };
+
+        std::array<Vector3D, 4> A = { corner(p1, -1, -1), corner(p1, 1, -1), corner(p1, 1, 1),
+                                      corner(p1, -1, 1) };
+
+        std::array<Vector3D, 4> B = { corner(p2, -1, -1), corner(p2, 1, -1), corner(p2, 1, 1),
+                                      corner(p2, -1, 1) };
+
+        std::array<Vector3D, 4> axes = { p1.getU().getNormalised(), p1.getV().getNormalised(),
+                                         p2.getU().getNormalised(), p2.getV().getNormalised() };
+
+        auto project = [](const Vector3D& axis, const auto& verts)
+        {
+            decimal min = axis.dotProduct(verts[0]);
+            decimal max = min;
+            for (int i = 1; i < 4; ++i)
+            {
+                decimal v = axis.dotProduct(verts[i]);
+                min       = std::min(min, v);
+                max       = std::max(max, v);
+            }
+            return std::pair { min, max };
+        };
+
+        for (const Vector3D& axis : axes)
+        {
+            auto IA = project(axis, A);
+            auto IB = project(axis, B);
+
+            if (commonMaths::approxSmallerThan(IA.second, IB.first) ||
+                commonMaths::approxSmallerThan(IB.second, IA.first))
+                return false;
+        }
+
+        // overlap confirmed
+        contact.position    = (p1.getPosition() + p2.getPosition()) * 0.5_d;
+        contact.normal      = p1.getNormal().getNormalised();
         contact.penetration = 0_d;
         contact.A           = &p1;
         contact.B           = &p2;
         return true;
     }
 
-    // Non-parallel planes: compute intersection line
-    const Vector3D dir = cross;
-    const decimal  d1  = n1.dotProduct(p1.getPosition());
-    const decimal  d2  = n2.dotProduct(p2.getPosition());
+    // Intersection line
+    const decimal d1 = n1.dotProduct(p1.getPosition());
+    const decimal d2 = n2.dotProduct(p2.getPosition());
 
-    const Vector3D P0 = ((n2 * d1 - n1 * d2).crossProduct(cross)) / crossNormSq;
+    const Vector3D P0 = ((n2 * d1 - n1 * d2).crossProduct(dir)) / dir2;
 
-    // Compute intervals for both rectangles along the line
-    auto interval_for_rect = [&](const Plane& P) -> std::optional<std::pair<decimal, decimal>>
+    auto interval = [&](const Plane& P) -> std::optional<std::pair<decimal, decimal>>
     {
-        const Vector3D C     = P.getPosition();
-        const Vector3D u     = P.getU().getNormalised();
-        const Vector3D v     = P.getV().getNormalised();
-        const decimal  halfU = P.getHalfWidth();
-        const decimal  halfV = P.getHalfHeight();
+        const Vector3D C = P.getPosition();
+        const Vector3D u = P.getU().getNormalised();
+        const Vector3D v = P.getV().getNormalised();
 
-        decimal s0 = u.dotProduct(P0 - C);
-        decimal su = u.dotProduct(dir);
-        decimal t0 = v.dotProduct(P0 - C);
-        decimal sv = v.dotProduct(dir);
-
-        auto axis_interval = [&](decimal s0_, decimal su_,
-                                 decimal half) -> std::optional<std::pair<decimal, decimal>>
+        auto axis = [&](decimal s0, decimal s1, decimal h) -> std::optional<std::pair<decimal, decimal>>
         {
-            if (commonMaths::approxEqual(su_, 0_d))
-            {
-                if (commonMaths::approxSmallerOrEqualThan(commonMaths::absVal(s0_), half))
-                    return std::make_pair(-INFINITY, INFINITY);
-                else
-                    return std::nullopt;
-            }
-            decimal t1 = (-half - s0_) / su_;
-            decimal t2 = (half - s0_) / su_;
-            if (t1 > t2)
-                std::swap(t1, t2);
-            return std::make_pair(t1, t2);
+            if (commonMaths::approxEqual(s1, 0_d))
+                return commonMaths::absVal(s0) <= h ? std::optional { std::make_pair(-INFINITY, INFINITY) }
+                                                    : std::nullopt;
+
+            decimal a = (-h - s0) / s1;
+            decimal b = (h - s0) / s1;
+            if (a > b)
+                std::swap(a, b);
+            return std::make_pair(a, b);
         };
 
-        auto Iu = axis_interval(s0, su, halfU);
-        if (!Iu)
-            return std::nullopt;
-        auto Iv = axis_interval(t0, sv, halfV);
-        if (!Iv)
+        auto Iu = axis((P0 - C).dotProduct(u), dir.dotProduct(u), P.getHalfWidth());
+        auto Iv = axis((P0 - C).dotProduct(v), dir.dotProduct(v), P.getHalfHeight());
+        if (!Iu || !Iv)
             return std::nullopt;
 
-        decimal tmin = std::max(Iu->first, Iv->first);
-        decimal tmax = std::min(Iu->second, Iv->second);
-        if (commonMaths::approxGreaterThan(tmin, tmax))
-            return std::nullopt;
-        return std::make_pair(tmin, tmax);
+        return std::make_pair(std::max(Iu->first, Iv->first), std::min(Iu->second, Iv->second));
     };
 
-    auto I1 = interval_for_rect(p1);
-    auto I2 = interval_for_rect(p2);
+    auto I1 = interval(p1);
+    auto I2 = interval(p2);
     if (!I1 || !I2)
         return false;
 
-    decimal tmin = std::max(I1->first, I2->first);
-    decimal tmax = std::min(I1->second, I2->second);
-    if (commonMaths::approxGreaterThan(tmin, tmax))
+    const decimal t0 = std::max(I1->first, I2->first);
+    const decimal t1 = std::min(I1->second, I2->second);
+    if (commonMaths::approxGreaterThan(t0, t1))
         return false;
 
-    // Contact: midpoint of intersection segment
-    contact.position    = P0 + dir * ((tmin + tmax) * 0.5_d);
+    contact.position    = P0 + dir * ((t0 + t1) * 0.5_d);
     contact.normal      = n2;
     contact.penetration = 0_d;
     contact.A           = &p1;
     contact.B           = &p2;
-
     return true;
 }

@@ -1,6 +1,9 @@
 #pragma once
 
-#include "object.hpp"
+#include "mathematics/vector.hpp"
+
+// Forward declaration
+class Object;
 
 struct Contact
 {

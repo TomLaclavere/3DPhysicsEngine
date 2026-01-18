@@ -9,7 +9,7 @@
 #include "object.hpp"
 
 // Forward declaration
-struct AABB;
+struct Sphere;
 struct Plane;
 
 /**

@@ -2,8 +2,7 @@
 
 #include <algorithm>
 
-void positionCorrection(Object& A, Object& B, Contact& contact, decimal percent = 0.8_d,
-                        decimal slop = 0.01_d)
+void positionCorrection(Object& A, Object& B, Contact& contact, decimal percent, decimal slop)
 {
     if (contact.penetration <= slop)
         return;
@@ -20,7 +19,7 @@ void positionCorrection(Object& A, Object& B, Contact& contact, decimal percent 
     B.setPosition(B.getPosition() + correction * invMassB);
 }
 
-void reboundCollision(Object& A, Object& B, Contact& contact, decimal restitution = 0.5_d)
+void reboundCollision(Object& A, Object& B, Contact& contact, decimal restitution)
 {
     decimal invMassA = 1_d / A.getMass();
     decimal invMassB = 1_d / B.getMass();

@@ -87,25 +87,6 @@ public:
     /// @}
 
     // ============================================================================
-    /// @name Time step methods
-    // ============================================================================
-    /// @{
-
-    /// Semi-implicit Euler integrator for one object.
-    void integrateEuler(Object& obj, decimal dt);
-    /// Verlet integrator for one object.
-    void integrateVerlet(Object& obj, decimal dt);
-    /// Runge-Kutta 4 integrator for one object.
-    Derivative evaluateRK4(const Object& obj, const Derivative& d, decimal dt);
-    void       integrateRK4(Object& obj, decimal dt);
-    /// @brief Integrate all objects over one time step.
-    /// Resets accelerations, applies forces, and moves objects using semi-implicit Euler.
-    void integrate();
-    /// Run simulation over all iterations.
-    void run();
-    /// @}
-
-    // ============================================================================
     /// @name Force computation
     // ============================================================================
     /// @{
@@ -128,6 +109,27 @@ public:
     void computeAcceleration(Object& obj);
     /// Compute and apply all forces for the current physics step.
     void applyForces();
+    /// Solve collisions between objects.
+    void solveCollisions();
+    /// @}
+
+    // ============================================================================
+    /// @name Time step methods
+    // ============================================================================
+    /// @{
+
+    /// Semi-implicit Euler integrator for one object.
+    void integrateEuler(Object& obj, decimal dt);
+    /// Verlet integrator for one object.
+    void integrateVerlet(Object& obj, decimal dt);
+    /// Runge-Kutta 4 integrator for one object.
+    Derivative evaluateRK4(const Object& obj, const Derivative& d, decimal dt);
+    void       integrateRK4(Object& obj, decimal dt);
+    /// @brief Integrate all objects over one time step.
+    /// Resets accelerations, applies forces, and moves objects using semi-implicit Euler.
+    void integrate();
+    /// Run simulation over all iterations.
+    void run();
     /// @}
 
     // ============================================================================

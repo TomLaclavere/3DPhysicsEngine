@@ -112,22 +112,6 @@ void PhysicsWorld::applyContactForces(Object& obj, Object& other)
     if (!other.getIsFixed())
         other.addAcceleration(-totalForce / other.getMass());
 }
-void PhysicsWorld::avoidOverlap(Object& obj, Object& other)
-{
-    if (obj.getIsFixed() && other.getIsFixed() || !obj.checkCollision(other))
-        return;
-
-    if (!obj.getIsFixed())
-    {
-        obj.setAcceleration(Vector3D(0_d));
-        obj.setVelocity(Vector3D(0_d));
-    }
-    if (!other.getIsFixed())
-    {
-        other.setAcceleration(Vector3D(0_d));
-        other.setVelocity(Vector3D(0_d));
-    }
-}
 void PhysicsWorld::computeAcceleration(Object& obj)
 {
     // Reset Acceleration

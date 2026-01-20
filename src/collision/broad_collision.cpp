@@ -138,7 +138,6 @@ bool BroadCollision::isColliding(const AABB& aabb, const Plane& plane)
  *
  * Each plane is approximated by a bounding sphere whose radius is defined
  * as half of its maximal size.
-
  *
  * @param plane1
  * @param plane2
@@ -147,7 +146,6 @@ bool BroadCollision::isColliding(const AABB& aabb, const Plane& plane)
 bool BroadCollision::isColliding(const Plane& plane1, const Plane& plane2)
 {
     decimal dist = (plane1.getPosition() - plane2.getPosition()).getNorm();
-    return commonMaths::approxSmallerOrEqualThan(commonMaths::absVal(dist),
-                                                 (0.5 * plane1.getSize()).getMax()) +
-           (0.5 * plane2.getSize()).getMax();
+    return commonMaths::approxSmallerOrEqualThan(
+        commonMaths::absVal(dist), (0.5 * plane1.getSize()).getMax() + (0.5 * plane2.getSize()).getMax());
 }

@@ -103,8 +103,6 @@ public:
     void applyFrictionForces(Object& obj, Object& other);
     /// Apply contact forces (spring + damping + friction) between two objects.
     void applyContactForces(Object& obj, Object& other);
-    /// Stop overlapping objects by zeroing their velocity and acceleration.
-    void avoidOverlap(Object& obj, Object& other);
     /// Compute and apply all forces for the curent physics step on one Object.
     void computeAcceleration(Object& obj);
     /// Compute and apply all forces for the current physics step.

@@ -19,6 +19,16 @@ namespace commonMaths {
 /// @brief constexpr std::fabs function
 constexpr decimal absVal(decimal d) { return d < 0 ? -d : d; }
 
+/// constexpr sign function
+constexpr int sign(decimal d)
+{
+    if (d > 0_d)
+        return 1;
+    if (d < 0_d)
+        return -1;
+    return 0;
+}
+
 /**
  * @brief consexpr check for isFinite
  *

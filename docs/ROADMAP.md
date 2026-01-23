@@ -80,10 +80,8 @@
 -----------------------------------------------------------------------------------------------------------
 
 ## Phase 4: Collisions
-IMPORTANT: this is only brainstormed ideas, needs to be reorganised in the future !
-- [ ] **Brainstorm on ROADMAP**
-- [ ] **Brainstorm on To-Do-List**
 - [ ] **Collision Detection :**
+  - [ ] Implement simple collision model
   - [ ] **Broad-Phase :** BVH (large N) | Uniform Grid (Small N) | Sweep-and-Prune (medium N) -> researches needed
   - [ ] **Narrow Phase :**
     - [ ] Sphere - Plan

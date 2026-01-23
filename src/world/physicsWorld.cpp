@@ -1,5 +1,6 @@
 #include "world/physicsWorld.hpp"
 
+#include "collision/collision_response.hpp"
 #include "mathematics/math_io.hpp"
 #include "world/integrateRK4.hpp"
 #include "world/physics.hpp"
@@ -55,6 +56,137 @@ void PhysicsWorld::initialize()
     timeStep   = config.getTimeStep();
     gravityCst = config.getGravity();
     gravityAcc = Physics::computeGravityAcc(gravityCst);
+}
+
+// ============================================================================
+//  Force application
+// ============================================================================
+void PhysicsWorld::applyGravityForce(Object& obj)
+{
+    if (!obj.getIsFixed())
+        obj.addAcceleration(gravityAcc);
+}
+void PhysicsWorld::applyGravityForces()
+{
+    {
+        for (auto* obj : objects)
+            applyGravityForce(*obj);
+    }
+}
+void PhysicsWorld::applySpringForces(Object& obj, Object& other)
+{
+    if (!obj.getIsFixed())
+    {
+        Vector3D springForce = Physics::computeSpringForce(obj, other);
+        obj.addAcceleration(springForce / obj.getMass());
+    }
+}
+void PhysicsWorld::applyDamplingForces(Object& obj, Object& other)
+{
+    if (!obj.getIsFixed())
+    {
+        Vector3D dampingForce = Physics::computeDampingForce(obj, other);
+        obj.addAcceleration(dampingForce / obj.getMass());
+    }
+}
+void PhysicsWorld::applyFrictionForces(Object& obj, Object& other)
+{
+    if (!obj.getIsFixed())
+    {
+        Vector3D frictionForce = Physics::computeFrictionForce(obj, other);
+        obj.addAcceleration(frictionForce / obj.getMass());
+    }
+}
+void PhysicsWorld::applyContactForces(Object& obj, Object& other)
+{
+    if (obj.getIsFixed() && other.getIsFixed())
+        return;
+
+    Vector3D springForce   = Physics::computeSpringForce(obj, other);
+    Vector3D dampingForce  = Physics::computeDampingForce(obj, other);
+    Vector3D frictionForce = Physics::computeFrictionForce(obj, other);
+    Vector3D totalForce    = springForce + dampingForce + frictionForce;
+
+    if (!obj.getIsFixed())
+        obj.addAcceleration(totalForce / obj.getMass());
+    if (!other.getIsFixed())
+        other.addAcceleration(-totalForce / other.getMass());
+}
+void PhysicsWorld::computeAcceleration(Object& obj)
+{
+    // Reset Acceleration
+    obj.setAcceleration(Vector3D(0_d));
+
+    // Apply gravity
+    applyGravityForce(obj);
+
+    // Contact forces
+    for (auto* other : objects)
+    {
+        if (!other || other == &obj)
+            continue;
+
+        if (obj.checkCollision(*other))
+        {
+            applyContactForces(obj, *other);
+        }
+    }
+}
+void PhysicsWorld::applyForces()
+{
+    // 1. Gravity (applies to all objects)
+    applyGravityForces();
+
+    // 2. Contact forces (between object pairs)
+    const size_t n = objects.size();
+    for (size_t i = 0; i < n; ++i)
+    {
+        Object* obj1 = objects[i];
+        if (!obj1)
+            continue;
+
+        for (size_t j = i + 1; j < n; ++j)
+        {
+            Object* obj2 = objects[j];
+            if (!obj2)
+                continue;
+
+            // Only apply contact forces if objects are colliding
+            if (obj1->checkCollision(*obj2))
+            {
+                applyContactForces(*obj1, *obj2);
+            }
+        }
+    }
+}
+
+void PhysicsWorld::solveCollisions()
+{
+    const size_t n = objects.size();
+    Contact      contact;
+
+    for (size_t i = 0; i < n; ++i)
+    {
+        Object* A = objects[i];
+        if (!A)
+            continue;
+
+        for (size_t j = i + 1; j < n; ++j)
+        {
+            Object* B = objects[j];
+            if (!B)
+                continue;
+
+            // Broad phase
+            bool isColliding = A->computeCollision(*B, contact);
+
+            // Narrow phase
+            if (isColliding)
+            {
+                reboundCollision(*A, *B, contact);
+            }
+        }
+    }
 }
 
 // ============================================================================
@@ -122,6 +254,7 @@ void PhysicsWorld::integrateRK4(Object& obj, decimal dt)
     obj.setPosition(obj.getPosition() + dxdt * dt);
     obj.setVelocity(obj.getVelocity() + dvdt * dt);
 }
+
 void PhysicsWorld::integrate()
 {
     if (!isRunning)
@@ -135,16 +268,15 @@ void PhysicsWorld::integrate()
     // Reset accelerations
     for (auto* obj : objects)
     {
-        if (obj || !obj->isFixed())
-        {
-            obj->setAcceleration(Vector3D(0_d));
-        }
+        if (!obj || obj->isFixed())
+            continue;
+        obj->setAcceleration(Vector3D(0_d));
     }
 
-    // Compute all forces
-    applyForces();
+    // Compute gravity forces
+    applyGravityForces();
 
-    // Integrate movable objects
+    // Integrate motion
     for (auto* obj : objects)
     {
         if (!obj || obj->isFixed())
@@ -166,7 +298,11 @@ void PhysicsWorld::integrate()
             break;
         }
     }
+
+    // Collision resolution
+    solveCollisions();
 }
+
 void PhysicsWorld::run()
 {
     const decimal timeStep = config.getTimeStep();
@@ -211,126 +347,6 @@ void PhysicsWorld::run()
                 std::cout << std::string(n, '-') << '\n';
             }
             cpt++;
-        }
-    }
-}
-
-// ============================================================================
-//  Force application
-// ============================================================================
-void PhysicsWorld::applyGravityForce(Object& obj)
-{
-    if (&obj && !obj.getIsFixed())
-        obj.addAcceleration(gravityAcc);
-}
-void PhysicsWorld::applyGravityForces()
-{
-    {
-        for (auto* obj : objects)
-            applyGravityForce(*obj);
-    }
-}
-void PhysicsWorld::applySpringForces(Object& obj, Object& other)
-{
-    if (!obj.getIsFixed())
-    {
-        Vector3D springForce = Physics::computeSpringForce(obj, other);
-        obj.addAcceleration(springForce / obj.getMass());
-    }
-}
-void PhysicsWorld::applyDamplingForces(Object& obj, Object& other)
-{
-    if (!obj.getIsFixed())
-    {
-        Vector3D dampingForce = Physics::computeDampingForce(obj, other);
-        obj.addAcceleration(dampingForce / obj.getMass());
-    }
-}
-void PhysicsWorld::applyFrictionForces(Object& obj, Object& other)
-{
-    if (!obj.getIsFixed())
-    {
-        Vector3D frictionForce = Physics::computeFrictionForce(obj, other);
-        obj.addAcceleration(frictionForce / obj.getMass());
-    }
-}
-void PhysicsWorld::applyContactForces(Object& obj, Object& other)
-{
-    if (obj.getIsFixed() && other.getIsFixed())
-        return;
-
-    Vector3D springForce   = Physics::computeSpringForce(obj, other);
-    Vector3D dampingForce  = Physics::computeDampingForce(obj, other);
-    Vector3D frictionForce = Physics::computeFrictionForce(obj, other);
-    Vector3D totalForce    = springForce + dampingForce + frictionForce;
-
-    if (!obj.getIsFixed())
-        obj.addAcceleration(totalForce / obj.getMass());
-    if (!other.getIsFixed())
-        other.addAcceleration(-totalForce / other.getMass());
-}
-void PhysicsWorld::avoidOverlap(Object& obj, Object& other)
-{
-    if (obj.getIsFixed() && other.getIsFixed() || !obj.checkCollision(other))
-        return;
-
-    if (!obj.getIsFixed())
-    {
-        obj.setAcceleration(Vector3D(0_d));
-        obj.setVelocity(Vector3D(0_d));
-    }
-    if (!other.getIsFixed())
-    {
-        other.setAcceleration(Vector3D(0_d));
-        other.setVelocity(Vector3D(0_d));
-    }
-}
-void PhysicsWorld::computeAcceleration(Object& obj)
-{
-    // Reset Acceleration
-    obj.setAcceleration(Vector3D(0_d));
-
-    // Apply gravity
-    applyGravityForce(obj);
-
-    // Contact forces
-    for (auto* other : objects)
-    {
-        if (!other || other == &obj)
-            continue;
-
-        if (obj.checkCollision(*other))
-        {
-            // TODO applyContactForces(obj, *other)
-            avoidOverlap(obj, *other);
-        }
-    }
-}
-void PhysicsWorld::applyForces()
-{
-    // 1. Gravity (applies to all objects)
-    applyGravityForces();
-
-    // 2. Contact forces (between object pairs)
-    const size_t n = objects.size();
-    for (size_t i = 0; i < n; ++i)
-    {
-        Object* obj1 = objects[i];
-        if (!obj1)
-            continue;
-
-        for (size_t j = i + 1; j < n; ++j)
-        {
-            Object* obj2 = objects[j];
-            if (!obj2)
-                continue;
-
-            // Only apply contact forces if objects are colliding
-            if (obj1->checkCollision(*obj2))
-            {
-                // TODO applyContactForces(*obj1, *obj2);
-                avoidOverlap(*obj1, *obj2);
-            }
         }
     }
 }

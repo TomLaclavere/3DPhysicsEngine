@@ -13,7 +13,8 @@
  */
 #include "objects/aabb.hpp"
 
-#include "objects/collision.hpp"
+#include "collision/broad_collision.hpp"
+#include "collision/narrow_collision.hpp"
 
 // ============================================================================
 //  Constructors / Destructors
@@ -50,57 +51,78 @@ Vector3D   AABB::getMax() const { return getPosition() + getHalfExtents(); }
 //  Collision
 // ============================================================================
 /**
- * @brief Checks collision between two aabb.
- *
- * Collision occurs if they overlap on each axis simultaneously.
- *
- * @param aabb AABB to test against.
- * @return true if the AABBs intersect, false otherwise.
+ * @brief Checks broad collision between two aabb.
  */
-bool AABB::aabbCollision(const AABB& aabb) { return Collision::collide(*this, aabb); }
+bool AABB::checkAABBCollision(const AABB& aabb) { return BroadCollision::isColliding(*this, aabb); }
 
 /**
- * @brief Checks collision between an aabb and a sphere.
- *
- * Collision occurs if the sphere's center-to-plane distance is smaller than the sphere radius, and if the
- * projection of the sphere center onto the plane lies within its rectangle bounds.
- *
- * @param sphere Sphere to test against.
- * @return true if the AABB and the Sphere intersect, false otherwise.
+ * @brief Checks broad collision between an aabb and a sphere.
  */
-bool AABB::aabbSphereCollision(const Sphere& sphere) { return Collision::collide(*this, sphere); }
+bool AABB::checkAABBSphereCollision(const Sphere& sphere)
+{
+    return BroadCollision::isColliding(*this, sphere);
+}
 
 /**
- * @brief Checks collision between an aabb and a finite plane.
- *
- * Collision occurs if the signed distance from the AABB to the plane is less than or equal to the projection
- * radius of the AABB onto the plane normal.
- *
- * @param plane Plane to test against.
- * @return true if the AABB and the Plane intersect, false otherwise.
+ * @brief Checks broad collision between an aabb and a finite plane.
  */
-bool AABB::aabbPlaneCollision(const Plane& plane) { return Collision::collide(*this, plane); }
+bool AABB::checkAABBPlaneCollision(const Plane& plane) { return BroadCollision::isColliding(*this, plane); }
 
 /**
- * @brief Polymorphic collision detection against another Object.
- *
- * Dispatches to the appropriate collision method depending on the type of
- * the other object.
- * Only collision between Sphere, AABB, and Plane are implemented.
- *
- * @param other Object to test against.
- * @return true if a collision is detected, false otherwise.
+ * @brief Polymorphic broad collision detection against another Object.
  */
 bool AABB::checkCollision(const Object& other)
 {
     switch (other.getType())
     {
     case ObjectType::AABB:
-        return AABB::aabbCollision(static_cast<const AABB&>(other));
+        return AABB::checkAABBCollision(static_cast<const AABB&>(other));
     case ObjectType::Sphere:
-        return AABB::aabbSphereCollision(static_cast<const Sphere&>(other));
+        return AABB::checkAABBSphereCollision(static_cast<const Sphere&>(other));
     case ObjectType::Plane:
-        return AABB::aabbPlaneCollision(static_cast<const Plane&>(other));
+        return AABB::checkAABBPlaneCollision(static_cast<const Plane&>(other));
+    default:
+        return false;
+    }
+}
+
+/**
+ * @brief Checks narrow collision between two aabb.
+ */
+bool AABB::computeAABBCollision(const AABB& aabb, Contact& contact)
+{
+    return NarrowCollision::computeContact(*this, aabb, contact);
+}
+
+/**
+ * @brief Checks narrow collision between an aabb and a sphere.
+ */
+bool AABB::computeAABBSphereCollision(const Sphere& sphere, Contact& contact)
+{
+    return NarrowCollision::computeContact(*this, sphere, contact);
+}
+
+/**
+ * @brief Checks narrow collision between an aabb and a finite plane.
+ */
+bool AABB::computeAABBPlaneCollision(const Plane& plane, Contact& contact)
+{
+    return NarrowCollision::computeContact(*this, plane, contact);
+}
+
+/**
+ * @brief Polymorphic narrow collision detection against another Object.
+ */
+bool AABB::computeCollision(const Object& other, Contact& contact)
+{
+    switch (other.getType())
+    {
+    case ObjectType::AABB:
+        return AABB::computeAABBCollision(static_cast<const AABB&>(other), contact);
+    case ObjectType::Sphere:
+        return AABB::computeAABBSphereCollision(static_cast<const Sphere&>(other), contact);
+    case ObjectType::Plane:
+        return AABB::computeAABBPlaneCollision(static_cast<const Plane&>(other), contact);
     default:
         return false;
     }

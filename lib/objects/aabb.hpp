@@ -58,13 +58,22 @@ public:
     // ============================================================================
     /// @{
 
-    /// Check collision between two AABBs.
-    bool aabbCollision(const AABB& aabb);
-    /// Check collision between an AABB and a Sphere.
-    bool aabbSphereCollision(const Sphere& sphere);
-    /// Check collisoin between an AABB and a Plane
-    bool aabbPlaneCollision(const Plane& plane);
-    /// Check collision with another Object.
+    /// Check broad collision between two AABBs.
+    bool checkAABBCollision(const AABB& aabb);
+    /// Check broad collision between a AABB and an Sphere.
+    bool checkAABBSphereCollision(const Sphere& sphere);
+    /// Check broad collision between a AABB and a Plane
+    bool checkAABBPlaneCollision(const Plane& plane);
+    /// Check broad collision with another Object.
     virtual bool checkCollision(const Object& other) override;
+
+    /// Check narrow collision between two AABBs.
+    bool computeAABBCollision(const AABB& aabb, Contact& contact);
+    /// Check narrow collision between a AABB and an AABB.
+    bool computeAABBSphereCollision(const Sphere& sphere, Contact& contact);
+    /// Check narrow collision between a AABB and a Plane.
+    bool computeAABBPlaneCollision(const Plane& plane, Contact& contact);
+    /// Check narrow collision with another Object.
+    virtual bool computeCollision(const Object& other, Contact& contact) override;
     /// @}
 };

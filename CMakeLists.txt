@@ -73,8 +73,13 @@ set(ENGINE_OBJECT_SOURCES
     src/objects/aabb.cpp
     src/objects/sphere.cpp
     src/objects/plane.cpp
-    src/objects/collision.cpp
 )
+
+set(ENGINE_COLLISION_SOURCES
+    src/collision/broad_collision.cpp
+    src/collision/narrow_collision.cpp
+    src/collision/collision_response.cpp
+    )
 
 set(ENGINE_UTILITIES_SOURCE
     src/utilities/timer.cpp
@@ -94,6 +99,7 @@ set(ENGINE_ALL_SOURCES
     ${ENGINE_CORE_SOURCES}
     ${ENGINE_MATH_SOURCES}
     ${ENGINE_OBJECT_SOURCES}
+    ${ENGINE_COLLISION_SOURCES}
     ${ENGINE_UTILITIES_SOURCE}
     ${ENGINE_WORLD_SOURCES}
     ${ENGINE_EXTERNAL_SOURCES}

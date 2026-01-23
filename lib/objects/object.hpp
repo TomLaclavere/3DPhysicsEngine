@@ -7,6 +7,7 @@
  * It serves as a base class for specific object types like Sphere, AABB, and Plane.
  */
 #pragma once
+#include "collision/contact.hpp"
 #include "mathematics/vector.hpp"
 #include "ostream"
 
@@ -162,9 +163,16 @@ public:
     // ============================================================================
     /// @{
 
-    /// @brief Check for collision with another object.
-    /// This is a pure virtual functions that must be implemented by derived classes.
+    /**
+     * @brief Quick check for collision with another object (Broad Phase).
+     *  This is a pure virtual functions that must be implemented by derived classes.
+     */
     virtual bool checkCollision(const Object& other) { return false; }
+    /**
+     * @brief Advanced check for collision with another object (Narrow Phase).
+     *  This is a pure virtual functions that must be implemented by derived classes.
+     */
+    virtual bool computeCollision(const Object& other, Contact& contact) { return false; }
     /// @}
 };
 

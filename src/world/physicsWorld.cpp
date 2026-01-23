@@ -63,7 +63,7 @@ void PhysicsWorld::initialize()
 // ============================================================================
 void PhysicsWorld::applyGravityForce(Object& obj)
 {
-    if (&obj && !obj.getIsFixed())
+    if (!obj.getIsFixed())
         obj.addAcceleration(gravityAcc);
 }
 void PhysicsWorld::applyGravityForces()

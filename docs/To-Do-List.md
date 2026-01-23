@@ -7,6 +7,7 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 - [ ] Fix Rebound during integration
 - [ ] Modify rebound by contact forces (currently : dead functions)
 - [ ] Adjust examples with contact forces
+- [ ] Add examples in unit tests ? 
 
 ## Code Quality and Maintenance
 

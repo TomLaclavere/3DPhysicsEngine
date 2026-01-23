@@ -70,6 +70,32 @@ public:
     // ============================================================================
     /// @{
 
+    /// Return max element of the vector
+    constexpr decimal getMax() const noexcept
+    {
+        decimal maxVal = v[0];
+        for (int i = 1; i < 3; i++)
+        {
+            if (v[i] > maxVal)
+            {
+                maxVal = v[i];
+            }
+        }
+        return maxVal;
+    }
+    /// Return min element of the vector
+    constexpr decimal getMin() const noexcept
+    {
+        decimal minVal = v[0];
+        for (int i = 1; i < 3; i++)
+        {
+            if (v[i] < minVal)
+            {
+                minVal = v[i];
+            }
+        }
+        return minVal;
+    }
     /// Convert each element to its absolute value (in-place).
     constexpr void absolute() noexcept
     {

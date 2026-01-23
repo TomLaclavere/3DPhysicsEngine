@@ -21,7 +21,7 @@ struct AABB;
  * Plane is defined by its position (center), its normal direction, and the size along
  * the two tangent axis computed from normal direction.
  *
- * The Plane supports collision detection with other Planes, Planes, and AABBs.
+ * The Plane supports collision detection with other Planes, Spheres, and AABBs.
  */
 struct Plane : public Object
 {

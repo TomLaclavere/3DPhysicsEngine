@@ -73,7 +73,7 @@ public:
     /// Return max element of the vector
     constexpr decimal getMax() const noexcept
     {
-        int maxVal = v[0];
+        decimal maxVal = v[0];
         for (int i = 1; i < 3; i++)
         {
             if (v[i] > maxVal)
@@ -86,7 +86,7 @@ public:
     /// Return min element of the vector
     constexpr decimal getMin() const noexcept
     {
-        int minVal = v[0];
+        decimal minVal = v[0];
         for (int i = 1; i < 3; i++)
         {
             if (v[i] < minVal)

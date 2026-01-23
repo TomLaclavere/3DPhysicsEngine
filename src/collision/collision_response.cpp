@@ -6,6 +6,12 @@ void positionCorrection(Object& A, Object& B, Contact& contact, decimal percent,
 {
     if (contact.penetration <= slop)
         return;
+
+    auto invMassA = A.getMass() > 0_d ? 1_d / A.getMass() : 0_d;
+    auto invMassB = B.getMass() > 0_d ? 1_d / B.getMass() : 0_d;
+    if (invMassA + invMassB <= 0_d)
+        return;
+
     decimal invMassA   = 1_d / A.getMass();
     decimal invMassB   = 1_d / B.getMass();
     decimal invMassSum = invMassA + invMassB;

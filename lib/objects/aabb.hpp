@@ -19,7 +19,7 @@ struct Plane;
  * Inherits from @ref Object and represents a box aligned with the X, Y, Z axes.
  * An AABB is defined by its center position and size (width, height, depth).
  *
- * The AABB supports collision detection with other AABBs, AABBs, and Planes.
+ * The AABB supports collision detection with other AABBs, Spheres, and Planes.
  */
 struct AABB : public Object
 {

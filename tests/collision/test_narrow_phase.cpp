@@ -125,7 +125,7 @@ TEST(SphereTest, NarrowSpherePlaneCollision)
 
     // Sphere outside plane bounds in X direction
     Sphere sphereOutsideX(Vector3D(3_d, 0_d, 0.5_d), 1_d); // Too far right
-    EXPECT_FALSE(sphereOutsideX.computeCollision(plane, contact));
+    EXPECT_FALSE(plane.computeCollision(sphereOutsideX, contact));
     EXPECT_FALSE(sphereOutsideX.computeCollision(plane, contact));
 
     // Sphere outside plane bounds in Y direction

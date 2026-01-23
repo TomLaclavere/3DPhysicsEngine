@@ -42,7 +42,7 @@ jobs:
         run: ctest --test-dir build --output-on-failure -j$(nproc)
 
       - name: Generate coverage report
-        run: gcovr -r build --lcov --output build/coverage.info
+        run: gcovr --root . --object-directory build --lcov --output build/coverage.info
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4

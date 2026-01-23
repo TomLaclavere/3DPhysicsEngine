@@ -41,6 +41,14 @@ jobs:
       - name: Run tests
         run: ctest --test-dir build --output-on-failure -j$(nproc)
 
+      - name: Generate coverage report
+        run: gcovr --root . --object-directory build --lcov --output build/coverage.info
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: build/coverage.info
+
   generate-docs:
     runs-on: ubuntu-latest
     needs: build

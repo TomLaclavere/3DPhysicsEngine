@@ -12,8 +12,6 @@ void positionCorrection(Object& A, Object& B, Contact& contact, decimal percent,
     if (invMassA + invMassB <= 0_d)
         return;
 
-    decimal invMassA   = 1_d / A.getMass();
-    decimal invMassB   = 1_d / B.getMass();
     decimal invMassSum = invMassA + invMassB;
     if (invMassSum <= 0_d)
         return;

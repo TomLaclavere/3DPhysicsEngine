@@ -2,6 +2,7 @@
 
 [![CMake](https://img.shields.io/badge/CMake-3.22.1-064f8d?logo=cmake)](https://cmake.org/)
 [![GitHub Actions](https://img.shields.io/github/actions/workflow/status/tomlaclavere/3DPhysicsEngine/ci.yml?branch=main&logo=githubactions)](https://github.com/tomlaclavere/3DPhysicsEngine/actions)
+[![Codecov](https://img.shields.io/codecov/c/gh/tomlaclavere/3DPhysicsEngine?logo=codecov)](https://codecov.io/gh/tomlaclavere/3DPhysicsEngine)
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue?logo=readthedocs)](https://tomlaclavere.github.io/3DPhysicsEngine/)
 [![License](https://img.shields.io/badge/license-AGPL%203.0-green)](LICENSE)
 [![C++](https://img.shields.io/badge/C++-23-blue?logo=c%2B%2B)](https://isocpp.org/)
@@ -18,6 +19,14 @@ While initially a personal research and engineering project, the codebase is des
 Contributions are welcome. Please read CONTRIBUTING.md and CLA.md before submitting a pull request.
 
 ---
+
+## Table of Contents
+ - [How to build and run](#how-to-build-and-run)
+ - [Developer scripts](#developer-scripts)
+ - [Doxygen Documentation](#doxygen-documentation)
+ - [Tech Stack](#tech-stack)
+ - [Deliverables](#deliverables)
+ - [License](#license)
 
 ## How to build and run
 
@@ -41,8 +50,8 @@ For convenience, bash scripts can be used to run common tasks : build, run, test
 ```
 scripts/
 ├─ build.sh        # configure & build with CMake
-├─ run_app.sh      # build (if needed) and run the executable
-├─ run_tests.sh    # build (if needed) and run tests via CTest
+├─ run.sh          # build (if needed) and run the executable
+├─ tests.sh        # build (if needed) and run tests via CTest
 ├─ coverage.sh     # build+generate coverage (html or console)
 └─ clean.sh        # remove the build directory
 ```

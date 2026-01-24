@@ -101,7 +101,7 @@ Vector3D operator/(const Vector3D& lhs, const Vector3D& rhs)
     if (commonMaths::approxEqual(rhs[0], decimal(0)) || commonMaths::approxEqual(rhs[1], decimal(0)) ||
         commonMaths::approxEqual(rhs[2], decimal(0)))
         throw std::invalid_argument("Division by zero");
-    return applyVector(lhs, rhs, std::divides<decimal>());
+    return applyVector(lhs, rhs, std::divides());
 }
 
 // Vector3D op decimal
@@ -109,7 +109,7 @@ Vector3D operator/(const Vector3D& lhs, decimal rhs)
 {
     if (commonMaths::approxEqual(rhs, decimal(0)))
         throw std::invalid_argument("Division by zero");
-    return applyVector(lhs, rhs, std::divides<decimal>());
+    return applyVector(lhs, rhs, std::divides());
 }
 
 // Decimal op Vector3D
@@ -119,7 +119,7 @@ Vector3D operator/(decimal lhs, const Vector3D& rhs)
     if (commonMaths::approxEqual(rhs[0], decimal(0)) || commonMaths::approxEqual(rhs[1], decimal(0)) ||
         commonMaths::approxEqual(rhs[2], decimal(0)))
         throw std::invalid_argument("Division by zero");
-    return applyVector(lhs, rhs, std::divides<decimal>());
+    return applyVector(lhs, rhs, std::divides());
 }
 
 // ============================================================================

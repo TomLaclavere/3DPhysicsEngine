@@ -60,13 +60,13 @@ Vector3D Matrix3x3::getRow(std::size_t index) const
 {
     if (index >= 3)
         throw std::out_of_range("Matrix3x3 index out of range");
-    return Vector3D(m[index * 3], m[index * 3 + 1], m[index * 3 + 2]);
+    return { m[index * 3], m[index * 3 + 1], m[index * 3 + 2] };
 }
 Vector3D Matrix3x3::getColumn(std::size_t index) const
 {
     if (index >= 3)
         throw std::out_of_range("Matrix3x3 index out of range");
-    return Vector3D(m[index], m[index + 3], m[index + 6]);
+    return { m[index], m[index + 3], m[index + 6] };
 }
 
 // ============================================================================
@@ -134,7 +134,7 @@ Matrix3x3 Matrix3x3::getIdentity() const
 }
 Matrix3x3 Matrix3x3::getAbsolute() const
 {
-    Matrix3x3 normalisedM = Matrix3x3((*this));
+    Matrix3x3 normalisedM { Matrix3x3((*this)) };
     normalisedM.absolute();
     return normalisedM;
 }
@@ -146,13 +146,13 @@ Matrix3x3 Matrix3x3::getNormalised() const
 }
 Matrix3x3 Matrix3x3::getTranspose() const
 {
-    Matrix3x3 transposeM = Matrix3x3((*this));
+    Matrix3x3 transposeM { Matrix3x3((*this)) };
     transposeM.transpose();
     return transposeM;
 }
 Matrix3x3 Matrix3x3::getInverse() const
 {
-    Matrix3x3 inverseM = Matrix3x3((*this));
+    Matrix3x3 inverseM { Matrix3x3((*this)) };
     inverseM.inverse();
     return inverseM;
 }

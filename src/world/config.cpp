@@ -2,7 +2,6 @@
 #include "world/config.hpp"
 
 #include <iostream>
-#include <stdexcept>
 #include <yaml-cpp/yaml.h>
 
 // ============================================================================
@@ -41,7 +40,7 @@ void Config::loadFromFile(const std::string& path)
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Error loading config file: " << e.what() << std::endl;
+        std::cerr << "Error loading config file: " << e.what() << "\n";
         throw;
     }
 }

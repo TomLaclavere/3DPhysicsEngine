@@ -4,12 +4,12 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 ## General Tasks
 
-- [ ] Fix coverage badge (Codecov)
-- [ ] Look at sanitizers for CI
+- [ ] Look at tools for CI
   - [ ] ASAN
   - [ ] UBSAN
 - [ ] Look at Static Analysis tools
   - [ ] clang-tidy
+   - [ ] Correct warnings from clang-tidy
   - [ ] cppcheck
 - [ ] Fix Rebound during integration
 - [ ] Modify rebound by contact forces (currently : dead functions)

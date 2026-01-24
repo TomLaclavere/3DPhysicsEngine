@@ -151,7 +151,7 @@ public:
     /// Check broad collision between a Plane and a Plane
     bool checkPlaneSphereCollision(const Sphere& sphere);
     /// Check broad collision with another Object.
-    virtual bool checkCollision(const Object& other) override;
+    bool checkCollision(const Object& other) override;
 
     /// Check narrow collision between two Planes.
     bool computePlaneCollision(const Plane& Plane, Contact& contact);
@@ -160,6 +160,6 @@ public:
     /// Check narrow collision between a Plane and a Plane.
     bool computePlaneSphereCollision(const Sphere& sphere, Contact& contact);
     /// Check narrow collision with another Object.
-    virtual bool computeCollision(const Object& other, Contact& contact) override;
+    bool computeCollision(const Object& other, Contact& contact) override;
     /// @}
 };

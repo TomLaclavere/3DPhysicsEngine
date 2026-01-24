@@ -327,7 +327,7 @@ void PhysicsWorld::run()
 
     while (cpt < maxIter + 1 && getIsRunning())
     {
-        const decimal time = cpt * timeStep;
+        const decimal time = static_cast<decimal>(cpt) * timeStep;
 
         integrate();
 

@@ -41,6 +41,9 @@ CMake takes multiple parameters to define different compilations :
 - `-D3DPE_BUILD_EXAMPLES` : compiles the unit example repository. To run an example, the executables are accessible at : `./build/examples/`.
 - `-D3DPE_BUILD_TESTS` : compiles the unit testing repository. To run the test, you can use : `ctest -j$(nproc)`.
 - `-D3DPE_ENABLE_COVERAGE` : allows performing coverage analysis. Two options are available, to run after build : `make coverage` which will save a detailed coverage reports as HTML file at the following location : `build/coverage_report/`; and `make coverage-console` to print the results in the console. Be careful: `gcovr` needs to be installed for GCC compilation.
+- `-D3DPE_BUILD_BENCHMARKS` : compiles the benchmark repository. To run benchmarks, the executables are accessible at : `./build/benchmarks/` : NOT IMPLEMENTED YET.
+- `-D3DPE_ENABLE_CLANG_TIDY` : enables static analysis with clang-tidy during the build. Clang-tidy must be installed on the system. By default, it is enabled.
+- `-D3DPE_WARNINGS_AS_ERRORS` : treats all compiler warnings as errors. By default, it is enabled.
 
 ## Developer scripts
 

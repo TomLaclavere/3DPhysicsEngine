@@ -364,16 +364,16 @@ bool NarrowCollision::computeContact(const Plane& p1, const Plane& p2, Contact& 
             return false;
 
         // Coplanar rectangles
-        auto corner = [](const Plane& P, int su, int sv)
+        auto corner = [](const Plane& P, decimal su, decimal sv)
         {
             return P.getPosition() + P.getU() * (su * P.getHalfWidth()) + P.getV() * (sv * P.getHalfHeight());
         };
 
-        std::array<Vector3D, 4> A = { corner(p1, -1, -1), corner(p1, 1, -1), corner(p1, 1, 1),
-                                      corner(p1, -1, 1) };
+        std::array<Vector3D, 4> A = { corner(p1, -1_d, -1_d), corner(p1, 1_d, -1_d), corner(p1, 1_d, 1_d),
+                                      corner(p1, -1_d, 1_d) };
 
-        std::array<Vector3D, 4> B = { corner(p2, -1, -1), corner(p2, 1, -1), corner(p2, 1, 1),
-                                      corner(p2, -1, 1) };
+        std::array<Vector3D, 4> B = { corner(p2, -1_d, -1_d), corner(p2, 1_d, -1_d), corner(p2, 1_d, 1_d),
+                                      corner(p2, -1_d, 1_d) };
 
         std::array<Vector3D, 4> axes = { p1.getU().getNormalised(), p1.getV().getNormalised(),
                                          p2.getU().getNormalised(), p2.getV().getNormalised() };
@@ -382,7 +382,7 @@ bool NarrowCollision::computeContact(const Plane& p1, const Plane& p2, Contact& 
         {
             decimal min = axis.dotProduct(verts[0]);
             decimal max = min;
-            for (int i = 1; i < 4; ++i)
+            for (std::size_t i = 1; i < 4; ++i)
             {
                 decimal v = axis.dotProduct(verts[i]);
                 min       = std::min(min, v);

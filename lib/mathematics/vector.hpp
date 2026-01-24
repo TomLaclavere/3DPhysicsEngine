@@ -74,7 +74,7 @@ public:
     constexpr decimal getMax() const noexcept
     {
         decimal maxVal = v[0];
-        for (int i = 1; i < 3; i++)
+        for (unsigned int i = 1; i < 3; i++)
         {
             if (v[i] > maxVal)
             {
@@ -87,7 +87,7 @@ public:
     constexpr decimal getMin() const noexcept
     {
         decimal minVal = v[0];
-        for (int i = 1; i < 3; i++)
+        for (unsigned int i = 1; i < 3; i++)
         {
             if (v[i] < minVal)
             {

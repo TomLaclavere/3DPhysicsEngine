@@ -1,8 +1,9 @@
 #pragma once
 
+#include <cstdint>
 #include <ostream>
 
-enum class Solver
+enum class Solver : std::uint8_t
 {
     Euler,
     Verlet,

@@ -259,7 +259,7 @@ void PhysicsWorld::integrate()
 {
     if (!isRunning)
     {
-        std::cout << "Simulation is not running. Run start() first." << std::endl;
+        std::cout << "Simulation is not running. Run start() first.\n";
         return;
     }
 
@@ -327,7 +327,7 @@ void PhysicsWorld::run()
 
     while (cpt < maxIter + 1 && getIsRunning())
     {
-        const decimal time = cpt * timeStep;
+        const decimal time = static_cast<decimal>(cpt) * timeStep;
 
         integrate();
 

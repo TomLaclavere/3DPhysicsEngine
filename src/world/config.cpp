@@ -2,7 +2,6 @@
 #include "world/config.hpp"
 
 #include <iostream>
-#include <stdexcept>
 #include <yaml-cpp/yaml.h>
 
 // ============================================================================
@@ -41,7 +40,7 @@ void Config::loadFromFile(const std::string& path)
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Error loading config file: " << e.what() << std::endl;
+        std::cerr << "Error loading config file: " << e.what() << "\n";
         throw;
     }
 }
@@ -53,15 +52,15 @@ void Config::overrideFromCommandLine(int argc, char** argv)
         std::string arg = argv[i];
         if (arg == "--gravity" && i + 1 < argc)
         {
-            gravity = std::stod(argv[++i]);
+            gravity = static_cast<decimal>(std::stod(argv[++i]));
         }
         else if (arg == "--timestep" && i + 1 < argc)
         {
-            timeStep = std::stod(argv[++i]);
+            timeStep = static_cast<decimal>(std::stod(argv[++i]));
         }
         else if (arg == "--iters" && i + 1 < argc)
         {
-            maxIterations = std::stoi(argv[++i]);
+            maxIterations = static_cast<unsigned int>(std::stoi(argv[++i]));
         }
         else if (arg == "--solver" && i + 1 < argc)
         {

@@ -8,10 +8,11 @@
  */
 #pragma once
 #include "collision/contact.hpp"
+#include "cstdint"
 #include "mathematics/vector.hpp"
 #include "ostream"
 
-enum class ObjectType
+enum class ObjectType : std::uint8_t
 {
     Generic,
     Sphere,
@@ -167,12 +168,15 @@ public:
      * @brief Quick check for collision with another object (Broad Phase).
      *  This is a pure virtual functions that must be implemented by derived classes.
      */
-    virtual bool checkCollision(const Object& other) { return false; }
+    virtual bool checkCollision([[maybe_unused]] const Object& other) { return false; }
     /**
      * @brief Advanced check for collision with another object (Narrow Phase).
      *  This is a pure virtual functions that must be implemented by derived classes.
      */
-    virtual bool computeCollision(const Object& other, Contact& contact) { return false; }
+    virtual bool computeCollision([[maybe_unused]] const Object& other, [[maybe_unused]] Contact& contact)
+    {
+        return false;
+    }
     /// @}
 };
 

@@ -6,6 +6,7 @@
 *.o
 *.log
 .vscode/
+.cache/
 
 # Doxygen generated files
 docs/html/

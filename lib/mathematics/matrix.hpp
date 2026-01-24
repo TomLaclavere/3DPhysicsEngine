@@ -293,7 +293,8 @@ public:
     /// @name Comparisons Operators
     // ============================================================================
     /// @{
-    constexpr bool operator==(const Matrix3x3& matrix) const noexcept
+    constexpr Matrix3x3& operator=(const Matrix3x3&) = default;
+    constexpr bool       operator==(const Matrix3x3& matrix) const noexcept
     {
         for (std::size_t i = 0; i < 9; ++i)
             if (!(m[i] == matrix.m[i]))

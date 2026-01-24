@@ -111,7 +111,8 @@ void trimHistory(const char* historyFilename, std::size_t maxLines)
     }
 
     // Keep only the last maxLines lines
-    std::vector<std::string> trimmed(lines.end() - maxLines, lines.end());
+    using diff_t = std::vector<std::string>::difference_type;
+    std::vector<std::string> trimmed(lines.end() - static_cast<diff_t>(maxLines), lines.end());
 
     // Rewrite history file
     std::ofstream out(historyFilename, std::ios::trunc);

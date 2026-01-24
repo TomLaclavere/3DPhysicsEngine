@@ -12,6 +12,7 @@ project(3DPhysicsEngine
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Set policies to avoid warnings and ensure modern behavior
 cmake_policy(SET CMP0077 NEW)
@@ -39,7 +40,7 @@ option(3DPE_BUILD_EXAMPLES "Build example applications" ON)
 option(3DPE_BUILD_TESTS "Build unit tests" ON)
 option(3DPE_BUILD_BENCHMARKS "Build benchmark applications" ON)
 option(3DPE_ENABLE_COVERAGE "Enable coverage reporting" ON)
-option(3DPE_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
+option(3DPE_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" ON)
 
 # Advanced options
 set(3DPE_GCC_EXTRA_FLAGS "" CACHE STRING "Extra flags for GCC")
@@ -138,13 +139,39 @@ target_compile_definitions(3DPhysicsEngine
 )
 
 # =============================================
-# Compiler-specific extra flags
+# Strict compiler warnings
+# =============================================
+set(3DPE_COMMON_WARNINGS
+    -Wall
+    -Wextra
+    -Wpedantic
+    -Wconversion
+    -Wsign-conversion
+    -Wold-style-cast
+    -Wunused
+)
+
+
+# =============================================
+# Compiler-specific warnings and extra flags
 # =============================================
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_compile_options(3DPhysicsEngine PRIVATE ${3DPE_GCC_EXTRA_FLAGS})
+    set(3DPE_ACTUAL_FLAGS ${3DPE_COMMON_WARNINGS} ${3DPE_GCC_EXTRA_FLAGS})
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    target_compile_options(3DPhysicsEngine PRIVATE ${3DPE_CLANG_EXTRA_FLAGS})
+    set(3DPE_ACTUAL_FLAGS ${3DPE_COMMON_WARNINGS} ${3DPE_CLANG_EXTRA_FLAGS})
 endif()
+
+if(3DPE_WARNINGS_AS_ERRORS)
+    list(APPEND 3DPE_ACTUAL_FLAGS -Werror)
+endif()
+
+target_compile_options(3DPhysicsEngine PRIVATE ${3DPE_ACTUAL_FLAGS})
+
+# Desactivate warnings for external linenoise library
+set_source_files_properties(
+    src/external/linenoise/linenoise.c
+    PROPERTIES COMPILE_FLAGS "-w"
+)
 
 # =============================================
 # Main Application Executable
@@ -356,4 +383,5 @@ message(STATUS "  Double Precision: ${3DPE_USE_DOUBLE_PRECISION}")
 message(STATUS "  Tests: ${3DPE_BUILD_TESTS}")
 message(STATUS "  Coverage: ${3DPE_ENABLE_COVERAGE}")
 message(STATUS "  Warnings as Errors: ${3DPE_WARNINGS_AS_ERRORS}")
+message(STATUS "  Clang-Tidy: ${3DPE_ENABLE_CLANG_TIDY}")
 message(STATUS "")

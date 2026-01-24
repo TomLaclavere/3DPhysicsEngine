@@ -41,7 +41,7 @@ void Vector3D::normalise()
 decimal  Vector3D::getNorm() const { return std::sqrt(getNormSquare()); }
 Vector3D Vector3D::getNormalised() const
 {
-    Vector3D normalisedV = Vector3D((*this));
+    auto normalisedV = Vector3D((*this));
     normalisedV.normalise();
     return normalisedV;
 }

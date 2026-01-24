@@ -181,7 +181,7 @@ endif()
 
 target_compile_options(3DPhysicsEngine PRIVATE ${3DPE_ACTUAL_FLAGS})
 
-# Desactivate warnings for external linenoise library
+# Deactivate warnings for external linenoise library
 set_source_files_properties(
     src/external/linenoise/linenoise.c
     PROPERTIES COMPILE_FLAGS "-w"

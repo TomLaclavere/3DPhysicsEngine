@@ -1,25 +1,15 @@
 #include "external/linenoise/history.hpp"
 #include "external/linenoise/linenoise.h"
-#include "objects/aabb.hpp"
-#include "objects/plane.hpp"
-#include "objects/sphere.hpp"
 #include "precision.hpp"
 #include "utilities/command.hpp"
 #include "utilities/timer.hpp"
 #include "world/config.hpp"
 #include "world/physicsWorld.hpp"
 
-#include <chrono>
+#include <cstdint>
 #include <cstring>
-#include <fstream>
-#include <functional>
-#include <iomanip>
 #include <iostream>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
-#include <utility>
-#include <vector>
 
 std::string completionFilename = "./src/external/linenoise/completion.txt";
 const char* historyFilename    = "./src/external/linenoise/history.txt";
@@ -59,7 +49,7 @@ void showObject(const PhysicsWorld& world, size_t id)
 // ============================================================================
 // Command enumeration for switch
 // ============================================================================
-enum class CommandType
+enum class CommandType : std::uint8_t
 {
     HELP,
     EXIT,

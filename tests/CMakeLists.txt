@@ -33,6 +33,14 @@ function(add_engine_test TEST_NAME)
             $<TARGET_PROPERTY:3DPhysicsEngine,COMPILE_FEATURES>
     )
     
+    target_compile_options(${TEST_NAME} PRIVATE
+        -Wno-misc-const-correctness
+        -Wno-readability-identifier-length
+        -Wno-cppcoreguidelines-avoid-magic-numbers
+        -Wno-llvmlibc-callee-namespace
+        -Wno-fuchsia-default-arguments-calls
+    )
+    
     # Add to GoogleTest
     gtest_discover_tests(${TEST_NAME}
         PROPERTIES 
@@ -87,6 +95,7 @@ add_engine_test(world_test
 message(STATUS "Configured tests:")
 message(STATUS "  mathematics_test - Unit tests for mathematical components")
 message(STATUS "  object_test - Unit tests for physical objects")
+message(STATUS "  collision_test - Unit tests for collision detection and response")
 message(STATUS "  utility_test - Unit tests for utilities")
-message(STATUS " world_test - Unit tests for world")
+message(STATUS "  world_test - Unit tests for world")
 message(STATUS "  Test output directory: ${CMAKE_BINARY_DIR}/bin/tests")

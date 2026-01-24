@@ -19,7 +19,6 @@
 #include "world/config.hpp"
 #include "world/physicsWorld.hpp"
 
-#include <chrono>
 #include <iomanip>
 #include <iostream>
 
@@ -41,7 +40,7 @@ int main(int argc, char** argv)
     std::cout << "Gravity: " << config.getGravity() << " m/s²\n";
     std::cout << "Timestep: " << config.getTimeStep() << " s\n";
     std::cout << "Max iterations: " << config.getMaxIterations() << "\n";
-    std::cout << "Solver: " << config.getSolver() << std::endl;
+    std::cout << "Solver: " << config.getSolver() << "\n";
     std::cout << "Loading configuration took: " << configTimer.elapsedMilliseconds() << " ms\n";
 
     // Initialize simulation
@@ -96,7 +95,7 @@ int main(int argc, char** argv)
     {
         Timer stepTimer;
 
-        const decimal time = counter * timeStep;
+        const decimal time = static_cast<decimal>(counter) * timeStep;
 
         world.integrate();
 
@@ -124,8 +123,8 @@ int main(int argc, char** argv)
         ++counter;
     }
 
-    const double simTimeSec = simulationTimer.elapsedSeconds();
-    const double avgStepUs  = simulationTimer.elapsedMicroseconds() / static_cast<double>(maxIter);
+    const decimal   simTimeSec = simulationTimer.elapsedSeconds();
+    const long long avgStepUs  = simulationTimer.elapsedMicroseconds() / static_cast<long long>(maxIter);
 
     std::cout << "\nSimulation took: " << simTimeSec << " s\n";
     std::cout << "Average iteration time: " << avgStepUs << " µs\n";
@@ -142,7 +141,7 @@ int main(int argc, char** argv)
         std::cout << "Sphere : analytical and simulation times are not compatible. Analytical contact time = "
                   << analyticalContactTimeSphere
                   << " (s), and Simulation contact time = " << simulationContactTimeSphere << " (s).\n";
-    std::cout << analyticalContactTimeSphere - simulationContactTimeSphere << std::endl;
+    std::cout << analyticalContactTimeSphere - simulationContactTimeSphere << "\n";
     // Verify Plane contact times
     if (commonMaths::approxEqual(analyticalContactTimePlane, simulationContactTimePlane, 2 * timeStep))
         std::cout << "Plane : analytical and simulation times are compatible. Contact time = "
@@ -151,7 +150,7 @@ int main(int argc, char** argv)
         std::cout << "Plane : analytical and simulation times are not compatible. Analytical contact time = "
                   << analyticalContactTimePlane
                   << " (s), and Simulation contact time = " << simulationContactTimePlane << " (s).\n";
-    std::cout << analyticalContactTimePlane - simulationContactTimePlane << std::endl;
+    std::cout << analyticalContactTimePlane - simulationContactTimePlane << "\n";
     // Verify Cube contact times
     if (commonMaths::approxEqual(analyticalContactTimeCube, simulationContactTimeCube, 2 * timeStep))
         std::cout << "Cube : analytical and simulation times are compatible. Contact time = "
@@ -160,7 +159,7 @@ int main(int argc, char** argv)
         std::cout << "Cube : analytical and simulation times are not compatible. Analytical contact time = "
                   << analyticalContactTimeCube
                   << " (s), and Simulation contact time = " << simulationContactTimeCube << " (s).\n";
-    std::cout << analyticalContactTimeCube - simulationContactTimeCube << std::endl;
+    std::cout << analyticalContactTimeCube - simulationContactTimeCube << "\n";
     world.clearObjects();
 
     return 0;

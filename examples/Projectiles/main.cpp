@@ -20,7 +20,6 @@
 #include "world/config.hpp"
 #include "world/physicsWorld.hpp"
 
-#include <chrono>
 #include <iomanip>
 #include <iostream>
 
@@ -100,7 +99,7 @@ int main(int argc, char** argv)
     {
         Timer stepTimer;
 
-        const decimal time = counter * timeStep;
+        const decimal time = static_cast<decimal>(counter) * timeStep;
 
         world.integrate();
 
@@ -128,8 +127,8 @@ int main(int argc, char** argv)
         ++counter;
     }
 
-    const double simTimeSec = simulationTimer.elapsedSeconds();
-    const double avgStepUs  = simulationTimer.elapsedMicroseconds() / static_cast<double>(maxIter);
+    const double    simTimeSec = simulationTimer.elapsedSeconds();
+    const long long avgStepUs  = simulationTimer.elapsedMicroseconds() / static_cast<long long>(maxIter);
 
     std::cout << "\nSimulation took: " << simTimeSec << " s\n";
     std::cout << "Average iteration time: " << avgStepUs << " µs\n";

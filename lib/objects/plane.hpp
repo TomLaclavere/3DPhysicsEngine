@@ -29,8 +29,8 @@ private:
     Vector3D normal = Vector3D(0_d, 0_d, 1_d); // Normal direction (unit vector)
     Vector3D u;                                // Tangent axis 1 (unit vector)
     Vector3D v;                                // Tangent axis 2 (unit vector)
-    decimal  halfWidth  = 1_d;                 // Half extent along u
     decimal  halfHeight = 1_d;                 // Half extent along v
+    decimal  halfWidth  = 1_d;                 // Half extent along u
 
 public:
     // ============================================================================
@@ -82,6 +82,9 @@ public:
           const Vector3D& acceleration, const Vector3D& force, const Vector3D& torque, decimal mass,
           const Vector3D& _normal)
         : Object(position, rotation, size, velocity, acceleration, force, torque, mass)
+        , normal(_normal.getNormalised())
+        , halfHeight { size[0] * 0.5_d }
+        , halfWidth { size[1] * 0.5_d }
     {
         updateLocalAxes();
         checkFixed();
@@ -148,7 +151,7 @@ public:
     /// Check broad collision between a Plane and a Plane
     bool checkPlaneSphereCollision(const Sphere& sphere);
     /// Check broad collision with another Object.
-    virtual bool checkCollision(const Object& other) override;
+    bool checkCollision(const Object& other) override;
 
     /// Check narrow collision between two Planes.
     bool computePlaneCollision(const Plane& Plane, Contact& contact);
@@ -157,6 +160,6 @@ public:
     /// Check narrow collision between a Plane and a Plane.
     bool computePlaneSphereCollision(const Sphere& sphere, Contact& contact);
     /// Check narrow collision with another Object.
-    virtual bool computeCollision(const Object& other, Contact& contact) override;
+    bool computeCollision(const Object& other, Contact& contact) override;
     /// @}
 };

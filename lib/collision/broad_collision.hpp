@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include "contact.hpp"
 #include "objects/aabb.hpp"
 #include "objects/plane.hpp"
 #include "objects/sphere.hpp"

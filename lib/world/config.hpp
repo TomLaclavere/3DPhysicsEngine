@@ -71,7 +71,7 @@ public:
             throw std::invalid_argument("Max iterations must be positive");
         maxIterations = max;
     }
-    void setSolver(std::string sol) { solver = sol; }
+    void setSolver(std::string& sol) { solver = sol; }
     void setVerbose(bool verb) { verbose = verb; }
     /// @}
 

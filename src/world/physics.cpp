@@ -2,7 +2,6 @@
 
 #include "mathematics/common.hpp"
 
-#include <algorithm>
 #include <cmath>
 
 // ============================================================================
@@ -71,7 +70,7 @@ decimal Physics::dampingRatioFromRestitution(decimal e)
     if (e >= 1.0_d)
         return 0.0_d;
     decimal ln_e = std::log(e);
-    return -ln_e / std::sqrt((decimal)M_PI * (decimal)M_PI + ln_e * ln_e);
+    return -ln_e / std::sqrt(std::numbers::pi_v<decimal> * std::numbers::pi_v<decimal> + ln_e * ln_e);
 }
 
 // ============================================================================

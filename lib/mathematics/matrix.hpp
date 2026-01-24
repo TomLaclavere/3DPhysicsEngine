@@ -59,9 +59,7 @@ public:
         : m { v1.getX(), v1.getY(), v1.getZ(), v2.getX(), v2.getY(),
               v2.getZ(), v3.getX(), v3.getY(), v3.getZ() }
     {}
-    constexpr Matrix3x3(const Matrix3x3& _m)
-        : m { _m.m }
-    {} /// @}
+    constexpr Matrix3x3(const Matrix3x3& _m) = default; /// @}
 
     // ============================================================================
     /// @name Element Access Operators

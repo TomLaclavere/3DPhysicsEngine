@@ -65,7 +65,7 @@ public:
     /// Check broad collision between a AABB and a Plane
     bool checkAABBPlaneCollision(const Plane& plane);
     /// Check broad collision with another Object.
-    virtual bool checkCollision(const Object& other) override;
+    bool checkCollision(const Object& other) override;
 
     /// Check narrow collision between two AABBs.
     bool computeAABBCollision(const AABB& aabb, Contact& contact);
@@ -74,6 +74,6 @@ public:
     /// Check narrow collision between a AABB and a Plane.
     bool computeAABBPlaneCollision(const Plane& plane, Contact& contact);
     /// Check narrow collision with another Object.
-    virtual bool computeCollision(const Object& other, Contact& contact) override;
+    bool computeCollision(const Object& other, Contact& contact) override;
     /// @}
 };

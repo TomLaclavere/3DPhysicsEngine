@@ -40,6 +40,7 @@ option(3DPE_BUILD_EXAMPLES "Build example applications" ON)
 option(3DPE_BUILD_TESTS "Build unit tests" ON)
 option(3DPE_BUILD_BENCHMARKS "Build benchmark applications" ON)
 option(3DPE_ENABLE_COVERAGE "Enable coverage reporting" ON)
+option(3DPE_ENABLE_CLANG_TIDY "Enable clang-tidy static analysis" OFF)
 option(3DPE_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" ON)
 
 # Advanced options
@@ -137,6 +138,19 @@ target_compile_definitions(3DPhysicsEngine
     PUBLIC 
         $<$<BOOL:${3DPE_USE_DOUBLE_PRECISION}>:IS_DOUBLE_PRECISION>
 )
+
+# =============================================
+# Clang-Tidy Configuration
+# =============================================
+if(3DPE_ENABLE_CLANG_TIDY)
+  find_program(CLANG_TIDY_EXE NAMES clang-tidy)
+  if(CLANG_TIDY_EXE)
+    message(STATUS "clang-tidy found: ${CLANG_TIDY_EXE}")
+        set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE}")
+    else()
+        message(WARNING "clang-tidy not found!")
+    endif()
+endif()
 
 # =============================================
 # Strict compiler warnings

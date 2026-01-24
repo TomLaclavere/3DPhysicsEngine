@@ -8,10 +8,11 @@
  */
 #pragma once
 #include "collision/contact.hpp"
+#include "cstdint"
 #include "mathematics/vector.hpp"
 #include "ostream"
 
-enum class ObjectType
+enum class ObjectType : std::uint8_t
 {
     Generic,
     Sphere,

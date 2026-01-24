@@ -259,7 +259,7 @@ void PhysicsWorld::integrate()
 {
     if (!isRunning)
     {
-        std::cout << "Simulation is not running. Run start() first." << std::endl;
+        std::cout << "Simulation is not running. Run start() first.\n";
         return;
     }
 

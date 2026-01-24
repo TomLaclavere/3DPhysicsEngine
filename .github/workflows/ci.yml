@@ -42,12 +42,19 @@ jobs:
         run: ctest --test-dir build --output-on-failure -j$(nproc)
 
       - name: Generate coverage report
-        run: gcovr --root . --object-directory build --lcov --output build/coverage.info
+        run: |
+          gcovr \
+            -r . \
+            --xml \
+            -o coverage.xml \
+            --exclude '.*tests.*'
 
-      - name: Upload coverage
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
-          files: build/coverage.info
+          files: coverage.xml
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   generate-docs:
     runs-on: ubuntu-latest

@@ -1,11 +1,10 @@
 # 3D Physics Engine in C++ for HPC
 
+[![C++](https://img.shields.io/badge/C++-23-blue?logo=c%2B%2B)](https://isocpp.org/)
 [![CMake](https://img.shields.io/badge/CMake-3.22.1-064f8d?logo=cmake)](https://cmake.org/)
 [![GitHub Actions](https://img.shields.io/github/actions/workflow/status/tomlaclavere/3DPhysicsEngine/ci.yml?branch=main&logo=githubactions)](https://github.com/tomlaclavere/3DPhysicsEngine/actions)
-[![Codecov](https://img.shields.io/codecov/c/gh/tomlaclavere/3DPhysicsEngine?logo=codecov)](https://codecov.io/gh/tomlaclavere/3DPhysicsEngine)
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue?logo=readthedocs)](https://tomlaclavere.github.io/3DPhysicsEngine/)
 [![License](https://img.shields.io/badge/license-AGPL%203.0-green)](LICENSE)
-[![C++](https://img.shields.io/badge/C++-23-blue?logo=c%2B%2B)](https://isocpp.org/)
 
 ## Project Overview
 A modular 3D physics engine written in modern C++, designed to combine scientific rigour with high-performance computing techniques.

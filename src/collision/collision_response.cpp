@@ -1,6 +1,7 @@
 #include "collision/collision_response.hpp"
 
 #include <algorithm>
+#include <iostream>
 
 void positionCorrection(Object& A, Object& B, Contact& contact, decimal percent, decimal slop)
 {
@@ -12,10 +13,7 @@ void positionCorrection(Object& A, Object& B, Contact& contact, decimal percent,
     if (invMassA + invMassB <= 0_d)
         return;
 
-    decimal invMassSum = invMassA + invMassB;
-    if (invMassSum <= 0_d)
-        return;
-
+    decimal  invMassSum = invMassA + invMassB;
     Vector3D correction =
         contact.normal * ((std::max(contact.penetration - slop, 0_d) / invMassSum) * percent);
     // move A back along -normal, B forward along +normal
@@ -37,6 +35,7 @@ void reboundCollision(Object& A, Object& B, Contact& contact, decimal restitutio
     Vector3D relVel = vb - va;
 
     decimal velAlongNormal = relVel.dotProduct(contact.normal);
+    std::cout << "goiphjqropighjroiehjg\n" << velAlongNormal << "\n";
     // Objects separating? do nothing
     if (velAlongNormal > 0._d)
         return;
@@ -44,8 +43,6 @@ void reboundCollision(Object& A, Object& B, Contact& contact, decimal restitutio
     // 3) Compute impulse scalar j
     decimal e          = std::clamp(restitution, 0._d, 1._d);
     decimal invMassSum = invMassA + invMassB;
-    if (invMassSum <= 0._d)
-        return; // both immovable
 
     decimal j = -(1._d + e) * velAlongNormal / invMassSum;
 

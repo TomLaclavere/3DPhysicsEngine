@@ -8,9 +8,9 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
   - [ ] ASAN
   - [ ] UBSAN
 - [ ] Look at Static Analysis tools
-  - [ ] clang-tidy
-   - [ ] Correct warnings from clang-tidy
-  - [ ] cppcheck
+  - [ ] clang-tidy ?
+   - [x] Correct warnings from clang-tidy
+  - [ ] cppcheck ?
 - [ ] Fix Rebound during integration
 - [ ] Modify rebound by contact forces (currently : dead functions)
 - [ ] Adjust examples with contact forces

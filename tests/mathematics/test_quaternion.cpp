@@ -1,4 +1,3 @@
-#include "mathematics/common.hpp"
 #include "mathematics/matrix.hpp"
 #include "mathematics/quaternion.hpp"
 #include "mathematics/vector.hpp"
@@ -6,7 +5,6 @@
 
 #include <cmath>
 #include <gtest/gtest.h>
-#include <ostream>
 #include <sstream>
 
 // ——————————————————————————————————————————————————————————————————————————
@@ -40,7 +38,7 @@ TEST(QuaternionTest, VectorAndScalarConstructor)
 TEST(QuaternionTest, FromEulerAngles)
 {
     // 90 degrees (pi/2) rotation about X axis
-    decimal      angleX = decimal(M_PI) / 2_d;
+    decimal      angleX = std::numbers::pi_v<decimal> / 2_d;
     decimal      angleY = 0_d;
     decimal      angleZ = 0_d;
     Quaternion3D q(angleX, angleY, angleZ);
@@ -493,6 +491,6 @@ TEST(QuaternionTest, StreamOutput)
     Quaternion3D      q(1_d, 2_d, 3_d, 4_d);
     std::stringstream ss;
     ss << q;
-    EXPECT_TRUE(ss.str().find("(") != std::string::npos);
-    EXPECT_TRUE(ss.str().find(")") != std::string::npos);
+    EXPECT_TRUE(ss.str().find('(') != std::string::npos);
+    EXPECT_TRUE(ss.str().find(')') != std::string::npos);
 }

@@ -77,7 +77,7 @@ add_engine_test(object_test
 add_engine_test(collision_test
     collision/test_broad_phase.cpp
     collision/test_narrow_phase.cpp
-    collision/test_rebound.cpp)
+    collision/test_collision_response.cpp)
 
 add_engine_test(utility_test
     utilities/test_timer.cpp

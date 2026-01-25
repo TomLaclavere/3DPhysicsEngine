@@ -2,7 +2,6 @@
 #include "test_functions.hpp"
 
 #include <gtest/gtest.h>
-#include <ostream>
 #include <sstream>
 
 // ——————————————————————————————————————————————————————————————————————————
@@ -147,8 +146,6 @@ TEST(Vector3D_Test, ComparisonOperators)
     v.setAllValues(1.002_d, 2.0002_d, 3.0002_d);
     EXPECT_TRUE(u.approxEqual(v, 0.01_d));
     EXPECT_FALSE(u.approxEqual(v, 1e-5_d));
-    Vector3D u_(1.001_d, 1.0001_d, 3.0001_d);
-    Vector3D u__(1.001_d, 2.0001_d, 1.0001_d);
 }
 
 // ——————————————————————————————————————————————————————————————————————————

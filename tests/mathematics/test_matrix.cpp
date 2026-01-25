@@ -1,9 +1,7 @@
-#include "mathematics/common.hpp"
 #include "mathematics/matrix.hpp"
 #include "test_functions.hpp"
 
 #include <gtest/gtest.h>
-#include <ostream>
 #include <sstream>
 
 // ——————————————————————————————————————————————————————————————————————————

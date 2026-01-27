@@ -12,6 +12,7 @@
  */
 
 #include "mathematics/math_io.hpp"
+#include "mathematics/vector.hpp"
 #include "objects/aabb.hpp"
 #include "objects/plane.hpp"
 #include "objects/sphere.hpp"
@@ -32,6 +33,7 @@ int main(int argc, char** argv)
     // Load configuration
     Timer   configTimer;
     Config& config = Config::get();
+    Contact contact;
     config.loadFromFile("examples/Free_Fall/config.yml");
     config.overrideFromCommandLine(argc, argv);
 
@@ -97,7 +99,7 @@ int main(int argc, char** argv)
 
         const decimal time = static_cast<decimal>(counter) * timeStep;
 
-        world.integrate();
+        world.integrateWithoutCollisions();
 
         if (counter % 25 == 0)
         {
@@ -113,12 +115,21 @@ int main(int argc, char** argv)
             std::cout << std::string(n, '-') << '\n';
         }
 
-        if (sphere->checkCollision(*ground) && simulationContactTimeSphere == 0_d)
+        if (sphere->computeCollision(*ground, contact) && simulationContactTimeSphere == 0_d)
+        {
             simulationContactTimeSphere = time;
-        if (plane->checkCollision(*ground) && simulationContactTimePlane == 0_d)
+            sphere->setVelocity(Vector3D(0_d));
+        }
+        if (plane->computeCollision(*ground, contact) && simulationContactTimePlane == 0_d)
+        {
             simulationContactTimePlane = time;
-        if (cube->checkCollision(*ground) && simulationContactTimeCube == 0_d)
+            plane->setVelocity(Vector3D(0_d));
+        }
+        if (cube->computeCollision(*ground, contact) && simulationContactTimeCube == 0_d)
+        {
             simulationContactTimeCube = time;
+            cube->setVelocity(Vector3D(0_d));
+        }
 
         ++counter;
     }

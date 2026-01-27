@@ -123,6 +123,9 @@ public:
     /// Runge-Kutta 4 integrator for one object.
     Derivative evaluateRK4(const Object& obj, const Derivative& d, decimal dt);
     void       integrateRK4(Object& obj, decimal dt);
+    /// @brief Integrate all objects over one time step without collision resolution.
+    /// Only for testing purposes.
+    void integrateWithoutCollisions();
     /// @brief Integrate all objects over one time step.
     /// Resets accelerations, applies forces, and moves objects using semi-implicit Euler.
     void integrate();

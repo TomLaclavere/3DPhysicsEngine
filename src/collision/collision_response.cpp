@@ -1,7 +1,6 @@
 #include "collision/collision_response.hpp"
 
 #include <algorithm>
-#include <iostream>
 
 void positionCorrection(Object& A, Object& B, Contact& contact, decimal percent, decimal slop)
 {
@@ -35,7 +34,6 @@ void reboundCollision(Object& A, Object& B, Contact& contact, decimal restitutio
     Vector3D relVel = vb - va;
 
     decimal velAlongNormal = relVel.dotProduct(contact.normal);
-    std::cout << "goiphjqropighjroiehjg\n" << velAlongNormal << "\n";
     // Objects separating? do nothing
     if (velAlongNormal > 0._d)
         return;

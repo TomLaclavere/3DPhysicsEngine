@@ -81,7 +81,7 @@ TEST(CollisionResponse, PenetrationResponse)
     EXPECT_DECIMAL_EQ(contactAfter.penetration, 0_d);
 }
 
-TEST(CollisionResponse, SphereSphereElasticCollision)
+TEST(CollisionResponse, ElasticCollision)
 {
     // Along X axis
     Sphere A(Vector3D(-1_d, 0_d, 0_d), 2_d);
@@ -124,4 +124,25 @@ TEST(CollisionResponse, SphereSphereElasticCollision)
 
     EXPECT_VECTOR_EQ(Vector3D(-1_d, -1_d, 1_d), sphere1.getVelocity());
     EXPECT_VECTOR_EQ(Vector3D(1_d, 1_d, -1_d), sphere2.getVelocity());
+}
+
+TEST(CollisionResponse, InelasticCollision)
+{
+    // Along X axis
+    Sphere A(Vector3D(-1_d, 0_d, 0_d), 2_d);
+    Sphere B(Vector3D(1_d, 0_d, 0_d), 2_d);
+
+    A.setMass(1_d);
+    B.setMass(1_d);
+
+    A.setVelocity(Vector3D(1_d, 0_d, 0_d));
+    B.setVelocity(Vector3D(-1_d, 0_d, 0_d));
+
+    Contact contactAB;
+    EXPECT_TRUE(A.computeCollision(B, contactAB));
+
+    reboundCollision(A, B, contactAB, 0.5); // restitution = 0.5
+
+    EXPECT_DECIMAL_EQ(A.getVelocity().getX(), -0.5);
+    EXPECT_DECIMAL_EQ(B.getVelocity().getX(), 0.5);
 }

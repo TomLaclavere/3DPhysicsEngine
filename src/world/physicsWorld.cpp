@@ -159,7 +159,6 @@ void PhysicsWorld::applyForces()
         }
     }
 }
-
 void PhysicsWorld::solveCollisions()
 {
     const size_t n = objects.size();
@@ -178,12 +177,14 @@ void PhysicsWorld::solveCollisions()
                 continue;
 
             // Broad phase
-            bool isColliding = A->computeCollision(*B, contact);
+            bool isCollidingBroad = A->checkCollision(*B);
 
             // Narrow phase
-            if (isColliding)
+            if (isCollidingBroad)
             {
-                reboundCollision(*A, *B, contact);
+                bool isCollidindNarrow = A->computeCollision(*B, contact);
+                if (isCollidindNarrow)
+                    reboundCollision(*A, *B, contact);
             }
         }
     }
@@ -254,7 +255,84 @@ void PhysicsWorld::integrateRK4(Object& obj, decimal dt)
     obj.setPosition(obj.getPosition() + dxdt * dt);
     obj.setVelocity(obj.getVelocity() + dvdt * dt);
 }
+void PhysicsWorld::integrateWithoutCollisions()
+{
+    if (!isRunning)
+    {
+        std::cout << "Simulation is not running. Run start() first.\n";
+        return;
+    }
 
+    setTimeStep(timeStep);
+
+    // Reset accelerations
+    for (auto* obj : objects)
+    {
+        if (!obj || obj->isFixed())
+            continue;
+        obj->setAcceleration(Vector3D(0_d));
+    }
+
+    // Compute gravity forces
+    applyGravityForces();
+
+    // Integrate motion
+    for (auto* obj : objects)
+    {
+        if (!obj || obj->isFixed())
+            continue;
+        switch (solver)
+        {
+        case Solver::Euler:
+            integrateEuler(*obj, timeStep);
+            break;
+        case Solver::Verlet:
+            integrateVerlet(*obj, timeStep);
+            break;
+        case Solver::RK4:
+            integrateRK4(*obj, timeStep);
+            break;
+        case Solver::Unknown:
+            std::cout << "The following solver is not implemented : " << config.getSolver() << '\n';
+            std::cout << "Please use one of the following solver : Euler, Verlet, RK4.\n";
+            break;
+        }
+    }
+
+    // If collision : object stops moving
+    {
+        const size_t n = objects.size();
+        Contact      contact;
+
+        for (size_t i = 0; i < n; ++i)
+        {
+            Object* A = objects[i];
+            if (!A)
+                continue;
+
+            for (size_t j = i + 1; j < n; ++j)
+            {
+                Object* B = objects[j];
+                if (!B)
+                    continue;
+
+                // Broad phase
+                bool isCollidingBroad = A->checkCollision(*B);
+
+                // Narrow phase
+                if (isCollidingBroad)
+                {
+                    bool isCollidindNarrow = A->computeCollision(*B, contact);
+                    if (isCollidindNarrow)
+                    {
+                        A->setVelocity(Vector3D(0_d));
+                        B->setVelocity(Vector3D(0_d));
+                    }
+                }
+            }
+        }
+    }
+}
 void PhysicsWorld::integrate()
 {
     if (!isRunning)

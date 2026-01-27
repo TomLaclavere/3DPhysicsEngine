@@ -1,6 +1,8 @@
+#include "mathematics/vector.hpp"
 #include "objects/aabb.hpp"
 #include "objects/plane.hpp"
 #include "objects/sphere.hpp"
+#include "test_functions.hpp"
 
 #include <cmath>
 #include <gtest/gtest.h>

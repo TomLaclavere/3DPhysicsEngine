@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <iostream>
 
 // ============================================================================
 //  Sphere vs Sphere
@@ -85,7 +84,7 @@ bool NarrowCollision::computeContact(const Sphere& sphere, const AABB& aabb, Con
 
         const decimal dist = std::sqrt(dist2);
 
-        contact.normal      = -(delta / dist);
+        contact.normal      = (delta / dist);
         contact.penetration = radius - dist;
         contact.position    = closestPoint;
     }
@@ -205,10 +204,23 @@ bool NarrowCollision::computeContact(const Sphere& sphere, const Plane& plane, C
     if (commonMaths::approxGreaterThan(dist2, sphere.getRadius() * sphere.getRadius()))
         return false;
 
-    decimal dist        = delta.getNorm();
-    contact.normal      = (commonMaths::approxGreaterThan(dist, 0_d)) ? -(delta / dist) : planeNormal;
-    contact.penetration = sphere.getRadius() - dist;
+    decimal    dist = delta.getNorm();
+    const bool insideFace =
+        commonMaths::approxSmallerOrEqualThan(commonMaths::absVal(s), plane.getHalfWidth()) &&
+        commonMaths::approxSmallerOrEqualThan(commonMaths::absVal(t), plane.getHalfHeight());
+
+    if (insideFace)
+    {
+        contact.normal = commonMaths::approxGreaterThan(signedDist, 0_d) ? planeNormal : -planeNormal;
+    }
+    else
+    {
+        contact.normal = (delta / dist);
+    }
+
+    contact.penetration = sphereRadius - dist;
     contact.position    = closestPoint;
+    contact.penetration = sphere.getRadius() - dist;
     contact.A           = &sphere;
     contact.B           = &plane;
     return true;
@@ -333,7 +345,7 @@ bool NarrowCollision::computeContact(const AABB& aabb, const Plane& plane, Conta
         return false;
 
     // Contact
-    contact.normal      = (dist < 0_d) ? -planeNormal : planeNormal;
+    contact.normal      = (dist < 0_d) ? planeNormal : -planeNormal;
     contact.penetration = r - commonMaths::absVal(dist);
     contact.position    = aabbPosition - dist * planeNormal;
     contact.A           = &aabb;

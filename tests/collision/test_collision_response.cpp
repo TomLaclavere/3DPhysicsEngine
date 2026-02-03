@@ -57,7 +57,7 @@ TEST(CollisionResponse, ReturnCases)
     EXPECT_VECTOR_EQ(velB, B.getVelocity());
 }
 
-TEST(CollisionResponse, PenetrationResponse)
+TEST(CollisionResponse, SphereSpherePenetrationResponse)
 {
     Sphere A(Vector3D(-0.5_d, 0_d, 0_d), 1_d);
     Sphere B(Vector3D(0.5_d, 0_d, 0_d), 2_d);
@@ -81,7 +81,7 @@ TEST(CollisionResponse, PenetrationResponse)
     EXPECT_DECIMAL_EQ(contactAfter.penetration, 0_d);
 }
 
-TEST(CollisionResponse, ElasticCollision)
+TEST(CollisionResponse, SphereSphereElasticCollision)
 {
     // Along X axis
     Sphere A(Vector3D(-1_d, 0_d, 0_d), 2_d);
@@ -126,7 +126,7 @@ TEST(CollisionResponse, ElasticCollision)
     EXPECT_VECTOR_EQ(Vector3D(1_d, 1_d, -1_d), sphere2.getVelocity());
 }
 
-TEST(CollisionResponse, InelasticCollision)
+TEST(CollisionResponse, SphereSphereInelasticCollision)
 {
     // Along X axis
     Sphere A(Vector3D(-1_d, 0_d, 0_d), 2_d);
@@ -145,4 +145,23 @@ TEST(CollisionResponse, InelasticCollision)
 
     EXPECT_DECIMAL_EQ(A.getVelocity().getX(), -0.5);
     EXPECT_DECIMAL_EQ(B.getVelocity().getX(), 0.5);
+}
+
+TEST(CollisionResponse, SpherePlaneCollision)
+{
+    Sphere sphere(Vector3D(0_d, 0_d, 2_d), 4_d);
+    Plane  plane(Vector3D(0_d, 0_d, 0_d), Vector3D(1_d, 1_d, 0_d), Vector3D(0_d, 0_d, 1_d));
+
+    sphere.setMass(2_d);
+    plane.setMass(0_d); // immovable
+
+    sphere.setVelocity(Vector3D(0_d, 0_d, -10_d));
+
+    Contact contact;
+    EXPECT_TRUE(sphere.computeCollision(plane, contact));
+    EXPECT_VECTOR_EQ(contact.normal, Vector3D(0_d, 0_d, 1_d));
+
+    reboundCollision(sphere, plane, contact, 1_d); // restitution = 1
+
+    EXPECT_VECTOR_EQ(Vector3D(0_d, 0_d, 10_d), sphere.getVelocity());
 }

@@ -15,37 +15,38 @@ void positionCorrection(Object& A, Object& B, Contact& contact, decimal percent,
     decimal  invMassSum = invMassA + invMassB;
     Vector3D correction =
         contact.normal * ((std::max(contact.penetration - slop, 0_d) / invMassSum) * percent);
-    // move A back along -normal, B forward along +normal
+
     A.setPosition(A.getPosition() - correction * invMassA);
     B.setPosition(B.getPosition() + correction * invMassB);
 }
 
 void reboundCollision(Object& A, Object& B, Contact& contact, decimal restitution)
 {
-    decimal invMassA = 1_d / A.getMass();
-    decimal invMassB = 1_d / B.getMass();
+    decimal invMassA = A.getMass() > 0_d ? 1_d / A.getMass() : 0_d;
+    decimal invMassB = B.getMass() > 0_d ? 1_d / B.getMass() : 0_d;
 
-    // 1) Positional correction
-    positionCorrection(A, B, contact);
-
-    // 2) Relative velocity at contact (linear only)
-    Vector3D va     = A.getVelocity();
-    Vector3D vb     = B.getVelocity();
-    Vector3D relVel = vb - va;
-
-    decimal velAlongNormal = relVel.dotProduct(contact.normal);
-    // Objects separating? do nothing
-    if (velAlongNormal > 0._d)
+    decimal invMassSum = invMassA + invMassB;
+    if (invMassSum <= 0_d)
         return;
 
-    // 3) Compute impulse scalar j
-    decimal e          = std::clamp(restitution, 0._d, 1._d);
-    decimal invMassSum = invMassA + invMassB;
+    // Positional correction
+    positionCorrection(A, B, contact);
 
-    decimal j = -(1._d + e) * velAlongNormal / invMassSum;
+    Vector3D va = A.getVelocity();
+    Vector3D vb = B.getVelocity();
 
-    // 4) Apply impulse
+    // Relative velocity
+    Vector3D relVel         = vb - va;
+    decimal  velAlongNormal = relVel.dotProduct(contact.normal);
+
+    if (velAlongNormal <= 0_d)
+        return;
+
+    decimal e = std::clamp(restitution, 0_d, 1_d);
+    decimal j = (1_d + e) * velAlongNormal / invMassSum;
+
     Vector3D impulse = contact.normal * j;
+
     A.setVelocity(va - impulse * invMassA);
     B.setVelocity(vb + impulse * invMassB);
 }

@@ -1,12 +1,12 @@
 # 3D Physics Engine in C++ for HPC
 
-[![C++](https://img.shields.io/badge/C++-23-blue?logo=c%2B%2B)](https://isocpp.org/)
-[![CMake](https://img.shields.io/badge/CMake-3.22.1-064f8d?logo=cmake)](https://cmake.org/)
-[![GitHub Actions](https://img.shields.io/github/actions/workflow/status/tomlaclavere/3DPhysicsEngine/ci.yml?branch=main&logo=githubactions)](https://github.com/tomlaclavere/3DPhysicsEngine/actions)
-[![Documentation](https://img.shields.io/badge/docs-doxygen-blue?logo=readthedocs)](https://tomlaclavere.github.io/3DPhysicsEngine/)
-[![License](https://img.shields.io/badge/license-AGPL%203.0-green)](LICENSE)
-[![GitHub Repo Size](https://img.shields.io/github/repo-size/tomlaclavere/PhD?style=for-the-badge)](https://github.com/tomlaclavere/PhD)
-[![Last Commit](https://img.shields.io/github/last-commit/tomlaclavere/PhD?style=for-the-badge)](https://github.com/tomlaclavere/PhD/commits/main)
+[![C++](https://img.shields.io/badge/C++-23-blue?style=for-the-badge&logo=c%2B%2B)](https://isocpp.org/)
+[![CMake](https://img.shields.io/badge/CMake-3.22.1-064f8d?style=for-the-badge&logo=cmake)](https://cmake.org/)
+[![GitHub Actions](https://img.shields.io/github/actions/workflow/status/tomlaclavere/3DPhysicsEngine/ci.yml?branch=main&logo=githubactions&style=for-the-badge)](https://github.com/tomlaclavere/3DPhysicsEngine/actions)
+[![Documentation](https://img.shields.io/badge/docs-doxygen-blue?logo=readthedocs&style=for-the-badge)](https://tomlaclavere.github.io/3DPhysicsEngine/)
+[![License](https://img.shields.io/badge/license-AGPL%203.0-green?style=for-the-badge)](LICENSE)
+[![GitHub Repo Size](https://img.shields.io/github/repo-size/tomlaclavere/PhD?style=for-the-badge)](https://github.com/tomlaclavere/3DPhyscisEngine)
+[![Last Commit](https://img.shields.io/github/last-commit/tomlaclavere/PhD?style=for-the-badge)](https://github.com/tomlaclavere/3DPhyscisEngine/commits/main)
 
 ## Project Overview
 A modular 3D physics engine written in modern C++, designed to combine scientific rigour with high-performance computing techniques.

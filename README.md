@@ -5,8 +5,8 @@
 [![GitHub Actions](https://img.shields.io/github/actions/workflow/status/tomlaclavere/3DPhysicsEngine/ci.yml?branch=main&logo=githubactions&style=flat)](https://github.com/tomlaclavere/3DPhysicsEngine/actions)
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue?logo=readthedocs&style=flat)](https://tomlaclavere.github.io/3DPhysicsEngine/)
 [![License](https://img.shields.io/badge/license-AGPL%203.0-green?style=flat)](LICENSE)
-[![GitHub Repo Size](https://img.shields.io/github/repo-size/tomlaclavere/PhD?style=flat)](https://github.com/tomlaclavere/3DPhyscisEngine)
-[![Last Commit](https://img.shields.io/github/last-commit/tomlaclavere/PhD?style=flat)](https://github.com/tomlaclavere/3DPhyscisEngine/commits/main)
+[![GitHub Repo Size](https://img.shields.io/github/repo-size/tomlaclavere/3DPhysicsEngine?style=flat)](https://github.com/tomlaclavere/3DPhysicsEngine)
+[![Last Commit](https://img.shields.io/github/last-commit/tomlaclavere/3DPhysicsEngine?style=flat)](https://github.com/tomlaclavere/3DPhysicsEngine/commits/main)
 
 ## Project Overview
 A modular 3D physics engine written in modern C++, designed to combine scientific rigour with high-performance computing techniques.

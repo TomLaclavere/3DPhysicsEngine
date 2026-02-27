@@ -102,6 +102,7 @@ fi
 # =====================================================================
 if [[ ! " ${CMAKE_EXTRA_ARGS[*]} " =~ "-G" ]]; then
     if command -v ninja >/dev/null 2>&1; then
+        echo "[INFO] Using Ninja generator"
         CMAKE_EXTRA_ARGS+=("-G" "Ninja")
     fi
 fi

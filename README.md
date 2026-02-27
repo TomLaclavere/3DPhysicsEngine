@@ -20,12 +20,62 @@ Contributions are welcome. Please read CONTRIBUTING.md and CLA.md before submitt
 ---
 
 ## Table of Contents
- - [How to build and run](#how-to-build-and-run)
+ - [Installation](#installation)
+ - [Build and Run](#build-and-run)
  - [Developer scripts](#developer-scripts)
  - [Doxygen Documentation](#doxygen-documentation)
  - [Tech Stack](#tech-stack)
  - [Deliverables](#deliverables)
  - [License](#license)
+
+## Installation
+
+This project relies mainly on basic packages to run easily without installing many external dependencies. Below is a step-by-step guide to get the project running.
+
+### Get the project
+
+Clone this repository using `git`:
+
+```bash
+git clone git@github.com:TomLaclavere/3DPhysicsEngine.git
+cd 3DPhysicsEngine
+```
+
+### Install dependencies
+
+#### Build system
+
+ - CMake >= 3.22
+ - GCC (included in `build-essential`) or Clang
+ - (optional) Ninja
+
+#### External lib
+
+ - yaml-cpp
+
+#### Tests
+
+ - git (for `FetchContent`, used to install `GoogleTest`)
+
+#### Coverage tools
+
+ - gcovr (for GCC)
+ - llvm-cov + llvm-profdata (for Clang)
+
+#### Installation (Ubuntu example)
+
+You can install the essential dependencies using:
+
+```bash
+sudo apt update
+sudo apt install build-essential cmake git libyaml-cpp-dev gcovr
+```
+
+For Clang and optional Ninja:
+
+```bash
+sudo apt install clang ninja-build
+```
 
 ## How to build and run
 

@@ -5,8 +5,8 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 ## General Tasks
 
 - [ ] Handle dependencies properly
-  - [ ] Update README with installation instructions
-  - [ ] Automoted dependency installation via CMake / scripts
+  - [x] Update README with installation instructions
+  - [ ] Automated dependency installation via CMake / scripts ???
 - [ ] Look at tools for CI
   - [ ] ASAN
   - [ ] UBSAN

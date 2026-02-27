@@ -9,7 +9,7 @@
 //  X vs X Collisions
 // ——————————————————————————————————————————————————————————————————————————
 // Sphere vs Sphere
-TEST(SphereTest, BroadSphereCollision)
+TEST(BroadCollisionTest, BroadSphereCollision)
 {
     Sphere  sphere(Vector3D(0_d, 0_d, 0_d), 2_d);
     Sphere  sphere_inside(Vector3D(1_d, 1_d, 1_d), 2_d);
@@ -25,7 +25,7 @@ TEST(SphereTest, BroadSphereCollision)
     EXPECT_TRUE(sphereTouching.checkCollision(sphere));  // Just touching
 }
 // AABB vs AABB
-TEST(AABBTest, BroadAABBCollision)
+TEST(BroadCollisionTest, BroadAABBCollision)
 {
     AABB aabb1(Vector3D(0_d, 0_d, 0_d), Vector3D(2_d, 2_d, 2_d));
     AABB aabb2(Vector3D(1_d, 1_d, 1_d), Vector3D(2_d, 2_d, 2_d));
@@ -45,7 +45,7 @@ TEST(AABBTest, BroadAABBCollision)
     EXPECT_FALSE(aabbZ.checkAABBCollision(aabb1));
 }
 // Plane vs Plane
-TEST(PlaneTest, BroadPlaneCollision)
+TEST(BroadCollisionTest, BroadPlaneCollision)
 {
     // Very long function to test: decomposition of the different paths
 
@@ -74,7 +74,7 @@ TEST(PlaneTest, BroadPlaneCollision)
 //  X vs Y Collisions
 // ——————————————————————————————————————————————————————————————————————————
 // Sphere vs Plane
-TEST(PlaneTest, BroadSpherePlaneCollision)
+TEST(BroadCollisionTest, BroadSpherePlaneCollision)
 {
     Plane   plane(Vector3D(0_d, 0_d, 0_d), Vector3D(4_d, 4_d, 0_d), Vector3D(0_d, 0_d, 1_d));
     Contact contact;
@@ -112,7 +112,7 @@ TEST(PlaneTest, BroadSpherePlaneCollision)
     EXPECT_FALSE(sphereSamePlan.computeCollision(plane, contact));
 }
 // Sphere vs AABB
-TEST(AABBTest, BroadSphereAABBCollision)
+TEST(BroadCollisionTest, BroadSphereAABBCollision)
 {
     AABB aabb(Vector3D(0_d, 0_d, 0_d), Vector3D(2_d, 2_d, 2_d));
 
@@ -172,7 +172,7 @@ TEST(AABBTest, BroadSphereAABBCollision)
     EXPECT_FALSE(sphereClose.computeCollision(aabb, contact));
 }
 // AABB vs Plane
-TEST(AABBTest, BroadAABBPlaneCollision)
+TEST(BroadCollisionTest, BroadAABBPlaneCollision)
 {
     AABB    aabb(Vector3D(0_d, 0_d, 0_d), Vector3D(2_d, 2_d, 2_d));
     Contact contact;
@@ -229,7 +229,7 @@ struct DummyObject : public Object
 };
 
 // Sphere vs Unknown
-TEST(SphereTest, BroadCollisionDefaultCase)
+TEST(BroadCollisionTest, BroadCollisionSphereDefaultCase)
 {
     Sphere      sphere(Vector3D(0_d, 0_d, 0_d));
     DummyObject dummy;
@@ -238,7 +238,7 @@ TEST(SphereTest, BroadCollisionDefaultCase)
     EXPECT_FALSE(dummy.checkCollision(sphere));
 }
 // AABB vs Unknown
-TEST(AABB, BroadCollisionDefaultCase)
+TEST(BroadCollisionTest, BroadCollisionAABBDefaultCase)
 {
     AABB        box(Vector3D(0_d, 0_d, 0_d), Vector3D(1_d, 1_d, 1_d));
     DummyObject dummy;
@@ -247,7 +247,7 @@ TEST(AABB, BroadCollisionDefaultCase)
     EXPECT_FALSE(dummy.checkCollision(box));
 }
 // Plane vs Unknown
-TEST(PlaneTest, BroadCollisionDefaultCase)
+TEST(BroadCollisionTest, BroadCollisionPlaneDefaultCase)
 {
     Plane       plane(Vector3D(0_d, 0_d, 0_d), Vector3D(1_d, 1_d, 1_d));
     DummyObject dummy;

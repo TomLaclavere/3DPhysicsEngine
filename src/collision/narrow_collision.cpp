@@ -128,8 +128,8 @@ bool NarrowCollision::computeContact(const Sphere& sphere, const AABB& aabb, Con
             normal  = Vector3D(0, 0, 1);
         }
 
-        // If sphere does not reach the nearest face, there is no collision
-        if (commonMaths::approxSmallerOrEqualThan(radius, minDist))
+        // If sphere does not reach the nearest face, there is no collisionE
+        if (commonMaths::approxSmallerOrEqualThan(radius, minDist) && !commonMaths::approxEqual(radius, 0_d))
         {
             return false;
         }

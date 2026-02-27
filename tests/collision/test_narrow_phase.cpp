@@ -11,7 +11,7 @@
 //  X vs X Collisions
 // ——————————————————————————————————————————————————————————————————————————
 // Sphere vs Sphere
-TEST(SphereTest, NarrowSphereCollision)
+TEST(NarrowCollisionTest, NarrowSphereCollision)
 {
     Sphere  sphere(Vector3D(0_d, 0_d, 0_d), 2_d);
     Sphere  sphere_inside(Vector3D(1_d, 1_d, 1_d), 2_d);
@@ -27,7 +27,7 @@ TEST(SphereTest, NarrowSphereCollision)
     EXPECT_TRUE(sphereTouching.computeCollision(sphere, contact));  // Just touching
 }
 // AABB vs AABB
-TEST(AABBTest, NarrowAABBCollision)
+TEST(NarrowCollisionTest, NarrowAABBCollision)
 {
     AABB    aabb1(Vector3D(0_d, 0_d, 0_d), Vector3D(2_d, 2_d, 2_d));
     AABB    aabb2(Vector3D(1_d, 1_d, 1_d), Vector3D(2_d, 2_d, 2_d));
@@ -48,7 +48,7 @@ TEST(AABBTest, NarrowAABBCollision)
     EXPECT_FALSE(aabbZ.computeCollision(aabb1, contact));
 }
 // Plane vs Plane
-TEST(PlaneTest, NarrowPlaneCollision)
+TEST(NarrowCollisionTest, NarrowPlaneCollision)
 {
     // Very long function to test: decomposition of the different paths
 
@@ -94,7 +94,7 @@ TEST(PlaneTest, NarrowPlaneCollision)
 //  X vs Y Collisions
 // ——————————————————————————————————————————————————————————————————————————
 // Sphere vs Plane
-TEST(SphereTest, NarrowSpherePlaneCollision)
+TEST(NarrowCollisionTest, NarrowSpherePlaneCollision)
 {
     Plane   plane(Vector3D(0_d, 0_d, 0_d), Vector3D(4_d, 4_d, 0_d), Vector3D(0_d, 0_d, 1_d));
     Contact contact;
@@ -150,7 +150,7 @@ TEST(SphereTest, NarrowSpherePlaneCollision)
     EXPECT_FALSE(plane.computeCollision(sphereZeroRadiusOutside, contact));
 }
 // Sphere vs AABB
-TEST(AABBTest, NarrowSphereAABBCollision)
+TEST(NarrowCollisionTest, NarrowSphereAABBCollision)
 {
     AABB    aabb(Vector3D(0_d, 0_d, 0_d), Vector3D(2_d, 2_d, 2_d));
     Contact contact;
@@ -203,7 +203,7 @@ TEST(AABBTest, NarrowSphereAABBCollision)
     EXPECT_TRUE(sphereNegativeTouching.computeCollision(aabb, contact));
 }
 // AABB vs Plane
-TEST(AABBTest, NarrowAABBPlaneCollision)
+TEST(NarrowCollisionTest, NarrowAABBPlaneCollision)
 {
     AABB    aabb(Vector3D(0_d, 0_d, 0_d), Vector3D(2_d, 2_d, 2_d));
     Contact contact;
@@ -259,7 +259,7 @@ struct DummyObject : public Object
 };
 
 // Sphere vs Unknown
-TEST(SphereTest, NarrowCollisionDefaultCase)
+TEST(NarrowCollisionTest, NarrowCollisionSphereDefaultCase)
 {
     Sphere      sphere(Vector3D(0_d, 0_d, 0_d));
     DummyObject dummy;
@@ -269,7 +269,7 @@ TEST(SphereTest, NarrowCollisionDefaultCase)
     EXPECT_FALSE(dummy.computeCollision(sphere, contact));
 }
 // AABB vs Unknown
-TEST(AABB, computeCollisionDefaultCase)
+TEST(NarrowCollisionTest, computeCollisionAABBDefaultCase)
 {
     AABB        box(Vector3D(0_d, 0_d, 0_d), Vector3D(1_d, 1_d, 1_d));
     DummyObject dummy;
@@ -279,7 +279,7 @@ TEST(AABB, computeCollisionDefaultCase)
     EXPECT_FALSE(dummy.computeCollision(box, contact)); // Default case should return false
 }
 // Plane vs Unknown
-TEST(PlaneTest, NarrowCollisionDefaultCase)
+TEST(NarrowCollisionTest, NarrowCollisionPlaneDefaultCase)
 {
     Plane       plane(Vector3D(0_d, 0_d, 0_d), Vector3D(1_d, 1_d, 1_d));
     DummyObject dummy;

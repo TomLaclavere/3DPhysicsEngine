@@ -7,46 +7,56 @@ void positionCorrection(Object& A, Object& B, Contact& contact, decimal percent,
     if (contact.penetration <= slop)
         return;
 
-    auto invMassA = A.getMass() > 0_d ? 1_d / A.getMass() : 0_d;
-    auto invMassB = B.getMass() > 0_d ? 1_d / B.getMass() : 0_d;
-    if (invMassA + invMassB <= 0_d)
-        return;
-
-    decimal  invMassSum = invMassA + invMassB;
-    Vector3D correction =
-        contact.normal * ((std::max(contact.penetration - slop, 0_d) / invMassSum) * percent);
-
-    A.setPosition(A.getPosition() - correction * invMassA);
-    B.setPosition(B.getPosition() + correction * invMassB);
-}
-
-void reboundCollision(Object& A, Object& B, Contact& contact, decimal restitution)
-{
-    decimal invMassA = A.getMass() > 0_d ? 1_d / A.getMass() : 0_d;
-    decimal invMassB = B.getMass() > 0_d ? 1_d / B.getMass() : 0_d;
-
+    auto    invMassA   = A.getMass() > 0_d ? 1_d / A.getMass() : 0_d;
+    auto    invMassB   = B.getMass() > 0_d ? 1_d / B.getMass() : 0_d;
     decimal invMassSum = invMassA + invMassB;
     if (invMassSum <= 0_d)
         return;
 
-    // Positional correction
+    // Normal orientée de B vers A
+    Vector3D n = contact.normal;
+    if ((A.getPosition() - B.getPosition()).dotProduct(n) < 0_d)
+        n = -n;
+
+    decimal  correctionMag = (std::max(contact.penetration - slop, 0_d) / invMassSum) * percent;
+    Vector3D correction    = n * correctionMag;
+
+    A.setPosition(A.getPosition() + correction * invMassA);
+    B.setPosition(B.getPosition() - correction * invMassB);
+}
+
+void reboundCollision(Object& A, Object& B, Contact& contact, decimal restitution)
+{
+    decimal invMassA   = A.getMass() > 0_d ? 1_d / A.getMass() : 0_d;
+    decimal invMassB   = B.getMass() > 0_d ? 1_d / B.getMass() : 0_d;
+    decimal invMassSum = invMassA + invMassB;
+    if (invMassSum <= 0_d)
+        return;
+
+    // Normal orientée de B vers A
+    Vector3D n = contact.normal;
+    if ((A.getPosition() - B.getPosition()).dotProduct(n) < 0_d)
+        n = -n;
+
+    // Correction de position symétrique
     positionCorrection(A, B, contact);
 
     Vector3D va = A.getVelocity();
     Vector3D vb = B.getVelocity();
 
-    // Relative velocity
-    Vector3D relVel         = vb - va;
-    decimal  velAlongNormal = relVel.dotProduct(contact.normal);
+    // Vitesse relative
+    Vector3D relVel         = va - vb;
+    decimal  velAlongNormal = relVel.dotProduct(n);
 
-    if (velAlongNormal <= 0_d)
+    // On ignore si les objets s’éloignent
+    if (velAlongNormal >= 0_d)
         return;
 
     decimal e = std::clamp(restitution, 0_d, 1_d);
-    decimal j = (1_d + e) * velAlongNormal / invMassSum;
+    decimal j = -(1_d + e) * velAlongNormal / invMassSum;
 
-    Vector3D impulse = contact.normal * j;
+    Vector3D impulse = n * j;
 
-    A.setVelocity(va - impulse * invMassA);
-    B.setVelocity(vb + impulse * invMassB);
+    A.setVelocity(va + impulse * invMassA);
+    B.setVelocity(vb - impulse * invMassB);
 }

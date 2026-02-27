@@ -7,7 +7,7 @@
 
 #include <gtest/gtest.h>
 
-TEST(CollisionResponse, ReturnCases)
+TEST(CollisionResponseTest, ReturnCases)
 {
     // Using spheres to test return cases for simplicity
     Sphere  A;
@@ -57,7 +57,7 @@ TEST(CollisionResponse, ReturnCases)
     EXPECT_VECTOR_EQ(velB, B.getVelocity());
 }
 
-TEST(CollisionResponse, SphereSpherePenetrationResponse)
+TEST(CollisionResponseTest, SphereSpherePenetrationResponse)
 {
     Sphere A(Vector3D(-0.5_d, 0_d, 0_d), 1_d);
     Sphere B(Vector3D(0.5_d, 0_d, 0_d), 2_d);
@@ -81,7 +81,7 @@ TEST(CollisionResponse, SphereSpherePenetrationResponse)
     EXPECT_DECIMAL_EQ(contactAfter.penetration, 0_d);
 }
 
-TEST(CollisionResponse, SphereSphereElasticCollision)
+TEST(CollisionResponseTest, SphereSphereElasticCollision)
 {
     // Along X axis
     Sphere A(Vector3D(-1_d, 0_d, 0_d), 2_d);
@@ -126,7 +126,7 @@ TEST(CollisionResponse, SphereSphereElasticCollision)
     EXPECT_VECTOR_EQ(Vector3D(1_d, 1_d, -1_d), sphere2.getVelocity());
 }
 
-TEST(CollisionResponse, SphereSphereInelasticCollision)
+TEST(CollisionResponseTest, SphereSphereInelasticCollision)
 {
     // Along X axis
     Sphere A(Vector3D(-1_d, 0_d, 0_d), 2_d);
@@ -147,7 +147,7 @@ TEST(CollisionResponse, SphereSphereInelasticCollision)
     EXPECT_DECIMAL_EQ(B.getVelocity().getX(), 0.5);
 }
 
-TEST(CollisionResponse, SpherePlaneCollision)
+TEST(CollisionResponseTest, SpherePlaneCollision)
 {
     Sphere sphere(Vector3D(0_d, 0_d, 2_d), 4_d);
     Plane  plane(Vector3D(0_d, 0_d, 0_d), Vector3D(1_d, 1_d, 0_d), Vector3D(0_d, 0_d, 1_d));

@@ -13,7 +13,6 @@ void positionCorrection(Object& A, Object& B, Contact& contact, decimal percent,
     if (invMassSum <= 0_d)
         return;
 
-    // Normal orientée de B vers A
     Vector3D n = contact.normal;
     if ((A.getPosition() - B.getPosition()).dotProduct(n) < 0_d)
         n = -n;
@@ -33,22 +32,18 @@ void reboundCollision(Object& A, Object& B, Contact& contact, decimal restitutio
     if (invMassSum <= 0_d)
         return;
 
-    // Normal orientée de B vers A
     Vector3D n = contact.normal;
     if ((A.getPosition() - B.getPosition()).dotProduct(n) < 0_d)
         n = -n;
 
-    // Correction de position symétrique
     positionCorrection(A, B, contact);
 
     Vector3D va = A.getVelocity();
     Vector3D vb = B.getVelocity();
 
-    // Vitesse relative
     Vector3D relVel         = va - vb;
     decimal  velAlongNormal = relVel.dotProduct(n);
 
-    // On ignore si les objets s’éloignent
     if (velAlongNormal >= 0_d)
         return;
 

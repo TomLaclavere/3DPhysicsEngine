@@ -7,9 +7,8 @@
 #include <cmath>
 #include <gtest/gtest.h>
 
-// ——————————————————————————————————————————————————————————————————————————
-//  X vs X Collisions
-// ——————————————————————————————————————————————————————————————————————————
+// ——————————————————————— X vs X Collisions ———————————————————————
+
 // Sphere vs Sphere
 TEST(NarrowCollisionTest, NarrowSphereCollision)
 {
@@ -90,9 +89,8 @@ TEST(NarrowCollisionTest, NarrowPlaneCollision)
                                        contact));
 }
 
-// ——————————————————————————————————————————————————————————————————————————
-//  X vs Y Collisions
-// ——————————————————————————————————————————————————————————————————————————
+// ——————————————————————— X vs Y Collisions ———————————————————————
+
 // Sphere vs Plane
 TEST(NarrowCollisionTest, NarrowSpherePlaneCollision)
 {
@@ -248,9 +246,8 @@ TEST(NarrowCollisionTest, NarrowAABBPlaneCollision)
     EXPECT_TRUE(planeRight.computeCollision(aabb, contact));
 }
 
-// ——————————————————————————————————————————————————————————————————————————
-//  X vs Unknown Collisions
-// ——————————————————————————————————————————————————————————————————————————
+// ——————————————————————— X vs Unknown Collisions ———————————————————————
+
 // Dummy class to simulate an unknown object type
 struct DummyObject : public Object
 {

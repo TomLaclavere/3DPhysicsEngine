@@ -62,19 +62,29 @@ cd 3DPhysicsEngine
  - gcovr (for GCC)
  - llvm-cov + llvm-profdata (for Clang)
 
+#### Documentation generation
+
+ - Doxygen
+
 #### Installation (Ubuntu example)
 
 You can install the essential dependencies using:
 
 ```bash
 sudo apt update
-sudo apt install build-essential cmake git libyaml-cpp-dev gcovr
+sudo apt install -y build-essential cmake git libyaml-cpp-dev gcovr
 ```
 
 For Clang and optional Ninja:
 
 ```bash
-sudo apt install clang ninja-build
+sudo apt install -y clang ninja-build
+```
+
+For documentation:
+
+```bash
+sudo apt-get install -y doxygen graphviz
 ```
 
 ## How to build and run

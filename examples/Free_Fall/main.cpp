@@ -118,17 +118,14 @@ int main(int argc, char** argv)
         if (sphere->computeCollision(*ground, contact) && simulationContactTimeSphere == 0_d)
         {
             simulationContactTimeSphere = time;
-            sphere->setVelocity(Vector3D(0_d));
         }
         if (plane->computeCollision(*ground, contact) && simulationContactTimePlane == 0_d)
         {
             simulationContactTimePlane = time;
-            plane->setVelocity(Vector3D(0_d));
         }
         if (cube->computeCollision(*ground, contact) && simulationContactTimeCube == 0_d)
         {
             simulationContactTimeCube = time;
-            cube->setVelocity(Vector3D(0_d));
         }
 
         ++counter;

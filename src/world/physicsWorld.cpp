@@ -68,10 +68,9 @@ void PhysicsWorld::applyGravityForce(Object& obj)
 }
 void PhysicsWorld::applyGravityForces()
 {
-    {
-        for (auto* obj : objects)
-            applyGravityForce(*obj);
-    }
+
+    for (auto* obj : objects)
+        applyGravityForce(*obj);
 }
 void PhysicsWorld::applySpringForces(Object& obj, Object& other)
 {
@@ -162,7 +161,6 @@ void PhysicsWorld::applyForces()
 void PhysicsWorld::solveCollisions()
 {
     const size_t n = objects.size();
-    Contact      contact;
 
     for (size_t i = 0; i < n; ++i)
     {
@@ -182,7 +180,8 @@ void PhysicsWorld::solveCollisions()
             // Narrow phase
             if (isCollidingBroad)
             {
-                bool isCollidindNarrow = A->computeCollision(*B, contact);
+                Contact contact;
+                bool    isCollidindNarrow = A->computeCollision(*B, contact);
                 if (isCollidindNarrow)
                     reboundCollision(*A, *B, contact);
             }
@@ -300,34 +299,35 @@ void PhysicsWorld::integrateWithoutCollisions()
     }
 
     // If collision : object stops moving
-    {
-        const size_t n = objects.size();
-        Contact      contact;
 
-        for (size_t i = 0; i < n; ++i)
+    const size_t n = objects.size();
+
+    for (size_t i = 0; i < n; ++i)
+    {
+        Object* A = objects[i];
+        if (!A)
+            continue;
+
+        for (size_t j = i + 1; j < n; ++j)
         {
-            Object* A = objects[i];
-            if (!A)
+            Object* B = objects[j];
+            if (!B)
                 continue;
 
-            for (size_t j = i + 1; j < n; ++j)
+            // Broad phase
+            bool isCollidingBroad = A->checkCollision(*B);
+
+            // Narrow phase
+            if (isCollidingBroad)
             {
-                Object* B = objects[j];
-                if (!B)
-                    continue;
-
-                // Broad phase
-                bool isCollidingBroad = A->checkCollision(*B);
-
-                // Narrow phase
-                if (isCollidingBroad)
+                Contact contact;
+                bool    isCollidindNarrow = A->computeCollision(*B, contact);
+                if (isCollidindNarrow)
                 {
-                    bool isCollidindNarrow = A->computeCollision(*B, contact);
-                    if (isCollidindNarrow)
-                    {
-                        A->setVelocity(Vector3D(0_d));
-                        B->setVelocity(Vector3D(0_d));
-                    }
+                    A->setVelocity(Vector3D(0_d));
+                    A->setIsFixed(true);
+                    B->setVelocity(Vector3D(0_d));
+                    B->setIsFixed(true);
                 }
             }
         }

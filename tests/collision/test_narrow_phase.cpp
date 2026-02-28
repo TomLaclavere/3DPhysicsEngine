@@ -98,12 +98,17 @@ TEST(NarrowCollisionTest, NarrowSpherePlaneCollision)
     Contact contact;
 
     // Sphere intersecting the plane from the front
-    Sphere sphereIntersecting(Vector3D(0_d, 0_d, 0.5_d), 1_d); // Center at z=0.5, radius=1
+    Sphere sphereIntersecting(Vector3D(0_d, 0_d, 0.5_d), 1_d);
     EXPECT_TRUE(sphereIntersecting.computeCollision(plane, contact));
     EXPECT_TRUE(plane.computeCollision(sphereIntersecting, contact));
 
+    // Sphere intersecting the plane from above
+    Sphere sphereIntersectingAbove(Vector3D(0_d, 0_d, 0.1_d), 0.2_d);
+    EXPECT_TRUE(sphereIntersectingAbove.computeCollision(plane, contact));
+    EXPECT_TRUE(plane.computeCollision(sphereIntersectingAbove, contact));
+
     // Sphere completely above plane (no intersection)
-    Sphere sphereAbove(Vector3D(0_d, 0_d, 2.5_d), 1_d); // Center at z=2.5, radius=1 → distance > radius
+    Sphere sphereAbove(Vector3D(0_d, 0_d, 2.5_d), 1_d);
     EXPECT_FALSE(sphereAbove.computeCollision(plane, contact));
     EXPECT_FALSE(plane.computeCollision(sphereAbove, contact));
 

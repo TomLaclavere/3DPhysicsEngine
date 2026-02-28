@@ -37,8 +37,8 @@ endif()
 # =============================================
 option(3DPE_USE_DOUBLE_PRECISION "Compile using double precision floating values" OFF)
 option(3DPE_BUILD_EXAMPLES "Build example applications" ON)
-option(3DPE_BUILD_TESTS "Build unit tests" ON)
 option(3DPE_BUILD_BENCHMARKS "Build benchmark applications" ON)
+option(3DPE_BUILD_TESTS "Build unit tests" ON)
 option(3DPE_ENABLE_COVERAGE "Enable coverage reporting" ON)
 option(3DPE_ENABLE_CLANG_TIDY "Enable clang-tidy static analysis" OFF)
 option(3DPE_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" ON)
@@ -243,6 +243,33 @@ if(3DPE_BUILD_EXAMPLES)
         DEPENDS example_Projectiles
         COMMENT "Running example: Projectiles"
     )
+endif()
+
+# =============================================
+# Benchmarks
+# =============================================
+if(3DPE_BUILD_BENCHMARKS)
+    message(STATUS "Building benchmarks")
+
+    # ---------------------------------------------
+    # Example: Free Fall benchmark
+    # ---------------------------------------------
+    add_executable(benchmark_Free_Fall benchmarks/Free_Fall/main.cpp)
+    target_link_libraries(benchmark_Free_Fall PRIVATE 3DPhysicsEngine)
+    target_include_directories(benchmark_Free_Fall PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+    set_target_properties(benchmark_Free_Fall PROPERTIES
+        OUTPUT_NAME "Free_Fall"
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/benchmarks
+        FOLDER "Benchmarks"
+    )
+
+    add_custom_target(Free_Fall_Benchmark
+        COMMAND $<TARGET_FILE:benchmark_Free_Fall>
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        DEPENDS benchmark_Free_Fall
+        COMMENT "Running benchmark: Free_Fall"
+    )
+
 endif()
 
 # =============================================

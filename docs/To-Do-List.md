@@ -4,6 +4,10 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 ## General Tasks
 
+- [ ] Replace maxIteration by simulationTime in yaml parameters file
+- [ ] Benchmark
+  - [ ] Compute error on time (t_simulation - t_analytic) vs timestep, to verify expected error from integration methods
+  - [ ] Add time / iteration in benchmark
 - [ ] Look at tools for CI
   - [ ] ASAN
   - [ ] UBSAN

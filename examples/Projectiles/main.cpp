@@ -13,6 +13,7 @@
  */
 
 #include "mathematics/math_io.hpp"
+#include "mathematics/vector.hpp"
 #include "objects/aabb.hpp"
 #include "objects/plane.hpp"
 #include "objects/sphere.hpp"
@@ -20,6 +21,7 @@
 #include "world/config.hpp"
 #include "world/physicsWorld.hpp"
 
+#include <cmath>
 #include <iomanip>
 #include <iostream>
 
@@ -33,6 +35,7 @@ int main(int argc, char** argv)
     // Load configuration
     Timer   configTimer;
     Config& config = Config::get();
+    Contact contact;
     config.loadFromFile("examples/Projectiles/config.yml");
     config.overrideFromCommandLine(argc, argv);
 
@@ -66,9 +69,10 @@ int main(int argc, char** argv)
     decimal  analyticalContactTimeSphere   = 0.5342499768054424_d;
     decimal  analyticalContactTimePlane    = 20.39535670016235_d;
     decimal  analyticalContactTimeCube     = 10.212231941071188_d;
-    Vector3D analyticalFinalPositionSphere = Vector3D(534.249977_d, 0_d, 0_d);
+    Vector3D analyticalFinalPositionSphere = Vector3D(534.249977_d, 0_d, sphereBulletMotion->getRadius());
     Vector3D analyticalFinalPositionPlane  = Vector3D(10_d, 0_d, 0_d);
-    Vector3D analyticalFinalPositionCube   = Vector3D(0_d, 520.611597_d, 0_d);
+    Vector3D analyticalFinalPositionCube =
+        Vector3D(0_d, 520.611597_d, cubeParabolicMotion->getSize()[2] / decimal(std::numbers::sqrt2));
 
     decimal simulationContactTimeSphere = 0_d;
     decimal simulationContactTimePlane  = 0_d;
@@ -103,7 +107,7 @@ int main(int argc, char** argv)
 
         world.integrateWithoutCollisions();
 
-        if (counter % 1000 == 0)
+        if (counter % 25 == 0)
         {
             for (auto* obj : world.getObject())
             {
@@ -117,11 +121,11 @@ int main(int argc, char** argv)
             std::cout << std::string(n, '-') << '\n';
         }
 
-        if (sphereBulletMotion->checkCollision(*ground) && simulationContactTimeSphere == 0_d)
+        if (sphereBulletMotion->computeCollision(*ground, contact) && simulationContactTimeSphere == 0_d)
             simulationContactTimeSphere = time;
-        if (planeVerticalMotion->checkCollision(*ground) && simulationContactTimePlane == 0_d)
+        if (planeVerticalMotion->computeCollision(*ground, contact) && simulationContactTimePlane == 0_d)
             simulationContactTimePlane = time;
-        if (cubeParabolicMotion->checkCollision(*ground) && simulationContactTimeCube == 0_d)
+        if (cubeParabolicMotion->computeCollision(*ground, contact) && simulationContactTimeCube == 0_d)
             simulationContactTimeCube = time;
 
         ++counter;
@@ -135,9 +139,10 @@ int main(int argc, char** argv)
     std::cout << "Total execution time: " << totalTimer.elapsedSeconds() << " s\n";
     std::cout << '\n';
 
-    // Verify contact times
+    // Bullet motion (sphere)
     std::cout << "Note : The time comparison are done with an approximation of 2 times the timestep value, "
                  "in order to prevent numerical uncertainties. \n";
+    std::cout << "\n";
     // Verify Sphere contact time
     if (commonMaths::approxEqual(analyticalContactTimeSphere, simulationContactTimeSphere, 2 * timeStep))
         std::cout
@@ -148,29 +153,6 @@ int main(int argc, char** argv)
                      "Analytical contact time = "
                   << analyticalContactTimeSphere
                   << " (s), and Simulation contact time = " << simulationContactTimeSphere << " (s).\n";
-    // Verify Plane contact time
-    if (commonMaths::approxEqual(analyticalContactTimePlane, simulationContactTimePlane, 2 * timeStep))
-        std::cout
-            << "Vertical motion (plane) : analytical and simulation times are compatible. Contact time = "
-            << analyticalContactTimePlane << " (s).\n";
-    else
-        std::cout << "Vertical motion (plane) : analytical and simulation times are not compatible. "
-                     "Analytical contact time = "
-                  << analyticalContactTimePlane
-                  << " (s), and Simulation contact time = " << simulationContactTimePlane << " (s).\n";
-    // Verify Cube contact time
-    if (commonMaths::approxEqual(analyticalContactTimeCube, simulationContactTimeCube, 2 * timeStep))
-        std::cout
-            << "Parabolic Motion (cube) : analytical and simulation times are compatible. Contact time = "
-            << analyticalContactTimeCube << " (s).\n";
-    else
-        std::cout << "Parabolic Motion (cube) : analytical and simulation times are not compatible. "
-                     "Analytical contact time = "
-                  << analyticalContactTimeCube
-                  << " (s), and Simulation contact time = " << simulationContactTimeCube << " (s).\n";
-
-    // Verify final position
-
     // Verify Sphere final position
     if (analyticalFinalPositionSphere.approxEqual(sphereBulletMotion->getPosition(), 0.2_d))
         std::cout << "Bullet  motion (sphere) : analytical and simulation final position are compatible. "
@@ -182,6 +164,18 @@ int main(int argc, char** argv)
                   << analyticalFinalPositionSphere
                   << " (m), and Simulation Final position = " << sphereBulletMotion->getPosition()
                   << " (m).\n";
+    std::cout << "\n";
+    // Vertical motion (plane)
+    // Verify Plane contact time
+    if (commonMaths::approxEqual(analyticalContactTimePlane, simulationContactTimePlane, 2 * timeStep))
+        std::cout
+            << "Vertical motion (plane) : analytical and simulation times are compatible. Contact time = "
+            << analyticalContactTimePlane << " (s).\n";
+    else
+        std::cout << "Vertical motion (plane) : analytical and simulation times are not compatible. "
+                     "Analytical contact time = "
+                  << analyticalContactTimePlane
+                  << " (s), and Simulation contact time = " << simulationContactTimePlane << " (s).\n";
     // Verify Plane final position
     if (analyticalFinalPositionPlane.approxEqual(planeVerticalMotion->getPosition(), 0.2_d))
         std::cout << "Bullet  motion (plane) : analytical and simulation final position are compatible. "
@@ -193,6 +187,19 @@ int main(int argc, char** argv)
                   << analyticalFinalPositionPlane
                   << " (m), and Simulation Final position = " << planeVerticalMotion->getPosition()
                   << " (m).\n";
+    std::cout << "\n";
+    // Bullet motion (cube)
+    // Verify Cube contact time
+    if (commonMaths::approxEqual(analyticalContactTimeCube, simulationContactTimeCube, 2 * timeStep))
+        std::cout
+            << "Parabolic Motion (cube) : analytical and simulation times are compatible. Contact time = "
+            << analyticalContactTimeCube << " (s).\n";
+    else
+        std::cout << "Parabolic Motion (cube) : analytical and simulation times are not compatible. "
+                     "Analytical contact time = "
+                  << analyticalContactTimeCube
+                  << " (s), and Simulation contact time = " << simulationContactTimeCube << " (s).\n";
+
     // Verify Cube final position
     if (analyticalFinalPositionCube.approxEqual(cubeParabolicMotion->getPosition(), 0.2_d))
         std::cout << "Bullet  motion (cube) : analytical and simulation final position are compatible. "

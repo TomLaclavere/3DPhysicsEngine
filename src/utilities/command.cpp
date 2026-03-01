@@ -1,6 +1,7 @@
 #include "utilities/command.hpp"
 
 #include "objects/aabb.hpp"
+#include "objects/object.hpp"
 #include "objects/plane.hpp"
 #include "objects/sphere.hpp"
 
@@ -32,7 +33,7 @@ void printUsage()
         << "World:\n"
         << "  set <dt|g> <value>                   Set timestep/grav acceleration to <value>.\n"
         << "  set obj <id> <property> [...values]  Set property for a given object, identified by its ID "
-           "(see 'list'). Properties can be: pos, vel, acc, rot, mass, fixed. values can "
+           "(see 'list'). Properties can be: pos, size, vel, acc, rot, mass, fixed. values can "
            "be either one value (ex: mass) or three values separated by spaces (ex: position).\n"
         << "  add <sphere|plane|AABB>              Add an object to the world.\n"
         << "  list                                 List all objects in the format <id> <ObjectType> "
@@ -106,6 +107,7 @@ using PropertySetter = std::function<void(Object*, const std::vector<std::string
 
 static const std::unordered_map<std::string, PropertySetter> PROPERTY_SETTERS = {
     { "pos", [](Object* o, const auto& a) { setVector3Property(o, a, &Object::setPosition, "pos"); } },
+    { "size", [](Object* o, const auto& a) { setVector3Property(o, a, &Object::setSize, "size"); } },
     { "vel", [](Object* o, const auto& a) { setVector3Property(o, a, &Object::setVelocity, "vel"); } },
     { "acc", [](Object* o, const auto& a) { setVector3Property(o, a, &Object::setAcceleration, "acc"); } },
     { "rot", [](Object* o, const auto& a) { setVector3Property(o, a, &Object::setRotation, "rot"); } },
@@ -171,7 +173,7 @@ bool handleAddCommand(PhysicsWorld& world, std::deque<std::string>& words)
     }
     if (type == "plane")
     {
-        auto plane = std::make_unique<Plane>(Vector3D(0, 0, 0), Vector3D(1, 1, 1), 1.0_d, Vector3D(0, 1, 0));
+        auto plane = std::make_unique<Plane>(Vector3D(0, 0, 0), Vector3D(1, 1, 1), 1.0_d, Vector3D(0, 0, 1));
         world.addObject(plane.release());
         std::cout << "Added plane.\n";
         return true;

@@ -6,10 +6,7 @@
 
 #include <gtest/gtest.h>
 
-// ——————————————————————————————————————————————————————————————————————————
 //  Constructors, Getters, and Setters
-// ——————————————————————————————————————————————————————————————————————————
-
 TEST(PlaneTest, ConstructorsAndGetters)
 {
     Vector3D position(1_d, 2_d, 3_d);
@@ -69,9 +66,7 @@ TEST(PlaneTest, Setters)
     EXPECT_DECIMAL_EQ(plane.getMass(), newMass);
 }
 
-// ——————————————————————————————————————————————————————————————————————————
 //  Utilities
-// ——————————————————————————————————————————————————————————————————————————
 
 TEST(PlaneTest, updateLocalAxes)
 {

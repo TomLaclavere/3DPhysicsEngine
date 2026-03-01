@@ -25,3 +25,11 @@ quit
 exit
 q
 set obj 1 fixed 1
+h
+set obj 0 fixed 1
+show 1
+set obj 1 size 1
+set obj 1 size 1 1 1
+set obj 0 fixed 0
+set obj 0 size 10 10 0
+set obj 1 pos 0 0 10

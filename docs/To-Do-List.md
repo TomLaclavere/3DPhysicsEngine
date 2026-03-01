@@ -11,9 +11,15 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 - [ ] Look at tools for CI
   - [ ] ASAN
   - [ ] UBSAN
-- [ ] Fix Rebound during integration
-- [ ] Modify rebound by contact forces (currently : dead functions)
-- [ ] Adjust examples with contact forces
+- [x] Fix Rebound during integration
+- [ ] Rebounds
+  - [ ] Modify rebound by contact forces (currently : dead functions)
+  - [ ] Add contact forces properties to objects ! 
+- [ ] Visualisation / Checking
+  - [ ] Save objects information during simulation
+  - [ ] Write generic plotting scripts (Python) to visualise data
+- [ ] Bouncing Ball example
+  - [ ] Compare with analytical computation
 
 ## Code Quality and Maintenance
 

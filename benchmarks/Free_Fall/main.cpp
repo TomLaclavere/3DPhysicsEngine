@@ -6,7 +6,6 @@
  */
 
 #include "mathematics/common.hpp"
-#include "mathematics/math_io.hpp"
 #include "mathematics/vector.hpp"
 #include "objects/aabb.hpp"
 #include "objects/plane.hpp"
@@ -17,7 +16,6 @@
 
 #include <cmath>
 #include <fstream>
-#include <iomanip>
 #include <iostream>
 
 decimal simulation(std::string solver, decimal timestep, int maxiter)

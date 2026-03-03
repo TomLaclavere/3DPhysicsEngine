@@ -1,6 +1,6 @@
 # config.yaml
 gravity: 9.81
 timestep: 0.001
-solverIters: 2000
+duration: 15
 solver: "Euler"
 verbose: true

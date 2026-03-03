@@ -1,26 +1,27 @@
 // config.cpp
 #include "world/config.hpp"
 
+#include "precision.hpp"
+
+#include <cstddef>
 #include <iostream>
+#include <string>
 #include <yaml-cpp/yaml.h>
 
-// ============================================================================
 //  Getters
-// ============================================================================
 Config& Config::get()
 {
     static Config instance;
     return instance;
 }
-decimal      Config::getGravity() const { return gravity; }
-decimal      Config::getTimeStep() const { return timeStep; }
-unsigned int Config::getMaxIterations() const { return maxIterations; }
-std::string  Config::getSolver() const { return solver; }
-bool         Config::getVerbose() const { return verbose; }
+decimal     Config::getGravity() const { return gravity; }
+decimal     Config::getTimeStep() const { return timeStep; }
+decimal     Config::getSimulationDuration() const { return simulationDuration; }
+std::size_t Config::getMaxIterations() const { return maxIterations; }
+std::string Config::getSolver() const { return solver; }
+bool        Config::getVerbose() const { return verbose; }
 
-// ============================================================================
 //  Loading Methods
-// ============================================================================
 void Config::loadFromFile(const std::string& path)
 {
     try
@@ -28,15 +29,15 @@ void Config::loadFromFile(const std::string& path)
         YAML::Node node = YAML::LoadFile(path);
 
         if (node["gravity"])
-            gravity = node["gravity"].as<decimal>();
+            setGravity(node["gravity"].as<decimal>());
         if (node["timestep"])
-            timeStep = node["timestep"].as<decimal>();
-        if (node["solverIters"])
-            maxIterations = node["solverIters"].as<unsigned>();
+            setTimeStep(node["timestep"].as<decimal>());
+        if (node["duration"])
+            setSimulationDuration(node["duration"].as<decimal>());
         if (node["solver"])
-            solver = node["solver"].as<std::string>();
+            setSolver(node["solver"].as<std::string>());
         if (node["verbose"])
-            verbose = node["verbose"].as<bool>();
+            setVerbose(node["verbose"].as<bool>());
     }
     catch (const std::exception& e)
     {
@@ -51,20 +52,16 @@ void Config::overrideFromCommandLine(int argc, char** argv)
     {
         std::string arg = argv[i];
         if (arg == "--gravity" && i + 1 < argc)
-        {
-            gravity = static_cast<decimal>(std::stod(argv[++i]));
-        }
+            setGravity(static_cast<decimal>(std::stold(argv[++i])));
         else if (arg == "--timestep" && i + 1 < argc)
-        {
-            timeStep = static_cast<decimal>(std::stod(argv[++i]));
-        }
+            setTimeStep(static_cast<decimal>(std::stold(argv[++i])));
+        else if (arg == "--duration" && i + 1 < argc)
+            setSimulationDuration(static_cast<decimal>(std::stold(argv[++i])));
         else if (arg == "--iters" && i + 1 < argc)
-        {
-            maxIterations = static_cast<unsigned int>(std::stoi(argv[++i]));
-        }
+            setMaxIterations(static_cast<std::size_t>(std::stoul(argv[++i])));
         else if (arg == "--solver" && i + 1 < argc)
-        {
-            solver = std::string(argv[++i]);
-        }
+            setSolver(std::string(argv[++i]));
+        else
+            continue;
     }
 }

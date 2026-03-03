@@ -21,7 +21,6 @@
 #include "world/config.hpp"
 #include "world/physicsWorld.hpp"
 
-#include <cmath>
 #include <iomanip>
 #include <iostream>
 
@@ -42,8 +41,10 @@ int main(int argc, char** argv)
     std::cout << "----------------------------------------\n";
     std::cout << "Simulation Parameters:\n";
     std::cout << "Gravity: " << config.getGravity() << " m/s²\n";
+    std::cout << "Duration: " << config.getSimulationDuration() << " s\n";
     std::cout << "Timestep: " << config.getTimeStep() << " s\n";
     std::cout << "Max iterations: " << config.getMaxIterations() << "\n";
+    std::cout << "Solver: " << config.getSolver() << "\n";
     std::cout << "Loading configuration took: " << configTimer.elapsedMilliseconds() << " ms\n";
 
     // Initialize simulation

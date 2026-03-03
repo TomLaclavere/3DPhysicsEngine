@@ -4,7 +4,8 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 ## General Tasks
 
-- [ ] Replace maxIteration by simulationTime in yaml parameters file
+- [x] Replace maxIteration by simulationDuration in yaml parameters file
+- [ ] Fix problem with double precision in free_fall and projectiles examples
 - [ ] Benchmark
   - [ ] Compute error on time (t_simulation - t_analytic) vs timestep, to verify expected error from integration methods
   - [ ] Add time / iteration in benchmark
@@ -56,7 +57,7 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
   - [ ] Real-time parameter modification
   - [ ] State saving/loading
   - [ ] Performance monitoring
-  - [ ] Debug visualization toggles
+  - [ ] Debug visualisation toggles
   - [ ] Event logging system
 
 ### User Interface

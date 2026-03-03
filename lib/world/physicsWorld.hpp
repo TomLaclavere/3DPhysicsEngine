@@ -61,7 +61,7 @@ public:
     /// @name Setters
     // ============================================================================
     /// @{
-    void setSolver(std::string _solver);
+    void setSolver(const std::string& _solver);
     void setTimeStep(decimal step);
     void setGravityCst(decimal g);
     void setGravityAcc(const Vector3D& acc);

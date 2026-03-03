@@ -35,7 +35,7 @@ Solver   PhysicsWorld::getSolver() const { return solver; }
 // ============================================================================
 //  Setters
 // ============================================================================
-void PhysicsWorld::setSolver(std::string _solver)
+void PhysicsWorld::setSolver(const std::string& _solver)
 {
     solver = parseSolver(_solver);
     config.setSolver(_solver);
@@ -70,7 +70,9 @@ void PhysicsWorld::applyGravityForces()
 {
 
     for (auto* obj : objects)
+    {
         applyGravityForce(*obj);
+    }
 }
 void PhysicsWorld::applySpringForces(Object& obj, Object& other)
 {

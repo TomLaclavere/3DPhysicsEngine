@@ -2,9 +2,12 @@
 
 #include "collision/collision_response.hpp"
 #include "mathematics/math_io.hpp"
+#include "objects/object.hpp"
 #include "world/integrateRK4.hpp"
 #include "world/physics.hpp"
 
+#include <cstddef>
+#include <filesystem>
 #include <iomanip>
 #include <iostream>
 #include <vector>
@@ -406,16 +409,21 @@ void PhysicsWorld::run()
         std::cout << std::string(n, '-') << "\n";
     }
 
+    // If save
+    initCSV("output/CSV");
+    saveObjectsCSV();
+
     while (cpt < maxIter + 1 && getIsRunning())
     {
         const decimal time = static_cast<decimal>(cpt) * timeStep;
 
         integrate();
+        saveMotionCSV();
 
         // Printing
         if (config.getVerbose())
         {
-            if (cpt % 10 == 0)
+            if (cpt % 25 == 0)
             {
                 for (auto* obj : objects)
                 {
@@ -458,30 +466,60 @@ void PhysicsWorld::printState() const
         }
     }
 }
-void PhysicsWorld::initMotionCSV(const std::string& directory)
+void PhysicsWorld::initCSV(const std::string& directory)
 {
     if (!config.getSave())
         return;
 
-    motionFiles.clear();
+    // Create CSV directory
+    if (!std::filesystem::exists(directory))
+    {
+        std::filesystem::create_directories(directory);
+    }
 
+    // Object CSV
+    objectFile.clear();
+    objectFile.open(directory + "/objects.csv");
+    if (!objectFile)
+    {
+        throw std::runtime_error("Cannot open objects.csv");
+    }
+    objectFile << "id" << "," << "name" << "," << "type" << "," << "mass" << "," << "size (x)" << ","
+               << "size(y)" << "," << "size(z)" << "," << "fixed"
+               << "\n";
+
+    // Motion CSV
+    motionFiles.clear();
     for (std::size_t idx = 0; idx < objects.size(); ++idx)
     {
-        if (objects[idx]->getIsFixed())
-            continue;
-        std::string filepath = directory + "/motion_object_" + std::to_string(idx) + ".csv";
-        motionFiles.emplace_back(objects[idx]->initMotionCSV(filepath));
+        Object* obj = objects[idx];
+
+        // if (obj->getIsFixed())
+        //     continue;
+
+        std::string   filepath = directory + "/motion_object_" + std::to_string(idx) + ".csv";
+        std::ofstream file(filepath);
+
+        obj->initMotionCSV(file);
+        motionFiles.emplace_back(obj, std::move(file));
     }
+}
+void PhysicsWorld::saveObjectsCSV()
+{
+    for (std::size_t idx = 0; idx < objects.size(); ++idx)
+    {
+        objects[idx]->saveObjectCSV(objectFile);
+    }
+    objectFile.close();
+    objectFile.close();
 }
 void PhysicsWorld::saveMotionCSV()
 {
     if (!config.getSave())
         return;
 
-    for (std::size_t idx = 0; idx < objects.size(); ++idx)
+    for (auto& [obj, file] : motionFiles)
     {
-        if (objects[idx]->getIsFixed())
-            continue;
-        objects[idx]->saveMotionCSV(motionFiles[idx]);
+        obj->saveMotionCSV(file);
     }
 }

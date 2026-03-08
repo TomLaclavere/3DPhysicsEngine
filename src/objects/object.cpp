@@ -11,7 +11,10 @@
  */
 #include "objects/object.hpp"
 
+#include "mathematics/vector.hpp"
+
 #include <fstream>
+#include <iomanip>
 
 //  Constructors / Destructors
 Object::Object(decimal mass)
@@ -84,7 +87,11 @@ void Object::setMass(const decimal _mass)
 void Object::setStiffnessCst(decimal k) { stiffnessCst = k; }
 void Object::setRestitutionCst(decimal e) { restitutionCst = e; }
 void Object::setFrictionCst(decimal mu) { frictionCst = mu; }
-void Object::setIsFixed(bool b) { fixed = b; }
+void Object::setIsFixed(bool b)
+{
+    fixed = b;
+    mass  = 0_d;
+}
 
 //  Physics
 void Object::checkFixed()
@@ -106,17 +113,23 @@ void Object::integrate(decimal dt)
 }
 
 //  Utilities
-std::ofstream Object::initMotionCSV(const std::string& filepath)
+void Object::initMotionCSV(std::ofstream& file)
 {
-    std::ofstream file(filepath);
-
+    file << std::fixed << std::setprecision(6);
+    file << "pos(x),pos(y),pos(z),vel(x),vel(y),vel(z),acc(x),acc(y),acc(z)\n";
+}
+bool Object::saveObjectCSV(std::ofstream& file)
+{
     if (!file)
     {
-        throw std::runtime_error("Cannot open file: " + filepath);
+        std::cerr << "Cannot open output file\n";
+        return false;
     }
+    Vector3D size = getSize();
+    file << getId() << "," << getName() << "," << getType() << "," << getMass() << "," << size.getX() << ","
+         << size.getY() << "," << size.getZ() << "," << getIsFixed() << "\n";
 
-    file << "pos(x),pos(y),pos(z),vel(x),vel(y),vel(z),acc(x),acc(y),acc(z)\n";
-    return file;
+    return file.good();
 }
 bool Object::saveMotionCSV(std::ofstream& file)
 {

@@ -1,100 +1,100 @@
+run
+quit
+add sphere
 start
 run
+exit
 add sphere
+start
+run
+exit
 add plane
-set obj 1 fixed 1
+add sphere
+set obj 0 set fixed true
+set obj 0 fixed true
+start
+run
+add plane
+add sphere
+start
+run
+list
+add plane
+set obj 0 fixed true
+add sphere
+start
+run
+add plane
+set obj 0 fixed true
+add sphere
+start
+plane
+run
+init
+list
+add sphere
+start
+run
+exit
+add sphere
 start
 run
 q
-h
-add plane
 add sphere
-list
-set obj 0 fixed 1
-list
-show 1
-set obj 1 size 1
+start
+run
 q
-add plane
 add sphere
-set obj 1 size 1
-set obj 1 size 1 1 1
-list
-set obj 0 fixed 1
 start
 run
 init
-list
-add plane
-set obj 0 fixed 0
-set obj 0 fixed 1
-set obj 0 size 10 10 0
-add sphere
-set obj 1 size 1 1 1
-list
-start
-run
-q
-add plane
-set obj 0 fixed 1
-add sphere
-start
-run
-init
-add plane
-set obj 0 fixed 1
-ls
-list
-add sphere
-set obj 1 pos 0 0 10
-start
-run
-q
-add plane
-set obj 0 fixed 1
-add sphere
-set obj 1 pos 0 0 10
+add sphere 
+add plane 
+set obj 1 fixed true
 start
 run
 init
 add plane
+add sphere
+set obj 0 fixed true
+set obj 1 name sphere
 q
 add plane
-set obj 0 fixed 1
+set obj 0 fixed true
+set obj 0 name ground
 add sphere
 start
 run
 q
 add plane
-set obj 0 fixed 1
+set obj 0 fixed true
 add sphere
+set obj 1 mass 5
+start 
+rujn
+run
+q
+add plane
+set obj 0 fixed true
+add sphere sphere
 start
 run
 q
 add plane
+set obj 0 fixed true
 add sphere
-set obj 0 fixed 1
 start
 run
 q
-add plane
-add sphere
-set obj 0 fixed 1
+add plane ground
+add sphere sphere
+set obj 0 fixed true
 start
 run
+set obj 0 fixed trueq
 q
-add plane
-add sphere
-set obj 0 fixed 1
+add plane ground
+set obj 0 fixed true
+add sphere sphere
 start
 run
-set obj 1 pos 0 0 10
-run
-q
-add plane
-set obj 0 fixed 1
-add sphere
-start
-run,
-run
-q

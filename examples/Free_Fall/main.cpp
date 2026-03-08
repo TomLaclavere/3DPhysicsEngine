@@ -58,13 +58,18 @@ int main(int argc, char** argv)
     sphere->setIsFixed(false);
     plane->setIsFixed(false);
     cube->setIsFixed(false);
+    sphere->setName("Sphere");
+    plane->setName("Plane");
+    cube->setName("Cube");
+    ground->setName("ground");
 
     world.addObject(sphere);
     world.addObject(plane);
     world.addObject(cube);
     world.addObject(ground);
     world.start();
-    world.initMotionCSV(directory);
+    world.initCSV(directory + "/CSV");
+    world.saveObjectsCSV();
 
     // Contact times with the ground, computed in README.md and computation.ipynb
     decimal analyticalContactTimeSphere = 1.914861584038593_d;
@@ -118,6 +123,7 @@ int main(int argc, char** argv)
             std::cout << std::string(n, '-') << '\n';
         }
 
+        // Save motion information
         world.saveMotionCSV();
 
         if (sphere->computeCollision(*ground, contact) && simulationContactTimeSphere == 0_d)

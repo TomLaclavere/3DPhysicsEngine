@@ -51,13 +51,15 @@ int main(int argc, char** argv)
     auto*        sphere = new Sphere(Vector3D(0_d, 0_d, 20_d), 0.2_d, Vector3D(0_d, 0_d, -1_d), 1_d);
 
     sphere->setIsFixed(false);
+    sphere->setName("Bouncing Ball");
+    ground->setName("Ground");
     world.addObject(sphere);
     world.addObject(ground);
     world.start();
-    world.setSolver(config.getSolver());
 
     // Initialise saving
-    world.initMotionCSV(directory);
+    world.initCSV(directory + "/CSV");
+    world.saveObjectsCSV();
 
     std::cout << "Initializing world took: " << initTimer.elapsedMilliseconds() << " ms\n\n";
 

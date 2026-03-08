@@ -28,15 +28,15 @@
 // ============================================================================
 int main(int argc, char** argv)
 {
-    Timer totalTimer;
+    Timer       totalTimer;
+    std::string directory = "examples/Free_Fall";
 
     // Load configuration
     Timer   configTimer;
     Config& config = Config::get();
     Contact contact;
-    config.loadFromFile("examples/Free_Fall/config.yml");
+    config.loadFromFile(directory + "/config.yml");
     config.overrideFromCommandLine(argc, argv);
-
     std::cout << "----------------------------------------\n";
     std::cout << "Simulation Parameters:\n";
     std::cout << "Gravity: " << config.getGravity() << " m/s²\n";
@@ -44,9 +44,10 @@ int main(int argc, char** argv)
     std::cout << "Timestep: " << config.getTimeStep() << " s\n";
     std::cout << "Max iterations: " << config.getMaxIterations() << "\n";
     std::cout << "Solver: " << config.getSolver() << "\n";
+    std::cout << "Save: " << config.getSave() << "\n";
     std::cout << "Loading configuration took: " << configTimer.elapsedMilliseconds() << " ms\n";
 
-    // Initialize simulation
+    // Initialise simulation
     Timer        initTimer;
     PhysicsWorld world(config);
     auto*        ground = new Plane(Vector3D(0_d), Vector3D(50_d, 50_d, 0_d), Vector3D(0_d, 0_d, 1_d));
@@ -63,6 +64,7 @@ int main(int argc, char** argv)
     world.addObject(cube);
     world.addObject(ground);
     world.start();
+    world.initMotionCSV(directory);
 
     // Contact times with the ground, computed in README.md and computation.ipynb
     decimal analyticalContactTimeSphere = 1.914861584038593_d;
@@ -115,6 +117,8 @@ int main(int argc, char** argv)
             }
             std::cout << std::string(n, '-') << '\n';
         }
+
+        world.saveMotionCSV();
 
         if (sphere->computeCollision(*ground, contact) && simulationContactTimeSphere == 0_d)
         {

@@ -12,6 +12,9 @@
 #include "mathematics/vector.hpp"
 #include "ostream"
 
+#include <fstream>
+#include <iostream>
+
 enum class ObjectType : std::uint8_t
 {
     Generic,
@@ -177,6 +180,15 @@ public:
     {
         return false;
     }
+    /// @}
+
+    // ============================================================================
+    /// @name Utilities
+    // ============================================================================
+    /// @{
+
+    std::ofstream initMotionCSV(const std::string& filepath);
+    bool          saveMotionCSV(std::ofstream& file);
     /// @}
 };
 

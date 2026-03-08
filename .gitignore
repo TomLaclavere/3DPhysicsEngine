@@ -16,3 +16,6 @@ docs/latex/
 __pycache__/
 *.pyc
 *.pyo
+
+# Data formats
+*.csv

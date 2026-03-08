@@ -52,7 +52,7 @@ TEST_F(PhysicsWorldTest, SetSolverParses)
     world.integrate(); // should not throw
 }
 
-TEST_F(PhysicsWorldTest, InitializeSetsConfigValues)
+TEST_F(PhysicsWorldTest, InitialiseSetsConfigValues)
 {
     Config::get();
     char  arg0[] = "prog";
@@ -66,7 +66,7 @@ TEST_F(PhysicsWorldTest, InitializeSetsConfigValues)
     int   argc   = 7;
 
     Config::get().overrideFromCommandLine(argc, argv);
-    world.initialize();
+    world.initialise();
     Config& config = world.getConfig();
 
     EXPECT_FALSE(world.getIsRunning());

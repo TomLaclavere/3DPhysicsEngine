@@ -11,9 +11,9 @@
  */
 #include "objects/object.hpp"
 
-// ============================================================================
+#include <fstream>
+
 //  Constructors / Destructors
-// ============================================================================
 Object::Object(decimal mass)
     : mass { mass } {};
 Object::Object(const Vector3D& position)
@@ -53,9 +53,7 @@ Object::Object(const Vector3D& position, const Vector3D& rotation, const Vector3
     checkFixed();
 }
 
-// ============================================================================
 //  Getters
-// ============================================================================
 Vector3D   Object::getPosition() const { return position; }
 Vector3D   Object::getRotation() const { return rotation; }
 Vector3D   Object::getSize() const { return size; }
@@ -70,9 +68,7 @@ decimal    Object::getFrictionCst() const { return frictionCst; }
 ObjectType Object::getType() const { return ObjectType::Generic; }
 bool       Object::getIsFixed() const { return fixed; }
 
-// ============================================================================
 //  Setters
-// ============================================================================
 void Object::setPosition(const Vector3D& _position) { position = _position; }
 void Object::setRotation(const Vector3D& _rotation) { rotation = _rotation; }
 void Object::setSize(const Vector3D& _size) { size = _size; }
@@ -90,9 +86,7 @@ void Object::setRestitutionCst(decimal e) { restitutionCst = e; }
 void Object::setFrictionCst(decimal mu) { frictionCst = mu; }
 void Object::setIsFixed(bool b) { fixed = b; }
 
-// ============================================================================
 //  Physics
-// ============================================================================
 void Object::checkFixed()
 {
     if (mass <= 0_d)
@@ -109,4 +103,35 @@ void Object::integrate(decimal dt)
 {
     velocity += acceleration * dt;
     position += velocity * dt;
+}
+
+//  Utilities
+std::ofstream Object::initMotionCSV(const std::string& filepath)
+{
+    std::ofstream file(filepath);
+
+    if (!file)
+    {
+        throw std::runtime_error("Cannot open file: " + filepath);
+    }
+
+    file << "pos(x),pos(y),pos(z),vel(x),vel(y),vel(z),acc(x),acc(y),acc(z)\n";
+    return file;
+}
+bool Object::saveMotionCSV(std::ofstream& file)
+{
+    if (!file)
+    {
+        std::cerr << "Cannot open output file\n";
+        return false;
+    }
+
+    const Vector3D& pos = getPosition();
+    const Vector3D& vel = getVelocity();
+    const Vector3D& acc = getAcceleration();
+
+    file << pos.getX() << "," << pos.getY() << "," << pos.getZ() << "," << vel.getX() << "," << vel.getY()
+         << "," << vel.getZ() << "," << acc.getX() << "," << acc.getY() << "," << acc.getZ() << "\n";
+
+    return file.good();
 }

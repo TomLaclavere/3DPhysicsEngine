@@ -15,23 +15,22 @@
 #include "world/config.hpp"
 #include "world/physicsWorld.hpp"
 
-#include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <vector>
 
 // ============================================================================
 // Main entry point
 // ============================================================================
 int main(int argc, char** argv)
 {
-    Timer totalTimer;
+    Timer       totalTimer;
+    std::string directory = "examples/Bouncing_Ball";
 
     // Load configuration
     Timer   configTimer;
     Config& config = Config::get();
     Contact contact;
-    config.loadFromFile("examples/Bouncing_Ball/config.yml");
+    config.loadFromFile(directory + "/config.yml");
     config.overrideFromCommandLine(argc, argv);
 
     std::cout << "----------------------------------------\n";
@@ -41,6 +40,8 @@ int main(int argc, char** argv)
     std::cout << "Timestep: " << config.getTimeStep() << " s\n";
     std::cout << "Max iterations: " << config.getMaxIterations() << "\n";
     std::cout << "Solver: " << config.getSolver() << "\n";
+    std::cout << "Verbose: " << config.getVerbose() << "\n";
+    std::cout << "Save: " << config.getSave() << "\n";
     std::cout << "Loading configuration took: " << configTimer.elapsedMilliseconds() << " ms\n";
 
     // Initialize simulation
@@ -53,10 +54,10 @@ int main(int argc, char** argv)
     world.addObject(sphere);
     world.addObject(ground);
     world.start();
+    world.setSolver(config.getSolver());
 
-    // Saving position & time
-    std::vector<decimal> positionSaving;
-    std::vector<decimal> timeSaving;
+    // Initialise saving
+    world.initMotionCSV(directory);
 
     std::cout << "Initializing world took: " << initTimer.elapsedMilliseconds() << " ms\n\n";
 
@@ -81,13 +82,10 @@ int main(int argc, char** argv)
 
     while (counter < maxIter && world.getIsRunning())
     {
-        Timer stepTimer;
-
+        Timer         stepTimer;
         const decimal time = static_cast<decimal>(counter) * timeStep;
 
         world.integrate();
-        timeSaving.push_back(time);
-        positionSaving.push_back(sphere->getPosition().getZ());
 
         if (counter % 25 == 0)
         {
@@ -103,6 +101,9 @@ int main(int argc, char** argv)
             std::cout << std::string(n, '-') << '\n';
         }
         ++counter;
+
+        // if save, save motion information to CSV
+        world.saveMotionCSV();
     }
 
     const decimal   simTimeSec = simulationTimer.elapsedSeconds();
@@ -114,23 +115,5 @@ int main(int argc, char** argv)
     std::cout << '\n';
 
     world.clearObjects();
-
-    // Save position into CSV
-    std::ofstream file("examples/Bouncing_Ball/altitude.csv");
-
-    if (!file)
-    {
-        std::cerr << "Cannot open output file\n";
-        return 1;
-    }
-
-    file << "time,pos\n";
-
-    for (std::size_t i = 0; i < positionSaving.size(); ++i)
-    {
-        file << timeSaving[i] << "," << positionSaving[i] << "\n";
-    }
-
-    file.close();
     return 0;
 }

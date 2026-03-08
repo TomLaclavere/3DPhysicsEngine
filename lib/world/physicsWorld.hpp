@@ -11,6 +11,7 @@
 #include "world/solver.hpp"
 
 #include <algorithm>
+#include <fstream>
 #include <vector>
 
 /**
@@ -24,8 +25,9 @@
 struct PhysicsWorld
 {
 private:
-    Config&              config = Config::get();
-    std::vector<Object*> objects;
+    Config&                    config = Config::get();
+    std::vector<Object*>       objects;
+    std::vector<std::ofstream> motionFiles;
 
     bool     isRunning = false;
     Solver   solver;
@@ -40,8 +42,10 @@ public:
     /// @{
     PhysicsWorld() = default;
     explicit PhysicsWorld(Config& _config)
-        : config { _config }
-    {}
+        : config(_config)
+    {
+        (*this).initialise();
+    }
     ~PhysicsWorld() { clearObjects(); };
     /// @}
 
@@ -72,8 +76,8 @@ public:
     // ============================================================================
     /// @{
 
-    /// Initialize the physics world: reset objects, time step, and gravity.
-    void initialize();
+    /// Initialise the physics world: reset objects, time step, and gravity.
+    void initialise();
     void start() { isRunning = true; }
     void stop() { isRunning = false; }
     /// Re-initialise PhysicsWorld
@@ -163,6 +167,7 @@ public:
 
     /// Print the current state of the physics world to stdout.
     void printState() const;
-    void save();
+    void initMotionCSV(const std::string& directory);
+    void saveMotionCSV();
     /// @}
 };

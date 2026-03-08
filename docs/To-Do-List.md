@@ -17,10 +17,15 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
   - [ ] Modify rebound by contact forces (currently : dead functions)
   - [ ] Add contact forces properties to objects ! 
 - [ ] Visualisation / Checking
-  - [ ] Save objects information during simulation
-  - [ ] Write generic plotting scripts (Python) to visualise data
+  - [x] Save objects information in examples
+  - [ ] Save objects information during main script
+  - [ ] Save objects properties
+  - [x] Write generic plotting scripts (Python) to visualise data
+  - [ ] Improve plotting functions
+  - [ ] Add object's name for plotting (maybe add a name variable in object...)
 - [ ] Bouncing Ball example
   - [ ] Compare with analytical computation
+- [ ] Solve Python package importation
 
 ## Code Quality and Maintenance
 

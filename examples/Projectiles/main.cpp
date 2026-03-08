@@ -29,13 +29,14 @@
 // ============================================================================
 int main(int argc, char** argv)
 {
-    Timer totalTimer;
+    Timer       totalTimer;
+    std::string directory = "examples/Projectiles";
 
     // Load configuration
     Timer   configTimer;
     Config& config = Config::get();
     Contact contact;
-    config.loadFromFile("examples/Projectiles/config.yml");
+    config.loadFromFile(directory + "/config.yml");
     config.overrideFromCommandLine(argc, argv);
 
     std::cout << "----------------------------------------\n";
@@ -45,6 +46,7 @@ int main(int argc, char** argv)
     std::cout << "Timestep: " << config.getTimeStep() << " s\n";
     std::cout << "Max iterations: " << config.getMaxIterations() << "\n";
     std::cout << "Solver: " << config.getSolver() << "\n";
+    std::cout << "Save: " << config.getSave() << "\n";
     std::cout << "Loading configuration took: " << configTimer.elapsedMilliseconds() << " ms\n";
 
     // Initialize simulation
@@ -65,6 +67,7 @@ int main(int argc, char** argv)
     world.addObject(cubeParabolicMotion);
     world.addObject(ground);
     world.start();
+    world.initMotionCSV(directory);
 
     // Contact times with the ground, computed in README.md
     decimal  analyticalContactTimeSphere   = 0.5342499768054424_d;
@@ -121,6 +124,8 @@ int main(int argc, char** argv)
             }
             std::cout << std::string(n, '-') << '\n';
         }
+
+        world.saveMotionCSV();
 
         if (sphereBulletMotion->computeCollision(*ground, contact) && simulationContactTimeSphere == 0_d)
             simulationContactTimeSphere = time;

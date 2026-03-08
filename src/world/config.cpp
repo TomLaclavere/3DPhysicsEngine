@@ -20,6 +20,7 @@ decimal     Config::getSimulationDuration() const { return simulationDuration; }
 std::size_t Config::getMaxIterations() const { return maxIterations; }
 std::string Config::getSolver() const { return solver; }
 bool        Config::getVerbose() const { return verbose; }
+bool        Config::getSave() const { return save; }
 
 //  Loading Methods
 void Config::loadFromFile(const std::string& path)
@@ -38,6 +39,8 @@ void Config::loadFromFile(const std::string& path)
             setSolver(node["solver"].as<std::string>());
         if (node["verbose"])
             setVerbose(node["verbose"].as<bool>());
+        if (node["save"])
+            setSave(node["save"].as<bool>());
     }
     catch (const std::exception& e)
     {
@@ -61,6 +64,16 @@ void Config::overrideFromCommandLine(int argc, char** argv)
             setMaxIterations(static_cast<std::size_t>(std::stoul(argv[++i])));
         else if (arg == "--solver" && i + 1 < argc)
             setSolver(std::string(argv[++i]));
+        else if (arg == "--verbose" && i + 1 < argc)
+        {
+            std::string v = argv[++i];
+            setVerbose(v == "1" || v == "true" || v == "yes");
+        }
+        else if (arg == "--save" && i + 1 < argc)
+        {
+            std::string s = argv[++i];
+            setSave(s == "1" || s == "true" || s == "yes");
+        }
         else
             continue;
     }

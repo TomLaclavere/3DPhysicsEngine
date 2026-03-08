@@ -4,3 +4,4 @@ timestep: 0.001
 duration: 6
 solver: "Euler"
 verbose: true
+save: true

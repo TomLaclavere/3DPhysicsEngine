@@ -7,6 +7,7 @@
 
 #include <iomanip>
 #include <iostream>
+#include <vector>
 
 // ============================================================================
 //  Solvers
@@ -47,7 +48,7 @@ void PhysicsWorld::setGravityAcc(const Vector3D& acc) { gravityAcc = acc; }
 // ============================================================================
 //  Core simulation methods
 // ============================================================================
-void PhysicsWorld::initialize()
+void PhysicsWorld::initialise()
 {
     isRunning = false;
     objects.clear();
@@ -416,7 +417,7 @@ void PhysicsWorld::run()
         {
             if (cpt % 10 == 0)
             {
-                for (auto* obj : getObject())
+                for (auto* obj : objects)
                 {
                     if (!obj->isFixed())
                         std::cout << std::left << std::setw(col_obj) << obj->getType() << std::setw(col_time)
@@ -455,5 +456,32 @@ void PhysicsWorld::printState() const
             std::cout << "  Object " << i << ": pos=" << objects[i]->getPosition()
                       << ", vel=" << objects[i]->getVelocity() << "\n";
         }
+    }
+}
+void PhysicsWorld::initMotionCSV(const std::string& directory)
+{
+    if (!config.getSave())
+        return;
+
+    motionFiles.clear();
+
+    for (std::size_t idx = 0; idx < objects.size(); ++idx)
+    {
+        if (objects[idx]->getIsFixed())
+            continue;
+        std::string filepath = directory + "/motion_object_" + std::to_string(idx) + ".csv";
+        motionFiles.emplace_back(objects[idx]->initMotionCSV(filepath));
+    }
+}
+void PhysicsWorld::saveMotionCSV()
+{
+    if (!config.getSave())
+        return;
+
+    for (std::size_t idx = 0; idx < objects.size(); ++idx)
+    {
+        if (objects[idx]->getIsFixed())
+            continue;
+        objects[idx]->saveMotionCSV(motionFiles[idx]);
     }
 }

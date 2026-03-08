@@ -26,6 +26,7 @@ private:
     std::size_t maxIterations      = static_cast<std::size_t>(std::round(simulationDuration / timeStep));
     std::string solver             = "Euler";
     bool        verbose            = true;
+    bool        save               = false;
 
     /// Singleton constructor
     Config() = default;
@@ -46,6 +47,7 @@ public:
     std::size_t    getMaxIterations() const;
     std::string    getSolver() const;
     bool           getVerbose() const;
+    bool           getSave() const;
     /// @}
 
     /// @name Setters
@@ -90,6 +92,7 @@ public:
     }
     void setSolver(const std::string& sol) { solver = sol; }
     void setVerbose(bool verb) { verbose = verb; }
+    void setSave(bool sav) { save = sav; }
     /// @}
 
     /// @name Loading Methods

@@ -25,15 +25,18 @@
 struct PhysicsWorld
 {
 private:
-    Config&                    config = Config::get();
-    std::vector<Object*>       objects;
-    std::vector<std::ofstream> motionFiles;
+    Config&                                        config = Config::get();
+    std::vector<Object*>                           objects;
+    std::ofstream                                  objectFile;
+    std::vector<std::pair<Object*, std::ofstream>> motionFiles;
 
     bool     isRunning = false;
     Solver   solver;
     decimal  timeStep   = config.getTimeStep();
     decimal  gravityCst = config.getGravity();
     Vector3D gravityAcc = Physics::computeGravityAcc(gravityCst);
+
+    unsigned int nextObjectId = 0;
 
 public:
     // ============================================================================
@@ -53,12 +56,13 @@ public:
     /// @name Getters
     // ============================================================================
     /// @{
-    Config&  getConfig() const;
-    bool     getIsRunning() const;
-    decimal  getTimeStep() const;
-    decimal  getGravityCst() const;
-    Vector3D getGravityAcc() const;
-    Solver   getSolver() const;
+    Config&      getConfig() const;
+    bool         getIsRunning() const;
+    decimal      getTimeStep() const;
+    decimal      getGravityCst() const;
+    Vector3D     getGravityAcc() const;
+    Solver       getSolver() const;
+    unsigned int getNextObjectId() const { return nextObjectId; }
     /// @}
 
     // ============================================================================
@@ -146,7 +150,10 @@ public:
     void addObject(Object* obj)
     {
         if (obj)
+        {
+            obj->setId(nextObjectId++);
             objects.push_back(obj);
+        }
     }
     void removeObject(Object* obj)
     {
@@ -167,7 +174,8 @@ public:
 
     /// Print the current state of the physics world to stdout.
     void printState() const;
-    void initMotionCSV(const std::string& directory);
+    void initCSV(const std::string& directory);
+    void saveObjectsCSV();
     void saveMotionCSV();
     /// @}
 };

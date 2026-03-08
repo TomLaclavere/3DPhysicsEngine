@@ -61,13 +61,17 @@ int main(int argc, char** argv)
     sphereBulletMotion->setIsFixed(false);
     planeVerticalMotion->setIsFixed(false);
     cubeParabolicMotion->setIsFixed(false);
+    sphereBulletMotion->setName("Sphere - Bullet Motion");
+    planeVerticalMotion->setName("Plane - Vertical Motion");
+    cubeParabolicMotion->setName("Cube - Parabolic Motion");
 
     world.addObject(sphereBulletMotion);
     world.addObject(planeVerticalMotion);
     world.addObject(cubeParabolicMotion);
     world.addObject(ground);
     world.start();
-    world.initMotionCSV(directory);
+    world.initCSV(directory + "/CSV");
+    world.saveObjectsCSV();
 
     // Contact times with the ground, computed in README.md
     decimal  analyticalContactTimeSphere   = 0.5342499768054424_d;

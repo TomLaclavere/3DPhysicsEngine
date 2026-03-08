@@ -65,6 +65,7 @@ private:
 
     bool         fixed = true;
     unsigned int id;
+    std::string  name;
 
 public:
     /// @brief Constructions can be done with various levels of details.
@@ -104,6 +105,7 @@ public:
     virtual ObjectType getType() const;
     bool               getIsFixed() const;
     unsigned int       getId() const { return id; }
+    std::string        getName() const { return name; }
     /// @}
 
     // ============================================================================
@@ -123,6 +125,7 @@ public:
     void setFrictionCst(decimal mu);
     void setIsFixed(bool b);
     void setId(unsigned int _id) { id = _id; }
+    void setName(const std::string& _name) { name = _name; }
 
     /// @}
 
@@ -187,8 +190,9 @@ public:
     // ============================================================================
     /// @{
 
-    std::ofstream initMotionCSV(const std::string& filepath);
-    bool          saveMotionCSV(std::ofstream& file);
+    void initMotionCSV(std::ofstream& file);
+    bool saveObjectCSV(std::ofstream& file);
+    bool saveMotionCSV(std::ofstream& file);
     /// @}
 };
 

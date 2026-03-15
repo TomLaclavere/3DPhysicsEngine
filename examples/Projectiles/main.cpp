@@ -129,7 +129,7 @@ int main(int argc, char** argv)
             std::cout << std::string(n, '-') << '\n';
         }
 
-        world.saveMotionCSV();
+        world.saveMotionCSV(time);
 
         if (sphereBulletMotion->computeCollision(*ground, contact) && simulationContactTimeSphere == 0_d)
             simulationContactTimeSphere = time;

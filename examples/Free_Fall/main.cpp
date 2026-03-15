@@ -124,7 +124,7 @@ int main(int argc, char** argv)
         }
 
         // Save motion information
-        world.saveMotionCSV();
+        world.saveMotionCSV(time);
 
         if (sphere->computeCollision(*ground, contact) && simulationContactTimeSphere == 0_d)
         {

@@ -117,7 +117,7 @@ void Object::integrate(decimal dt)
 void Object::initMotionCSV(std::ofstream& file)
 {
     file << std::fixed << std::setprecision(6);
-    file << "pos(x),pos(y),pos(z),vel(x),vel(y),vel(z),acc(x),acc(y),acc(z)\n";
+    file << "time,pos(x),pos(y),pos(z),vel(x),vel(y),vel(z),acc(x),acc(y),acc(z)\n";
 }
 bool Object::saveObjectCSV(std::ofstream& file)
 {
@@ -127,12 +127,14 @@ bool Object::saveObjectCSV(std::ofstream& file)
         return false;
     }
     Vector3D size = getSize();
-    file << getId() << "," << getName() << "," << getType() << "," << getMass() << "," << size.getX() << ","
-         << size.getY() << "," << size.getZ() << "," << getIsFixed() << "\n";
+    Vector3D pos  = getPosition();
+    file << getId() << "," << getName() << "," << getType() << "," << getMass() << "," << pos.getX() << ","
+         << pos.getY() << "," << pos.getZ() << "," << size.getX() << "," << size.getY() << "," << size.getZ()
+         << "," << getIsFixed() << "\n";
 
     return file.good();
 }
-bool Object::saveMotionCSV(std::ofstream& file)
+bool Object::saveMotionCSV(std::ofstream& file, decimal time)
 {
     if (!file)
     {
@@ -144,8 +146,9 @@ bool Object::saveMotionCSV(std::ofstream& file)
     const Vector3D& vel = getVelocity();
     const Vector3D& acc = getAcceleration();
 
-    file << pos.getX() << "," << pos.getY() << "," << pos.getZ() << "," << vel.getX() << "," << vel.getY()
-         << "," << vel.getZ() << "," << acc.getX() << "," << acc.getY() << "," << acc.getZ() << "\n";
+    file << time << "," << pos.getX() << "," << pos.getY() << "," << pos.getZ() << "," << vel.getX() << ","
+         << vel.getY() << "," << vel.getZ() << "," << acc.getX() << "," << acc.getY() << "," << acc.getZ()
+         << "\n";
 
     return file.good();
 }

@@ -9,6 +9,7 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 - [ ] Benchmark
   - [ ] Compute error on time (t_simulation - t_analytic) vs timestep, to verify expected error from integration methods
   - [ ] Add time / iteration in benchmark
+  - [ ] Fix problem with precision from the different solvers
 - [ ] Look at tools for CI
   - [ ] ASAN
   - [ ] UBSAN
@@ -16,16 +17,17 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 - [ ] Rebounds
   - [ ] Modify rebound by contact forces (currently : dead functions)
   - [ ] Add contact forces properties to objects ! 
+- [ ] Add examples :
+  - [ ] Rolling
+  - [ ] Skate pipe
 - [ ] Visualisation / Checking
   - [x] Save objects information in examples
-  - [ ] Save objects information during main script
+  - [x] Save objects information during main script
   - [x] Save objects properties
   - [x] Write generic plotting scripts (Python) to visualise data
   - [ ] Improve plotting functions
   - [x] Add object's name for plotting (maybe add a name variable in object...)
-- [ ] Bouncing Ball example
-  - [ ] Compare with analytical computation
-- [ ] Solve Python package importation
+- [x] Solve Python package importation
 
 ## Code Quality and Maintenance
 

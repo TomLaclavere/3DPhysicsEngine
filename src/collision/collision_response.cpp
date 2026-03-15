@@ -29,6 +29,7 @@ void reboundCollision(Object& A, Object& B, Contact& contact, decimal restitutio
     decimal invMassA   = A.getMass() > 0_d ? 1_d / A.getMass() : 0_d;
     decimal invMassB   = B.getMass() > 0_d ? 1_d / B.getMass() : 0_d;
     decimal invMassSum = invMassA + invMassB;
+
     if (invMassSum <= 0_d)
         return;
 
@@ -43,7 +44,6 @@ void reboundCollision(Object& A, Object& B, Contact& contact, decimal restitutio
 
     Vector3D relVel         = va - vb;
     decimal  velAlongNormal = relVel.dotProduct(n);
-
     if (velAlongNormal >= 0_d)
         return;
 

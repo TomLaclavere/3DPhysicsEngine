@@ -1,12 +1,3 @@
-run
-quit
-add sphere
-start
-run
-exit
-add sphere
-start
-run
 exit
 add plane
 add sphere
@@ -98,3 +89,12 @@ set obj 0 fixed true
 add sphere sphere
 start
 run
+q
+add plane
+add sphere
+set obj 0 fixed true
+run
+start
+rujn
+run
+q

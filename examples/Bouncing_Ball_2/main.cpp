@@ -24,7 +24,7 @@
 int main(int argc, char** argv)
 {
     Timer       totalTimer;
-    std::string directory = "examples/Bouncing_Ball";
+    std::string directory = "examples/Bouncing_Ball_2";
 
     // Load configuration
     Timer   configTimer;
@@ -47,15 +47,17 @@ int main(int argc, char** argv)
     // Initialize simulation
     Timer        initTimer;
     PhysicsWorld world(config);
-    auto*        ground = new Plane(Vector3D(0_d), Vector3D(50_d, 50_d, 0_d), Vector3D(0_d, 0_d, 1_d));
-    auto*        sphere = new Sphere(Vector3D(0_d, 0_d, 20_d), 0.2_d, Vector3D(0_d, 0_d, -1_d), 1_d);
+    auto*        ground_1 = new Plane(Vector3D(2_d, 0_d, 0_d), Vector3D(10_d), Vector3D(-1_d, 0_d, 1_d));
+    auto*        ground_2 = new Plane(Vector3D(-2_d, 0_d, 0_d), Vector3D(10_d), Vector3D(1_d, 0_d, 1_d));
+    auto*        sphere   = new Sphere(Vector3D(2_d, 0_d, 20_d), 0.2_d, Vector3D(0_d, 0_d, -1_d), 1_d);
 
     sphere->setIsFixed(false);
     sphere->setName("Bouncing Ball");
-    ground->setIsFixed(true);
-    ground->setName("Ground");
+    ground_1->setName("Ground 1");
+    ground_2->setName("Ground 2");
     world.addObject(sphere);
-    world.addObject(ground);
+    world.addObject(ground_1);
+    world.addObject(ground_2);
     world.start();
 
     // Initialise saving

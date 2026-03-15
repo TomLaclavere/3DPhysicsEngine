@@ -90,7 +90,8 @@ void Object::setFrictionCst(decimal mu) { frictionCst = mu; }
 void Object::setIsFixed(bool b)
 {
     fixed = b;
-    mass  = 0_d;
+    if (fixed)
+        mass = 0_d;
 }
 
 //  Physics

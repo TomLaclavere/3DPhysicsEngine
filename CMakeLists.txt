@@ -262,6 +262,25 @@ if(3DPE_BUILD_EXAMPLES)
         DEPENDS example_Bouncing
         COMMENT "Running example: Bouncing"
     )
+
+    # ---------------------------------------------
+    # Example: Bouncing Ball Simulation 2
+    # ---------------------------------------------
+    add_executable(example_Bouncing_2 examples/Bouncing_Ball_2/main.cpp)
+    target_link_libraries(example_Bouncing_2 PRIVATE 3DPhysicsEngine)
+    target_include_directories(example_Bouncing_2 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+    set_target_properties(example_Bouncing_2 PROPERTIES
+        OUTPUT_NAME "Bouncing_2"
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/examples
+        FOLDER "Examples"
+    )
+
+    add_custom_target(Bouncing_2
+        COMMAND $<TARGET_FILE:example_Bouncing_2>
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        DEPENDS example_Bouncing_2
+        COMMENT "Running example: Bouncing_2"
+    )
 endif()
 
 # =============================================

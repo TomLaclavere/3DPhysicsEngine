@@ -192,7 +192,7 @@ public:
 
     void initMotionCSV(std::ofstream& file);
     bool saveObjectCSV(std::ofstream& file);
-    bool saveMotionCSV(std::ofstream& file);
+    bool saveMotionCSV(std::ofstream& file, decimal time);
     /// @}
 };
 

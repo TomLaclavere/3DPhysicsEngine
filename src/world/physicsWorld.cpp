@@ -418,7 +418,7 @@ void PhysicsWorld::run()
         const decimal time = static_cast<decimal>(cpt) * timeStep;
 
         integrate();
-        saveMotionCSV();
+        saveMotionCSV(time);
 
         // Printing
         if (config.getVerbose())
@@ -484,7 +484,8 @@ void PhysicsWorld::initCSV(const std::string& directory)
     {
         throw std::runtime_error("Cannot open objects.csv");
     }
-    objectFile << "id" << "," << "name" << "," << "type" << "," << "mass" << "," << "size (x)" << ","
+    objectFile << "id" << "," << "name" << "," << "type" << "," << "mass" << "," << "pos(x)" << ","
+               << "pos(y)" << "," << "pos(z)" << "," << "size(x)" << ","
                << "size(y)" << "," << "size(z)" << "," << "fixed"
                << "\n";
 
@@ -513,13 +514,13 @@ void PhysicsWorld::saveObjectsCSV()
     objectFile.close();
     objectFile.close();
 }
-void PhysicsWorld::saveMotionCSV()
+void PhysicsWorld::saveMotionCSV(decimal time)
 {
     if (!config.getSave())
         return;
 
     for (auto& [obj, file] : motionFiles)
     {
-        obj->saveMotionCSV(file);
+        obj->saveMotionCSV(file, time);
     }
 }

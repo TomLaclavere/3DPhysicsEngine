@@ -108,7 +108,7 @@ int main(int argc, char** argv)
         ++counter;
 
         // if save, save motion information to CSV
-        world.saveMotionCSV();
+        world.saveMotionCSV(time);
     }
 
     const decimal   simTimeSec = simulationTimer.elapsedSeconds();

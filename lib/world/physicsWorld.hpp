@@ -176,6 +176,6 @@ public:
     void printState() const;
     void initCSV(const std::string& directory);
     void saveObjectsCSV();
-    void saveMotionCSV();
+    void saveMotionCSV(decimal time);
     /// @}
 };

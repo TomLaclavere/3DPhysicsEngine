@@ -47,8 +47,8 @@ int main(int argc, char** argv)
     // Initialize simulation
     Timer        initTimer;
     PhysicsWorld world(config);
-    auto*        ground = new Plane(Vector3D(0_d), Vector3D(5_d, 5_d, 0_d), Vector3D(0_d, 0_d, 1_d));
-    auto*        sphere = new Sphere(Vector3D(0_d, 0_d, 20), 0.2_d, Vector3D(0_d, 0_d, -1_d), 1_d);
+    auto*        ground = new Plane(Vector3D(0_d), Vector3D(40_d, 40_d, 0_d), Vector3D(0_d, 0_d, 1_d));
+    auto*        sphere = new Sphere(Vector3D(0_d, 0_d, 20), 5_d, Vector3D(0_d, 0_d, -1_d), 1_d);
 
     sphere->setIsFixed(false);
     sphere->setName("Bouncing Ball");

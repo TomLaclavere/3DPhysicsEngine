@@ -128,9 +128,10 @@ bool Object::saveObjectCSV(std::ofstream& file)
     }
     Vector3D size = getSize();
     Vector3D pos  = getPosition();
+    Vector3D rota = getRotation();
     file << getId() << "," << getName() << "," << getType() << "," << getMass() << "," << pos.getX() << ","
          << pos.getY() << "," << pos.getZ() << "," << size.getX() << "," << size.getY() << "," << size.getZ()
-         << "," << getIsFixed() << "\n";
+         << "," << rota.getX() << "," << rota.getY() << "," << rota.getZ() << "," << getIsFixed() << "\n";
 
     return file.good();
 }

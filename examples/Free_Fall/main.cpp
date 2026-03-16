@@ -50,7 +50,7 @@ int main(int argc, char** argv)
     // Initialise simulation
     Timer        initTimer;
     PhysicsWorld world(config);
-    auto*        ground = new Plane(Vector3D(0_d), Vector3D(50_d, 50_d, 0_d), Vector3D(0_d, 0_d, 1_d));
+    auto*        ground = new Plane(Vector3D(0_d), Vector3D(25_d, 25_d, 0_d), Vector3D(0_d, 0_d, 1_d));
     auto*        sphere = new Sphere(Vector3D(0_d, 0_d, 20_d), 0.2_d, Vector3D(0_d, 0_d, -1_d), 1_d);
     auto*        plane  = new Plane(Vector3D(10_d, 0_d, 15_d), Vector3D(1_d, 0.4_d, 0_d), Vector3D(0_d), 1_d,
                                     Vector3D(0_d, 1_d, 0_d));

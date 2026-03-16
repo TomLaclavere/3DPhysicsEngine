@@ -486,8 +486,8 @@ void PhysicsWorld::initCSV(const std::string& directory)
     }
     objectFile << "id" << "," << "name" << "," << "type" << "," << "mass" << "," << "pos(x)" << ","
                << "pos(y)" << "," << "pos(z)" << "," << "size(x)" << ","
-               << "size(y)" << "," << "size(z)" << "," << "fixed"
-               << "\n";
+               << "size(y)" << "," << "size(z)" << "," << "rota(x)" << "," << "rota(y)" << ","
+               << "rota(z)" << "," << "fixed" << "\n";
 
     // Motion CSV
     motionFiles.clear();

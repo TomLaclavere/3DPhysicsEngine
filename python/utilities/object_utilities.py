@@ -56,9 +56,6 @@ class ObjectPlotting:
 
         self.objectpath = objectpath
         self.motionpaths = motionpaths
-        
-        print(self.object_df)
-        print(f"Nombre d'objets : {len(self.object_df)}")
 
     # ------------------------------------------------------------------
     # Public plotting helpers
@@ -87,9 +84,12 @@ class ObjectPlotting:
             else:
                 obj_pos = pos[idx]
             self._add_object(
-                fig, obj_pos, self._size(obj), obj["type"], obj["name"], idx
+                fig, obj_pos, self._size(obj), self._normal(obj), obj["type"], obj["name"], idx
             )
-        self._apply_scene_layout(fig, "Objects – custom positions")
+        x_range, y_range, z_range = self._compute_axis_ranges()
+        self._apply_scene_layout(fig, "Objects – custom positions", x_range=x_range,
+            y_range=y_range,
+            z_range=z_range,)
         fig.show()
 
     def animate_objects(self, stride: int = 1):
@@ -104,7 +104,7 @@ class ObjectPlotting:
         for idx, obj in self.object_df.iterrows():
             trace = self._build_trace(obj, self.motions[idx].pos[0], idx)
             fig.add_trace(trace)
-            
+
         # ---- frames -----------------------------------------------------------
         frames = []
         for t in range(0, n_frames, stride):
@@ -139,18 +139,19 @@ class ObjectPlotting:
         size = self._size(obj)
         name = obj["name"]
         color = _get_color(idx)
-
+        normal = self._normal(obj)
+        
         if obj_type == "Sphere":
             return self._sphere_trace(pos, size[0], name, color)
-        elif obj_type in ("Box", "Cube"):
+        elif obj_type in ("AABB"):
             return self._box_trace(pos, size, name, color)
         elif obj_type == "Plane":
-            return self._plane_trace(pos, size, name, color)
+            return self._plane_trace(pos, size, normal, name, color)
         else:
             raise ValueError(f"Unknown object type: {obj_type!r}")
 
     def _add_object(
-        self, fig: go.Figure, pos, size, obj_type: str, name: str, idx: int
+        self, fig: go.Figure, pos, size, normal, obj_type: str, name: str, idx: int
     ):
         """Convenience wrapper used by the static plot methods."""
         # Build a minimal Series-like object so _build_trace can be reused
@@ -161,6 +162,9 @@ class ObjectPlotting:
                 "size(x)": size[0],
                 "size(y)": size[1],
                 "size(z)": size[2],
+                "rota(x)": normal[0],
+                "rota(y)": normal[1],
+                "rota(z)": normal[2]
             }
         )
         fig.add_trace(self._build_trace(obj, np.asarray(pos), idx))
@@ -171,23 +175,26 @@ class ObjectPlotting:
 
     @staticmethod
     def _sphere_trace(
-        pos: np.ndarray, radius: float, name: str, color: str
-    ) -> go.Scatter3d:
-        u = np.linspace(0, 2 * np.pi, 30)
-        v = np.linspace(0, np.pi, 30)
-        u, v = np.meshgrid(u, v)
+        pos: np.ndarray, size: float, name: str, color: str
+    ) -> go.Surface:
 
-        x = (pos[0] + radius * np.cos(u) * np.sin(v)).flatten()
-        y = (pos[1] + radius * np.sin(u) * np.sin(v)).flatten()
-        z = (pos[2] + radius * np.cos(v)).flatten()
+        radius = 0.5 * size
 
-        return go.Scatter3d(
+        u = np.linspace(0, 2*np.pi, 60)
+        v = np.linspace(0, np.pi, 60)
+
+        x = pos[0] + radius * np.outer(np.cos(u), np.sin(v))
+        y = pos[1] + radius * np.outer(np.sin(u), np.sin(v))
+        z = pos[2] + radius * np.outer(np.ones_like(u), np.cos(v))
+
+        return go.Surface(
             x=x,
             y=y,
             z=z,
             name=name,
-            mode="markers",
-            marker=dict(size=2, color=color, opacity=0.8),
+            opacity=0.8,
+            showscale=False,
+            colorscale=[[0, color], [1, color]],
         )
 
     # ------------------------------------------------------------------
@@ -196,75 +203,29 @@ class ObjectPlotting:
 
     @staticmethod
     def _box_trace(pos: np.ndarray, size: tuple, name: str, color: str) -> go.Mesh3d:
+
         sx, sy, sz = size
         cx, cy, cz = pos
 
-        x = np.array(
-            [
-                cx - sx / 2,
-                cx + sx / 2,
-                cx + sx / 2,
-                cx - sx / 2,
-                cx - sx / 2,
-                cx + sx / 2,
-                cx + sx / 2,
-                cx - sx / 2,
-            ]
-        )
-        y = np.array(
-            [
-                cy - sy / 2,
-                cy - sy / 2,
-                cy + sy / 2,
-                cy + sy / 2,
-                cy - sy / 2,
-                cy - sy / 2,
-                cy + sy / 2,
-                cy + sy / 2,
-            ]
-        )
-        z = np.array(
-            [
-                cz - sz / 2,
-                cz - sz / 2,
-                cz - sz / 2,
-                cz - sz / 2,
-                cz + sz / 2,
-                cz + sz / 2,
-                cz + sz / 2,
-                cz + sz / 2,
-            ]
-        )
+        x = np.array([cx-sx/2, cx+sx/2, cx+sx/2, cx-sx/2,
+                    cx-sx/2, cx+sx/2, cx+sx/2, cx-sx/2])
 
-        # 12 triangles covering 6 faces
-        vertices = [
-            [0, 1, 2],
-            [0, 2, 3],  # bottom
-            [4, 5, 6],
-            [4, 6, 7],  # top
-            [0, 1, 5],
-            [0, 5, 4],  # front
-            [2, 3, 7],
-            [2, 7, 6],  # back
-            [1, 2, 6],
-            [1, 6, 5],  # right
-            [0, 3, 7],
-            [0, 7, 4],  # left
-        ]
-        i, j, k = zip(*vertices)
+        y = np.array([cy-sy/2, cy-sy/2, cy+sy/2, cy+sy/2,
+                    cy-sy/2, cy-sy/2, cy+sy/2, cy+sy/2])
+
+        z = np.array([cz-sz/2, cz-sz/2, cz-sz/2, cz-sz/2,
+                    cz+sz/2, cz+sz/2, cz+sz/2, cz+sz/2])
+
+        i = [0,0,4,4,0,0,2,2,1,1,0,0]
+        j = [1,2,5,6,1,5,3,7,2,6,3,7]
+        k = [2,3,6,7,5,4,7,6,6,5,7,4]
 
         return go.Mesh3d(
-            x=x,
-            y=y,
-            z=z,
-            i=i,
-            j=j,
-            k=k,
+            x=x, y=y, z=z,
+            i=i, j=j, k=k,
             name=name,
             opacity=0.7,
             color=color,
-            flatshading=False,
-            lighting=dict(ambient=0.4, diffuse=0.8, specular=0.2),
         )
 
     # ------------------------------------------------------------------
@@ -272,20 +233,41 @@ class ObjectPlotting:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _plane_trace(pos: np.ndarray, size: tuple, name: str, color: str) -> go.Surface:
+    def _plane_trace(pos: np.ndarray, size: tuple, normal : tuple, name: str, color: str) -> go.Surface:
+
         sx, sy, _ = size
         cx, cy, cz = pos
 
-        x = np.array([[cx - sx / 2, cx + sx / 2], [cx - sx / 2, cx + sx / 2]])
-        y = np.array([[cy - sy / 2, cy - sy / 2], [cy + sy / 2, cy + sy / 2]])
-        z = np.array([[cz, cz], [cz, cz]])
+        # normalisation
+        n = np.asarray(normal, dtype=float)
+        n = normal / np.linalg.norm(n)
+
+        if abs(n[0]) < 0.9:
+            tangent = np.array([1.0, 0.0, 0.0])
+        else:
+            tangent = np.array([0.0, 1.0, 0.0])
+
+        u = tangent - n * np.dot(n, tangent)  
+        u /= np.linalg.norm(u)
+        v = np.cross(n, u)
+        v /= np.linalg.norm(v)
+
+        grid_x = np.array([[-sx/2, sx/2],
+                        [-sx/2, sx/2]])
+
+        grid_y = np.array([[-sy/2, -sy/2],
+                        [ sy/2,  sy/2]])
+
+        X = cx + grid_x*u[0] + grid_y*v[0]
+        Y = cy + grid_x*u[1] + grid_y*v[1]
+        Z = cz + grid_x*u[2] + grid_y*v[2]
 
         return go.Surface(
-            x=x,
-            y=y,
-            z=z,
+            x=X,
+            y=Y,
+            z=Z,
             name=name,
-            opacity=0.7,
+            opacity=0.6,
             showscale=False,
             colorscale=[[0, color], [1, color]],
         )
@@ -425,7 +407,11 @@ class ObjectPlotting:
             pos = self.motions[idx].pos[index]
             trace = self._build_trace(obj, pos, idx)
             fig.add_trace(trace)
-        self._apply_scene_layout(fig, title)
+            
+        x_range, y_range, z_range = self._compute_axis_ranges()
+        self._apply_scene_layout(fig, title, x_range=x_range,
+            y_range=y_range,
+            z_range=z_range,)
         fig.show()
 
     def _compute_axis_ranges(self) -> tuple[list, list, list]:
@@ -436,9 +422,9 @@ class ObjectPlotting:
         z_min, z_max = all_pos[:,2].min(), all_pos[:,2].max()
 
         max_size = max(self.object_df[["size(x)", "size(y)", "size(z)"]].max().max(), 1.0)
-        x_margin = max(0.15*(x_max - x_min), max_size)
-        y_margin = max(0.15*(y_max - y_min), max_size)
-        z_margin = max(0.15*(z_max - z_min), max_size)
+        x_margin = max(0.15*(x_max - x_min), max_size/4)
+        y_margin = max(0.15*(y_max - y_min), max_size/4)
+        z_margin = max(0.15*(z_max - z_min), max_size/4)
 
         x_range = [x_min - x_margin, x_max + x_margin]
         y_range = [y_min - y_margin, y_max + y_margin]
@@ -456,3 +442,7 @@ class ObjectPlotting:
     @staticmethod
     def _size(obj: pd.Series) -> tuple:
         return (obj["size(x)"], obj["size(y)"], obj["size(z)"])
+    
+    @staticmethod
+    def _normal(obj: pd.Series) -> tuple:
+        return (obj["rota(x)"], obj["rota(y)"], obj["rota(z)"])

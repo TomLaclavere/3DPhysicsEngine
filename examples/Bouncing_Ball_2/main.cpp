@@ -49,7 +49,7 @@ int main(int argc, char** argv)
     PhysicsWorld world(config);
     auto*        ground_1 = new Plane(Vector3D(2_d, 0_d, 0_d), Vector3D(10_d), Vector3D(-1_d, 0_d, 1_d));
     auto*        ground_2 = new Plane(Vector3D(-2_d, 0_d, 0_d), Vector3D(10_d), Vector3D(1_d, 0_d, 1_d));
-    auto*        sphere   = new Sphere(Vector3D(2_d, 0_d, 20_d), 0.2_d, Vector3D(0_d, 0_d, -1_d), 1_d);
+    auto*        sphere   = new Sphere(Vector3D(2_d, 0_d, 20_d), 2_d, Vector3D(0_d, 0_d, -1_d), 1_d);
 
     sphere->setIsFixed(false);
     sphere->setName("Bouncing Ball");

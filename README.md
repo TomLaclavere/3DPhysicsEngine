@@ -70,33 +70,39 @@ cd 3DPhysicsEngine
 
 You can install the essential dependencies using:
 
-```bash Ubuntu
+```bash
+# Ubuntu
 sudo apt update
 sudo apt install -y build-essential cmake git libyaml-cpp-dev gcovr
 ```
 
-```bash Arch Linux
-sudo pacman -S base-devel cmake git yaml-cpp gcovr
+```bash
+# Arch Linux
+sudo pacman -Syu --needed base-devel cmake git yaml-cpp gcovr
 ```
 
 For Clang and optional Ninja:
 
-```bash Ubuntu
+```bash
+# Ubuntu
 sudo apt install -y clang ninja-build
 ```
 
-```bash Arch Linux
-sudo pacman -S clang ninja llvm
+```bash
+# Arch Linux
+sudo pacman -S --needed clang ninja llvm
 ```
 
 For documentation:
 
-```bash Ubuntu
+```bash
+# Ubuntu
 sudo apt-get install -y doxygen graphviz
 ```
 
-```bash Arch Linux
-sudo pacman -S doxygen graphviz
+```bash
+# Arch Linux
+sudo pacman -S --needed doxygen graphviz
 ```
 
 ## How to build and run

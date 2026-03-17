@@ -24,7 +24,7 @@ void positionCorrection(Object& A, Object& B, Contact& contact, decimal percent,
     B.setPosition(B.getPosition() - correction * invMassB);
 }
 
-void reboundCollision(Object& A, Object& B, Contact& contact, decimal restitution)
+void reboundCollision(Object& A, Object& B, Contact& contact)
 {
     decimal invMassA   = A.getMass() > 0_d ? 1_d / A.getMass() : 0_d;
     decimal invMassB   = B.getMass() > 0_d ? 1_d / B.getMass() : 0_d;
@@ -47,7 +47,8 @@ void reboundCollision(Object& A, Object& B, Contact& contact, decimal restitutio
     if (velAlongNormal >= 0_d)
         return;
 
-    decimal e = std::clamp(restitution, 0_d, 1_d);
+    decimal e =
+        std::clamp(std::min(A.getMaterial().getRestitution(), B.getMaterial().getRestitution()), 0_d, 1_d);
     decimal j = -(1_d + e) * velAlongNormal / invMassSum;
 
     Vector3D impulse = n * j;

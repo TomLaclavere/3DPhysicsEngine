@@ -14,10 +14,13 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
   - [ ] ASAN
   - [ ] UBSAN
 - [x] Fix Rebound during integration
-- [ ] Rebounds
-  - [ ] Modify rebound by contact forces (currently : dead functions)
-  - [ ] Add contact forces properties to objects ! 
-- [ ] Add examples :
+- [ ] Contact Forces
+  - [ ] Implement Material in Object
+  - [ ] Implement Contact forces from Material (in physics) + need to rename and to look for dead functions
+  - [ ] Implement Contact forces in PhysicsWorld
+  - [ ] Compare Contact forces and Restitution collision
+  - [ ] Add way to chose between Contact forces and Restitution
+- [x] Add examples :
   - [x] Rolling
   - [x] Skate pipe
 - [x] Visualisation / Checking

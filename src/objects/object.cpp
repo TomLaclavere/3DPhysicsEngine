@@ -11,6 +11,7 @@
  */
 #include "objects/object.hpp"
 
+#include "mathematics/matrix.hpp"
 #include "mathematics/vector.hpp"
 
 #include <fstream>
@@ -68,6 +69,7 @@ decimal    Object::getMass() const { return mass; }
 decimal    Object::getStiffnessCst() const { return stiffnessCst; }
 decimal    Object::getRestitutionCst() const { return restitutionCst; }
 decimal    Object::getFrictionCst() const { return frictionCst; }
+Material   Object::getMaterial() const { return material; }
 ObjectType Object::getType() const { return ObjectType::Generic; }
 bool       Object::getIsFixed() const { return fixed; }
 
@@ -87,6 +89,7 @@ void Object::setMass(const decimal _mass)
 void Object::setStiffnessCst(decimal k) { stiffnessCst = k; }
 void Object::setRestitutionCst(decimal e) { restitutionCst = e; }
 void Object::setFrictionCst(decimal mu) { frictionCst = mu; }
+void Object::setMaterial(const Material& mat) { material = mat; }
 void Object::setIsFixed(bool b)
 {
     fixed = b;

@@ -364,14 +364,14 @@ TEST_F(CommandUtilitiesTest, HandleAddCommand_AddPlane)
 
 TEST_F(CommandUtilitiesTest, HandleAddCommand_AddAABB)
 {
-    deque<string> words = { "AABB" };
+    deque<string> words = { "aabb" };
 
     testing::internal::CaptureStdout();
     bool   result = handleAddCommand(*world, words);
     string output = testing::internal::GetCapturedStdout();
 
     EXPECT_TRUE(result);
-    EXPECT_TRUE(output.find("Added AABB") != string::npos);
+    EXPECT_TRUE(output.find("Added aabb") != string::npos);
     EXPECT_GE(world->getObject().size(), 1);
 }
 

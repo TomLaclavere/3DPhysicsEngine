@@ -75,6 +75,7 @@ set(ENGINE_OBJECT_SOURCES
     src/objects/aabb.cpp
     src/objects/sphere.cpp
     src/objects/plane.cpp
+    src/objects/material.cpp
 )
 
 set(ENGINE_COLLISION_SOURCES

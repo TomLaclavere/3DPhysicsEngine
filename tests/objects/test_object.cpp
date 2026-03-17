@@ -59,15 +59,6 @@ TEST(ObjectTest, setters)
     obj.setIsFixed(true);
     EXPECT_TRUE(obj.getIsFixed());
 
-    obj.setRestitutionCst(1_d);
-    EXPECT_EQ(obj.getRestitutionCst(), 1_d);
-
-    obj.setStiffnessCst(4_d);
-    EXPECT_EQ(obj.getStiffnessCst(), 4_d);
-
-    obj.setFrictionCst(0.5_d);
-    EXPECT_EQ(obj.getFrictionCst(), 0.5_d);
-
     // Check is fixed if mass < 0
     obj.setMass(-1_d);
     obj.checkFixed();

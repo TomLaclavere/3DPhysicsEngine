@@ -1,0 +1,5 @@
+name: aluminum
+young: 1e6
+damping: 0.2
+friction: 0.4
+restitution: 0.6

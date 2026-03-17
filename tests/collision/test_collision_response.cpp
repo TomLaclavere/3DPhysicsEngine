@@ -2,12 +2,12 @@
 #include "mathematics/common.hpp"
 #include "mathematics/vector.hpp"
 #include "objects/aabb.hpp"
+#include "objects/object.hpp"
 #include "objects/plane.hpp"
 #include "objects/sphere.hpp"
 #include "test_functions.hpp"
 
 #include <gtest/gtest.h>
-#include <iostream>
 
 TEST(CollisionResponseTest, ReturnCases)
 {
@@ -53,7 +53,13 @@ TEST(CollisionResponseTest, ReturnCases)
     A.setVelocity(velA);
     B.setVelocity(velB);
 
-    reboundCollision(A, B, contact, 1_d);
+    // Define restitution
+    Material mat;
+    mat.setRestitution(1_d);
+    A.setMaterial(mat);
+    B.setMaterial(mat);
+
+    reboundCollision(A, B, contact);
 
     EXPECT_VECTOR_EQ(velA, A.getVelocity());
     EXPECT_VECTOR_EQ(velB, B.getVelocity());
@@ -90,8 +96,12 @@ TEST(CollisionResponseTest, SphereSpherePenetrationResponse)
 TEST(CollisionResponseTest, SphereSphereElasticCollision)
 {
     // Along X axis
-    Sphere A(Vector3D(-1_d, 0_d, 0_d), 2_d);
-    Sphere B(Vector3D(1_d, 0_d, 0_d), 2_d);
+    Sphere   A(Vector3D(-1_d, 0_d, 0_d), 2_d);
+    Sphere   B(Vector3D(1_d, 0_d, 0_d), 2_d);
+    Material mat;
+    mat.setRestitution(1_d);
+    A.setMaterial(mat);
+    B.setMaterial(mat);
 
     A.setMass(1_d);
     B.setMass(1_d);
@@ -102,7 +112,7 @@ TEST(CollisionResponseTest, SphereSphereElasticCollision)
     Contact contactAB;
     EXPECT_TRUE(A.computeCollision(B, contactAB));
 
-    reboundCollision(A, B, contactAB, 1_d); // restitution = 1
+    reboundCollision(A, B, contactAB); // restitution = 1
 
     EXPECT_DECIMAL_EQ(A.getVelocity().getX(), -1_d);
     EXPECT_DECIMAL_EQ(B.getVelocity().getX(), 1_d);
@@ -114,7 +124,9 @@ TEST(CollisionResponseTest, SphereSphereElasticCollision)
     Contact contactCD;
     EXPECT_TRUE(sphereC.computeCollision(sphereD, contactCD));
 
-    reboundCollision(sphereC, sphereD, contactCD, 1_d);
+    sphereC.setMaterial(mat);
+    sphereD.setMaterial(mat);
+    reboundCollision(sphereC, sphereD, contactCD);
 
     EXPECT_DECIMAL_EQ(0_d, sphereC.getVelocity().getY());
     EXPECT_DECIMAL_EQ(8_d, sphereD.getVelocity().getY());
@@ -126,7 +138,9 @@ TEST(CollisionResponseTest, SphereSphereElasticCollision)
     Contact contact12;
     EXPECT_TRUE(sphere1.computeCollision(sphere2, contact12));
 
-    reboundCollision(sphere1, sphere2, contact12, 1_d);
+    sphere1.setMaterial(mat);
+    sphere2.setMaterial(mat);
+    reboundCollision(sphere1, sphere2, contact12);
 
     EXPECT_VECTOR_EQ(Vector3D(-1_d, -1_d, 1_d), sphere1.getVelocity());
     EXPECT_VECTOR_EQ(Vector3D(1_d, 1_d, -1_d), sphere2.getVelocity());
@@ -135,8 +149,13 @@ TEST(CollisionResponseTest, SphereSphereElasticCollision)
 TEST(CollisionResponseTest, SphereSphereInelasticCollision)
 {
     // Along X axis
-    Sphere A(Vector3D(-1_d, 0_d, 0_d), 2_d);
-    Sphere B(Vector3D(1_d, 0_d, 0_d), 2_d);
+    Sphere   A(Vector3D(-1_d, 0_d, 0_d), 2_d);
+    Sphere   B(Vector3D(1_d, 0_d, 0_d), 2_d);
+    Material mat;
+    mat.setRestitution(0.5_d);
+
+    A.setMaterial(mat);
+    B.setMaterial(mat);
 
     A.setMass(1_d);
     B.setMass(1_d);
@@ -147,7 +166,7 @@ TEST(CollisionResponseTest, SphereSphereInelasticCollision)
     Contact contactAB;
     EXPECT_TRUE(A.computeCollision(B, contactAB));
 
-    reboundCollision(A, B, contactAB, 0.5); // restitution = 0.5
+    reboundCollision(A, B, contactAB); // restitution = 0.5
 
     EXPECT_DECIMAL_EQ(A.getVelocity().getX(), -0.5);
     EXPECT_DECIMAL_EQ(B.getVelocity().getX(), 0.5);
@@ -156,8 +175,12 @@ TEST(CollisionResponseTest, SphereSphereInelasticCollision)
 TEST(CollisionResponseTest, SphereSphereSymmetry)
 {
     // Collision AB
-    Sphere A(Vector3D(-1_d, 0_d, 0_d), 2_d);
-    Sphere B(Vector3D(1_d, 0_d, 0_d), 2_d);
+    Sphere   A(Vector3D(-1_d, 0_d, 0_d), 2_d);
+    Sphere   B(Vector3D(1_d, 0_d, 0_d), 2_d);
+    Material mat;
+    mat.setRestitution(1_d);
+    A.setMaterial(mat);
+    B.setMaterial(mat);
 
     A.setMass(1_d);
     B.setMass(1_d);
@@ -168,7 +191,7 @@ TEST(CollisionResponseTest, SphereSphereSymmetry)
     Contact contactAB;
     EXPECT_TRUE(A.computeCollision(B, contactAB));
 
-    reboundCollision(A, B, contactAB, 1_d); // restitution = 1
+    reboundCollision(A, B, contactAB); // restitution = 1
 
     EXPECT_DECIMAL_EQ(A.getVelocity().getX(), -1_d);
     EXPECT_DECIMAL_EQ(B.getVelocity().getX(), 1_d);
@@ -180,7 +203,7 @@ TEST(CollisionResponseTest, SphereSphereSymmetry)
     Contact contactBA;
     EXPECT_TRUE(B.computeCollision(A, contactBA));
 
-    reboundCollision(B, A, contactBA, 1_d);
+    reboundCollision(B, A, contactBA);
 
     EXPECT_DECIMAL_EQ(A.getVelocity().getX(), -1_d);
     EXPECT_DECIMAL_EQ(B.getVelocity().getX(), 1_d);
@@ -189,8 +212,12 @@ TEST(CollisionResponseTest, SphereSphereSymmetry)
 // Plane vs Plane
 TEST(CollisionResponseTest, PlanePlaneCollision)
 {
-    Plane planeA(Vector3D(0_d, 0_d, 0_d), Vector3D(1_d, 2_d, 0_d), Vector3D(0_d, 0_d, -1_d));
-    Plane planeB(Vector3D(0_d, 0_d, 0_d), Vector3D(1_d, 2_d, 0_d), Vector3D(0_d, 0_d, 1_d));
+    Plane    planeA(Vector3D(0_d, 0_d, 0_d), Vector3D(1_d, 2_d, 0_d), Vector3D(0_d, 0_d, -1_d));
+    Plane    planeB(Vector3D(0_d, 0_d, 0_d), Vector3D(1_d, 2_d, 0_d), Vector3D(0_d, 0_d, 1_d));
+    Material mat;
+    mat.setRestitution(1_d);
+    planeA.setMaterial(mat);
+    planeB.setMaterial(mat);
 
     planeA.setMass(1_d);
     planeB.setMass(1_d);
@@ -201,7 +228,7 @@ TEST(CollisionResponseTest, PlanePlaneCollision)
     Contact contact;
     EXPECT_TRUE(planeA.computeCollision(planeB, contact));
 
-    reboundCollision(planeA, planeB, contact, 1_d);
+    reboundCollision(planeA, planeB, contact);
 
     EXPECT_VECTOR_EQ(Vector3D(0_d, 0_d, -1_d), planeA.getVelocity());
     EXPECT_VECTOR_EQ(Vector3D(0_d, 0_d, 1_d), planeB.getVelocity());
@@ -210,8 +237,12 @@ TEST(CollisionResponseTest, PlanePlaneCollision)
 // AABB vs AABB
 TEST(CollisionResponseTest, AABBAABBCollision)
 {
-    AABB boxA(Vector3D(-1_d, -1_d, -1_d), Vector3D(1_d, 1_d, 1_d));
-    AABB boxB(Vector3D(0.5_d, 0.5_d, 0.5_d), Vector3D(2_d, 2_d, 2_d));
+    AABB     boxA(Vector3D(-1_d, -1_d, -1_d), Vector3D(1_d, 1_d, 1_d));
+    AABB     boxB(Vector3D(0.5_d, 0.5_d, 0.5_d), Vector3D(2_d, 2_d, 2_d));
+    Material mat;
+    mat.setRestitution(1_d);
+    boxA.setMaterial(mat);
+    boxB.setMaterial(mat);
 
     boxA.setMass(1_d);
     boxB.setMass(1_d);
@@ -222,7 +253,7 @@ TEST(CollisionResponseTest, AABBAABBCollision)
     Contact contact;
     EXPECT_TRUE(boxA.computeCollision(boxB, contact));
 
-    reboundCollision(boxA, boxB, contact, 1_d);
+    reboundCollision(boxA, boxB, contact);
 
     EXPECT_VECTOR_EQ(Vector3D(-1_d, 0_d, 0_d), boxA.getVelocity());
     EXPECT_VECTOR_EQ(Vector3D(1_d, 0_d, 0_d), boxB.getVelocity());
@@ -234,8 +265,12 @@ TEST(CollisionResponseTest, AABBAABBCollision)
 
 TEST(CollisionResponseTest, SpherePlaneCollision)
 {
-    Sphere sphere(Vector3D(0_d, 0_d, 2_d), 4_d);
-    Plane  plane(Vector3D(0_d, 0_d, 0_d), Vector3D(1_d, 1_d, 0_d), Vector3D(0_d, 0_d, 1_d));
+    Sphere   sphere(Vector3D(0_d, 0_d, 2_d), 4_d);
+    Plane    plane(Vector3D(0_d, 0_d, 0_d), Vector3D(1_d, 1_d, 0_d), Vector3D(0_d, 0_d, 1_d));
+    Material mat;
+    mat.setRestitution(1_d);
+    sphere.setMaterial(mat);
+    plane.setMaterial(mat);
 
     sphere.setMass(2_d);
     plane.setMass(0_d); // immovable
@@ -246,7 +281,7 @@ TEST(CollisionResponseTest, SpherePlaneCollision)
     EXPECT_TRUE(sphere.computeCollision(plane, contact));
     EXPECT_VECTOR_EQ(contact.normal, Vector3D(0_d, 0_d, 1_d));
 
-    reboundCollision(sphere, plane, contact, 1_d); // restitution = 1
+    reboundCollision(sphere, plane, contact); // restitution = 1
 
     EXPECT_VECTOR_EQ(Vector3D(0_d, 0_d, 10_d), sphere.getVelocity());
 }
@@ -254,8 +289,12 @@ TEST(CollisionResponseTest, SpherePlaneCollision)
 // Sphere vs AABB
 TEST(CollisionResponseTest, SphereAABBCollision)
 {
-    Sphere sphere(Vector3D(0_d, 0_d, 0_d), 1_d);
-    AABB   box(Vector3D(0_d, -0.5_d, 0_d), Vector3D(0.5_d));
+    Sphere   sphere(Vector3D(0_d, 0_d, 0_d), 1_d);
+    AABB     box(Vector3D(0_d, -0.5_d, 0_d), Vector3D(0.5_d));
+    Material mat;
+    mat.setRestitution(1_d);
+    sphere.setMaterial(mat);
+    box.setMaterial(mat);
 
     sphere.setMass(1_d);
     box.setMass(1_d);
@@ -266,7 +305,7 @@ TEST(CollisionResponseTest, SphereAABBCollision)
     Contact contact;
     EXPECT_TRUE(sphere.computeCollision(box, contact));
 
-    reboundCollision(sphere, box, contact, 1_d);
+    reboundCollision(sphere, box, contact);
 
     EXPECT_VECTOR_EQ(Vector3D(0_d, 2_d, 0_d), sphere.getVelocity());
     EXPECT_VECTOR_EQ(Vector3D(0_d, -2_d, 0_d), box.getVelocity());
@@ -275,8 +314,12 @@ TEST(CollisionResponseTest, SphereAABBCollision)
 // AABB vs Plane
 TEST(CollisionResponseTest, AABBPlaneCollision)
 {
-    AABB  box(Vector3D(-0_d, -0_d, 1_d), Vector3D(2_d));
-    Plane plane(Vector3D(0_d, 0_d, 0_d), Vector3D(1_d, 0_d, 0_d), Vector3D(0_d, 0_d, 1_d));
+    AABB     box(Vector3D(-0_d, -0_d, 1_d), Vector3D(2_d));
+    Plane    plane(Vector3D(0_d, 0_d, 0_d), Vector3D(1_d, 0_d, 0_d), Vector3D(0_d, 0_d, 1_d));
+    Material mat;
+    mat.setRestitution(1_d);
+    box.setMaterial(mat);
+    plane.setMaterial(mat);
 
     box.setMass(1_d);
     plane.setMass(0_d); // immovable
@@ -286,7 +329,7 @@ TEST(CollisionResponseTest, AABBPlaneCollision)
     Contact contact;
     EXPECT_TRUE(box.computeCollision(plane, contact));
 
-    reboundCollision(box, plane, contact, 1_d);
+    reboundCollision(box, plane, contact);
 
     EXPECT_VECTOR_EQ(Vector3D(0_d, 0_d, 5_d), box.getVelocity());
 }

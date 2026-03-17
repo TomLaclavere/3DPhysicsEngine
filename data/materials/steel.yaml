@@ -1,0 +1,5 @@
+name: steel
+young: 5e6
+damping: 0.1
+friction: 0.3
+restitution: 0.7

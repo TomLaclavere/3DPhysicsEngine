@@ -43,4 +43,4 @@ void positionCorrection(Object& A, Object& B, Contact& contact, decimal percent 
  * @param restitution Coefficient of restitution [0, 1], where 0 = perfectly inelastic,
  *                    1 = perfectly elastic (default 0.5).
  */
-void reboundCollision(Object& A, Object& B, Contact& contact, decimal restitution = 0.5_d);
+void reboundCollision(Object& A, Object& B, Contact& contact);

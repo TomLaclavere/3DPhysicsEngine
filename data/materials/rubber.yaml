@@ -1,0 +1,5 @@
+name: rubber
+young: 5e3
+damping: 1.0
+friction: 0.9
+restitution: 0.85

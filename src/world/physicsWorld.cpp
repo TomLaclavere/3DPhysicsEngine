@@ -2,11 +2,15 @@
 
 #include "collision/collision_response.hpp"
 #include "mathematics/math_io.hpp"
+#include "objects/object.hpp"
 #include "world/integrateRK4.hpp"
 #include "world/physics.hpp"
 
+#include <cstddef>
+#include <filesystem>
 #include <iomanip>
 #include <iostream>
+#include <vector>
 
 // ============================================================================
 //  Solvers
@@ -35,7 +39,7 @@ Solver   PhysicsWorld::getSolver() const { return solver; }
 // ============================================================================
 //  Setters
 // ============================================================================
-void PhysicsWorld::setSolver(std::string _solver)
+void PhysicsWorld::setSolver(const std::string& _solver)
 {
     solver = parseSolver(_solver);
     config.setSolver(_solver);
@@ -47,7 +51,7 @@ void PhysicsWorld::setGravityAcc(const Vector3D& acc) { gravityAcc = acc; }
 // ============================================================================
 //  Core simulation methods
 // ============================================================================
-void PhysicsWorld::initialize()
+void PhysicsWorld::initialise()
 {
     isRunning = false;
     objects.clear();
@@ -68,9 +72,10 @@ void PhysicsWorld::applyGravityForce(Object& obj)
 }
 void PhysicsWorld::applyGravityForces()
 {
+
+    for (auto* obj : objects)
     {
-        for (auto* obj : objects)
-            applyGravityForce(*obj);
+        applyGravityForce(*obj);
     }
 }
 void PhysicsWorld::applySpringForces(Object& obj, Object& other)
@@ -159,11 +164,9 @@ void PhysicsWorld::applyForces()
         }
     }
 }
-
 void PhysicsWorld::solveCollisions()
 {
     const size_t n = objects.size();
-    Contact      contact;
 
     for (size_t i = 0; i < n; ++i)
     {
@@ -178,12 +181,15 @@ void PhysicsWorld::solveCollisions()
                 continue;
 
             // Broad phase
-            bool isColliding = A->computeCollision(*B, contact);
+            bool isCollidingBroad = A->checkCollision(*B);
 
             // Narrow phase
-            if (isColliding)
+            if (isCollidingBroad)
             {
-                reboundCollision(*A, *B, contact);
+                Contact contact;
+                bool    isCollidindNarrow = A->computeCollision(*B, contact);
+                if (isCollidindNarrow)
+                    reboundCollision(*A, *B, contact);
             }
         }
     }
@@ -254,7 +260,85 @@ void PhysicsWorld::integrateRK4(Object& obj, decimal dt)
     obj.setPosition(obj.getPosition() + dxdt * dt);
     obj.setVelocity(obj.getVelocity() + dvdt * dt);
 }
+void PhysicsWorld::integrateWithoutCollisions()
+{
+    if (!isRunning)
+    {
+        std::cout << "Simulation is not running. Run start() first.\n";
+        return;
+    }
 
+    setTimeStep(timeStep);
+
+    // Reset accelerations
+    for (auto* obj : objects)
+    {
+        if (!obj || obj->isFixed())
+            continue;
+        obj->setAcceleration(Vector3D(0_d));
+    }
+
+    // Compute gravity forces
+    applyGravityForces();
+
+    // Integrate motion
+    for (auto* obj : objects)
+    {
+        if (!obj || obj->isFixed())
+            continue;
+        switch (solver)
+        {
+        case Solver::Euler:
+            integrateEuler(*obj, timeStep);
+            break;
+        case Solver::Verlet:
+            integrateVerlet(*obj, timeStep);
+            break;
+        case Solver::RK4:
+            integrateRK4(*obj, timeStep);
+            break;
+        case Solver::Unknown:
+            std::cout << "The following solver is not implemented : " << config.getSolver() << '\n';
+            std::cout << "Please use one of the following solver : Euler, Verlet, RK4.\n";
+            break;
+        }
+    }
+
+    // If collision : object stops moving
+
+    const size_t n = objects.size();
+
+    for (size_t i = 0; i < n; ++i)
+    {
+        Object* A = objects[i];
+        if (!A)
+            continue;
+
+        for (size_t j = i + 1; j < n; ++j)
+        {
+            Object* B = objects[j];
+            if (!B)
+                continue;
+
+            // Broad phase
+            bool isCollidingBroad = A->checkCollision(*B);
+
+            // Narrow phase
+            if (isCollidingBroad)
+            {
+                Contact contact;
+                bool    isCollidindNarrow = A->computeCollision(*B, contact);
+                if (isCollidindNarrow)
+                {
+                    A->setVelocity(Vector3D(0_d));
+                    A->setIsFixed(true);
+                    B->setVelocity(Vector3D(0_d));
+                    B->setIsFixed(true);
+                }
+            }
+        }
+    }
+}
 void PhysicsWorld::integrate()
 {
     if (!isRunning)
@@ -325,18 +409,23 @@ void PhysicsWorld::run()
         std::cout << std::string(n, '-') << "\n";
     }
 
+    // If save
+    initCSV("output/CSV");
+    saveObjectsCSV();
+
     while (cpt < maxIter + 1 && getIsRunning())
     {
         const decimal time = static_cast<decimal>(cpt) * timeStep;
 
         integrate();
+        saveMotionCSV(time);
 
         // Printing
         if (config.getVerbose())
         {
-            if (cpt % 10 == 0)
+            if (cpt % 25 == 0)
             {
-                for (auto* obj : getObject())
+                for (auto* obj : objects)
                 {
                     if (!obj->isFixed())
                         std::cout << std::left << std::setw(col_obj) << obj->getType() << std::setw(col_time)
@@ -375,5 +464,63 @@ void PhysicsWorld::printState() const
             std::cout << "  Object " << i << ": pos=" << objects[i]->getPosition()
                       << ", vel=" << objects[i]->getVelocity() << "\n";
         }
+    }
+}
+void PhysicsWorld::initCSV(const std::string& directory)
+{
+    if (!config.getSave())
+        return;
+
+    // Create CSV directory
+    if (!std::filesystem::exists(directory))
+    {
+        std::filesystem::create_directories(directory);
+    }
+
+    // Object CSV
+    objectFile.clear();
+    objectFile.open(directory + "/objects.csv");
+    if (!objectFile)
+    {
+        throw std::runtime_error("Cannot open objects.csv");
+    }
+    objectFile << "id" << "," << "name" << "," << "type" << "," << "mass" << "," << "pos(x)" << ","
+               << "pos(y)" << "," << "pos(z)" << "," << "size(x)" << ","
+               << "size(y)" << "," << "size(z)" << "," << "rota(x)" << "," << "rota(y)" << ","
+               << "rota(z)" << "," << "fixed" << "\n";
+
+    // Motion CSV
+    motionFiles.clear();
+    for (std::size_t idx = 0; idx < objects.size(); ++idx)
+    {
+        Object* obj = objects[idx];
+
+        // if (obj->getIsFixed())
+        //     continue;
+
+        std::string   filepath = directory + "/motion_object_" + std::to_string(idx) + ".csv";
+        std::ofstream file(filepath);
+
+        obj->initMotionCSV(file);
+        motionFiles.emplace_back(obj, std::move(file));
+    }
+}
+void PhysicsWorld::saveObjectsCSV()
+{
+    for (std::size_t idx = 0; idx < objects.size(); ++idx)
+    {
+        objects[idx]->saveObjectCSV(objectFile);
+    }
+    objectFile.close();
+    objectFile.close();
+}
+void PhysicsWorld::saveMotionCSV(decimal time)
+{
+    if (!config.getSave())
+        return;
+
+    for (auto& [obj, file] : motionFiles)
+    {
+        obj->saveMotionCSV(file, time);
     }
 }

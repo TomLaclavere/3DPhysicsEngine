@@ -58,6 +58,7 @@ public:
         , halfWidth { size[1] * 0.5_d }
     {
         updateLocalAxes();
+        setRotation(normal);
     }
     Plane(const Vector3D& position, const Vector3D& size, decimal mass, const Vector3D& _normal)
         : Object(position, size, mass)
@@ -66,6 +67,7 @@ public:
         , halfWidth { size[1] * 0.5_d }
     {
         updateLocalAxes();
+        setRotation(normal);
         checkFixed();
     }
     Plane(const Vector3D& position, const Vector3D& size, const Vector3D& velocity, decimal mass,
@@ -76,6 +78,7 @@ public:
         , halfWidth { size[1] * 0.5_d }
     {
         updateLocalAxes();
+        setRotation(normal);
         checkFixed();
     }
     Plane(const Vector3D& position, const Vector3D& rotation, const Vector3D& size, const Vector3D& velocity,
@@ -87,6 +90,7 @@ public:
         , halfWidth { size[1] * 0.5_d }
     {
         updateLocalAxes();
+        setRotation(normal);
         checkFixed();
     }
 

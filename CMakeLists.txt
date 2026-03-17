@@ -37,8 +37,8 @@ endif()
 # =============================================
 option(3DPE_USE_DOUBLE_PRECISION "Compile using double precision floating values" OFF)
 option(3DPE_BUILD_EXAMPLES "Build example applications" ON)
-option(3DPE_BUILD_TESTS "Build unit tests" ON)
 option(3DPE_BUILD_BENCHMARKS "Build benchmark applications" ON)
+option(3DPE_BUILD_TESTS "Build unit tests" ON)
 option(3DPE_ENABLE_COVERAGE "Enable coverage reporting" ON)
 option(3DPE_ENABLE_CLANG_TIDY "Enable clang-tidy static analysis" OFF)
 option(3DPE_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" ON)
@@ -75,6 +75,7 @@ set(ENGINE_OBJECT_SOURCES
     src/objects/aabb.cpp
     src/objects/sphere.cpp
     src/objects/plane.cpp
+    src/objects/material.cpp
 )
 
 set(ENGINE_COLLISION_SOURCES
@@ -243,6 +244,90 @@ if(3DPE_BUILD_EXAMPLES)
         DEPENDS example_Projectiles
         COMMENT "Running example: Projectiles"
     )
+
+    # ---------------------------------------------
+    # Example: Bouncing Ball Simulation
+    # ---------------------------------------------
+    add_executable(example_Bouncing examples/Bouncing_Ball/main.cpp)
+    target_link_libraries(example_Bouncing PRIVATE 3DPhysicsEngine)
+    target_include_directories(example_Bouncing PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+    set_target_properties(example_Bouncing PROPERTIES
+        OUTPUT_NAME "Bouncing"
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/examples
+        FOLDER "Examples"
+    )
+
+    add_custom_target(Bouncing
+        COMMAND $<TARGET_FILE:example_Bouncing>
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        DEPENDS example_Bouncing
+        COMMENT "Running example: Bouncing"
+    )
+
+    # ---------------------------------------------
+    # Example: Bouncing Ball Simulation 2
+    # ---------------------------------------------
+    add_executable(example_Bouncing_2 examples/Bouncing_Ball_2/main.cpp)
+    target_link_libraries(example_Bouncing_2 PRIVATE 3DPhysicsEngine)
+    target_include_directories(example_Bouncing_2 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+    set_target_properties(example_Bouncing_2 PROPERTIES
+        OUTPUT_NAME "Bouncing_2"
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/examples
+        FOLDER "Examples"
+    )
+
+    add_custom_target(Bouncing_2
+        COMMAND $<TARGET_FILE:example_Bouncing_2>
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        DEPENDS example_Bouncing_2
+        COMMENT "Running example: Bouncing_2"
+    )
+
+    # ---------------------------------------------
+    # Example: Rolling Ball Simulation
+    # ---------------------------------------------
+    add_executable(example_Rolling examples/Rolling_Ball/main.cpp)
+    target_link_libraries(example_Rolling PRIVATE 3DPhysicsEngine)
+    target_include_directories(example_Rolling PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+    set_target_properties(example_Rolling PROPERTIES
+        OUTPUT_NAME "Rolling"
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/examples
+        FOLDER "Examples"
+    )
+
+    add_custom_target(Rolling
+        COMMAND $<TARGET_FILE:example_Rolling>
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        DEPENDS example_Rolling
+        COMMENT "Running example: Rolling"
+    )
+endif()
+
+# =============================================
+# Benchmarks
+# =============================================
+if(3DPE_BUILD_BENCHMARKS)
+    message(STATUS "Building benchmarks")
+
+    # ---------------------------------------------
+    # Example: Free Fall benchmark
+    # ---------------------------------------------
+    add_executable(benchmark_Free_Fall benchmarks/Free_Fall/main.cpp)
+    target_link_libraries(benchmark_Free_Fall PRIVATE 3DPhysicsEngine)
+    target_include_directories(benchmark_Free_Fall PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+    set_target_properties(benchmark_Free_Fall PROPERTIES
+        OUTPUT_NAME "Free_Fall"
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/benchmarks
+        FOLDER "Benchmarks"
+    )
+
+    add_custom_target(Free_Fall_Benchmark
+        COMMAND $<TARGET_FILE:benchmark_Free_Fall>
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        DEPENDS benchmark_Free_Fall
+        COMMENT "Running benchmark: Free_Fall"
+    )
+
 endif()
 
 # =============================================

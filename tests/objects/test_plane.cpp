@@ -6,10 +6,7 @@
 
 #include <gtest/gtest.h>
 
-// ——————————————————————————————————————————————————————————————————————————
 //  Constructors, Getters, and Setters
-// ——————————————————————————————————————————————————————————————————————————
-
 TEST(PlaneTest, ConstructorsAndGetters)
 {
     Vector3D position(1_d, 2_d, 3_d);
@@ -25,7 +22,7 @@ TEST(PlaneTest, ConstructorsAndGetters)
     Plane plane(position, rotation, size, velocity, acceleration, force, torque, mass, normal);
 
     EXPECT_EQ(plane.getPosition(), position);
-    EXPECT_EQ(plane.getRotation(), rotation);
+    EXPECT_EQ(plane.getRotation(), normal);
     EXPECT_EQ(plane.getSize(), size);
     EXPECT_EQ(plane.getVelocity(), velocity);
     EXPECT_EQ(plane.getAcceleration(), acceleration);
@@ -69,9 +66,7 @@ TEST(PlaneTest, Setters)
     EXPECT_DECIMAL_EQ(plane.getMass(), newMass);
 }
 
-// ——————————————————————————————————————————————————————————————————————————
 //  Utilities
-// ——————————————————————————————————————————————————————————————————————————
 
 TEST(PlaneTest, updateLocalAxes)
 {

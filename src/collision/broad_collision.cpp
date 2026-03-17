@@ -2,9 +2,7 @@
 
 #include "mathematics/common.hpp"
 
-// ============================================================================
 //  Sphere vs Sphere
-// ============================================================================
 
 /**
  * @brief Check broad collision between two Spheres.
@@ -23,9 +21,7 @@ bool BroadCollision::isColliding(const Sphere& sphere1, const Sphere& sphere2)
     return commonMaths::approxSmallerOrEqualThan(d.getNormSquare(), r * r);
 }
 
-// ============================================================================
 //  Sphere vs AABB
-// ============================================================================
 
 /**
  * @brief Check broad collisoin between Sphere and AABB.
@@ -44,9 +40,7 @@ bool BroadCollision::isColliding(const Sphere& sphere, const AABB& aabb)
     return commonMaths::approxSmallerOrEqualThan(dist, aabbRadius + sphere.getRadius());
 }
 
-// ============================================================================
 //  Sphere vs Plane
-// ============================================================================
 
 /**
  * @brief Check broad collision between Sphere and Plane.
@@ -70,9 +64,7 @@ bool BroadCollision::isColliding(const Sphere& sphere, const Plane& plane)
                                                  sphere.getRadius() + (0.5 * plane.getSize()).getMax());
 }
 
-// ============================================================================
 //  AABB vs AABB
-// ============================================================================
 
 /**
  * @brief Check broad collision between two AABBs.
@@ -94,9 +86,7 @@ bool BroadCollision::isColliding(const AABB& aabb1, const AABB& aabb2)
              aabb1.getMax().getZ() < aabb2.getMin().getZ() || aabb1.getMin().getZ() > aabb2.getMax().getZ());
 }
 
-// ============================================================================
 //  AABB vs Plane
-// ============================================================================
 
 /**
  * @brief Broad-phase check: AABB vs Plane.
@@ -124,9 +114,7 @@ bool BroadCollision::isColliding(const AABB& aabb, const Plane& plane)
     return commonMaths::approxSmallerOrEqualThan(commonMaths::absVal(dist), aabbProj);
 }
 
-// ============================================================================
 //  Plane vs Plane
-// ============================================================================
 
 /**
  * @brief Check broad collision between two Planes.

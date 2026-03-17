@@ -104,13 +104,13 @@ public:
     /// Apply gravitational force to all movable objects.
     void applyGravityForces();
     /// Apply spring forces on a single object due to another.
-    void applySpringForces(Object& obj, Object& other);
+    void applySpringForces(Object& obj, Object& other, Contact& contact);
     /// Apply dampling forces on a single object due to another.
-    void applyDamplingForces(Object& obj, Object& other);
+    void applyDamplingForces(Object& obj, Object& other, Contact& contact);
     /// Apply friction forces on a single object due to another.
-    void applyFrictionForces(Object& obj, Object& other);
+    void applyFrictionForces(Object& obj, Object& other, Contact& contact);
     /// Apply contact forces (spring + damping + friction) between two objects.
-    void applyContactForces(Object& obj, Object& other);
+    void applyContactForces(Object& obj, Object& other, Contact& contact);
     /// Compute and apply all forces for the curent physics step on one Object.
     void computeAcceleration(Object& obj);
     /// Compute and apply all forces for the current physics step.

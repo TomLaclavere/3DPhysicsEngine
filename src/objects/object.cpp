@@ -66,9 +66,10 @@ Vector3D   Object::getAcceleration() const { return acceleration; }
 Vector3D   Object::getForce() const { return force; }
 Vector3D   Object::getTorque() const { return torque; }
 decimal    Object::getMass() const { return mass; }
-decimal    Object::getStiffnessCst() const { return stiffnessCst; }
-decimal    Object::getRestitutionCst() const { return restitutionCst; }
-decimal    Object::getFrictionCst() const { return frictionCst; }
+decimal    Object::getYoungCst() const { return material.getYoung(); }
+decimal    Object::getDampingCst() const { return material.getDamping(); }
+decimal    Object::getFrictionCst() const { return material.getFriction(); }
+decimal    Object::getRestitutionCst() const { return material.getRestitution(); }
 Material   Object::getMaterial() const { return material; }
 ObjectType Object::getType() const { return ObjectType::Generic; }
 bool       Object::getIsFixed() const { return fixed; }
@@ -86,9 +87,10 @@ void Object::setMass(const decimal _mass)
     mass = _mass;
     checkFixed();
 }
-void Object::setStiffnessCst(decimal k) { stiffnessCst = k; }
-void Object::setRestitutionCst(decimal e) { restitutionCst = e; }
-void Object::setFrictionCst(decimal mu) { frictionCst = mu; }
+void Object::setYoungCst(decimal k) { material.setYoung(k); }
+void Object::setDampingCst(decimal d) { material.setDamping(d); }
+void Object::setFrictionCst(decimal mu) { material.setFriction(mu); }
+void Object::setRestitutionCst(decimal e) { material.setRestitution(e); }
 void Object::setMaterial(const Material& mat) { material = mat; }
 void Object::setIsFixed(bool b)
 {

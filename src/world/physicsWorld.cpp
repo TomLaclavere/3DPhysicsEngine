@@ -1,6 +1,7 @@
 #include "world/physicsWorld.hpp"
 
 #include "collision/collision_response.hpp"
+#include "collision/contact.hpp"
 #include "mathematics/math_io.hpp"
 #include "objects/object.hpp"
 #include "world/integrateRK4.hpp"
@@ -78,38 +79,38 @@ void PhysicsWorld::applyGravityForces()
         applyGravityForce(*obj);
     }
 }
-void PhysicsWorld::applySpringForces(Object& obj, Object& other)
+void PhysicsWorld::applySpringForces(Object& obj, Object& other, Contact& contact)
 {
     if (!obj.getIsFixed())
     {
-        Vector3D springForce = Physics::computeSpringForce(obj, other);
+        Vector3D springForce = Physics::computeSpringForce(obj, other, contact);
         obj.addAcceleration(springForce / obj.getMass());
     }
 }
-void PhysicsWorld::applyDamplingForces(Object& obj, Object& other)
+void PhysicsWorld::applyDamplingForces(Object& obj, Object& other, Contact& contact)
 {
     if (!obj.getIsFixed())
     {
-        Vector3D dampingForce = Physics::computeDampingForce(obj, other);
+        Vector3D dampingForce = Physics::computeDampingForce(obj, other, contact);
         obj.addAcceleration(dampingForce / obj.getMass());
     }
 }
-void PhysicsWorld::applyFrictionForces(Object& obj, Object& other)
+void PhysicsWorld::applyFrictionForces(Object& obj, Object& other, Contact& contact)
 {
     if (!obj.getIsFixed())
     {
-        Vector3D frictionForce = Physics::computeFrictionForce(obj, other);
+        Vector3D frictionForce = Physics::computeFrictionForce(obj, other, contact);
         obj.addAcceleration(frictionForce / obj.getMass());
     }
 }
-void PhysicsWorld::applyContactForces(Object& obj, Object& other)
+void PhysicsWorld::applyContactForces(Object& obj, Object& other, Contact& contact)
 {
     if (obj.getIsFixed() && other.getIsFixed())
         return;
 
-    Vector3D springForce   = Physics::computeSpringForce(obj, other);
-    Vector3D dampingForce  = Physics::computeDampingForce(obj, other);
-    Vector3D frictionForce = Physics::computeFrictionForce(obj, other);
+    Vector3D springForce   = Physics::computeSpringForce(obj, other, contact);
+    Vector3D dampingForce  = Physics::computeDampingForce(obj, other, contact);
+    Vector3D frictionForce = Physics::computeFrictionForce(obj, other, contact);
     Vector3D totalForce    = springForce + dampingForce + frictionForce;
 
     if (!obj.getIsFixed())
@@ -131,9 +132,16 @@ void PhysicsWorld::computeAcceleration(Object& obj)
         if (!other || other == &obj)
             continue;
 
-        if (obj.checkCollision(*other))
+        // Broad phase
+        bool isCollidingBroad = obj.checkCollision(*other);
+
+        // Narrow phase
+        if (isCollidingBroad)
         {
-            applyContactForces(obj, *other);
+            Contact contact;
+            bool    isCollidindNarrow = obj.computeCollision(*other, contact);
+            if (isCollidindNarrow)
+                applyContactForces(obj, *other, contact);
         }
     }
 }
@@ -144,22 +152,29 @@ void PhysicsWorld::applyForces()
 
     // 2. Contact forces (between object pairs)
     const size_t n = objects.size();
+
     for (size_t i = 0; i < n; ++i)
     {
-        Object* obj1 = objects[i];
-        if (!obj1)
+        Object* A = objects[i];
+        if (!A)
             continue;
 
         for (size_t j = i + 1; j < n; ++j)
         {
-            Object* obj2 = objects[j];
-            if (!obj2)
+            Object* B = objects[j];
+            if (!B)
                 continue;
 
-            // Only apply contact forces if objects are colliding
-            if (obj1->checkCollision(*obj2))
+            // Broad phase
+            bool isCollidingBroad = A->checkCollision(*B);
+
+            // Narrow phase
+            if (isCollidingBroad)
             {
-                applyContactForces(*obj1, *obj2);
+                Contact contact;
+                bool    isCollidindNarrow = A->computeCollision(*B, contact);
+                if (isCollidindNarrow)
+                    applyContactForces(*A, *B, contact);
             }
         }
     }

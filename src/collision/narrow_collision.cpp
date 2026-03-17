@@ -1,6 +1,7 @@
 #include "collision/narrow_collision.hpp"
 
 #include "mathematics/common.hpp"
+#include "mathematics/vector.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -32,7 +33,10 @@ bool NarrowCollision::computeContact(const Sphere& s1, const Sphere& s2, Contact
     const decimal dist = std::sqrt(dist2);
 
     // Compute normal and penetration
-    Vector3D normal     = (commonMaths::approxGreaterThan(dist, 0_d)) ? diff / dist : Vector3D(1, 0, 0);
+    Vector3D normal = (commonMaths::approxGreaterThan(dist, 0_d)) ? diff / dist : Vector3D(1, 0, 0);
+
+    if ((s1.getPosition() - s2.getPosition()).dotProduct(normal) < 0_d)
+        normal = -normal;
     contact.normal      = normal;
     contact.penetration = rSum - dist;
 
@@ -84,7 +88,10 @@ bool NarrowCollision::computeContact(const Sphere& sphere, const AABB& aabb, Con
 
         const decimal dist = std::sqrt(dist2);
 
-        contact.normal      = (delta / dist);
+        Vector3D normal = (delta / dist);
+        if ((sphere.getPosition() - aabb.getPosition()).dotProduct(normal) < 0_d)
+            normal = -normal;
+        contact.normal      = normal;
         contact.penetration = radius - dist;
         contact.position    = closestPoint;
     }
@@ -134,6 +141,8 @@ bool NarrowCollision::computeContact(const Sphere& sphere, const AABB& aabb, Con
             return false;
         }
 
+        if ((sphere.getPosition() - aabb.getPosition()).dotProduct(normal) < 0_d)
+            normal = -normal;
         contact.normal      = normal;
         contact.penetration = radius - minDist;
         contact.position    = center + normal * minDist;
@@ -209,15 +218,19 @@ bool NarrowCollision::computeContact(const Sphere& sphere, const Plane& plane, C
         commonMaths::approxSmallerOrEqualThan(commonMaths::absVal(s), plane.getHalfWidth()) &&
         commonMaths::approxSmallerOrEqualThan(commonMaths::absVal(t), plane.getHalfHeight());
 
+    Vector3D normal;
     if (insideFace)
     {
-        contact.normal = commonMaths::approxGreaterThan(signedDist, 0_d) ? planeNormal : -planeNormal;
+        normal = commonMaths::approxGreaterThan(signedDist, 0_d) ? planeNormal : -planeNormal;
     }
     else
     {
-        contact.normal = (delta / dist);
+        normal = (delta / dist);
     }
 
+    if ((sphere.getPosition() - plane.getPosition()).dotProduct(normal) < 0_d)
+        normal = -normal;
+    contact.normal      = normal;
     contact.penetration = sphereRadius - dist;
     contact.position    = closestPoint;
     contact.penetration = sphere.getRadius() - dist;
@@ -286,7 +299,9 @@ bool NarrowCollision::computeContact(const AABB& a1, const AABB& a2, Contact& co
     const Vector3D contactMax(std::min(a1Max[0], a2Max[0]), std::min(a1Max[1], a2Max[1]),
                               std::min(a1Max[2], a2Max[2]));
 
-    contact.position    = (contactMin + contactMax) * 0.5_d;
+    contact.position = (contactMin + contactMax) * 0.5_d;
+    if ((a1.getPosition() - a2.getPosition()).dotProduct(normal) < 0_d)
+        normal = -normal;
     contact.normal      = normal;
     contact.penetration = penetration;
 
@@ -345,7 +360,10 @@ bool NarrowCollision::computeContact(const AABB& aabb, const Plane& plane, Conta
         return false;
 
     // Contact
-    contact.normal      = (dist < 0_d) ? planeNormal : -planeNormal;
+    Vector3D normal = (dist < 0_d) ? planeNormal : -planeNormal;
+    if ((aabb.getPosition() - plane.getPosition()).dotProduct(normal) < 0_d)
+        normal = -normal;
+    contact.normal      = normal;
     contact.penetration = r - commonMaths::absVal(dist);
     contact.position    = aabbPosition - dist * planeNormal;
     contact.A           = &aabb;
@@ -421,8 +439,11 @@ bool NarrowCollision::computeContact(const Plane& p1, const Plane& p2, Contact& 
         }
 
         // overlap confirmed
-        contact.position    = (p1.getPosition() + p2.getPosition()) * 0.5_d;
-        contact.normal      = p1.getNormal().getNormalised();
+        contact.position = (p1.getPosition() + p2.getPosition()) * 0.5_d;
+        Vector3D normal  = p1.getNormal().getNormalised();
+        if ((p1.getPosition() - p2.getPosition()).dotProduct(normal) < 0_d)
+            normal = -normal;
+        contact.normal      = normal;
         contact.penetration = 0_d;
         contact.A           = &p1;
         contact.B           = &p2;

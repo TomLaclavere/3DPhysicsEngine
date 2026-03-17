@@ -61,9 +61,6 @@ private:
     Vector3D torque       = Vector3D();
     decimal  mass         = 0_d; // static by default
     Material material;
-    decimal  stiffnessCst   = 0_d;
-    decimal  restitutionCst = 0_d;
-    decimal  frictionCst    = 0_d;
 
     bool         fixed = true;
     unsigned int id;
@@ -98,9 +95,10 @@ public:
     Vector3D           getForce() const;
     Vector3D           getTorque() const;
     decimal            getMass() const;
-    decimal            getStiffnessCst() const;
-    decimal            getRestitutionCst() const;
+    decimal            getYoungCst() const;
     decimal            getFrictionCst() const;
+    decimal            getDampingCst() const;
+    decimal            getRestitutionCst() const;
     Material           getMaterial() const;
     virtual ObjectType getType() const;
     bool               getIsFixed() const;
@@ -118,9 +116,10 @@ public:
     void setForce(const Vector3D& _force);
     void setTorque(const Vector3D& _torque);
     void setMass(const decimal _mass);
-    void setStiffnessCst(decimal k);
-    void setRestitutionCst(decimal e);
+    void setYoungCst(decimal k);
+    void setDampingCst(decimal d);
     void setFrictionCst(decimal mu);
+    void setRestitutionCst(decimal e);
     void setMaterial(const Material& mat);
     void setIsFixed(bool b);
     void setId(unsigned int _id) { id = _id; }

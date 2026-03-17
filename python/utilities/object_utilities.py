@@ -415,7 +415,11 @@ class ObjectPlotting:
         fig.show()
 
     def _compute_axis_ranges(self) -> tuple[list, list, list]:
-        all_pos = np.vstack([m.pos for m in self.motions])
+        all_pos = []
+        for idx, obj in self.object_df.iterrows():
+            if obj["fixed"] == 0:
+                all_pos.append(self.motions[idx].pos)
+        all_pos = np.vstack(all_pos)
 
         x_min, x_max = all_pos[:,0].min(), all_pos[:,0].max()
         y_min, y_max = all_pos[:,1].min(), all_pos[:,1].max()

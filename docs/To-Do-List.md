@@ -18,14 +18,14 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
   - [ ] Modify rebound by contact forces (currently : dead functions)
   - [ ] Add contact forces properties to objects ! 
 - [ ] Add examples :
-  - [ ] Rolling
-  - [ ] Skate pipe
-- [ ] Visualisation / Checking
+  - [x] Rolling
+  - [x] Skate pipe
+- [x] Visualisation / Checking
   - [x] Save objects information in examples
   - [x] Save objects information during main script
   - [x] Save objects properties
   - [x] Write generic plotting scripts (Python) to visualise data
-  - [ ] Improve plotting functions
+  - [x] Improve plotting functions
   - [x] Add object's name for plotting (maybe add a name variable in object...)
 - [x] Solve Python package importation
 

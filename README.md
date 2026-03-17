@@ -66,25 +66,37 @@ cd 3DPhysicsEngine
 
  - Doxygen
 
-#### Installation (Ubuntu example)
+#### Installation 
 
 You can install the essential dependencies using:
 
-```bash
+```bash Ubuntu
 sudo apt update
 sudo apt install -y build-essential cmake git libyaml-cpp-dev gcovr
 ```
 
+```bash Arch Linux
+sudo pacman -S base-devel cmake git yaml-cpp gcovr
+```
+
 For Clang and optional Ninja:
 
-```bash
+```bash Ubuntu
 sudo apt install -y clang ninja-build
+```
+
+```bash Arch Linux
+sudo pacman -S clang ninja llvm
 ```
 
 For documentation:
 
-```bash
+```bash Ubuntu
 sudo apt-get install -y doxygen graphviz
+```
+
+```bash Arch Linux
+sudo pacman -S doxygen graphviz
 ```
 
 ## How to build and run

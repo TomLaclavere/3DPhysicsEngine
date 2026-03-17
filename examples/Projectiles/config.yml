@@ -1,5 +1,7 @@
 # config.yaml
 gravity: 9.81
 timestep: 0.001
-solverIters: 20500
-solver: "Verlet"
+duration: 20.5
+solver: "Euler"
+verbose: true
+save: true

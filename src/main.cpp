@@ -103,7 +103,7 @@ CommandType commandFromString(const std::string& action)
 // ============================================================================
 int main(int argc, char** argv)
 {
-    // Initialize history & completion helpers (wraps linenoise callbacks / loading)
+    // Initialise history & completion helpers (wraps linenoise callbacks / loading)
     initHistoryAndCompletion(historyFilename, completionFilename);
 
     Timer totalTimer;
@@ -123,7 +123,6 @@ int main(int argc, char** argv)
     std::cout << "----------------------------------------\n";
 
     PhysicsWorld world(config);
-    world.initialize();
 
     // Input loop
     while (true)
@@ -210,8 +209,8 @@ int main(int argc, char** argv)
             break;
 
         case CommandType::INIT:
-            world.initialize();
-            std::cout << "World initialized.\n";
+            world.initialise();
+            std::cout << "World initialised.\n";
             success = true;
             break;
 

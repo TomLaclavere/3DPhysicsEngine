@@ -11,6 +11,7 @@
 #include "world/solver.hpp"
 
 #include <algorithm>
+#include <fstream>
 #include <vector>
 
 /**
@@ -24,14 +25,18 @@
 struct PhysicsWorld
 {
 private:
-    Config&              config = Config::get();
-    std::vector<Object*> objects;
+    Config&                                        config = Config::get();
+    std::vector<Object*>                           objects;
+    std::ofstream                                  objectFile;
+    std::vector<std::pair<Object*, std::ofstream>> motionFiles;
 
     bool     isRunning = false;
     Solver   solver;
     decimal  timeStep   = config.getTimeStep();
     decimal  gravityCst = config.getGravity();
     Vector3D gravityAcc = Physics::computeGravityAcc(gravityCst);
+
+    unsigned int nextObjectId = 0;
 
 public:
     // ============================================================================
@@ -40,8 +45,10 @@ public:
     /// @{
     PhysicsWorld() = default;
     explicit PhysicsWorld(Config& _config)
-        : config { _config }
-    {}
+        : config(_config)
+    {
+        (*this).initialise();
+    }
     ~PhysicsWorld() { clearObjects(); };
     /// @}
 
@@ -49,19 +56,20 @@ public:
     /// @name Getters
     // ============================================================================
     /// @{
-    Config&  getConfig() const;
-    bool     getIsRunning() const;
-    decimal  getTimeStep() const;
-    decimal  getGravityCst() const;
-    Vector3D getGravityAcc() const;
-    Solver   getSolver() const;
+    Config&      getConfig() const;
+    bool         getIsRunning() const;
+    decimal      getTimeStep() const;
+    decimal      getGravityCst() const;
+    Vector3D     getGravityAcc() const;
+    Solver       getSolver() const;
+    unsigned int getNextObjectId() const { return nextObjectId; }
     /// @}
 
     // ============================================================================
     /// @name Setters
     // ============================================================================
     /// @{
-    void setSolver(std::string _solver);
+    void setSolver(const std::string& _solver);
     void setTimeStep(decimal step);
     void setGravityCst(decimal g);
     void setGravityAcc(const Vector3D& acc);
@@ -72,8 +80,8 @@ public:
     // ============================================================================
     /// @{
 
-    /// Initialize the physics world: reset objects, time step, and gravity.
-    void initialize();
+    /// Initialise the physics world: reset objects, time step, and gravity.
+    void initialise();
     void start() { isRunning = true; }
     void stop() { isRunning = false; }
     /// Re-initialise PhysicsWorld
@@ -123,6 +131,9 @@ public:
     /// Runge-Kutta 4 integrator for one object.
     Derivative evaluateRK4(const Object& obj, const Derivative& d, decimal dt);
     void       integrateRK4(Object& obj, decimal dt);
+    /// @brief Integrate all objects over one time step without collision resolution.
+    /// Only for testing purposes.
+    void integrateWithoutCollisions();
     /// @brief Integrate all objects over one time step.
     /// Resets accelerations, applies forces, and moves objects using semi-implicit Euler.
     void integrate();
@@ -139,7 +150,10 @@ public:
     void addObject(Object* obj)
     {
         if (obj)
+        {
+            obj->setId(nextObjectId++);
             objects.push_back(obj);
+        }
     }
     void removeObject(Object* obj)
     {
@@ -160,6 +174,8 @@ public:
 
     /// Print the current state of the physics world to stdout.
     void printState() const;
-    void save();
+    void initCSV(const std::string& directory);
+    void saveObjectsCSV();
+    void saveMotionCSV(decimal time);
     /// @}
 };

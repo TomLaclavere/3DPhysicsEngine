@@ -9,8 +9,12 @@
 #pragma once
 #include "collision/contact.hpp"
 #include "cstdint"
+#include "material.hpp"
 #include "mathematics/vector.hpp"
 #include "ostream"
+
+#include <fstream>
+#include <iostream>
 
 enum class ObjectType : std::uint8_t
 {
@@ -48,28 +52,29 @@ inline std::string toString(ObjectType type)
 struct Object
 {
 private:
-    Vector3D position       = Vector3D();
-    Vector3D rotation       = Vector3D();
-    Vector3D size           = Vector3D(1_d, 1_d, 1_d);
-    Vector3D velocity       = Vector3D();
-    Vector3D acceleration   = Vector3D();
-    Vector3D force          = Vector3D();
-    Vector3D torque         = Vector3D();
-    decimal  mass           = 0_d; // static by default
+    Vector3D position     = Vector3D();
+    Vector3D rotation     = Vector3D();
+    Vector3D size         = Vector3D(1_d, 1_d, 1_d);
+    Vector3D velocity     = Vector3D();
+    Vector3D acceleration = Vector3D();
+    Vector3D force        = Vector3D();
+    Vector3D torque       = Vector3D();
+    decimal  mass         = 0_d; // static by default
+    Material material;
     decimal  stiffnessCst   = 0_d;
     decimal  restitutionCst = 0_d;
     decimal  frictionCst    = 0_d;
 
     bool         fixed = true;
     unsigned int id;
+    std::string  name;
 
 public:
     /// @brief Constructions can be done with various levels of details.
     /// Default values are zero vectors for all `Vector3D` properties, except `size` which defaults to
     /// (1,1,1). Mass defaults to 0.0.
-    // ============================================================================
+
     /// @name Constructors / Destructors
-    // ============================================================================
     /// @{
 
     Object() = default;
@@ -83,9 +88,7 @@ public:
     virtual ~Object() = default;
     /// @}
 
-    // ============================================================================
     /// @name Getters
-    // ============================================================================
     /// @{
     Vector3D           getPosition() const;
     Vector3D           getRotation() const;
@@ -98,14 +101,14 @@ public:
     decimal            getStiffnessCst() const;
     decimal            getRestitutionCst() const;
     decimal            getFrictionCst() const;
+    Material           getMaterial() const;
     virtual ObjectType getType() const;
     bool               getIsFixed() const;
     unsigned int       getId() const { return id; }
+    std::string        getName() const { return name; }
     /// @}
 
-    // ============================================================================
     /// @name Setters
-    // ============================================================================
     /// @{
     void setPosition(const Vector3D& _position);
     void setRotation(const Vector3D& _rotation);
@@ -118,14 +121,14 @@ public:
     void setStiffnessCst(decimal k);
     void setRestitutionCst(decimal e);
     void setFrictionCst(decimal mu);
+    void setMaterial(const Material& mat);
     void setIsFixed(bool b);
     void setId(unsigned int _id) { id = _id; }
+    void setName(const std::string& _name) { name = _name; }
 
     /// @}
 
-    // ============================================================================
     /// @name Transformations
-    // ============================================================================
     /// @{
     void addAcceleration(const Vector3D& acc) { acceleration += acc; }
     void applyTranslation(const Vector3D& v_translation) { position += v_translation; }
@@ -142,9 +145,7 @@ public:
     void applyScaling(const Vector3D& v_scaling) { size *= v_scaling; }
     /// @}
 
-    // ============================================================================
     /// @name Physics
-    // ============================================================================
     /// @{
     void checkFixed();
     bool isFixed() const { return fixed; }
@@ -159,9 +160,7 @@ public:
     virtual void integrate(decimal dt);
     /// @}
 
-    // ============================================================================
     /// @name Collision
-    // ============================================================================
     /// @{
 
     /**
@@ -177,6 +176,14 @@ public:
     {
         return false;
     }
+    /// @}
+
+    /// @name Utilities
+    /// @{
+
+    void initMotionCSV(std::ofstream& file);
+    bool saveObjectCSV(std::ofstream& file);
+    bool saveMotionCSV(std::ofstream& file, decimal time);
     /// @}
 };
 

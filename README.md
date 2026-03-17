@@ -22,12 +22,90 @@ Contributions are welcome. Please read CONTRIBUTING.md and CLA.md before submitt
 ---
 
 ## Table of Contents
- - [How to build and run](#how-to-build-and-run)
+ - [Installation](#installation)
+ - [Build and Run](#build-and-run)
  - [Developer scripts](#developer-scripts)
  - [Doxygen Documentation](#doxygen-documentation)
  - [Tech Stack](#tech-stack)
  - [Deliverables](#deliverables)
  - [License](#license)
+
+## Installation
+
+This project relies mainly on basic packages to run easily without installing many external dependencies. Below is a step-by-step guide to get the project running.
+
+### Get the project
+
+Clone this repository using `git`:
+
+```bash
+git clone git@github.com:TomLaclavere/3DPhysicsEngine.git
+cd 3DPhysicsEngine
+```
+
+### Install dependencies
+
+#### Build system
+
+ - CMake >= 3.22
+ - GCC (included in `build-essential`) or Clang
+ - (optional) Ninja
+
+#### External lib
+
+ - yaml-cpp
+
+#### Tests
+
+ - git (for `FetchContent`, used to install `GoogleTest`)
+
+#### Coverage tools
+
+ - gcovr (for GCC)
+ - llvm-cov + llvm-profdata (for Clang)
+
+#### Documentation generation
+
+ - Doxygen
+
+#### Installation 
+
+You can install the essential dependencies using:
+
+```bash
+# Ubuntu
+sudo apt update
+sudo apt install -y build-essential cmake git libyaml-cpp-dev gcovr
+```
+
+```bash
+# Arch Linux
+sudo pacman -Syu --needed base-devel cmake git yaml-cpp gcovr
+```
+
+For Clang and optional Ninja:
+
+```bash
+# Ubuntu
+sudo apt install -y clang ninja-build
+```
+
+```bash
+# Arch Linux
+sudo pacman -S --needed clang ninja llvm
+```
+
+For documentation:
+
+```bash
+# Ubuntu
+sudo apt-get install -y doxygen graphviz
+```
+
+```bash
+# Arch Linux
+sudo pacman -S --needed doxygen graphviz
+```
 
 ## How to build and run
 

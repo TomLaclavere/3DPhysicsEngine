@@ -1,8 +1,6 @@
 #pragma once
 #include "mathematics/common.hpp"
-#include "mathematics/matrix.hpp"
-#include "mathematics/quaternion.hpp"
-#include "mathematics/vector.hpp"
+#include "precision.hpp"
 
 #include <gtest/gtest.h>
 

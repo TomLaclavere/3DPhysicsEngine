@@ -20,7 +20,8 @@ TEST(ConfigTest, DefaultValue)
     Config& config = Config::get();
     EXPECT_DECIMAL_EQ(config.getGravity(), 9.81_d);
     EXPECT_DECIMAL_EQ(config.getTimeStep(), 0.01_d);
-    EXPECT_EQ(config.getMaxIterations(), 10u);
+    EXPECT_DECIMAL_EQ(config.getSimulationDuration(), 10_d);
+    EXPECT_EQ(config.getMaxIterations(), 1000);
     EXPECT_TRUE(config.getVerbose());
 }
 
@@ -30,7 +31,7 @@ TEST(ConfigTest, LoadFromFile)
     std::string yaml1 = R"(
         gravity: 15.2
         timestep: 0.005
-        solverIters: 50
+        duration: 50
         solver: Euler
         verbose: true
     )";
@@ -41,7 +42,8 @@ TEST(ConfigTest, LoadFromFile)
 
     EXPECT_DECIMAL_EQ(config1.getGravity(), 15.2);
     EXPECT_DECIMAL_EQ(config1.getTimeStep(), 0.005);
-    EXPECT_EQ(config1.getMaxIterations(), 50u);
+    EXPECT_DECIMAL_EQ(config1.getSimulationDuration(), 50);
+    EXPECT_EQ(config1.getMaxIterations(), 10000u);
     EXPECT_EQ(config1.getSolver(), "Euler");
     EXPECT_TRUE(config1.getVerbose());
 
@@ -59,7 +61,7 @@ TEST(ConfigTest, LoadFromFile)
     EXPECT_DECIMAL_EQ(config2.getTimeStep(), 0.02_d);
     // Other fields unchanged (should keep previous values)
     EXPECT_DECIMAL_EQ(config2.getGravity(), 15.2_d);
-    EXPECT_EQ(config2.getMaxIterations(), 50u);
+    EXPECT_EQ(config2.getMaxIterations(), 10000u);
 
     std::remove(path2.c_str());
 
@@ -95,7 +97,7 @@ TEST(ConfigTest, OverrideFromCommandLineInvalid)
     // Values unchanged
     EXPECT_DOUBLE_EQ(config.getGravity(), 9.81_d);
     EXPECT_DOUBLE_EQ(config.getTimeStep(), 0.01_d);
-    EXPECT_EQ(config.getMaxIterations(), 10);
+    EXPECT_EQ(config.getMaxIterations(), 1000u);
 
     // Test valid args
     const char* _argv[] = { "program", "--gravity", "1.62", "--solver", "RK4", "--timestep", "0.005" };

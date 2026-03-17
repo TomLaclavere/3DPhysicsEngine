@@ -1,6 +1,7 @@
 #include "utilities/command.hpp"
 
 #include "objects/aabb.hpp"
+#include "objects/object.hpp"
 #include "objects/plane.hpp"
 #include "objects/sphere.hpp"
 
@@ -32,7 +33,7 @@ void printUsage()
         << "World:\n"
         << "  set <dt|g> <value>                   Set timestep/grav acceleration to <value>.\n"
         << "  set obj <id> <property> [...values]  Set property for a given object, identified by its ID "
-           "(see 'list'). Properties can be: pos, vel, acc, rot, mass, fixed. values can "
+           "(see 'list'). Properties can be: pos, size, vel, acc, rot, mass, fixed. values can "
            "be either one value (ex: mass) or three values separated by spaces (ex: position).\n"
         << "  add <sphere|plane|AABB>              Add an object to the world.\n"
         << "  list                                 List all objects in the format <id> <ObjectType> "
@@ -106,11 +107,13 @@ using PropertySetter = std::function<void(Object*, const std::vector<std::string
 
 static const std::unordered_map<std::string, PropertySetter> PROPERTY_SETTERS = {
     { "pos", [](Object* o, const auto& a) { setVector3Property(o, a, &Object::setPosition, "pos"); } },
+    { "size", [](Object* o, const auto& a) { setVector3Property(o, a, &Object::setSize, "size"); } },
     { "vel", [](Object* o, const auto& a) { setVector3Property(o, a, &Object::setVelocity, "vel"); } },
     { "acc", [](Object* o, const auto& a) { setVector3Property(o, a, &Object::setAcceleration, "acc"); } },
     { "rot", [](Object* o, const auto& a) { setVector3Property(o, a, &Object::setRotation, "rot"); } },
     { "mass", [](Object* o, const auto& a) { setScalarProperty(o, a, &Object::setMass, "mass"); } },
     { "fixed", [](Object* o, const auto& a) { setFixedProperty(o, a); } },
+    { "name", [](Object* o, const auto& a) { setNameProperty(o, a); } },
 };
 
 bool handleSetCommand(PhysicsWorld& world, std::deque<std::string>& words)
@@ -157,35 +160,51 @@ bool handleAddCommand(PhysicsWorld& world, std::deque<std::string>& words)
 {
     if (words.empty())
     {
-        std::cout << "Usage: add <sphere|plane|AABB>\n";
+        std::cout << "Usage: add <sphere|plane|aabb> [name]\n";
         return false;
     }
 
     const std::string type = popNext(words);
-    if (type == "sphere")
+
+    // Nom optionnel
+    std::string name;
+
+    if (!words.empty())
+        name = popNext(words);
+
+    // Si aucun nom fourni → nom par défaut
+    if (name.empty())
     {
-        auto sphere = std::make_unique<Sphere>(Vector3D(0, 0, 10), 0.2_d, Vector3D(0, 0, 0), 1.0_d);
-        world.addObject(sphere.release());
-        std::cout << "Added sphere.\n";
-        return true;
-    }
-    if (type == "plane")
-    {
-        auto plane = std::make_unique<Plane>(Vector3D(0, 0, 0), Vector3D(1, 1, 1), 1.0_d, Vector3D(0, 1, 0));
-        world.addObject(plane.release());
-        std::cout << "Added plane.\n";
-        return true;
-    }
-    if (type == "AABB")
-    {
-        auto aabb = std::make_unique<AABB>(Vector3D(0, 0, 5), Vector3D(1, 1, 1), Vector3D(0, 0, 0), 1.0_d);
-        world.addObject(aabb.release());
-        std::cout << "Added AABB.\n";
-        return true;
+        unsigned int id = world.getNextObjectId();
+        name            = "Object_" + std::to_string(id);
     }
 
-    std::cout << "Unknown object type: " << type << "\n";
-    return false;
+    std::unique_ptr<Object> obj;
+
+    if (type == "sphere")
+    {
+        obj = std::make_unique<Sphere>(Vector3D(0, 0, 10), 0.2_d, Vector3D(0, 0, 0), 1.0_d);
+    }
+    else if (type == "plane")
+    {
+        obj = std::make_unique<Plane>(Vector3D(0, 0, 0), Vector3D(1, 1, 1), 1.0_d, Vector3D(0, 0, 1));
+    }
+    else if (type == "aabb")
+    {
+        obj = std::make_unique<AABB>(Vector3D(0, 0, 5), Vector3D(1, 1, 1), Vector3D(0, 0, 0), 1.0_d);
+    }
+    else
+    {
+        std::cout << "Unknown object type: " << type << "\n";
+        return false;
+    }
+
+    obj->setName(name);
+
+    world.addObject(obj.release());
+
+    std::cout << "Added " << type << " (" << name << ")\n";
+    return true;
 }
 
 // ============================================================================
@@ -224,4 +243,14 @@ void setFixedProperty(Object* obj, const std::vector<std::string>& args)
     const std::string& val = args[0];
     const bool         b   = (val == "1" || val == "true" || val == "yes");
     obj->setIsFixed(b);
+}
+void setNameProperty(Object* obj, const std::vector<std::string>& args)
+{
+    if (args.empty())
+    {
+        std::cout << "Usage: set obj <id> name <object_name>\n";
+        return;
+    }
+    const std::string& name = args[0];
+    obj->setName(name);
 }

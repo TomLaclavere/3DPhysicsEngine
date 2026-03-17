@@ -4,17 +4,33 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 ## General Tasks
 
+- [x] Replace maxIteration by simulationDuration in yaml parameters file
+- [ ] Fix problem with double precision in free_fall and projectiles examples
+- [ ] Benchmark
+  - [ ] Compute error on time (t_simulation - t_analytic) vs timestep, to verify expected error from integration methods
+  - [ ] Add time / iteration in benchmark
+  - [ ] Fix problem with precision from the different solvers
 - [ ] Look at tools for CI
   - [ ] ASAN
   - [ ] UBSAN
-- [ ] Look at Static Analysis tools
-  - [ ] clang-tidy
-   - [ ] Correct warnings from clang-tidy
-  - [ ] cppcheck
-- [ ] Fix Rebound during integration
-- [ ] Modify rebound by contact forces (currently : dead functions)
-- [ ] Adjust examples with contact forces
-- [ ] Add examples in unit tests ? 
+- [x] Fix Rebound during integration
+- [ ] Contact Forces
+  - [ ] Implement Material in Object
+  - [ ] Implement Contact forces from Material (in physics) + need to rename and to look for dead functions
+  - [ ] Implement Contact forces in PhysicsWorld
+  - [ ] Compare Contact forces and Restitution collision
+  - [ ] Add way to chose between Contact forces and Restitution
+- [x] Add examples :
+  - [x] Rolling
+  - [x] Skate pipe
+- [x] Visualisation / Checking
+  - [x] Save objects information in examples
+  - [x] Save objects information during main script
+  - [x] Save objects properties
+  - [x] Write generic plotting scripts (Python) to visualise data
+  - [x] Improve plotting functions
+  - [x] Add object's name for plotting (maybe add a name variable in object...)
+- [x] Solve Python package importation
 
 ## Code Quality and Maintenance
 
@@ -51,7 +67,7 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
   - [ ] Real-time parameter modification
   - [ ] State saving/loading
   - [ ] Performance monitoring
-  - [ ] Debug visualization toggles
+  - [ ] Debug visualisation toggles
   - [ ] Event logging system
 
 ### User Interface

@@ -28,10 +28,10 @@ TEST(PhysicsTest, Helpers)
     EXPECT_DOUBLE_EQ(Physics::reducedMass(-2.0_d, 3.0_d), 0_d);
     EXPECT_DOUBLE_EQ(Physics::reducedMass(2.0_d, -3.0_d), 0_d);
 
-    EXPECT_DOUBLE_EQ(Physics::effectiveYoung(2.0_d, 3.0_d), 6.0_d / 5.0_d);
-    EXPECT_DOUBLE_EQ(Physics::effectiveYoung(0_d, 3.0_d), 3.0_d);
-    EXPECT_DOUBLE_EQ(Physics::effectiveYoung(2.0_d, 0_d), 2.0_d);
-    EXPECT_DOUBLE_EQ(Physics::effectiveYoung(0_d, 0_d), 0_d); // Both zero
+    EXPECT_DOUBLE_EQ(Physics::effectiveStiffness(2.0_d, 3.0_d), 6.0_d / 5.0_d);
+    EXPECT_DOUBLE_EQ(Physics::effectiveStiffness(0_d, 3.0_d), 3.0_d);
+    EXPECT_DOUBLE_EQ(Physics::effectiveStiffness(2.0_d, 0_d), 2.0_d);
+    EXPECT_DOUBLE_EQ(Physics::effectiveStiffness(0_d, 0_d), 0_d); // Both zero
 
     EXPECT_DOUBLE_EQ(Physics::dampingRatioFromRestitution(0_d), 1.0_d);
     EXPECT_DOUBLE_EQ(Physics::dampingRatioFromRestitution(1.0_d), 0.0_d);
@@ -68,8 +68,8 @@ TEST(PhysicsTest, SpringForce)
     obj1.setPosition(Vector3D(0_d));
     obj2.setPosition(Vector3D(1_d, 0_d, 0_d));
 
-    obj1.setYoungCst(2_d);
-    obj2.setYoungCst(3_d);
+    obj1.setStiffnessCst(2_d);
+    obj2.setStiffnessCst(3_d);
 
     Contact contact12;
     obj1.computeCollision(obj2, contact12);
@@ -77,14 +77,14 @@ TEST(PhysicsTest, SpringForce)
     Vector3D f = Physics::computeSpringForce(obj1, obj2, contact12);
     EXPECT_VECTOR_EQ(f, Vector3D(-6.0_d / 5.0_d, 0_d, 0_d)); // -(k1*k2/(k1+k2)) * r
 
-    // Edge case - zero Young
+    // Edge case - zero Stiffness
     DummyObject obj3, obj4;
     Contact     contact34;
     obj3.setPosition(Vector3D(0_d));
     obj4.setPosition(Vector3D(1_d, 0_d, 0_d));
     obj3.computeCollision(obj4, contact34);
-    obj3.setYoungCst(0_d);
-    obj4.setYoungCst(3_d);
+    obj3.setStiffnessCst(0_d);
+    obj4.setStiffnessCst(3_d);
     EXPECT_VECTOR_EQ(Physics::computeSpringForce(obj3, obj4, contact34), Vector3D(-3.0_d, 0_d, 0_d));
 }
 
@@ -103,8 +103,8 @@ TEST(PhysicsTest, DampingForce)
     obj1.setMass(1_d);
     obj2.setMass(2_d);
 
-    obj1.setYoungCst(2_d);
-    obj2.setYoungCst(3_d);
+    obj1.setStiffnessCst(2_d);
+    obj2.setStiffnessCst(3_d);
 
     obj1.setDampingCst(0.5_d);
     obj2.setDampingCst(0.5_d);
@@ -135,8 +135,8 @@ TEST(PhysicsTest, DampingForce)
     // obj8.setPosition(Vector3D(0_d)); // r.isNull()
     // obj7.setMass(1_d);
     // obj8.setMass(2_d);
-    // obj7.setYoungCst(2_d);
-    // obj8.setYoungCst(3_d);
+    // obj7.setStiffnessCst(2_d);
+    // obj8.setStiffnessCst(3_d);
     // obj7.setRestitutionCst(0.5_d);
     // obj8.setRestitutionCst(0.5_d);
     // EXPECT_VECTOR_EQ(Physics::computeDampingForce(obj7, obj8), Vector3D(0_d));
@@ -145,8 +145,8 @@ TEST(PhysicsTest, DampingForce)
     // DummyObject obj9(0_d), obj10(1_d); // obj9 has mass 0, so mu=0
     // obj9.setPosition(Vector3D(0_d));
     // obj10.setPosition(Vector3D(1_d, 0_d, 0_d));
-    // obj9.setYoungCst(2_d);
-    // obj10.setYoungCst(3_d);
+    // obj9.setStiffnessCst(2_d);
+    // obj10.setStiffnessCst(3_d);
     // EXPECT_VECTOR_EQ(Physics::computeDampingForce(obj9, obj10), Vector3D(0_d));
 }
 
@@ -183,9 +183,9 @@ TEST(PhysicsTest, FrictionForce)
     obj1.setFrictionCst(0.5_d);
     obj2.setFrictionCst(0.5_d);
 
-    // Set up Young and restitution to get non-zero normal force
-    obj1.setYoungCst(2_d);
-    obj2.setYoungCst(3_d);
+    // Set up Stiffness and restitution to get non-zero normal force
+    obj1.setStiffnessCst(2_d);
+    obj2.setStiffnessCst(3_d);
     obj1.setRestitutionCst(0.5_d);
     obj2.setRestitutionCst(0.5_d);
     obj1.setMass(1_d);
@@ -216,8 +216,8 @@ TEST(PhysicsTest, FrictionForce)
 
     obj3.setFrictionCst(0.5_d);
     obj4.setFrictionCst(0.5_d);
-    obj3.setYoungCst(2_d);
-    obj4.setYoungCst(3_d);
+    obj3.setStiffnessCst(2_d);
+    obj4.setStiffnessCst(3_d);
     obj3.setRestitutionCst(0.5_d);
     obj4.setRestitutionCst(0.5_d);
 
@@ -238,9 +238,9 @@ TEST(PhysicsTest, FrictionForce)
     // DummyObject obj7, obj8;
     // obj7.setPosition(Vector3D(0_d));
     // obj8.setPosition(Vector3D(1_d, 0_d, 0_d));
-    // // Set Young to 0 so normal force will be 0
-    // obj7.setYoungCst(0_d);
-    // obj8.setYoungCst(0_d);
+    // // Set Stiffness to 0 so normal force will be 0
+    // obj7.setStiffnessCst(0_d);
+    // obj8.setStiffnessCst(0_d);
     // // But have tangential velocity
     // obj7.setVelocity(Vector3D(0_d, 1_d, 0_d));
     // obj8.setVelocity(Vector3D(0_d, 0_d, 0_d));
@@ -269,8 +269,8 @@ TEST(PhysicsTest, ContactForce)
     // Set properties to get non-zero forces
     obj1.setMass(1_d);
     obj2.setMass(2_d);
-    obj1.setYoungCst(2_d);
-    obj2.setYoungCst(3_d);
+    obj1.setStiffnessCst(2_d);
+    obj2.setStiffnessCst(3_d);
     obj1.setRestitutionCst(0.5_d);
     obj2.setRestitutionCst(0.5_d);
     obj1.setFrictionCst(0.5_d);

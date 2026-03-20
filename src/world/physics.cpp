@@ -30,19 +30,19 @@ decimal Physics::reducedMass(decimal m1, decimal m2)
 }
 
 /**
- * @brief Compute the effective Young of two springs in series.
+ * @brief Compute the effective Stiffness of two springs in series.
  *
  * Formula:
  * \f[ k = \frac{k_1 k_2}{k_1 + k_2} \f]
  *
- * This harmonic mean ensures that the effective Young is dominated
+ * This harmonic mean ensures that the effective Stiffness is dominated
  * by the softer spring.
  *
- * @param k1 Young constant of the first object.
- * @param k2 Young constant of the second object.
- * @return Effective Young constant.
+ * @param k1 Stiffness constant of the first object.
+ * @param k2 Stiffness constant of the second object.
+ * @return Effective Stiffness constant.
  */
-decimal Physics::effectiveYoung(decimal k1, decimal k2)
+decimal Physics::effectiveStiffness(decimal k1, decimal k2)
 {
     if (commonMaths::approxSmallerOrEqualThan(k1, 0_d))
         return k2;
@@ -114,7 +114,7 @@ Vector3D Physics::computeSpringForce(const Object& obj1, const Object& obj2, Con
     if (r <= 0_d)
         return Vector3D(0_d);
 
-    decimal k = effectiveYoung(obj1.getYoungCst(), obj2.getYoungCst());
+    decimal k = effectiveStiffness(obj1.getStiffnessCst(), obj2.getStiffnessCst());
     if (commonMaths::approxEqual(k, 0_d))
         return Vector3D(0_d);
 
@@ -142,7 +142,7 @@ Vector3D Physics::computeDampingForce(const Object& obj1, const Object& obj2, Co
     if (contact.penetration <= 0_d)
         return Vector3D(0_d);
 
-    decimal k_rel = effectiveYoung(obj1.getYoungCst(), obj2.getYoungCst());
+    decimal k_rel = effectiveStiffness(obj1.getStiffnessCst(), obj2.getStiffnessCst());
     decimal mu    = reducedMass(obj1.getMass(), obj2.getMass());
     if (commonMaths::approxEqual(k_rel, 0_d) || commonMaths::approxEqual(mu, 0_d))
         return Vector3D(0_d);

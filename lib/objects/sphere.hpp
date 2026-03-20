@@ -10,8 +10,8 @@
 #include "object.hpp"
 
 // Forward declaration
-struct AABB;
-struct Plane;
+class AABB;
+class Plane;
 
 /**
  * @class Sphere
@@ -25,13 +25,11 @@ struct Plane;
  *
  * The Sphere supports collision detection with other Spheres, AABBs, and Planes.
  */
-struct Sphere : public Object
+class Sphere : public Object
 {
 private:
 public:
-    // ============================================================================
     /// @name Constructors / Destructors
-    // ============================================================================
     /// @{
     Sphere() = default;
     explicit Sphere(const Vector3D& position)
@@ -59,19 +57,21 @@ public:
     virtual ~Sphere() = default;
     /// @}
 
-    // ============================================================================
     /// @name Getters
-    // ============================================================================
     /// @{
+    decimal    getVolume() const override;
     ObjectType getType() const override;
     Vector3D   getCenter() const;
     decimal    getDiameter() const;
     decimal    getRadius() const;
     /// @}
 
-    // ============================================================================
+    /// @name Setters
+    /// @{
+    void setMaterial(const Material& mat) override;
+    /// @}
+
     /// @name Collision
-    // ============================================================================
     /// @{
 
     /// Check broad collision between two Spheres.

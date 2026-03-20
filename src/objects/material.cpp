@@ -12,7 +12,8 @@ Material& Material::get() const
     return instance;
 }
 std::string Material::getName() const { return name; }
-decimal     Material::getYoung() const { return young; }
+decimal     Material::getDensity() const { return density; }
+decimal     Material::getStiffness() const { return stiffness; }
 decimal     Material::getDamping() const { return damping; }
 decimal     Material::getFriction() const { return friction; }
 decimal     Material::getRestitution() const { return restitution; }
@@ -26,8 +27,10 @@ void Material::loadFromFile(const std::string& path)
 
         if (node["name"])
             setName(node["name"].as<std::string>());
-        if (node["young"])
-            setYoung(node["young"].as<decimal>());
+        if (node["density"])
+            setDensity(node["density"].as<decimal>());
+        if (node["stiffness"])
+            setStiffness(node["stiffness"].as<decimal>());
         if (node["damping"])
             setDamping(node["damping"].as<decimal>());
         if (node["friction"])

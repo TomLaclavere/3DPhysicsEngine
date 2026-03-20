@@ -10,8 +10,8 @@
 #include "object.hpp"
 
 // Forward declaration
-struct Sphere;
-struct AABB;
+class Sphere;
+class AABB;
 
 /**
  * @class Plane
@@ -23,7 +23,7 @@ struct AABB;
  *
  * The Plane supports collision detection with other Planes, Spheres, and AABBs.
  */
-struct Plane : public Object
+class Plane : public Object
 {
 private:
     Vector3D normal = Vector3D(0_d, 0_d, 1_d); // Normal direction (unit vector)
@@ -33,10 +33,9 @@ private:
     decimal  halfWidth  = 1_d;                 // Half extent along u
 
 public:
-    // ============================================================================
     /// @name Constructors / Destructors
-    // ============================================================================
     /// @{
+
     Plane() { updateLocalAxes(); }
 
     explicit Plane(const Vector3D& position)
@@ -97,10 +96,10 @@ public:
     virtual ~Plane() = default;
     /// @}
 
-    // ============================================================================
     /// @name Getters
-    // ============================================================================
     /// @{
+
+    decimal         getVolume() const override;
     ObjectType      getType() const override;
     const Vector3D& getNormal() const;
     const Vector3D& getU() const;
@@ -109,11 +108,10 @@ public:
     decimal         getHalfHeight() const;
     /// @}
 
-    // ============================================================================
     /// @name Setters
-    // ============================================================================
     /// @{
 
+    void setMaterial(const Material& mat) override;
     /// Set normal axis and recompute the two tangent axes.
     void setNormal(const Vector3D& n)
     {
@@ -130,9 +128,7 @@ public:
     }
     /// @}
 
-    // ============================================================================
     /// @name Utilities
-    // ============================================================================
     /// @{
 
     /// Compute local tangent axes based on the normal.
@@ -143,9 +139,7 @@ public:
     bool containsPoint(const Vector3D& point) const;
     /// @}
 
-    // ============================================================================
     /// @name Collision
-    // ============================================================================
     /// @{
 
     /// Check broad collision between two Planes.

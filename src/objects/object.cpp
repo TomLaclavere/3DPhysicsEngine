@@ -16,6 +16,7 @@
 
 #include <fstream>
 #include <iomanip>
+#include <numbers>
 
 //  Constructors / Destructors
 Object::Object(decimal mass)
@@ -66,10 +67,11 @@ Vector3D   Object::getAcceleration() const { return acceleration; }
 Vector3D   Object::getForce() const { return force; }
 Vector3D   Object::getTorque() const { return torque; }
 decimal    Object::getMass() const { return mass; }
-decimal    Object::getYoungCst() const { return material.getYoung(); }
+decimal    Object::getStiffnessCst() const { return material.getStiffness(); }
 decimal    Object::getDampingCst() const { return material.getDamping(); }
 decimal    Object::getFrictionCst() const { return material.getFriction(); }
 decimal    Object::getRestitutionCst() const { return material.getRestitution(); }
+decimal    Object::getVolume() const { return size.getNorm() * std::numbers::pi_v<decimal>; }
 Material   Object::getMaterial() const { return material; }
 ObjectType Object::getType() const { return ObjectType::Generic; }
 bool       Object::getIsFixed() const { return fixed; }
@@ -87,11 +89,10 @@ void Object::setMass(const decimal _mass)
     mass = _mass;
     checkFixed();
 }
-void Object::setYoungCst(decimal k) { material.setYoung(k); }
+void Object::setStiffnessCst(decimal k) { material.setStiffness(k); }
 void Object::setDampingCst(decimal d) { material.setDamping(d); }
 void Object::setFrictionCst(decimal mu) { material.setFriction(mu); }
 void Object::setRestitutionCst(decimal e) { material.setRestitution(e); }
-void Object::setMaterial(const Material& mat) { material = mat; }
 void Object::setIsFixed(bool b)
 {
     fixed = b;
@@ -117,6 +118,7 @@ void Object::integrate(decimal dt)
     velocity += acceleration * dt;
     position += velocity * dt;
 }
+void Object::setMaterial(const Material& mat) { material = mat; }
 
 //  Utilities
 void Object::initMotionCSV(std::ofstream& file)

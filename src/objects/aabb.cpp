@@ -15,10 +15,11 @@
 
 #include "collision/broad_collision.hpp"
 #include "collision/narrow_collision.hpp"
+#include "mathematics/vector.hpp"
+#include "objects/object.hpp"
+#include "precision.hpp"
 
-// ============================================================================
 //  Constructors / Destructors
-// ============================================================================
 AABB::AABB(const Vector3D& position, const Vector3D& size)
     : Object(position, size)
 {}
@@ -39,17 +40,26 @@ AABB::AABB(const Vector3D& position, const Vector3D& rotation, const Vector3D& s
     checkFixed();
 }
 
-// ============================================================================
 //  Getters
-// ============================================================================
 ObjectType AABB::getType() const { return ObjectType::AABB; }
 Vector3D   AABB::getHalfExtents() const { return getSize() * 0.5_d; }
 Vector3D   AABB::getMin() const { return getPosition() - getHalfExtents(); }
 Vector3D   AABB::getMax() const { return getPosition() + getHalfExtents(); }
+decimal    AABB::getVolume() const
+{
+    Vector3D size   = getSize();
+    decimal  volume = size[0] * size[1] * size[2];
+    return volume;
+}
 
-// ============================================================================
+// Setters
+void AABB::setMaterial(const Material& mat)
+{
+    Object::setMaterial(mat);
+    setMass(mat.getDensity() * getVolume());
+}
+
 //  Collision
-// ============================================================================
 /**
  * @brief Checks broad collision between two aabb.
  */

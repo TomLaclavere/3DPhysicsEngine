@@ -10,7 +10,7 @@ namespace Physics {
 /// @{
 
 decimal reducedMass(decimal m1, decimal m2);
-decimal effectiveYoung(decimal k1, decimal k2);
+decimal effectiveStiffness(decimal k1, decimal k2);
 decimal effectiveDamping(decimal d1, decimal d2);
 decimal effectiveFriction(decimal mu1, decimal mu2);
 decimal dampingRatioFromRestitution(decimal e);

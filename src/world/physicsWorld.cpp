@@ -3,6 +3,7 @@
 #include "collision/collision_response.hpp"
 #include "collision/contact.hpp"
 #include "mathematics/math_io.hpp"
+#include "mathematics/vector.hpp"
 #include "objects/object.hpp"
 #include "world/integrateRK4.hpp"
 #include "world/physics.hpp"
@@ -118,39 +119,8 @@ void PhysicsWorld::applyContactForces(Object& obj, Object& other, Contact& conta
     if (!other.getIsFixed())
         other.addAcceleration(-totalForce / other.getMass());
 }
-void PhysicsWorld::computeAcceleration(Object& obj)
+void PhysicsWorld::applyContact()
 {
-    // Reset Acceleration
-    obj.setAcceleration(Vector3D(0_d));
-
-    // Apply gravity
-    applyGravityForce(obj);
-
-    // Contact forces
-    for (auto* other : objects)
-    {
-        if (!other || other == &obj)
-            continue;
-
-        // Broad phase
-        bool isCollidingBroad = obj.checkCollision(*other);
-
-        // Narrow phase
-        if (isCollidingBroad)
-        {
-            Contact contact;
-            bool    isCollidindNarrow = obj.computeCollision(*other, contact);
-            if (isCollidindNarrow)
-                applyContactForces(obj, *other, contact);
-        }
-    }
-}
-void PhysicsWorld::applyForces()
-{
-    // 1. Gravity (applies to all objects)
-    applyGravityForces();
-
-    // 2. Contact forces (between object pairs)
     const size_t n = objects.size();
 
     for (size_t i = 0; i < n; ++i)
@@ -175,6 +145,38 @@ void PhysicsWorld::applyForces()
                 bool    isCollidindNarrow = A->computeCollision(*B, contact);
                 if (isCollidindNarrow)
                     applyContactForces(*A, *B, contact);
+            }
+        }
+    }
+}
+void PhysicsWorld::applyForces()
+{
+    {
+        // 1. Gravity (applies to all objects)
+        applyGravityForces();
+
+        // 2. Contact forces (between object pairs)
+        const size_t n = objects.size();
+        for (size_t i = 0; i < n; ++i)
+        {
+            Object* obj1 = objects[i];
+            if (!obj1)
+                continue;
+
+            for (size_t j = i + 1; j < n; ++j)
+            {
+                Object* obj2 = objects[j];
+                if (!obj2)
+                    continue;
+
+                // Only apply contact forces if objects are colliding
+                if (obj1->checkCollision(*obj2))
+                {
+                    Contact contact;
+                    bool    isCollidindNarrow = obj1->computeCollision(*obj2, contact);
+                    if (isCollidindNarrow)
+                        applyContactForces(*obj1, *obj2, contact);
+                }
             }
         }
     }
@@ -209,6 +211,40 @@ void PhysicsWorld::solveCollisions()
         }
     }
 }
+Vector3D PhysicsWorld::computeAcceleration(Object& obj)
+{
+    Vector3D acc(0_d);
+
+    // Gravity acc
+    acc += gravityAcc;
+
+    // Contact acc
+    if (!config.getSimplifiedCollision())
+    {
+        for (auto& other : objects)
+        {
+            if (&obj == other)
+                continue;
+
+            // Broad + narrow phase
+            bool isCollidingBroad = obj.checkCollision(*other);
+            if (isCollidingBroad)
+            {
+                Contact contact;
+                bool    isCollidingNarrow = obj.computeCollision(*other, contact);
+                if (isCollidingNarrow)
+                {
+                    Vector3D springForce   = Physics::computeSpringForce(obj, *other, contact);
+                    Vector3D dampingForce  = Physics::computeDampingForce(obj, *other, contact);
+                    Vector3D frictionForce = Physics::computeFrictionForce(obj, *other, contact);
+                    acc += (springForce + dampingForce + frictionForce) / obj.getMass();
+                }
+            }
+        }
+    }
+
+    return acc;
+}
 
 // ============================================================================
 //  Integration
@@ -230,8 +266,7 @@ void PhysicsWorld::integrateVerlet(Object& obj, decimal dt)
     obj.setPosition(nextPos);
 
     // acceleration from new position
-    computeAcceleration(obj);
-    Vector3D nextAcc = obj.getAcceleration();
+    Vector3D nextAcc = computeAcceleration(obj);
 
     // velocity
     Vector3D nextVel = obj.getVelocity() + (currentAcc + nextAcc) * (0.5_d * dt);
@@ -245,7 +280,7 @@ Derivative PhysicsWorld::evaluateRK4(const Object& obj, const Derivative& d, dec
     tmp.setVelocity(obj.getVelocity() + d.derivativeV * dt);
 
     // Recompute acceleration for the intermediate state
-    computeAcceleration(tmp);
+    tmp.setAcceleration(computeAcceleration(tmp));
 
     Derivative out;
     out.derivativeX = tmp.getVelocity();
@@ -375,6 +410,16 @@ void PhysicsWorld::integrate()
     // Compute gravity forces
     applyGravityForces();
 
+    // Compute contact
+    if (config.getSimplifiedCollision())
+    {
+        solveCollisions(); // impulsion
+    }
+    else
+    {
+        applyContact(); // forces
+    }
+
     // Integrate motion
     for (auto* obj : objects)
     {
@@ -397,11 +442,7 @@ void PhysicsWorld::integrate()
             break;
         }
     }
-
-    // Collision resolution
-    solveCollisions();
 }
-
 void PhysicsWorld::run()
 {
     const decimal timeStep = config.getTimeStep();

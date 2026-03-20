@@ -3,23 +3,28 @@
 #include <stdexcept>
 #include <string>
 
-struct Material
+class Material
 {
 private:
-    std::string name;
-    decimal     density;
-    decimal     stiffness;
-    decimal     damping;
-    decimal     friction;
+    std::string name        = "default";
+    decimal     density     = 1000_d;
+    decimal     stiffness   = 0_d;
+    decimal     damping     = 0_d;
+    decimal     friction    = 0_d;
     decimal     restitution = 0.5_d; // For simplified collision
 
 public:
     /// @name Constructors
     /// @{
 
-    Material()                           = default;
-    Material(const Material&)            = default;
-    Material& operator=(const Material&) = default;
+    Material()                               = default;
+    Material(const Material&)                = default;
+    Material& operator=(const Material&)     = default;
+    Material(Material&&) noexcept            = default;
+    Material& operator=(Material&&) noexcept = default;
+
+    explicit Material(const std::string& pathfile) { loadFromFile(pathfile); }
+
     Material(std::string name, decimal density, decimal stiffness, decimal damping, decimal friction,
              decimal restitution)
         : name(std::move(name))

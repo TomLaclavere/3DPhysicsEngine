@@ -4,6 +4,7 @@
  *
  */
 #pragma once
+#include "mathematics/vector.hpp"
 #include "objects/object.hpp"
 #include "world/config.hpp"
 #include "world/integrateRK4.hpp"
@@ -111,12 +112,14 @@ public:
     void applyFrictionForces(Object& obj, Object& other, Contact& contact);
     /// Apply contact forces (spring + damping + friction) between two objects.
     void applyContactForces(Object& obj, Object& other, Contact& contact);
-    /// Compute and apply all forces for the curent physics step on one Object.
-    void computeAcceleration(Object& obj);
-    /// Compute and apply all forces for the current physics step.
+    /// Compute and apply contact forces for the current physics step.
+    void applyContact();
+    /// Apply all forces to all objects.
     void applyForces();
     /// Solve collisions between objects.
     void solveCollisions();
+    /// Compute acceleration from forces.
+    Vector3D computeAcceleration(Object& obj);
     /// @}
 
     // ============================================================================

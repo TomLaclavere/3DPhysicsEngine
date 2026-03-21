@@ -15,9 +15,9 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
   - [ ] UBSAN
 - [x] Fix Rebound during integration
 - [ ] Contact Forces
-  - [ ] Implement Material in Object
-  - [ ] Implement Contact forces from Material (in physics) + need to rename and to look for dead functions
-  - [ ] Implement Contact forces in PhysicsWorld
+  - [x] Implement Material in Object
+  - [x] Implement Contact forces from Material (in physics) + need to rename and to look for dead functions
+  - [x] Implement Contact forces in PhysicsWorld
   - [ ] Compare Contact forces and Restitution collision
   - [ ] Add way to chose between Contact forces and Restitution
 - [x] Add examples :

@@ -80,17 +80,17 @@
 -----------------------------------------------------------------------------------------------------------
 
 ## Phase 4: Collisions
-- [ ] **Collision Detection :**
-  - [ ] Implement simple collision model
-  - [ ] **Broad-Phase :** BVH (large N) | Uniform Grid (Small N) | Sweep-and-Prune (medium N) -> researches needed
-  - [ ] **Narrow Phase :**
-    - [ ] Sphere - Plan
-    - [ ] Sphere - Sphere
-    - [ ] AABB - AABB
-- [ ] **Collision Response :**
-  - [ ] **Impulse resolution**
-  - [ ] **Restitution coefficient** (bounciness)
-  - [ ] **Basic friction**
+- [x] **Collision Detection :**
+  - [x] Implement simple collision model
+  - [x] **Broad-Phase :** BVH (large N) | Uniform Grid (Small N) | Sweep-and-Prune (medium N) -> researches needed
+  - [x] **Narrow Phase :**
+    - [x] Sphere - Plan
+    - [x] Sphere - Sphere
+    - [x] AABB - AABB
+- [x] **Collision Response :**
+  - [x] **Impulse resolution**
+  - [x] **Restitution coefficient** (bounciness)
+  - [x] **Basic friction**
 - [ ] **Validation & Release :**
   - [ ] **Standard testing :** reference scenes, physical validity, ...
   - [ ] **Check Energy/momentum conservation**

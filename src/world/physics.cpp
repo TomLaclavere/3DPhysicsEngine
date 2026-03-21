@@ -119,8 +119,8 @@ Vector3D Physics::computeSpringForce(const Object& obj1, const Object& obj2, Con
         return Vector3D(0_d);
 
     Vector3D n = contact.normal;
-    if ((obj1.getPosition() - obj2.getPosition()).dotProduct(n) < 0_d)
-        n = -n;
+    // if ((obj1.getPosition() - obj2.getPosition()).dotProduct(n) < 0_d)
+    //     n = -n;
 
     return k * r * n;
 }

@@ -106,14 +106,14 @@ void PhysicsWorld::applyFrictionForces(Object& obj, Object& other, Contact& cont
 }
 void PhysicsWorld::applyContactForces(Object& obj, Object& other, Contact& contact)
 {
-    if (obj.getIsFixed() && other.getIsFixed())
+    if (obj.getIsFixed())
         return;
 
     Vector3D springForce   = Physics::computeSpringForce(obj, other, contact);
     Vector3D dampingForce  = Physics::computeDampingForce(obj, other, contact);
     Vector3D frictionForce = Physics::computeFrictionForce(obj, other, contact);
     Vector3D totalForce    = springForce + dampingForce + frictionForce;
-
+    std::cout << "Total contact acc : " << totalForce / obj.getMass() << "\n";
     if (!obj.getIsFixed())
         obj.addAcceleration(totalForce / obj.getMass());
     if (!other.getIsFixed())
@@ -219,7 +219,6 @@ Vector3D PhysicsWorld::computeAcceleration(Object& obj)
     acc += gravityAcc;
 
     // Contact acc
-    if (!config.getSimplifiedCollision())
     {
         for (auto& other : objects)
         {
@@ -410,16 +409,6 @@ void PhysicsWorld::integrate()
     // Compute gravity forces
     applyGravityForces();
 
-    // Compute contact
-    if (config.getSimplifiedCollision())
-    {
-        solveCollisions(); // impulsion
-    }
-    else
-    {
-        applyContact(); // forces
-    }
-
     // Integrate motion
     for (auto* obj : objects)
     {
@@ -441,6 +430,8 @@ void PhysicsWorld::integrate()
             std::cout << "Please use one of the following solver : Euler, Verlet, RK4.\n";
             break;
         }
+
+        solveCollisions();
     }
 }
 void PhysicsWorld::run()

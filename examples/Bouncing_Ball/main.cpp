@@ -8,6 +8,7 @@
 #include "mathematics/math_io.hpp"
 #include "mathematics/vector.hpp"
 #include "objects/aabb.hpp"
+#include "objects/object.hpp"
 #include "objects/plane.hpp"
 #include "objects/sphere.hpp"
 #include "precision.hpp"
@@ -48,13 +49,24 @@ int main(int argc, char** argv)
     Timer        initTimer;
     PhysicsWorld world(config);
     auto*        ground = new Plane(Vector3D(0_d), Vector3D(40_d, 40_d, 0_d), Vector3D(0_d, 0_d, 1_d));
-    auto*        sphere = new Sphere(Vector3D(0_d, 0_d, 20), 5_d, Vector3D(0_d, 0_d, -1_d), 1_d);
+    auto*        wood   = new Sphere(Vector3D(6_d, 0_d, 20), 5_d, Vector3D(0_d, 0_d, -1_d), 1_d);
+    auto*        steel  = new Sphere(Vector3D(0_d, 0_d, 20), 5_d, Vector3D(0_d, 0_d, -1_d), 1_d);
+    auto*        rubber = new Sphere(Vector3D(-6_d, 0_d, 20), 5_d, Vector3D(0_d, 0_d, -1_d), 1_d);
 
-    sphere->setIsFixed(false);
-    sphere->setName("Bouncing Ball");
+    wood->setIsFixed(false);
+    wood->setMaterial(Material("data/materials/wood.yaml"));
+    wood->setName("Wooden Ball");
+    steel->setIsFixed(false);
+    steel->setMaterial(Material("data/materials/steel.yaml"));
+    steel->setName("Steel Ball");
+    rubber->setIsFixed(false);
+    rubber->setMaterial(Material("data/materials/rubber.yaml"));
+    rubber->setName("Rubber Ball");
     ground->setIsFixed(true);
     ground->setName("Ground");
-    world.addObject(sphere);
+    world.addObject(wood);
+    world.addObject(steel);
+    world.addObject(rubber);
     world.addObject(ground);
     world.start();
 

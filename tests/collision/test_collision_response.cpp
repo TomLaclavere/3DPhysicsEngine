@@ -48,8 +48,8 @@ TEST(CollisionResponseTest, ReturnCases)
     B.setPosition(Vector3D(-1_d, 0_d, 0_d));
     B.setSize(Vector3D(2_d));
 
-    Vector3D velA = Vector3D(-1_d, 0_d, 0_d);
-    Vector3D velB = Vector3D(1_d, 0_d, 0_d);
+    Vector3D velA = Vector3D(1_d, 0_d, 0_d);
+    Vector3D velB = Vector3D(-1_d, 0_d, 0_d);
     A.setVelocity(velA);
     B.setVelocity(velB);
 
@@ -96,12 +96,11 @@ TEST(CollisionResponseTest, SphereSpherePenetrationResponse)
 TEST(CollisionResponseTest, SphereSphereElasticCollision)
 {
     // Along X axis
-    Sphere   A(Vector3D(-1_d, 0_d, 0_d), 2_d);
-    Sphere   B(Vector3D(1_d, 0_d, 0_d), 2_d);
-    Material mat;
-    mat.setRestitution(1_d);
-    A.setMaterial(mat);
-    B.setMaterial(mat);
+    Sphere A(Vector3D(-1_d, 0_d, 0_d), 2_d);
+    Sphere B(Vector3D(1_d, 0_d, 0_d), 2_d);
+
+    A.setRestitutionCst(1_d);
+    B.setRestitutionCst(1_d);
 
     A.setMass(1_d);
     B.setMass(1_d);
@@ -124,8 +123,9 @@ TEST(CollisionResponseTest, SphereSphereElasticCollision)
     Contact contactCD;
     EXPECT_TRUE(sphereC.computeCollision(sphereD, contactCD));
 
-    sphereC.setMaterial(mat);
-    sphereD.setMaterial(mat);
+    sphereC.setRestitutionCst(1_d);
+    sphereD.setRestitutionCst(1_d);
+
     reboundCollision(sphereC, sphereD, contactCD);
 
     EXPECT_DECIMAL_EQ(0_d, sphereC.getVelocity().getY());
@@ -138,8 +138,9 @@ TEST(CollisionResponseTest, SphereSphereElasticCollision)
     Contact contact12;
     EXPECT_TRUE(sphere1.computeCollision(sphere2, contact12));
 
-    sphere1.setMaterial(mat);
-    sphere2.setMaterial(mat);
+    sphere1.setRestitutionCst(1_d);
+    sphere2.setRestitutionCst(1_d);
+
     reboundCollision(sphere1, sphere2, contact12);
 
     EXPECT_VECTOR_EQ(Vector3D(-1_d, -1_d, 1_d), sphere1.getVelocity());
@@ -149,13 +150,11 @@ TEST(CollisionResponseTest, SphereSphereElasticCollision)
 TEST(CollisionResponseTest, SphereSphereInelasticCollision)
 {
     // Along X axis
-    Sphere   A(Vector3D(-1_d, 0_d, 0_d), 2_d);
-    Sphere   B(Vector3D(1_d, 0_d, 0_d), 2_d);
-    Material mat;
-    mat.setRestitution(0.5_d);
+    Sphere A(Vector3D(-1_d, 0_d, 0_d), 2_d);
+    Sphere B(Vector3D(1_d, 0_d, 0_d), 2_d);
 
-    A.setMaterial(mat);
-    B.setMaterial(mat);
+    A.setRestitutionCst(0.5_d);
+    B.setRestitutionCst(0.5_d);
 
     A.setMass(1_d);
     B.setMass(1_d);
@@ -175,12 +174,11 @@ TEST(CollisionResponseTest, SphereSphereInelasticCollision)
 TEST(CollisionResponseTest, SphereSphereSymmetry)
 {
     // Collision AB
-    Sphere   A(Vector3D(-1_d, 0_d, 0_d), 2_d);
-    Sphere   B(Vector3D(1_d, 0_d, 0_d), 2_d);
-    Material mat;
-    mat.setRestitution(1_d);
-    A.setMaterial(mat);
-    B.setMaterial(mat);
+    Sphere A(Vector3D(-1_d, 0_d, 0_d), 2_d);
+    Sphere B(Vector3D(1_d, 0_d, 0_d), 2_d);
+
+    A.setRestitutionCst(1_d);
+    B.setRestitutionCst(1_d);
 
     A.setMass(1_d);
     B.setMass(1_d);
@@ -212,12 +210,11 @@ TEST(CollisionResponseTest, SphereSphereSymmetry)
 // Plane vs Plane
 TEST(CollisionResponseTest, PlanePlaneCollision)
 {
-    Plane    planeA(Vector3D(0_d, 0_d, 0_d), Vector3D(1_d, 2_d, 0_d), Vector3D(0_d, 0_d, -1_d));
-    Plane    planeB(Vector3D(0_d, 0_d, 0_d), Vector3D(1_d, 2_d, 0_d), Vector3D(0_d, 0_d, 1_d));
-    Material mat;
-    mat.setRestitution(1_d);
-    planeA.setMaterial(mat);
-    planeB.setMaterial(mat);
+    Plane planeA(Vector3D(0_d, 0_d, 0_d), Vector3D(1_d, 2_d, 0_d), Vector3D(0_d, 0_d, -1_d));
+    Plane planeB(Vector3D(0_d, 0_d, 0_d), Vector3D(1_d, 2_d, 0_d), Vector3D(0_d, 0_d, 1_d));
+
+    planeA.setRestitutionCst(1_d);
+    planeB.setRestitutionCst(1_d);
 
     planeA.setMass(1_d);
     planeB.setMass(1_d);
@@ -237,12 +234,11 @@ TEST(CollisionResponseTest, PlanePlaneCollision)
 // AABB vs AABB
 TEST(CollisionResponseTest, AABBAABBCollision)
 {
-    AABB     boxA(Vector3D(-1_d, -1_d, -1_d), Vector3D(1_d, 1_d, 1_d));
-    AABB     boxB(Vector3D(0.5_d, 0.5_d, 0.5_d), Vector3D(2_d, 2_d, 2_d));
-    Material mat;
-    mat.setRestitution(1_d);
-    boxA.setMaterial(mat);
-    boxB.setMaterial(mat);
+    AABB boxA(Vector3D(-1_d, -1_d, -1_d), Vector3D(1_d, 1_d, 1_d));
+    AABB boxB(Vector3D(0.5_d, 0.5_d, 0.5_d), Vector3D(2_d, 2_d, 2_d));
+
+    boxA.setRestitutionCst(1_d);
+    boxB.setRestitutionCst(1_d);
 
     boxA.setMass(1_d);
     boxB.setMass(1_d);
@@ -265,12 +261,11 @@ TEST(CollisionResponseTest, AABBAABBCollision)
 
 TEST(CollisionResponseTest, SpherePlaneCollision)
 {
-    Sphere   sphere(Vector3D(0_d, 0_d, 2_d), 4_d);
-    Plane    plane(Vector3D(0_d, 0_d, 0_d), Vector3D(1_d, 1_d, 0_d), Vector3D(0_d, 0_d, 1_d));
-    Material mat;
-    mat.setRestitution(1_d);
-    sphere.setMaterial(mat);
-    plane.setMaterial(mat);
+    Sphere sphere(Vector3D(0_d, 0_d, 2_d), 4_d);
+    Plane  plane(Vector3D(0_d, 0_d, 0_d), Vector3D(1_d, 1_d, 0_d), Vector3D(0_d, 0_d, 1_d));
+
+    sphere.setRestitutionCst(1_d);
+    plane.setRestitutionCst(1_d);
 
     sphere.setMass(2_d);
     plane.setMass(0_d); // immovable
@@ -289,12 +284,11 @@ TEST(CollisionResponseTest, SpherePlaneCollision)
 // Sphere vs AABB
 TEST(CollisionResponseTest, SphereAABBCollision)
 {
-    Sphere   sphere(Vector3D(0_d, 0_d, 0_d), 1_d);
-    AABB     box(Vector3D(0_d, -0.5_d, 0_d), Vector3D(0.5_d));
-    Material mat;
-    mat.setRestitution(1_d);
-    sphere.setMaterial(mat);
-    box.setMaterial(mat);
+    Sphere sphere(Vector3D(0_d, 0_d, 0_d), 1_d);
+    AABB   box(Vector3D(0_d, -0.5_d, 0_d), Vector3D(0.5_d));
+
+    sphere.setRestitutionCst(1_d);
+    box.setRestitutionCst(1_d);
 
     sphere.setMass(1_d);
     box.setMass(1_d);
@@ -314,12 +308,11 @@ TEST(CollisionResponseTest, SphereAABBCollision)
 // AABB vs Plane
 TEST(CollisionResponseTest, AABBPlaneCollision)
 {
-    AABB     box(Vector3D(-0_d, -0_d, 1_d), Vector3D(2_d));
-    Plane    plane(Vector3D(0_d, 0_d, 0_d), Vector3D(1_d, 0_d, 0_d), Vector3D(0_d, 0_d, 1_d));
-    Material mat;
-    mat.setRestitution(1_d);
-    box.setMaterial(mat);
-    plane.setMaterial(mat);
+    AABB  box(Vector3D(-0_d, -0_d, 1_d), Vector3D(2_d));
+    Plane plane(Vector3D(0_d, 0_d, 0_d), Vector3D(1_d, 0_d, 0_d), Vector3D(0_d, 0_d, 1_d));
+
+    box.setRestitutionCst(1_d);
+    plane.setRestitutionCst(1_d);
 
     box.setMass(1_d);
     plane.setMass(0_d); // immovable

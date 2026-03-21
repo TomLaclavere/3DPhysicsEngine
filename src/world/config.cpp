@@ -21,7 +21,6 @@ std::size_t Config::getMaxIterations() const { return maxIterations; }
 std::string Config::getSolver() const { return solver; }
 bool        Config::getVerbose() const { return verbose; }
 bool        Config::getSave() const { return save; }
-bool        Config::getSimplifiedCollision() const { return useSimplifiedCollision; }
 
 //  Loading Methods
 void Config::loadFromFile(const std::string& path)

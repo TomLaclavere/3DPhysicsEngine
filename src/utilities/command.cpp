@@ -166,13 +166,13 @@ bool handleAddCommand(PhysicsWorld& world, std::deque<std::string>& words)
 
     const std::string type = popNext(words);
 
-    // Nom optionnel
+    // Name
     std::string name;
 
     if (!words.empty())
         name = popNext(words);
 
-    // Si aucun nom fourni → nom par défaut
+    // If no name, default one
     if (name.empty())
     {
         unsigned int id = world.getNextObjectId();
@@ -183,15 +183,15 @@ bool handleAddCommand(PhysicsWorld& world, std::deque<std::string>& words)
 
     if (type == "sphere")
     {
-        obj = std::make_unique<Sphere>(Vector3D(0, 0, 10), 0.2_d, Vector3D(0, 0, 0), 1.0_d);
+        obj = std::make_unique<Sphere>(Vector3D(0_d, 0_d, 10_d), 2_d, Vector3D(0_d), 1_d);
     }
     else if (type == "plane")
     {
-        obj = std::make_unique<Plane>(Vector3D(0, 0, 0), Vector3D(1, 1, 1), 1.0_d, Vector3D(0, 0, 1));
+        obj = std::make_unique<Plane>(Vector3D(0_d), Vector3D(10_d), 1_d, Vector3D(0_d, 0_d, 1_d));
     }
     else if (type == "aabb")
     {
-        obj = std::make_unique<AABB>(Vector3D(0, 0, 5), Vector3D(1, 1, 1), Vector3D(0, 0, 0), 1.0_d);
+        obj = std::make_unique<AABB>(Vector3D(0_d, 0_d, 5_d), Vector3D(1_d), Vector3D(0_d), 1_d);
     }
     else
     {

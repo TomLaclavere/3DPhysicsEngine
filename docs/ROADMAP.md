@@ -91,6 +91,10 @@
   - [x] **Impulse resolution**
   - [x] **Restitution coefficient** (bounciness)
   - [x] **Basic friction**
+- [ ] **Contact Forces :** implement collisions with contact forces instead of instantaneous response
+  - [ ] **Write Forces**
+  - [ ] Add possibility to choose between instantaneous response and contact forces
+  - [ ] **Implement Forces :** implement forces in simulation
 - [ ] **Validation & Release :**
   - [ ] **Standard testing :** reference scenes, physical validity, ...
   - [ ] **Check Energy/momentum conservation**
@@ -103,7 +107,63 @@
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
 
-## Phase 5: Rotations & Angular Dynamics
+## Phase 5: First Optimisation (CPU & Memory)
+IMPORTANT: this is only brainstormed ideas, needs to be reorganised in the future !
+- [ ] **Brainstorm on ROADMAP**
+- [ ] **Brainstorm on To-Do-List**
+- [ ] **CPU Optimisation**
+  - [ ] **Profiler :** Advisor, Maqao, IntelAdvisor, VTune
+  - [ ] **Vectorisation "home-made"**
+  - [ ] **External tools :** MKL, TBB, SYCL, OpenMP, Eve, ...
+- [ ] **Memory Optimisation :**
+  - [ ] **Profiler :** Malt    
+  - [ ] **Structure of Arrays**
+  - [ ] **Optimisation :** caches, data splitting
+- [ ] **Benchmarks :**
+  - [ ] **Scalability :** with the numbers of objects N
+  - [ ] **Comparison :** naive, vectorised, parallel, ...
+  - [ ] **External Comparison :** **Comparison with Chrono/ReactPhysics3D* ?*
+- [ ] **Validation & Release :**
+  - [ ] **Standard testing :** reference scenes, physical validity, ...
+  - [ ] **Documentation :**
+    - [ ] *Doxygen & GitHub Pages*
+    - [ ] *Performance report*
+    - [ ] *Installation & Usage guides*
+    - [ ] *GitHub notes*
+
+-----------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+
+## Phase 6: Second Optimisation (GPU)   
+IMPORTANT: this is only brainstormed ideas, needs to be reorganised in the future !
+- [ ] **Brainstorm on ROADMAP**
+- [ ] **Brainstorm on To-Do-List**
+- [ ] **GPU Implementation** 
+  - [ ] **Software choice :** CUDA, SYCL, OpenCL, ...
+  - [ ] **GPU Implementation**
+- [ ] **Optimisation :**
+  - [ ] **Profiling :** NSight, ...
+  - [ ] **Data Transfer**
+  - [ ] **Tuning :** threads, block sizes, memory, ...
+- [ ] **Hybrid CPU - GPU :** *Star PU*
+- [ ] **Benchmarks :**
+  - [ ] **CPU - GPU consistency**
+  - [ ] **CPU vs GPU**
+  - [ ] **High testing**
+- [ ] **Validation & Release :**
+ - [ ] **Standard testing :** reference scenes, physical validity, ...
+ - [ ] **Documentation :**
+   - [ ] *Doxygen & GitHub Pages*
+   - [ ] *Performance report*
+   - [ ] *Installation & Usage guides*
+   - [ ] *GitHub notes*
+
+-----------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+
+## Phase 7: Rotations & Angular Dynamics
 - [ ] **Brainstorm on ROADMAP**
 - [ ] **Brainstorm on To-Do-List**
 - [ ] **Extend RigidBody :**
@@ -128,7 +188,7 @@
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
 
-## Phase 5.5: Advanced Physics features (optional)
+## Phase 7.5: Advanced Physics features (optional)
 IMPORTANT: this is only brainstormed ideas, needs to be reorganised in the future !
 - [ ] **Brainstorm on ROADMAP**
 - [ ] **Brainstorm on To-Do-List**
@@ -158,7 +218,7 @@ IMPORTANT: this is only brainstormed ideas, needs to be reorganised in the futur
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
 
-## Phase 6: Visualization
+## Phase 8: Advanced Visualization + Graphical Interface
 IMPORTANT: this is only brainstormed ideas, needs to be reorganised in the future !
 - [ ] **Brainstorm on ROADMAP**
 - [ ] **Brainstorm on To-Do-List**
@@ -172,6 +232,10 @@ IMPORTANT: this is only brainstormed ideas, needs to be reorganised in the futur
   - [ ] **Basic Shaders**
   - [ ] **Physics-Rendering Synchronisation :** synchronisation between simulation FPS and rendering FPS
 - [ ] **Camera Control :** WASD/Mouse
+- [ ] **Graphical Interface :** 
+  - [ ] **Add objects**
+  - [ ] **Modify objects**
+  - [ ] **Modify simulation**
 - [ ] **Debug Tools :**
   - [ ] **Overlay Data :** FPS, objects state, ...
   - [ ] **Runtime Parameters**
@@ -183,62 +247,6 @@ IMPORTANT: this is only brainstormed ideas, needs to be reorganised in the futur
     - [ ] *Performance report*
     - [ ] *Installation & Usage guides*
     - [ ] *GitHub notes*
-
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
-
-## Phase 7: First Optimisation (CPU & Memory)
-IMPORTANT: this is only brainstormed ideas, needs to be reorganised in the future !
-- [ ] **Brainstorm on ROADMAP**
-- [ ] **Brainstorm on To-Do-List**
-- [ ] **CPU Optimisation**
-  - [ ] **Profiler :** Advisor, Maqao, IntelAdvisor, VTune
-  - [ ] **Vectorisation "home-made"**
-  - [ ] **External tools :** MKL, TBB, SYCL, OpenMP, Eve, ...
-- [ ] **Memory Optimisation :**
-  - [ ] **Profiler :** Malt    
-  - [ ] **Structure of Arrays**
-  - [ ] **Optimisation :** caches, data splitting
-- [ ] **Benchmarks :**
-  - [ ] **Scalability :** with the numbers of objects N
-  - [ ] **Comparison :** naive, vectorised, parallel, ...
-  - [ ] **External Comparison :** **Comparison with Chrono/ReactPhysics3D* ?*
-- [ ] **Validation & Release :**
-  - [ ] **Standard testing :** reference scenes, physical validity, ...
-  - [ ] **Documentation :**
-    - [ ] *Doxygen & GitHub Pages*
-    - [ ] *Performance report*
-    - [ ] *Installation & Usage guides*
-    - [ ] *GitHub notes*
-
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
-
-## Phase 8: Second Optimisation (GPU)   
-IMPORTANT: this is only brainstormed ideas, needs to be reorganised in the future !
-- [ ] **Brainstorm on ROADMAP**
-- [ ] **Brainstorm on To-Do-List**
-- [ ] **GPU Implementation** 
-  - [ ] **Software choice :** CUDA, SYCL, OpenCL, ...
-  - [ ] **GPU Implementation**
-- [ ] **Optimisation :**
-  - [ ] **Profiling :** NSight, ...
-  - [ ] **Data Transfer**
-  - [ ] **Tuning :** threads, block sizes, memory, ...
-- [ ] **Hybrid CPU - GPU :** *Star PU*
-- [ ] **Benchmarks :**
-  - [ ] **CPU - GPU consistency**
-  - [ ] **CPU vs GPU**
-  - [ ] **High testing**
-- [ ] **Validation & Release :**
- - [ ] **Standard testing :** reference scenes, physical validity, ...
- - [ ] **Documentation :**
-   - [ ] *Doxygen & GitHub Pages*
-   - [ ] *Performance report*
-   - [ ] *Installation & Usage guides*
-   - [ ] *GitHub notes*
 
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------

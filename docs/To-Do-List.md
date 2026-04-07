@@ -6,31 +6,12 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 - [x] Replace maxIteration by simulationDuration in yaml parameters file
 - [ ] Fix problem with double precision in free_fall and projectiles examples
-- [ ] Benchmark
-  - [ ] Compute error on time (t_simulation - t_analytic) vs timestep, to verify expected error from integration methods
-  - [ ] Add time / iteration in benchmark
-  - [ ] Fix problem with precision from the different solvers
 - [ ] Look at tools for CI
   - [ ] ASAN
   - [ ] UBSAN
-- [x] Fix Rebound during integration
 - [ ] Contact Forces
-  - [x] Implement Material in Object
-  - [x] Implement Contact forces from Material (in physics) + need to rename and to look for dead functions
-  - [x] Implement Contact forces in PhysicsWorld
-  - [ ] Compare Contact forces and Restitution collision
-  - [ ] Add way to chose between Contact forces and Restitution
-- [x] Add examples :
-  - [x] Rolling
-  - [x] Skate pipe
-- [x] Visualisation / Checking
-  - [x] Save objects information in examples
-  - [x] Save objects information during main script
-  - [x] Save objects properties
-  - [x] Write generic plotting scripts (Python) to visualise data
-  - [x] Improve plotting functions
-  - [x] Add object's name for plotting (maybe add a name variable in object...)
-- [x] Solve Python package importation
+  - [ ] Implement contact forces in simulation
+  - [ ] Add parameter to choose between instantaneous response and continuous response
 
 ## Code Quality and Maintenance
 
@@ -117,6 +98,18 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 - [x] linenoise
   - [x] Clear the oldest lines in the history when the history file reaches a given size on quitting.
   - [x] Add autocompletion and persist new accepted commands to a file when they are entered 
+
+- [x] Add examples :
+  - [x] Rolling
+  - [x] Skate pipe
+- [x] Visualisation / Checking
+  - [x] Save objects information in examples
+  - [x] Save objects information during main script
+  - [x] Save objects properties
+  - [x] Write generic plotting scripts (Python) to visualise data
+  - [x] Improve plotting functions
+  - [x] Add object's name for plotting (maybe add a name variable in object...)
+- [x] Solve Python package importation
 
 ## Code Quality and Maintenance
 

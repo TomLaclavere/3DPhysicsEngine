@@ -1,4 +1,3 @@
-start
 run
 q
 add plane ground
@@ -98,3 +97,4 @@ set obj 1 fixed 1
 set obj 0 vel 0 0 -10
 start
 run
+q

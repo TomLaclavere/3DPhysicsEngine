@@ -43,3 +43,9 @@ start
 add sphere sphere
 add plane ground
 set obj 0 fixed trueq
+add plane Ground
+add sphere Sphere
+set obj 1 mass 10
+set obj 0 fixed 1$
+set obj 0 vel 0 0 -50
+set obj 0 vel 0 0 -10

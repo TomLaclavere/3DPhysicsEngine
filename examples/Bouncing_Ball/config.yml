@@ -2,6 +2,6 @@
 gravity: 9.81
 timestep: 0.01
 duration: 6
-solver: "Euler"
+solver: "RK4"
 verbose: true
 save: true

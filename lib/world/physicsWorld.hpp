@@ -6,6 +6,7 @@
 #pragma once
 #include "mathematics/vector.hpp"
 #include "objects/object.hpp"
+#include "utilities/csv.hpp"
 #include "world/config.hpp"
 #include "world/integrateRK4.hpp"
 #include "world/physics.hpp"
@@ -13,6 +14,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <unordered_map>
 #include <vector>
 
 /**
@@ -26,18 +28,24 @@
 struct PhysicsWorld
 {
 private:
-    Config&                                        config = Config::get();
-    std::vector<Object*>                           objects;
-    std::ofstream                                  objectFile;
-    std::vector<std::pair<Object*, std::ofstream>> motionFiles;
+    // World
+    Config&                                    config = Config::get();
+    std::vector<Object*>                       objects;
+    std::ofstream                              objectFile;
+    std::unordered_map<Object*, std::ofstream> motionFiles;
 
+    // Simulation
     bool     isRunning = false;
     Solver   solver;
     decimal  timeStep   = config.getTimeStep();
     decimal  gravityCst = config.getGravity();
     Vector3D gravityAcc = Physics::computeGravityAcc(gravityCst);
 
-    unsigned int nextObjectId = 0;
+    // Utilites
+    unsigned int            nextObjectId = 0;
+    static constexpr size_t FLUSH_EVERY  = 500;
+    std::vector<MotionCSV>  motionBuffer;
+    void                    flushMotionBuffer();
 
 public:
     // ============================================================================
@@ -179,6 +187,8 @@ public:
     void printState() const;
     void initCSV(const std::string& directory);
     void saveObjectsCSV();
+    void flushMotionCSV();
     void saveMotionCSV(decimal time);
+    void closeCSV();
     /// @}
 };

@@ -485,6 +485,9 @@ void PhysicsWorld::run()
             cpt++;
         }
     }
+
+    // Close buffer
+    closeCSV();
 }
 
 // ============================================================================
@@ -549,17 +552,36 @@ void PhysicsWorld::initCSV(const std::string& directory)
         std::ofstream file(filepath);
 
         obj->initMotionCSV(file);
-        motionFiles.emplace_back(obj, std::move(file));
+        motionFiles.emplace(obj, std::move(file));
     }
+
+    // Buffer
+    motionBuffer.reserve(FLUSH_EVERY);
 }
 void PhysicsWorld::saveObjectsCSV()
 {
-    for (std::size_t idx = 0; idx < objects.size(); ++idx)
+    for (auto& object : objects)
     {
-        objects[idx]->saveObjectCSV(objectFile);
+        object->saveObjectCSV(objectFile);
     }
     objectFile.close();
     objectFile.close();
+}
+void PhysicsWorld::flushMotionBuffer()
+{
+    if (motionBuffer.empty())
+        return;
+
+    for (auto& snap : motionBuffer)
+    {
+        auto& file = motionFiles.at(snap.obj);
+
+        file << snap.time << "," << snap.pos.getX() << "," << snap.pos.getY() << "," << snap.pos.getZ() << ","
+             << snap.vel.getX() << "," << snap.vel.getY() << "," << snap.vel.getZ() << "," << snap.acc.getX()
+             << "," << snap.acc.getY() << "," << snap.acc.getZ() << "\n";
+    }
+
+    motionBuffer.clear();
 }
 void PhysicsWorld::saveMotionCSV(decimal time)
 {
@@ -568,6 +590,20 @@ void PhysicsWorld::saveMotionCSV(decimal time)
 
     for (auto& [obj, file] : motionFiles)
     {
-        obj->saveMotionCSV(file, time);
+        motionBuffer.push_back({ .time = time,
+                                 .obj  = obj,
+                                 .pos  = obj->getPosition(),
+                                 .vel  = obj->getVelocity(),
+                                 .acc  = obj->getAcceleration() });
     }
+
+    if (motionBuffer.size() >= FLUSH_EVERY)
+        flushMotionBuffer();
+}
+void PhysicsWorld::closeCSV()
+{
+    flushMotionBuffer(); // empty residual buffer
+    for (auto& [obj, file] : motionFiles)
+        file.close(); // flush + close
+    objectFile.close();
 }

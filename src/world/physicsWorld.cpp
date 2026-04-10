@@ -5,6 +5,7 @@
 #include "mathematics/math_io.hpp"
 #include "mathematics/vector.hpp"
 #include "objects/object.hpp"
+#include "precision.hpp"
 #include "world/integrateRK4.hpp"
 #include "world/physics.hpp"
 
@@ -12,6 +13,7 @@
 #include <filesystem>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <vector>
 
 // ============================================================================
@@ -63,6 +65,65 @@ void PhysicsWorld::initialise()
     gravityCst = config.getGravity();
     gravityAcc = Physics::computeGravityAcc(gravityCst);
 }
+void PhysicsWorld::checkStabilityCondition()
+{
+    // Stability check only applies to force-based contact model.
+    // Impulse-based collisions are unconditionally stable.
+    if (config.getSimplifiedCollision())
+        return;
+
+    const size_t n      = objects.size();
+    decimal      dt_min = std::numeric_limits<decimal>::max();
+
+    for (size_t i = 0; i < n; ++i)
+        for (size_t j = i + 1; j < n; ++j)
+        {
+            if (!objects[i] || !objects[j])
+                continue;
+
+            decimal m1 = objects[i]->getMass();
+            decimal m2 = objects[j]->getMass();
+            decimal k =
+                Physics::effectiveStiffness(objects[i]->getStiffnessCst(), objects[j]->getStiffnessCst());
+            decimal mu = Physics::reducedMass(m1, m2);
+
+            if (k <= 0_d || mu <= 0_d)
+                continue;
+
+            // ── Criterion 1 : oscillatory stability ──────────────────────────
+            // For an explicit Euler integrator, a spring-mass system is stable
+            // only if:
+            //   dt < 2 * sqrt(μ / k)
+            // Beyond this threshold, the integrator adds energy each step and
+            // the contact oscillation diverges.
+            decimal dt_osc = 2_d * std::sqrt(mu / k);
+
+            // ── Criterion 2 : impact stability ───────────────────────────────
+            // Even if criterion 1 holds, a fast-moving object can tunnel
+            // through the contact zone in a single step if its velocity is too
+            // high relative to the static equilibrium penetration:
+            //   δ_eq = μg / k
+            // The object must not travel more than δ_eq in one time step:
+            //   v * dt < δ_eq  →  dt < δ_eq / v  =  μg / (k * v)
+            decimal v1        = objects[i]->getVelocity().getNorm();
+            decimal v2        = objects[j]->getVelocity().getNorm();
+            decimal v         = std::max(v1, v2);
+            decimal dt_impact = std::numeric_limits<decimal>::max();
+            if (v > 0_d)
+            {
+                decimal delta_eq = mu * gravityCst / k;
+                dt_impact        = delta_eq / v;
+            }
+
+            // The binding constraint is the most restrictive of the two.
+            decimal dt_crit = std::min(dt_osc, dt_impact);
+            dt_min          = std::min(dt_min, dt_crit);
+        }
+
+    if (dt_min < std::numeric_limits<decimal>::max() && timeStep > dt_min)
+        std::cerr << "[Warning] dt=" << timeStep << " exceeds stability limit dt_crit=" << dt_min
+                  << ". Suggested dt < " << 0.5_d * dt_min << " s.\n";
+}
 
 // ============================================================================
 //  Force application
@@ -100,20 +161,21 @@ void PhysicsWorld::applyFrictionForces(Object& obj, Object& other, Contact& cont
 {
     if (!obj.getIsFixed())
     {
-        Vector3D frictionForce = Physics::computeFrictionForce(obj, other, contact);
+        Vector3D frictionForce = Physics::computeFrictionForce(
+            obj, other, contact, Physics::computeNormalForces(obj, other, contact).getNorm());
         obj.addAcceleration(frictionForce / obj.getMass());
     }
 }
 void PhysicsWorld::applyContactForces(Object& obj, Object& other, Contact& contact)
 {
-    if (obj.getIsFixed())
-        return;
+    std::cout << "[Contact] " << obj.getName() << " mass=" << obj.getMass()
+              << " k_eff=" << Physics::effectiveStiffness(obj.getStiffnessCst(), other.getStiffnessCst())
+              << " delta_eq="
+              << obj.getMass() * 9.81 /
+                     Physics::effectiveStiffness(obj.getStiffnessCst(), other.getStiffnessCst())
+              << "\n";
 
-    Vector3D springForce   = Physics::computeSpringForce(obj, other, contact);
-    Vector3D dampingForce  = Physics::computeDampingForce(obj, other, contact);
-    Vector3D frictionForce = Physics::computeFrictionForce(obj, other, contact);
-    Vector3D totalForce    = springForce + dampingForce + frictionForce;
-    std::cout << "Total contact acc : " << totalForce / obj.getMass() << "\n";
+    Vector3D totalForce = Physics::computeContactForce(obj, other, contact);
     if (!obj.getIsFixed())
         obj.addAcceleration(totalForce / obj.getMass());
     if (!other.getIsFixed())
@@ -233,10 +295,8 @@ Vector3D PhysicsWorld::computeAcceleration(Object& obj)
                 bool    isCollidingNarrow = obj.computeCollision(*other, contact);
                 if (isCollidingNarrow)
                 {
-                    Vector3D springForce   = Physics::computeSpringForce(obj, *other, contact);
-                    Vector3D dampingForce  = Physics::computeDampingForce(obj, *other, contact);
-                    Vector3D frictionForce = Physics::computeFrictionForce(obj, *other, contact);
-                    acc += (springForce + dampingForce + frictionForce) / obj.getMass();
+                    Vector3D contactForces = Physics::computeContactForce(obj, *other, contact);
+                    acc += (contactForces) / obj.getMass();
                 }
             }
         }
@@ -409,6 +469,16 @@ void PhysicsWorld::integrate()
     // Compute gravity forces
     applyGravityForces();
 
+    // Compute contact
+    if (config.getSimplifiedCollision())
+    {
+        solveCollisions(); // impulsion
+    }
+    else
+    {
+        applyContact(); // forces
+    }
+
     // Integrate motion
     for (auto* obj : objects)
     {
@@ -431,7 +501,7 @@ void PhysicsWorld::integrate()
             break;
         }
 
-        solveCollisions();
+        // solveCollisions();
     }
 }
 void PhysicsWorld::run()
@@ -439,6 +509,7 @@ void PhysicsWorld::run()
     const decimal timeStep = config.getTimeStep();
     const size_t  maxIter  = config.getMaxIterations();
     size_t        cpt      = 0;
+    checkStabilityCondition();
 
     // Printing
     // Column widths

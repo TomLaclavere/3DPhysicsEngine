@@ -101,6 +101,28 @@ public:
             obj->setAcceleration(Vector3D(0_d));
         }
     }
+    /**
+     * @brief Check numerical stability of the force-based contact model.
+     *
+     * For a spring-mass system integrated with an explicit Euler scheme, the
+     * stability condition is:
+     * \f[ \Delta t < 2 \sqrt{\frac{\mu}{k}} \f]
+     * where \f$ \mu \f$ is the reduced mass and \f$ k \f$ the effective stiffness
+     * of each interacting pair.
+     *
+     * This method iterates over all object pairs, computes their critical time
+     * step, and emits a warning if the configured time step exceeds the most
+     * restrictive constraint found.
+     *
+     * @note Only relevant for the force-based contact model (non-simplified).
+     *       Impulse-based collisions are unconditionally stable and are skipped.
+     *
+     * @warning If the time step exceeds the stability limit, the simulation may
+     *          exhibit non-physical behaviour such as objects passing through each
+     *          other or diverging velocities. A safety margin of 0.5 × dt_crit is
+     *          recommended.
+     */
+    void checkStabilityCondition();
     /// @}
 
     // ============================================================================

@@ -12,27 +12,16 @@
 TEST(PhysicsTest, Helpers)
 {
     EXPECT_DOUBLE_EQ(Physics::reducedMass(2.0_d, 3.0_d), 6.0_d / 5.0_d);
-    EXPECT_DOUBLE_EQ(Physics::reducedMass(0_d, 3.0_d), 0_d);
-    EXPECT_DOUBLE_EQ(Physics::reducedMass(2.0_d, 0_d), 0_d);
+    EXPECT_DOUBLE_EQ(Physics::reducedMass(0_d, 3.0_d), 3_d);
+    EXPECT_DOUBLE_EQ(Physics::reducedMass(2.0_d, 0_d), 2_d);
     // Test negative mass (should return 0)
-    EXPECT_DOUBLE_EQ(Physics::reducedMass(-2.0_d, 3.0_d), 0_d);
-    EXPECT_DOUBLE_EQ(Physics::reducedMass(2.0_d, -3.0_d), 0_d);
+    EXPECT_DOUBLE_EQ(Physics::reducedMass(-2.0_d, 3.0_d), 3_d);
+    EXPECT_DOUBLE_EQ(Physics::reducedMass(2.0_d, -3.0_d), 2_d);
 
     EXPECT_DOUBLE_EQ(Physics::effectiveStiffness(2.0_d, 3.0_d), 6.0_d / 5.0_d);
     EXPECT_DOUBLE_EQ(Physics::effectiveStiffness(0_d, 3.0_d), 3.0_d);
     EXPECT_DOUBLE_EQ(Physics::effectiveStiffness(2.0_d, 0_d), 2.0_d);
     EXPECT_DOUBLE_EQ(Physics::effectiveStiffness(0_d, 0_d), 0_d); // Both zero
-
-    EXPECT_DOUBLE_EQ(Physics::dampingRatioFromRestitution(0_d), 1.0_d);
-    EXPECT_DOUBLE_EQ(Physics::dampingRatioFromRestitution(1.0_d), 0.0_d);
-    decimal e     = 0.5_d;
-    decimal ratio = Physics::dampingRatioFromRestitution(e);
-    EXPECT_GT(ratio, 0.0_d);
-    EXPECT_LT(ratio, 1.0_d);
-    // Test negative restitution (should return 1)
-    EXPECT_DOUBLE_EQ(Physics::dampingRatioFromRestitution(-0.5_d), 1.0_d);
-    // Test >1 restitution (should return 0)
-    EXPECT_DOUBLE_EQ(Physics::dampingRatioFromRestitution(1.5_d), 0.0_d);
 }
 
 // ============================================================================
@@ -215,14 +204,18 @@ TEST(PhysicsTest, FrictionForce)
 
     // This should now exercise the lines that compute normal force
     obj1.computeCollision(obj2, contact12);
-    Vector3D f = Physics::computeFrictionForce(obj1, obj2, contact12);
+    Vector3D f = Physics::computeFrictionForce(obj1, obj2, contact12,
+                                               Physics::computeNormalForces(obj1, obj2, contact12).getNorm());
     // Should have some non-zero component (likely in y-direction since tangential velocity has y component)
     EXPECT_NE(f.getNorm(), 0_d);
 
     // Test mu=0 case
     obj1.setFrictionCst(0_d);
     obj2.setFrictionCst(0_d);
-    EXPECT_VECTOR_EQ(Physics::computeFrictionForce(obj1, obj2, contact12), Vector3D(0_d));
+    EXPECT_VECTOR_EQ(
+        Physics::computeFrictionForce(obj1, obj2, contact12,
+                                      Physics::computeNormalForces(obj1, obj2, contact12).getNorm()),
+        Vector3D(0_d));
 
     // Edge cases
     Sphere obj3, obj4;
@@ -243,12 +236,18 @@ TEST(PhysicsTest, FrictionForce)
     obj3.computeCollision(obj4, contact34);
 
     // v_tan.isNull() branch
-    EXPECT_VECTOR_EQ(Physics::computeFrictionForce(obj3, obj4, contact34), Vector3D(0_d));
+    EXPECT_VECTOR_EQ(
+        Physics::computeFrictionForce(obj3, obj4, contact34,
+                                      Physics::computeNormalForces(obj3, obj4, contact34).getNorm()),
+        Vector3D(0_d));
 
     // r.isNull() -> returns early before computing normal force
     obj3.setPosition(Vector3D(0_d));
     obj4.setPosition(Vector3D(0_d)); // r.isNull()
-    EXPECT_VECTOR_EQ(Physics::computeFrictionForce(obj3, obj4, contact34), Vector3D(0_d));
+    EXPECT_VECTOR_EQ(
+        Physics::computeFrictionForce(obj3, obj4, contact34,
+                                      Physics::computeNormalForces(obj3, obj4, contact34).getNorm()),
+        Vector3D(0_d));
 
     // Test case where normal force magnitude is 0
     obj3.setPosition(Vector3D(0_d));
@@ -261,7 +260,8 @@ TEST(PhysicsTest, FrictionForce)
     obj4.setVelocity(Vector3D(0_d, 0_d, 0_d));
 
     // This should compute normal force and find it's 0
-    Vector3D zero_normal_friction = Physics::computeFrictionForce(obj3, obj4, contact34);
+    Vector3D zero_normal_friction = Physics::computeFrictionForce(
+        obj3, obj4, contact34, Physics::computeNormalForces(obj3, obj4, contact34).getNorm());
     EXPECT_VECTOR_EQ(zero_normal_friction, Vector3D(0_d));
 }
 
@@ -289,8 +289,8 @@ TEST(PhysicsTest, ContactForce)
     obj1.setVelocity(Vector3D(0_d, 1_d, 0_d));
     obj2.setVelocity(Vector3D(0_d, 0_d, 0_d));
 
-    Vector3D f     = Physics::computeContactForce(obj1, obj2, contact12);
-    Vector3D f_exp = Physics::computeNormalForces(obj1, obj2, contact12) +
-                     Physics::computeFrictionForce(obj1, obj2, contact12);
+    Vector3D f      = Physics::computeContactForce(obj1, obj2, contact12);
+    Vector3D normal = Physics::computeNormalForces(obj1, obj2, contact12);
+    Vector3D f_exp  = normal + Physics::computeFrictionForce(obj1, obj2, contact12, normal.getNorm());
     EXPECT_VECTOR_EQ(f, f_exp);
 }

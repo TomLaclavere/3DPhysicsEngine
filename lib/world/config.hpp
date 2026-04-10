@@ -21,12 +21,13 @@ private:
     decimal gravity = 9.81_d; // m/s^2
 
     // Simulation parameters
-    decimal     timeStep           = 0.01_d; // seconds
-    decimal     simulationDuration = 10_d;   // simulation duration in seconds
-    std::size_t maxIterations      = static_cast<std::size_t>(std::round(simulationDuration / timeStep));
-    std::string solver             = "Euler";
-    bool        verbose            = true;
-    bool        save               = false;
+    decimal     timeStep               = 0.01_d; // seconds
+    decimal     simulationDuration     = 10_d;   // simulation duration in seconds
+    std::size_t maxIterations          = static_cast<std::size_t>(std::round(simulationDuration / timeStep));
+    std::string solver                 = "Euler";
+    bool        verbose                = true;
+    bool        save                   = false;
+    bool        useSimplifiedCollision = true;
 
     /// Singleton constructor
     Config() = default;
@@ -48,6 +49,7 @@ public:
     std::string    getSolver() const;
     bool           getVerbose() const;
     bool           getSave() const;
+    bool           getSimplifiedCollision() const;
     /// @}
 
     /// @name Setters
@@ -93,6 +95,7 @@ public:
     void setSolver(const std::string& sol) { solver = sol; }
     void setVerbose(bool verb) { verbose = verb; }
     void setSave(bool sav) { save = sav; }
+    void setSimplifiedCollision(bool simpColl) { useSimplifiedCollision = simpColl; }
     /// @}
 
     /// @name Loading Methods

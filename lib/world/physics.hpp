@@ -13,7 +13,6 @@ decimal reducedMass(decimal m1, decimal m2);
 decimal effectiveStiffness(decimal k1, decimal k2);
 decimal effectiveDamping(decimal d1, decimal d2);
 decimal effectiveFriction(decimal mu1, decimal mu2);
-decimal dampingRatioFromRestitution(decimal e);
 /// @}
 
 // ============================================================================
@@ -24,14 +23,14 @@ decimal dampingRatioFromRestitution(decimal e);
 Vector3D computeGravityAcc(decimal g);
 /// Compute gravitational force vector for an Object.
 Vector3D computeGravityForce(decimal g, const Object& obj);
-/// Compute spring (Hooke) force between two objects in collision.
+/// Internal - Compute spring (Hooke) force between two objects in collision.
 Vector3D computeSpringForce(const Object& obj1, const Object& obj2, Contact& contact);
-/// Compute damping (dissipation) force between two objects in collision.
+/// Internal - Compute damping (dissipation) force between two objects in collision.
 Vector3D computeDampingForce(const Object& obj1, const Object& obj2, Contact& contact);
 /// Compute normal forces : spring + damping.
 Vector3D computeNormalForces(const Object& obj1, const Object& obj2, Contact& contact);
 /// Compute friction (Coulomb) force between two objects in collision.
-Vector3D computeFrictionForce(const Object& obj1, const Object& obj2, Contact& contact);
+Vector3D computeFrictionForce(const Object& obj1, const Object& obj2, Contact& contact, decimal F_normal_mag);
 /// Compute contacts forces : spring + damping + friction.
 Vector3D computeContactForce(const Object& obj1, const Object& obj2, Contact& contact);
 /// @}

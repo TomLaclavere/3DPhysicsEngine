@@ -10,8 +10,10 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
   - [ ] ASAN
   - [ ] UBSAN
 - [ ] Contact Forces
-  - [ ] Implement contact forces in simulation
-  - [ ] Add parameter to choose between instantaneous response and continuous response
+  - [x] Implement contact forces in simulation
+  - [x] Add parameter to choose between instantaneous response and continuous response
+  - [ ] Fix contact forces to simulate collisions
+- [ ] Fix Verlet & RK4 integration
 
 ## Code Quality and Maintenance
 

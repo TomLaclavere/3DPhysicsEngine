@@ -11,7 +11,7 @@ private:
     decimal     stiffness   = 0_d;
     decimal     damping     = 0_d;
     decimal     friction    = 0_d;
-    decimal     restitution = 0.5_d; // For simplified collision
+    decimal     restitution = 1_d; // For simplified collision
 
 public:
     /// @name Constructors

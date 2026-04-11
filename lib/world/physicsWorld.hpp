@@ -65,7 +65,7 @@ public:
     /// @name Getters
     // ============================================================================
     /// @{
-    Config&      getConfig() const;
+    Config&      getConfig();
     bool         getIsRunning() const;
     decimal      getTimeStep() const;
     decimal      getGravityCst() const;
@@ -101,28 +101,7 @@ public:
             obj->setAcceleration(Vector3D(0_d));
         }
     }
-    /**
-     * @brief Check numerical stability of the force-based contact model.
-     *
-     * For a spring-mass system integrated with an explicit Euler scheme, the
-     * stability condition is:
-     * \f[ \Delta t < 2 \sqrt{\frac{\mu}{k}} \f]
-     * where \f$ \mu \f$ is the reduced mass and \f$ k \f$ the effective stiffness
-     * of each interacting pair.
-     *
-     * This method iterates over all object pairs, computes their critical time
-     * step, and emits a warning if the configured time step exceeds the most
-     * restrictive constraint found.
-     *
-     * @note Only relevant for the force-based contact model (non-simplified).
-     *       Impulse-based collisions are unconditionally stable and are skipped.
-     *
-     * @warning If the time step exceeds the stability limit, the simulation may
-     *          exhibit non-physical behaviour such as objects passing through each
-     *          other or diverging velocities. A safety margin of 0.5 × dt_crit is
-     *          recommended.
-     */
-    void checkStabilityCondition();
+
     /// @}
 
     // ============================================================================
@@ -134,12 +113,6 @@ public:
     void applyGravityForce(Object& obj);
     /// Apply gravitational force to all movable objects.
     void applyGravityForces();
-    /// Apply spring forces on a single object due to another.
-    void applySpringForces(Object& obj, Object& other, Contact& contact);
-    /// Apply dampling forces on a single object due to another.
-    void applyDamplingForces(Object& obj, Object& other, Contact& contact);
-    /// Apply friction forces on a single object due to another.
-    void applyFrictionForces(Object& obj, Object& other, Contact& contact);
     /// Apply contact forces (spring + damping + friction) between two objects.
     void applyContactForces(Object& obj, Object& other, Contact& contact);
     /// Compute and apply contact forces for the current physics step.
@@ -148,6 +121,8 @@ public:
     void applyForces();
     /// Solve collisions between objects.
     void solveCollisions();
+    /// Compute gravitational force only.
+    Vector3D computeAccelerationGravityOnly();
     /// Compute acceleration from forces.
     Vector3D computeAcceleration(Object& obj);
     /// @}
@@ -159,11 +134,10 @@ public:
 
     /// Semi-implicit Euler integrator for one object.
     void integrateEuler(Object& obj, decimal dt);
-    /// Verlet integrator for one object.
-    void integrateVerlet(Object& obj, decimal dt);
-    /// Runge-Kutta 4 integrator for one object.
-    Derivative evaluateRK4(const Object& obj, const Derivative& d, decimal dt);
-    void       integrateRK4(Object& obj, decimal dt);
+    /// Verlet integrator for all objects.
+    void integrateVerlet(decimal dt);
+    /// RK4 integrator for all objects.
+    void integrateRK4(decimal dt);
     /// @brief Integrate all objects over one time step without collision resolution.
     /// Only for testing purposes.
     void integrateWithoutCollisions();

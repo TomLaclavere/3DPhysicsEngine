@@ -59,7 +59,7 @@ decimal Physics::effectiveDamping(decimal d1, decimal d2)
         return d2;
     if (commonMaths::approxSmallerOrEqualThan(d2, 0_d))
         return d1;
-    return (2_d * d1 * d2) / (d1 + d2);
+    return (d1 * d2) / (d1 + d2);
 }
 decimal Physics::effectiveFriction(decimal mu1, decimal mu2) { return std::sqrt(mu1 * mu2); }
 
@@ -140,10 +140,10 @@ Vector3D Physics::computeDampingForce(const Object& obj1, const Object& obj2, Co
     Vector3D n = contact.normal;
     // if ((obj1.getPosition() - obj2.getPosition()).dotProduct(n) < 0_d)
     //     n = -n;
-    Vector3D v_rel = obj2.getVelocity() - obj1.getVelocity();
-    decimal  vn    = v_rel.dotProduct(n);
-
-    return -c * vn * n;
+    Vector3D v_rel  = obj2.getVelocity() - obj1.getVelocity();
+    decimal  vn     = v_rel.dotProduct(n);
+    decimal  F_damp = -c * std::min(vn, 0_d);
+    return F_damp * n;
 }
 
 /**
@@ -167,10 +167,10 @@ Vector3D Physics::computeNormalForces(const Object& obj1, const Object& obj2, Co
     decimal c    = 2_d * zeta * std::sqrt(k * mu);
 
     Vector3D v_rel = obj2.getVelocity() - obj1.getVelocity();
-    decimal  vn    = v_rel.dotProduct(n); // négatif si les objets se rapprochent
+    decimal  vn    = v_rel.dotProduct(n);
 
     decimal F_spring = k * delta;
-    decimal F_damp   = -c * vn;
+    decimal F_damp   = c * std::min(vn, 0_d);
 
     // Force is not allowed to be tractive (no adhesion).
     decimal F_normal = std::max(F_spring + F_damp, 0_d);

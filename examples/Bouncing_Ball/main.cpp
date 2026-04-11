@@ -49,9 +49,9 @@ int main(int argc, char** argv)
     Timer        initTimer;
     PhysicsWorld world(config);
     auto*        ground = new Plane(Vector3D(0_d), Vector3D(40_d, 40_d, 0_d), Vector3D(0_d, 0_d, 1_d));
-    auto*        wood   = new Sphere(Vector3D(6_d, 0_d, 20), 0.2_d, Vector3D(0_d, 0_d, -1_d), 1_d);
-    auto*        steel  = new Sphere(Vector3D(0_d, 0_d, 20), 0.2_d, Vector3D(0_d, 0_d, -1_d), 1_d);
-    auto*        rubber = new Sphere(Vector3D(-6_d, 0_d, 20), 0.2_d, Vector3D(0_d, 0_d, -1_d), 1_d);
+    auto*        wood   = new Sphere(Vector3D(6_d, 0_d, 20), 2_d, Vector3D(0_d, 0_d, -1_d), 1_d);
+    auto*        steel  = new Sphere(Vector3D(0_d, 0_d, 20), 2_d, Vector3D(0_d, 0_d, -1_d), 1_d);
+    auto*        rubber = new Sphere(Vector3D(-6_d, 0_d, 20), 2_d, Vector3D(0_d, 0_d, -1_d), 1_d);
 
     wood->setIsFixed(false);
     wood->setMaterial(Material("data/materials/wood.yaml"));
@@ -69,7 +69,8 @@ int main(int argc, char** argv)
     world.addObject(rubber);
     world.addObject(ground);
     world.start();
-    world.checkStabilityCondition();
+    std::cout << "Ground | " << "e : " << ground->getRestitutionCst()
+              << "stiff : " << ground->getStiffnessCst() << "damp : " << ground->getDampingCst() << "\n";
 
     // Initialise saving
     world.initCSV(directory + "/CSV");

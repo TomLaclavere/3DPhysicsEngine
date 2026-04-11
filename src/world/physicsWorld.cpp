@@ -13,7 +13,6 @@
 #include <filesystem>
 #include <iomanip>
 #include <iostream>
-#include <limits>
 #include <vector>
 
 // ============================================================================
@@ -33,7 +32,7 @@ static Solver parseSolver(const std::string& name)
 // ============================================================================
 //  Getters
 // ============================================================================
-Config&  PhysicsWorld::getConfig() const { return config; }
+Config&  PhysicsWorld::getConfig() { return config; }
 bool     PhysicsWorld::getIsRunning() const { return isRunning; }
 decimal  PhysicsWorld::getTimeStep() const { return timeStep; }
 decimal  PhysicsWorld::getGravityCst() const { return gravityCst; }
@@ -65,65 +64,6 @@ void PhysicsWorld::initialise()
     gravityCst = config.getGravity();
     gravityAcc = Physics::computeGravityAcc(gravityCst);
 }
-void PhysicsWorld::checkStabilityCondition()
-{
-    // Stability check only applies to force-based contact model.
-    // Impulse-based collisions are unconditionally stable.
-    if (config.getSimplifiedCollision())
-        return;
-
-    const size_t n      = objects.size();
-    decimal      dt_min = std::numeric_limits<decimal>::max();
-
-    for (size_t i = 0; i < n; ++i)
-        for (size_t j = i + 1; j < n; ++j)
-        {
-            if (!objects[i] || !objects[j])
-                continue;
-
-            decimal m1 = objects[i]->getMass();
-            decimal m2 = objects[j]->getMass();
-            decimal k =
-                Physics::effectiveStiffness(objects[i]->getStiffnessCst(), objects[j]->getStiffnessCst());
-            decimal mu = Physics::reducedMass(m1, m2);
-
-            if (k <= 0_d || mu <= 0_d)
-                continue;
-
-            // ── Criterion 1 : oscillatory stability ──────────────────────────
-            // For an explicit Euler integrator, a spring-mass system is stable
-            // only if:
-            //   dt < 2 * sqrt(μ / k)
-            // Beyond this threshold, the integrator adds energy each step and
-            // the contact oscillation diverges.
-            decimal dt_osc = 2_d * std::sqrt(mu / k);
-
-            // ── Criterion 2 : impact stability ───────────────────────────────
-            // Even if criterion 1 holds, a fast-moving object can tunnel
-            // through the contact zone in a single step if its velocity is too
-            // high relative to the static equilibrium penetration:
-            //   δ_eq = μg / k
-            // The object must not travel more than δ_eq in one time step:
-            //   v * dt < δ_eq  →  dt < δ_eq / v  =  μg / (k * v)
-            decimal v1        = objects[i]->getVelocity().getNorm();
-            decimal v2        = objects[j]->getVelocity().getNorm();
-            decimal v         = std::max(v1, v2);
-            decimal dt_impact = std::numeric_limits<decimal>::max();
-            if (v > 0_d)
-            {
-                decimal delta_eq = mu * gravityCst / k;
-                dt_impact        = delta_eq / v;
-            }
-
-            // The binding constraint is the most restrictive of the two.
-            decimal dt_crit = std::min(dt_osc, dt_impact);
-            dt_min          = std::min(dt_min, dt_crit);
-        }
-
-    if (dt_min < std::numeric_limits<decimal>::max() && timeStep > dt_min)
-        std::cerr << "[Warning] dt=" << timeStep << " exceeds stability limit dt_crit=" << dt_min
-                  << ". Suggested dt < " << 0.5_d * dt_min << " s.\n";
-}
 
 // ============================================================================
 //  Force application
@@ -141,40 +81,8 @@ void PhysicsWorld::applyGravityForces()
         applyGravityForce(*obj);
     }
 }
-void PhysicsWorld::applySpringForces(Object& obj, Object& other, Contact& contact)
-{
-    if (!obj.getIsFixed())
-    {
-        Vector3D springForce = Physics::computeSpringForce(obj, other, contact);
-        obj.addAcceleration(springForce / obj.getMass());
-    }
-}
-void PhysicsWorld::applyDamplingForces(Object& obj, Object& other, Contact& contact)
-{
-    if (!obj.getIsFixed())
-    {
-        Vector3D dampingForce = Physics::computeDampingForce(obj, other, contact);
-        obj.addAcceleration(dampingForce / obj.getMass());
-    }
-}
-void PhysicsWorld::applyFrictionForces(Object& obj, Object& other, Contact& contact)
-{
-    if (!obj.getIsFixed())
-    {
-        Vector3D frictionForce = Physics::computeFrictionForce(
-            obj, other, contact, Physics::computeNormalForces(obj, other, contact).getNorm());
-        obj.addAcceleration(frictionForce / obj.getMass());
-    }
-}
 void PhysicsWorld::applyContactForces(Object& obj, Object& other, Contact& contact)
 {
-    std::cout << "[Contact] " << obj.getName() << " mass=" << obj.getMass()
-              << " k_eff=" << Physics::effectiveStiffness(obj.getStiffnessCst(), other.getStiffnessCst())
-              << " delta_eq="
-              << obj.getMass() * 9.81 /
-                     Physics::effectiveStiffness(obj.getStiffnessCst(), other.getStiffnessCst())
-              << "\n";
-
     Vector3D totalForce = Physics::computeContactForce(obj, other, contact);
     if (!obj.getIsFixed())
         obj.addAcceleration(totalForce / obj.getMass());
@@ -273,35 +181,26 @@ void PhysicsWorld::solveCollisions()
         }
     }
 }
+Vector3D PhysicsWorld::computeAccelerationGravityOnly() { return gravityAcc; }
 Vector3D PhysicsWorld::computeAcceleration(Object& obj)
 {
-    Vector3D acc(0_d);
+    // Impulse-based collisions pipeline : collision are solved with velocities, contact forces don't enter in
+    // integration
+    if (config.getSimplifiedCollision())
+        return computeAccelerationGravityOnly();
 
-    // Gravity acc
-    acc += gravityAcc;
-
-    // Contact acc
+    Vector3D acc = gravityAcc;
+    for (auto& other : objects)
     {
-        for (auto& other : objects)
+        if (!other || &obj == other)
+            continue;
+        if (obj.checkCollision(*other))
         {
-            if (&obj == other)
-                continue;
-
-            // Broad + narrow phase
-            bool isCollidingBroad = obj.checkCollision(*other);
-            if (isCollidingBroad)
-            {
-                Contact contact;
-                bool    isCollidingNarrow = obj.computeCollision(*other, contact);
-                if (isCollidingNarrow)
-                {
-                    Vector3D contactForces = Physics::computeContactForce(obj, *other, contact);
-                    acc += (contactForces) / obj.getMass();
-                }
-            }
+            Contact contact;
+            if (obj.computeCollision(*other, contact))
+                acc += Physics::computeContactForce(obj, *other, contact) / obj.getMass();
         }
     }
-
     return acc;
 }
 
@@ -315,59 +214,148 @@ void PhysicsWorld::integrateEuler(Object& obj, decimal dt)
     // x_{t+dt} = x_t + v_{t+dt} * dt
     obj.setPosition(obj.getPosition() + obj.getVelocity() * dt);
 }
-void PhysicsWorld::integrateVerlet(Object& obj, decimal dt)
+void PhysicsWorld::integrateVerlet(decimal dt)
 {
-    // Store current acceleration
-    Vector3D currentAcc = obj.getAcceleration();
+    const size_t n = objects.size();
 
-    // position
-    Vector3D nextPos = obj.getPosition() + obj.getVelocity() * dt + obj.getAcceleration() * (0.5_d * dt * dt);
-    obj.setPosition(nextPos);
+    // 1) Accelerations at (t) from computeAcceleration
+    std::vector<Vector3D> prevAcc(n, Vector3D(0_d));
+    for (size_t i = 0; i < n; ++i)
+    {
+        auto* obj = objects[i];
+        if (!obj || obj->isFixed())
+            continue;
+        prevAcc[i] = computeAcceleration(*obj);
+    }
 
-    // acceleration from new position
-    Vector3D nextAcc = computeAcceleration(obj);
+    // 2) Positions at (t+dt)
+    for (size_t i = 0; i < n; ++i)
+    {
+        auto* obj = objects[i];
+        if (!obj || obj->isFixed())
+            continue;
+        obj->setPosition(obj->getPosition() + obj->getVelocity() * dt + prevAcc[i] * (0.5_d * dt * dt));
+    }
 
-    // velocity
-    Vector3D nextVel = obj.getVelocity() + (currentAcc + nextAcc) * (0.5_d * dt);
-    obj.setVelocity(nextVel);
+    // 3) Accelerations at (t+dt), from new positions
+    std::vector<Vector3D> nextAcc(n, Vector3D(0_d));
+    for (size_t i = 0; i < n; ++i)
+    {
+        auto* obj = objects[i];
+        if (!obj || obj->isFixed())
+            continue;
+        nextAcc[i] = computeAcceleration(*obj);
+    }
+
+    // 4) Velocities at (t+dt)
+    for (size_t i = 0; i < n; ++i)
+    {
+        auto* obj = objects[i];
+        if (!obj || obj->isFixed())
+            continue;
+        obj->setVelocity(obj->getVelocity() + (prevAcc[i] + nextAcc[i]) * (0.5_d * dt));
+    }
 }
-Derivative PhysicsWorld::evaluateRK4(const Object& obj, const Derivative& d, decimal dt)
+void PhysicsWorld::integrateRK4(decimal dt)
 {
-    Object tmp = obj; // copy object state
+    const size_t n = objects.size();
 
-    tmp.setPosition(obj.getPosition() + d.derivativeX * dt);
-    tmp.setVelocity(obj.getVelocity() + d.derivativeV * dt);
+    struct State
+    {
+        Vector3D pos, vel, acc;
+    };
+    std::vector<State>      s0(n);
+    std::vector<Derivative> k1(n), k2(n), k3(n), k4(n);
 
-    // Recompute acceleration for the intermediate state
-    tmp.setAcceleration(computeAcceleration(tmp));
-
-    Derivative out;
-    out.derivativeX = tmp.getVelocity();
-    out.derivativeV = tmp.getAcceleration();
-    return out;
-}
-void PhysicsWorld::integrateRK4(Object& obj, decimal dt)
-{
-    Derivative k1, k2, k3, k4;
+    for (size_t i = 0; i < n; ++i)
+    {
+        auto* obj = objects[i];
+        if (!obj || obj->isFixed())
+            continue;
+        s0[i] = { .pos = obj->getPosition(), .vel = obj->getVelocity(), .acc = obj->getAcceleration() };
+    }
 
     // k1
-    k1.derivativeX = obj.getVelocity();
-    k1.derivativeV = obj.getAcceleration();
+    for (size_t i = 0; i < n; ++i)
+    {
+        auto* obj = objects[i];
+        if (!obj || obj->isFixed())
+            continue;
+        k1[i].derivativeX = s0[i].vel;
+        k1[i].derivativeV = computeAcceleration(*obj);
+    }
+
     // k2
-    k2 = evaluateRK4(obj, k1, dt * 0.5_d);
+    for (size_t i = 0; i < n; ++i)
+    {
+        auto* obj = objects[i];
+        if (!obj || obj->isFixed())
+            continue;
+        obj->setPosition(s0[i].pos + k1[i].derivativeX * (0.5_d * dt));
+        obj->setVelocity(s0[i].vel + k1[i].derivativeV * (0.5_d * dt));
+    }
+    for (size_t i = 0; i < n; ++i)
+    {
+        auto* obj = objects[i];
+        if (!obj || obj->isFixed())
+            continue;
+        k2[i].derivativeX = obj->getVelocity();
+        k2[i].derivativeV = computeAcceleration(*obj);
+    }
+
     // k3
-    k3 = evaluateRK4(obj, k2, dt * 0.5_d);
+    for (size_t i = 0; i < n; ++i)
+    {
+        auto* obj = objects[i];
+        if (!obj || obj->isFixed())
+            continue;
+        obj->setPosition(s0[i].pos + k2[i].derivativeX * (0.5_d * dt));
+        obj->setVelocity(s0[i].vel + k2[i].derivativeV * (0.5_d * dt));
+    }
+    for (size_t i = 0; i < n; ++i)
+    {
+        auto* obj = objects[i];
+        if (!obj || obj->isFixed())
+            continue;
+        k3[i].derivativeX = obj->getVelocity();
+        k3[i].derivativeV = computeAcceleration(*obj);
+    }
+
     // k4
-    k4 = evaluateRK4(obj, k3, dt);
+    for (size_t i = 0; i < n; ++i)
+    {
+        auto* obj = objects[i];
+        if (!obj || obj->isFixed())
+            continue;
+        obj->setPosition(s0[i].pos + k3[i].derivativeX * dt);
+        obj->setVelocity(s0[i].vel + k3[i].derivativeV * dt);
+    }
+    for (size_t i = 0; i < n; ++i)
+    {
+        auto* obj = objects[i];
+        if (!obj || obj->isFixed())
+            continue;
+        k4[i].derivativeX = obj->getVelocity();
+        k4[i].derivativeV = computeAcceleration(*obj);
+    }
 
-    // Weighted average derivative
-    Vector3D dxdt =
-        (k1.derivativeX + (2_d * k2.derivativeX) + (2_d * k3.derivativeX) + k4.derivativeX) * (1_d / 6_d);
-    Vector3D dvdt =
-        (k1.derivativeV + (2_d * k2.derivativeV) + (2_d * k3.derivativeV) + k4.derivativeV) * (1_d / 6_d);
+    // Update
+    for (size_t i = 0; i < n; ++i)
+    {
+        auto* obj = objects[i];
+        if (!obj || obj->isFixed())
+            continue;
 
-    obj.setPosition(obj.getPosition() + dxdt * dt);
-    obj.setVelocity(obj.getVelocity() + dvdt * dt);
+        Vector3D dxdt =
+            (k1[i].derivativeX + 2_d * k2[i].derivativeX + 2_d * k3[i].derivativeX + k4[i].derivativeX) *
+            (1_d / 6_d);
+        Vector3D dvdt =
+            (k1[i].derivativeV + 2_d * k2[i].derivativeV + 2_d * k3[i].derivativeV + k4[i].derivativeV) *
+            (1_d / 6_d);
+
+        obj->setPosition(s0[i].pos + dxdt * dt);
+        obj->setVelocity(s0[i].vel + dvdt * dt);
+    }
 }
 void PhysicsWorld::integrateWithoutCollisions()
 {
@@ -391,30 +379,27 @@ void PhysicsWorld::integrateWithoutCollisions()
     applyGravityForces();
 
     // Integrate motion
-    for (auto* obj : objects)
+    switch (solver)
     {
-        if (!obj || obj->isFixed())
-            continue;
-        switch (solver)
+    case Solver::Euler:
+        for (auto* obj : objects)
         {
-        case Solver::Euler:
+            if (!obj || obj->isFixed())
+                continue;
             integrateEuler(*obj, timeStep);
-            break;
-        case Solver::Verlet:
-            integrateVerlet(*obj, timeStep);
-            break;
-        case Solver::RK4:
-            integrateRK4(*obj, timeStep);
-            break;
-        case Solver::Unknown:
-            std::cout << "The following solver is not implemented : " << config.getSolver() << '\n';
-            std::cout << "Please use one of the following solver : Euler, Verlet, RK4.\n";
-            break;
         }
+        break;
+    case Solver::Verlet:
+        integrateVerlet(timeStep);
+        break;
+    case Solver::RK4:
+        integrateRK4(timeStep);
+        break;
+    default:
+        std::cout << "Unknown solver: " << config.getSolver() << '\n';
     }
 
     // If collision : object stops moving
-
     const size_t n = objects.size();
 
     for (size_t i = 0; i < n; ++i)
@@ -456,52 +441,69 @@ void PhysicsWorld::integrate()
         return;
     }
 
-    setTimeStep(timeStep);
-
-    // Reset accelerations
-    for (auto* obj : objects)
-    {
-        if (!obj || obj->isFixed())
-            continue;
-        obj->setAcceleration(Vector3D(0_d));
-    }
-
-    // Compute gravity forces
-    applyGravityForces();
-
-    // Compute contact
     if (config.getSimplifiedCollision())
     {
-        solveCollisions(); // impulsion
-    }
-    else
-    {
-        applyContact(); // forces
-    }
+        // Impulse-based collisions pipeline : pre-compute gravity + apply impulsions before integration.
+        for (auto* obj : objects)
+        {
+            if (!obj || obj->isFixed())
+                continue;
+            obj->setAcceleration(Vector3D(0_d));
+        }
+        applyGravityForces();
+        solveCollisions();
 
-    // Integrate motion
-    for (auto* obj : objects)
-    {
-        if (!obj || obj->isFixed())
-            continue;
         switch (solver)
         {
         case Solver::Euler:
-            integrateEuler(*obj, timeStep);
+            for (auto* obj : objects)
+            {
+                if (!obj || obj->isFixed())
+                    continue;
+                integrateEuler(*obj, timeStep);
+            }
             break;
         case Solver::Verlet:
-            integrateVerlet(*obj, timeStep);
+            integrateVerlet(timeStep);
             break;
         case Solver::RK4:
-            integrateRK4(*obj, timeStep);
+            integrateRK4(timeStep);
             break;
-        case Solver::Unknown:
-            std::cout << "The following solver is not implemented : " << config.getSolver() << '\n';
-            std::cout << "Please use one of the following solver : Euler, Verlet, RK4.\n";
+        default:
+            std::cout << "Unknown solver: " << config.getSolver() << '\n';
+        }
+    }
+    else
+    {
+        // Force-based collisions pipeline : computeAcceleration() compute everything internaly.
+        switch (solver)
+        {
+        case Solver::Euler: {
+            for (auto* obj : objects)
+            {
+                if (!obj || obj->isFixed())
+                    continue;
+                obj->setAcceleration(Vector3D(0_d));
+            }
+            applyGravityForces();
+            applyContact();
+            for (auto* obj : objects)
+            {
+                if (!obj || obj->isFixed())
+                    continue;
+                integrateEuler(*obj, timeStep);
+            }
             break;
         }
-
-        // solveCollisions();
+        case Solver::Verlet:
+            integrateVerlet(timeStep);
+            break;
+        case Solver::RK4:
+            integrateRK4(timeStep);
+            break;
+        default:
+            std::cout << "Unknown solver: " << config.getSolver() << '\n';
+        }
     }
 }
 void PhysicsWorld::run()
@@ -509,7 +511,6 @@ void PhysicsWorld::run()
     const decimal timeStep = config.getTimeStep();
     const size_t  maxIter  = config.getMaxIterations();
     size_t        cpt      = 0;
-    checkStabilityCondition();
 
     // Printing
     // Column widths
@@ -553,17 +554,13 @@ void PhysicsWorld::run()
                 }
                 std::cout << std::string(n, '-') << '\n';
             }
-            cpt++;
         }
+        cpt++;
     }
 
     // Close buffer
     closeCSV();
 }
-
-// ============================================================================
-//  Object management
-// ============================================================================
 
 // ============================================================================
 //  Print & Save
@@ -635,7 +632,6 @@ void PhysicsWorld::saveObjectsCSV()
     {
         object->saveObjectCSV(objectFile);
     }
-    objectFile.close();
     objectFile.close();
 }
 void PhysicsWorld::flushMotionBuffer()

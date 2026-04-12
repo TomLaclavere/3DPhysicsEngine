@@ -1,6 +1,6 @@
 name: aluminum
 density: 2700        # kg/m^3
-stiffness: 1e5       # N/m   
-damping: 0.01        # ratio ζ [0.001-0.02]
-friction: 0.5        # μ [0.3-0.6]
-restitution: 0.6     # e [0.5-0.8]
+stiffness: 3e9       # N/m   
+damping: 0.75        # ratio ζ 
+friction: 0.45        # μ 
+restitution: 0.5     # e 

@@ -1,6 +1,6 @@
 name: wood
 density: 600           # kg/m^3 
-stiffness: 1e7         # N/m 
-damping: 0.05          # ratio ζ 
+stiffness: 5e7         # N/m 
+damping: 0.45          # ratio ζ 
 friction: 0.5          # μ 
-restitution: 0.4       # e 
+restitution: 0.6       # e 

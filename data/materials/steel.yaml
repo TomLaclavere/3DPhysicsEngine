@@ -1,6 +1,6 @@
 name: steel
 density: 7850        # kg/m^3
-stiffness: 1e9       # N/m   
-damping: 0.02         # ratio ζ 
+stiffness: 1e10       # N/m   
+damping: 0.85         # ratio ζ 
 friction: 0.6        # μ 
-restitution: 0.3     # e 
+restitution: 0.4     # e 

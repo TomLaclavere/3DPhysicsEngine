@@ -100,6 +100,9 @@ public:
     decimal            getDampingCst() const;
     decimal            getRestitutionCst() const;
     virtual decimal    getVolume() const;
+    decimal            getKineticEnergy() const;
+    decimal            getPotentielEnergy(decimal g) const;
+    decimal            getTotalEnergy(decimal g) const;
     Material           getMaterial() const;
     virtual ObjectType getType() const;
     bool               getIsFixed() const;

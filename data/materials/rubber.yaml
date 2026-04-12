@@ -1,6 +1,6 @@
 name: rubber
 density: 1000        # kg/m^3
 stiffness: 5e6       # N/m   
-damping: 0.7         # ratio ζ 
+damping: 0.15         # ratio ζ 
 friction: 1          # μ 
-restitution: 0.8     # e 
+restitution: 0.9     # e 

@@ -13,9 +13,8 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
   - [x] Implement contact forces in simulation
   - [x] Add parameter to choose between instantaneous response and continuous response
   - [x] Fix contact forces simulating collisions
-  - [ ] Harmonise contact forces & impulsion for collisions
-  - [ ] Warning : damping might be inverted in contact forces
-  - [ ] Adjust materials' properties
+  - [x] Harmonise contact forces & impulsion for collisions
+  - [x] Adjust materials' properties
 - [x] Fix Verlet & RK4 integration
 
 ## Code Quality and Maintenance

@@ -310,7 +310,7 @@ if(3DPE_BUILD_BENCHMARKS)
     message(STATUS "Building benchmarks")
 
     # ---------------------------------------------
-    # Example: Free Fall benchmark
+    # Benchmark: Free Fall
     # ---------------------------------------------
     add_executable(benchmark_Free_Fall benchmarks/Free_Fall/main.cpp)
     target_link_libraries(benchmark_Free_Fall PRIVATE 3DPhysicsEngine)
@@ -326,6 +326,25 @@ if(3DPE_BUILD_BENCHMARKS)
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         DEPENDS benchmark_Free_Fall
         COMMENT "Running benchmark: Free_Fall"
+    )
+
+    # ---------------------------------------------
+    # Benchmark: Bouncing Ball
+    # ---------------------------------------------
+    add_executable(benchmark_Bouncing benchmarks/Bouncing/main.cpp)
+    target_link_libraries(benchmark_Bouncing PRIVATE 3DPhysicsEngine)
+    target_include_directories(benchmark_Bouncing PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+    set_target_properties(benchmark_Bouncing PROPERTIES
+        OUTPUT_NAME "Bouncing"
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/benchmarks
+        FOLDER "Benchmarks"
+    )
+
+    add_custom_target(Bouncing_Benchmark
+        COMMAND $<TARGET_FILE:benchmark_Bouncing>
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        DEPENDS benchmark_Bouncing
+        COMMENT "Running benchmark: Bouncing"
     )
 
 endif()

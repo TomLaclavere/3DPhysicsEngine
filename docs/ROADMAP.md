@@ -91,10 +91,10 @@
   - [x] **Impulse resolution**
   - [x] **Restitution coefficient** (bounciness)
   - [x] **Basic friction**
-- [ ] **Contact Forces :** implement collisions with contact forces instead of instantaneous response
-  - [ ] **Write Forces**
-  - [ ] Add possibility to choose between instantaneous response and contact forces
-  - [ ] **Implement Forces :** implement forces in simulation
+- [x] **Contact Forces :** implement collisions with contact forces instead of instantaneous response
+  - [x] **Write Forces**
+  - [x] Add possibility to choose between instantaneous response and contact forces
+  - [x] **Implement Forces :** implement forces in simulation
 - [ ] **Validation & Release :**
   - [ ] **Standard testing :** reference scenes, physical validity, ...
   - [ ] **Check Energy/momentum conservation**

@@ -1,18 +1,23 @@
 /**
  * @file main.cpp
  *
- * @brief Bouncing Benchmark
+ * @brief Bouncing Ball Benchmark
  *
  * Metrics measured per simulation:
- *   - Contact time error    : |t_contact_numerical - t_contact_analytical|
- *   - Max energy drift      : max( |E(t) - E0| / E0 )
+ *   - Max peak height error : max relative error on analytical peak heights
+ *   - Max energy drift      : max( |E(t) - E0| / E0 ) over the simulation
  *   - Final energy drift    : |E(T) - E0| / E0
- *   - CPU time (ms)         : duration of the simulation loop
+ *   - CPU time (µs)         : duration of the simulation loop
+ *   - Bounce count          : number of bounces detected
+ *
+ * Analytical reference for peak heights:
+ *   Sphere: z0=20, radius=2, v0=0, g=9.81, restitution e=0.9
+ *   Contact when z_centre = radius  =>  effective drop height = z0 - radius = 18
+ *   Peak after bounce n (1-indexed) : z_peak(n) = radius + (z0 - radius) * e^(2n)
  *
  * Two CSV files are produced:
  *   benchmark.csv      — one row per (solver, dt), all aggregated metrics
- *   energy_drift.csv   — one row per (solver, dt, timestep) to plot E(t)
- *                        (only for a subset of dt values to limit file size)
+ *   energy_drift.csv   — E(t) time series for a subset of dt values
  */
 
 #include "mathematics/common.hpp"
@@ -28,31 +33,27 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
-#include <limits>
 #include <string>
 #include <vector>
 
-//------------------------------------------------------------------------
 // Result structure
-//------------------------------------------------------------------------
 
 struct SimResult
 {
-    decimal maxEnergyDrift;
-    decimal finalEnergyDrift;
-    decimal cpuMs;
+    decimal maxEnergyDrift;   // max |E(t) - E0| / E0 over the whole simulation
+    decimal finalEnergyDrift; // |E(T) - E0| / E0
+    decimal cpuUs;            // simulation loop duration (microseconds)
 
-    int     bounceCount;
-    decimal maxHeightError;
+    int     bounceCount;    // number of bounces detected
+    decimal maxHeightError; // max relative error on analytical peak heights
 
+    // Energy samples for E(t) plots — filled only if recordEnergy = true
     std::vector<decimal> energyTimes;
     std::vector<decimal> energyDrifts;
 };
 
-//------------------------------------------------------------------------
 // Total mechanical energy of the sphere
 // E = Ek + Ep = 0.5 * m * v^2 + m * g * z
-//------------------------------------------------------------------------
 
 static inline decimal computeEnergy(const Sphere& sphere, decimal g = 9.81_d)
 {
@@ -63,11 +64,21 @@ static inline decimal computeEnergy(const Sphere& sphere, decimal g = 9.81_d)
     return 0.5_d * mass * velocitySq + mass * g * z;
 }
 
-//------------------------------------------------------------------------
-// Single simulation run
-//------------------------------------------------------------------------
+// Analytical peak height after bounce n (1-indexed)
+//   z_peak(n) = radius + (z0 - radius) * e^(2n)
 
-SimResult simulation(const std::string& solver, decimal timestep, int maxiter, bool recordEnergy = false)
+static inline decimal analyticalPeakHeight(decimal z0, decimal radius,
+                                            decimal restitution, int bounceIndex)
+{
+    return radius + (z0 - radius) * std::pow(restitution, 2 * bounceIndex);
+}
+
+// Single simulation run
+
+SimResult simulation(const std::string& solver,
+                     decimal            timestep,
+                     int                maxiter,
+                     bool               recordEnergy = false)
 {
     // Configuration
     Config& config = Config::get();
@@ -79,14 +90,21 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, b
 
     // Scene setup
     PhysicsWorld world(config);
-    auto ground = std::make_unique<Plane>(Vector3D(0_d), Vector3D(50_d, 50_d, 0_d), Vector3D(0_d, 0_d, 1_d));
-    auto sphere = std::make_unique<Sphere>(Vector3D(0_d, 0_d, 20_d), 2_d, 1_d);
+    auto ground = std::make_unique<Plane>(
+        Vector3D(0_d), Vector3D(50_d, 50_d, 0_d), Vector3D(0_d, 0_d, 1_d));
+    auto sphere = std::make_unique<Sphere>(
+        Vector3D(0_d, 0_d, 20_d), 2_d, 1_d); // radius=2, mass=1, v0=(0,0,0)
 
     sphere->setIsFixed(false);
     sphere->setRestitutionCst(0.9_d);
     world.addObject(sphere.get());
     world.addObject(ground.get());
     world.start();
+
+    // Analytical parameters (read from the actual sphere to stay consistent)
+    const decimal z0          = sphere->getPosition().getZ(); // 20
+    const decimal radius      = sphere->getRadius();          // 2
+    const decimal restitution = sphere->getRestitutionCst();  // 0.9
 
     // Initial energy reference
     const decimal E0 = computeEnergy(*sphere);
@@ -95,25 +113,23 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, b
     SimResult result;
     result.maxEnergyDrift   = 0_d;
     result.finalEnergyDrift = 0_d;
-    result.cpuMs            = 0_d;
+    result.cpuUs            = 0_d;
+    result.bounceCount      = 0;
+    result.maxHeightError   = 0_d;
 
     const decimal timeStep = config.getTimeStep();
-    const auto    maxIter  = static_cast<size_t>(config.getMaxIterations());
+    const auto  maxIter  = static_cast<size_t>(config.getMaxIterations());
 
     // Sub-sample energy recording to at most 500 points
-    const size_t recordEvery = recordEnergy ? std::max(size_t(1), maxIter / 500) : 0;
+    const size_t recordEvery = recordEnergy
+                                   ? std::max(size_t(1), maxIter / 500)
+                                   : 0;
 
     // Simulation loop
     Timer  simulationTimer;
-    size_t counter = 0;
-
-    decimal previousVz  = sphere->getVelocity().getZ();
-    decimal currentPeak = sphere->getPosition().getZ();
-    decimal h0          = currentPeak;
-    decimal restitution = 1_d;
-
-    int     bounceCount    = 0;
-    decimal maxHeightError = 0_d;
+    size_t counter    = 0;
+    decimal previousVz = sphere->getVelocity().getZ(); // 0 at t=0
+    decimal currentPeak = z0; // maximum z tracked while the sphere is rising
 
     while (counter < maxIter && world.getIsRunning())
     {
@@ -124,37 +140,48 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, b
         const decimal z  = sphere->getPosition().getZ();
         const decimal vz = sphere->getVelocity().getZ();
 
-        // Track peak while going up
+        // -- Track maximum z while the sphere is moving upward --
         if (vz > 0_d)
             currentPeak = std::max(currentPeak, z);
 
-        // Detect bounce (velocity flip: downward → upward)
-        // Detect peak (top of trajectory)
-        if (previousVz > 0_d && vz < 0_d)
-        {
-            // Expected height AFTER previous bounce
-            const decimal expected = h0 * std::pow(restitution, 2 * bounceCount);
-
-            const decimal err = commonMaths::absVal((z - expected) / expected);
-            if (err > maxHeightError)
-                maxHeightError = err;
-        }
-
-        // Detect bounce (for counting only)
+        // -- Detect bounce: vz flips from negative to positive --
+        // Increment bounceCount FIRST so the index is already correct
+        // when we check the apex on the next downward flip.
         if (previousVz < 0_d && vz > 0_d)
         {
-            bounceCount++;
+            result.bounceCount++;
+            currentPeak = z; // start fresh peak tracking from the bounce position
+        }
+
+        // -- Detect apex: vz flips from positive to negative --
+        // currentPeak holds the best estimate of the reached peak height.
+        // bounceCount is already the 1-indexed bounce number for this ascent.
+        if (previousVz > 0_d && vz <= 0_d && result.bounceCount > 0)
+        {
+            const decimal expected = analyticalPeakHeight(z0, radius, restitution,
+                                                           result.bounceCount);
+            const decimal err      = (expected > 0_d)
+                                         ? commonMaths::absVal((currentPeak - expected) / expected)
+                                         : commonMaths::absVal(currentPeak - expected);
+            if (err > result.maxHeightError)
+                result.maxHeightError = err;
+
+            // Reset peak tracker for the next ascent
+            currentPeak = radius;
         }
 
         previousVz = vz;
 
-        // Energy drift
+        // -- Energy drift --
         const decimal E     = computeEnergy(*sphere);
-        const decimal drift = (E0 != 0_d) ? commonMaths::absVal((E - E0) / E0) : commonMaths::absVal(E - E0);
+        const decimal drift = (E0 != 0_d)
+                                  ? commonMaths::absVal((E - E0) / E0)
+                                  : commonMaths::absVal(E - E0);
 
         if (drift > result.maxEnergyDrift)
             result.maxEnergyDrift = drift;
 
+        // -- Optional E(t) recording --
         if (recordEnergy && (counter % recordEvery == 0))
         {
             result.energyTimes.push_back(time);
@@ -164,39 +191,30 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, b
         ++counter;
     }
 
-    result.cpuMs          = simulationTimer.elapsedMicroseconds();
-    result.bounceCount    = bounceCount;
-    result.maxHeightError = maxHeightError;
+    result.cpuUs = simulationTimer.elapsedMicroseconds();
 
     // Final energy drift
     {
-        const decimal E = computeEnergy(*sphere);
-        result.finalEnergyDrift =
-            (E0 != 0_d) ? commonMaths::absVal((E - E0) / E0) : commonMaths::absVal(E - E0);
+        const decimal E         = computeEnergy(*sphere);
+        result.finalEnergyDrift = (E0 != 0_d)
+                                      ? commonMaths::absVal((E - E0) / E0)
+                                      : commonMaths::absVal(E - E0);
     }
 
     world.clearObjects();
     return result;
 }
 
-//------------------------------------------------------------------------
 // Entry point
-//------------------------------------------------------------------------
 
 int main(int argc, char** argv)
 {
-    // Analytical reference
-    // Free fall: z0=20, v0z=-1, r=0.2, g=9.81
-    // Contact when z_centre = r  =>  20 - t - 0.5*9.81*t^2 = 0.2
-    // =>  4.905 t^2 + t - 19.8 = 0
-    // =>  t = (-1 + sqrt(1 + 4*4.905*19.8)) / (2*4.905)
-    const decimal analyticalContactTime = 1.914861584038593_d;
-    const decimal totalTime             = 20_d;
+    const decimal totalTime = 20_d; // long enough to observe multiple bounces
 
     // Timesteps: logarithmic spacing
-    constexpr std::size_t     N_DT = 50;
+    constexpr std::size_t N_DT = 50;
     std::array<decimal, N_DT> timesteps;
-    std::array<int, N_DT>     maxIterations;
+    std::array<int,     N_DT> maxIterations;
 
     const decimal dt_max = 0.5_d;
     const decimal dt_min = 1e-5_d;
@@ -216,11 +234,9 @@ int main(int argc, char** argv)
 
     // Indices of dt values for which E(t) is recorded (5 representative values)
     const std::array<size_t, 5> energyRecordIdx { 5, 15, 25, 35, 45 };
-    auto                        shouldRecord = [&](size_t j)
-    {
+    auto shouldRecord = [&](size_t j) {
         for (auto idx : energyRecordIdx)
-            if (idx == j)
-                return true;
+            if (idx == j) return true;
         return false;
     };
 
@@ -230,20 +246,22 @@ int main(int argc, char** argv)
         std::cout << "Solver: " << solvers[iS] << "\n";
         for (size_t jDt = 0; jDt < N_DT; ++jDt)
         {
-            results[iS][jDt] = simulation(solvers[iS], timesteps[jDt], maxIterations[jDt], shouldRecord(jDt));
+            results[iS][jDt] = simulation(
+                solvers[iS], timesteps[jDt], maxIterations[jDt],
+                shouldRecord(jDt));
 
-            std::cout << "  dt=" << timesteps[jDt] << "  height_error=" << results[iS][jDt].maxHeightError
-                      << "  bounces=" << results[iS][jDt].bounceCount
+            std::cout << "  dt="               << timesteps[jDt]
+                      << "  height_error="     << results[iS][jDt].maxHeightError
+                      << "  bounces="          << results[iS][jDt].bounceCount
                       << "  max_energy_drift=" << results[iS][jDt].maxEnergyDrift
-                      << "  cpu=" << results[iS][jDt].cpuMs << " ms\n";
+                      << "  cpu="              << results[iS][jDt].cpuUs << " µs\n";
         }
     }
 
-    //--------------------------------------------------------------------
     // CSV 1: benchmark.csv
-    // Columns: solver, dt, contact_error, max_energy_drift,
-    //          final_energy_drift, cpu_ms, ops_total
-    //--------------------------------------------------------------------
+    // Columns: solver, dt, max_height_error, max_energy_drift,
+    //          final_energy_drift, cpu_us, ops_total, bounce_count
+    
     {
         std::ofstream file("benchmarks/Bouncing/benchmark.csv");
         if (!file)
@@ -253,7 +271,7 @@ int main(int argc, char** argv)
         }
 
         file << "solver,dt,max_height_error,max_energy_drift,"
-                "final_energy_drift,cpu_ms,ops_total,bounce_count\n";
+                "final_energy_drift,cpu_us,ops_total,bounce_count\n";
 
         // Force evaluations per step: Euler=1, Verlet=1, RK4=4
         const std::array<int, 3> opsPerStep { 1, 1, 4 };
@@ -263,22 +281,24 @@ int main(int argc, char** argv)
             for (size_t jDt = 0; jDt < N_DT; ++jDt)
             {
                 const SimResult& r = results[iS][jDt];
+                const long long  opsTotal =
+                    static_cast<long long>(maxIterations[jDt]) * opsPerStep[iS];
 
-                // Total force evaluations (normalised cost metric)
-                const long long opsTotal = static_cast<long long>(maxIterations[jDt]) * opsPerStep[iS];
-
-                file << solvers[iS] << "," << timesteps[jDt] << "," << r.maxHeightError << ","
-                     << r.maxEnergyDrift << "," << r.finalEnergyDrift << "," << r.cpuMs << "," << opsTotal
-                     << "," << r.bounceCount << "\n";
+                file << solvers[iS]        << ","
+                     << timesteps[jDt]     << ","
+                     << r.maxHeightError   << ","
+                     << r.maxEnergyDrift   << ","
+                     << r.finalEnergyDrift << ","
+                     << r.cpuUs           << ","
+                     << opsTotal          << ","
+                     << r.bounceCount     << "\n";
             }
         }
     }
 
-    //--------------------------------------------------------------------
     // CSV 2: energy_drift.csv
     // Columns: solver, dt, time, energy_drift
-    // Contains E(t) samples for selected dt values
-    //--------------------------------------------------------------------
+
     {
         std::ofstream file("benchmarks/Bouncing/energy_drift.csv");
         if (!file)
@@ -296,7 +316,9 @@ int main(int argc, char** argv)
                 const SimResult& r = results[iS][jDt];
                 for (size_t k = 0; k < r.energyTimes.size(); ++k)
                 {
-                    file << solvers[iS] << "," << timesteps[jDt] << "," << r.energyTimes[k] << ","
+                    file << solvers[iS]       << ","
+                         << timesteps[jDt]    << ","
+                         << r.energyTimes[k]  << ","
                          << r.energyDrifts[k] << "\n";
                 }
             }

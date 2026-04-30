@@ -347,6 +347,25 @@ if(3DPE_BUILD_BENCHMARKS)
         COMMENT "Running benchmark: Bouncing"
     )
 
+    # ---------------------------------------------
+    # Benchmark: Contact Forces
+    # ---------------------------------------------
+    add_executable(benchmark_Contact_Forces benchmarks/Contact_Forces/main.cpp)
+    target_link_libraries(benchmark_Contact_Forces PRIVATE 3DPhysicsEngine)
+    target_include_directories(benchmark_Contact_Forces PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+    set_target_properties(benchmark_Contact_Forces PROPERTIES
+        OUTPUT_NAME "Contact_Forces"
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/benchmarks
+        FOLDER "Benchmarks"
+    )
+
+    add_custom_target(Contact_Forces_Benchmark
+        COMMAND $<TARGET_FILE:benchmark_Contact_Forces>
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        DEPENDS benchmark_Contact_Forces
+        COMMENT "Running benchmark: Contact_Forces"
+    )
+
 endif()
 
 # =============================================

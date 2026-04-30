@@ -47,6 +47,11 @@ struct SimResult
     int     bounceCount;    // number of bounces detected
     decimal maxHeightError; // max relative error on analytical peak heights
 
+    // NEW: integrator-only error, measured between bounces (free-flight phases).
+    // Isolates numerical integration quality from the physical energy loss at contact.
+    // For constant-gravity free fall: Euler drifts O(dt), Verlet/RK4 are near-exact.
+    decimal maxFlightEnergyDrift;
+
     // Energy samples for E(t) plots — filled only if recordEnergy = true
     std::vector<decimal> energyTimes;
     std::vector<decimal> energyDrifts;
@@ -111,11 +116,12 @@ SimResult simulation(const std::string& solver,
 
     // Result initialisation
     SimResult result;
-    result.maxEnergyDrift   = 0_d;
-    result.finalEnergyDrift = 0_d;
-    result.cpuUs            = 0_d;
-    result.bounceCount      = 0;
-    result.maxHeightError   = 0_d;
+    result.maxEnergyDrift        = 0_d;
+    result.finalEnergyDrift      = 0_d;
+    result.cpuUs                 = 0_d;
+    result.bounceCount           = 0;
+    result.maxHeightError        = 0_d;
+    result.maxFlightEnergyDrift  = 0_d;
 
     const decimal timeStep = config.getTimeStep();
     const auto  maxIter  = static_cast<size_t>(config.getMaxIterations());
@@ -124,6 +130,12 @@ SimResult simulation(const std::string& solver,
     const size_t recordEvery = recordEnergy
                                    ? std::max(size_t(1), maxIter / 500)
                                    : 0;
+
+    // Flight energy tracking: reference is E0 before first bounce, then updated
+    // to E right after each bounce.  Only accumulated when the sphere is clearly
+    // above the ground (z > radius * 1.05) to exclude the contact phase.
+    decimal E_flight_ref           = E0;
+    const decimal FLIGHT_THRESHOLD = radius * 1.05_d;
 
     // Simulation loop
     Timer  simulationTimer;
@@ -151,6 +163,12 @@ SimResult simulation(const std::string& solver,
         {
             result.bounceCount++;
             currentPeak = z; // start fresh peak tracking from the bounce position
+
+            // Reset flight energy reference to current E so the next free-flight
+            // phase is measured relative to the post-bounce energy level.
+            const decimal E_now = computeEnergy(*sphere);
+            if (E_now > 0_d)
+                E_flight_ref = E_now;
         }
 
         // -- Detect apex: vz flips from positive to negative --
@@ -180,6 +198,18 @@ SimResult simulation(const std::string& solver,
 
         if (drift > result.maxEnergyDrift)
             result.maxEnergyDrift = drift;
+
+        // -- Flight energy drift (integrator error only) --
+        // Only accumulated when the sphere is clearly airborne.
+        // This isolates numerical integration quality from physical energy loss at
+        // contact: for gravity-only free fall, Verlet/RK4 are near-exact while
+        // Euler drifts O(dt).
+        if (z > FLIGHT_THRESHOLD && E_flight_ref > 0_d)
+        {
+            const decimal flightDrift = commonMaths::absVal((E - E_flight_ref) / E_flight_ref);
+            if (flightDrift > result.maxFlightEnergyDrift)
+                result.maxFlightEnergyDrift = flightDrift;
+        }
 
         // -- Optional E(t) recording --
         if (recordEnergy && (counter % recordEvery == 0))
@@ -250,11 +280,12 @@ int main(int argc, char** argv)
                 solvers[iS], timesteps[jDt], maxIterations[jDt],
                 shouldRecord(jDt));
 
-            std::cout << "  dt="               << timesteps[jDt]
-                      << "  height_error="     << results[iS][jDt].maxHeightError
-                      << "  bounces="          << results[iS][jDt].bounceCount
-                      << "  max_energy_drift=" << results[iS][jDt].maxEnergyDrift
-                      << "  cpu="              << results[iS][jDt].cpuUs << " µs\n";
+            std::cout << "  dt="                    << timesteps[jDt]
+                      << "  height_error="          << results[iS][jDt].maxHeightError
+                      << "  bounces="               << results[iS][jDt].bounceCount
+                      << "  max_energy_drift="      << results[iS][jDt].maxEnergyDrift
+                      << "  flight_energy_drift="   << results[iS][jDt].maxFlightEnergyDrift
+                      << "  cpu="                   << results[iS][jDt].cpuUs << " µs\n";
         }
     }
 
@@ -271,7 +302,8 @@ int main(int argc, char** argv)
         }
 
         file << "solver,dt,max_height_error,max_energy_drift,"
-                "final_energy_drift,cpu_us,ops_total,bounce_count\n";
+                "final_energy_drift,cpu_us,ops_total,bounce_count,"
+                "max_flight_energy_drift\n";
 
         // Force evaluations per step: Euler=1, Verlet=1, RK4=4
         const std::array<int, 3> opsPerStep { 1, 1, 4 };
@@ -284,14 +316,15 @@ int main(int argc, char** argv)
                 const long long  opsTotal =
                     static_cast<long long>(maxIterations[jDt]) * opsPerStep[iS];
 
-                file << solvers[iS]        << ","
-                     << timesteps[jDt]     << ","
-                     << r.maxHeightError   << ","
-                     << r.maxEnergyDrift   << ","
-                     << r.finalEnergyDrift << ","
-                     << r.cpuUs           << ","
-                     << opsTotal          << ","
-                     << r.bounceCount     << "\n";
+                file << solvers[iS]              << ","
+                     << timesteps[jDt]           << ","
+                     << r.maxHeightError         << ","
+                     << r.maxEnergyDrift         << ","
+                     << r.finalEnergyDrift       << ","
+                     << r.cpuUs                 << ","
+                     << opsTotal                << ","
+                     << r.bounceCount           << ","
+                     << r.maxFlightEnergyDrift  << "\n";
             }
         }
     }

@@ -1,7 +1,7 @@
 # 3D Physics Engine - Roadmap
 
 > **Goal:** Build a credible technical showcase for numerical simulation and HPC roles.
-> Phases are ordered by job-market impact: scientific rigour first, then CPU and GPU performance, then distributed computing, then physics completeness.
+> Phases are ordered by : scientific rigour first, then CPU and GPU performance, then physics completeness, then distributed computing.
 
 ---
 
@@ -103,7 +103,7 @@
 
 ## Phase 5: Scientific Validation & Benchmark Analysis
 
-*Close out Phase 4 with rigorous numerical evidence. This is what distinguishes a simulation project from a game dev project in the eyes of a scientific computing recruiter.*
+*Close out Phase 4 with rigorous numerical evidence.*
 
 - [ ] **Convergence analysis:**
   - [ ] Log-log plot of position/energy error vs dt for each integrator
@@ -129,8 +129,6 @@
 ---
 
 ## Phase 6: CPU Performance Engineering
-
-*Core HPC skill. Demonstrate the full profiling → optimisation → benchmarked speedup pipeline.*
 
 - [ ] **Brainstorm on ROADMAP**
 - [ ] **Brainstorm on To-Do-List**
@@ -170,8 +168,6 @@
 ---
 
 ## Phase 7: GPU Acceleration (CUDA / SYCL)
-
-*Targeted scope: one well-benchmarked kernel is more credible than an unfinished full GPU port.*
 
 - [ ] **Brainstorm on ROADMAP**
 - [ ] **Brainstorm on To-Do-List**
@@ -223,8 +219,6 @@
 
 ## Phase 9: Constraint Solver (Sequential Impulse / LCP)
 
-*Used in every commercial physics engine (PhysX, Bullet, Havok). Demonstrates awareness of industry-standard solvers beyond spring-damper models.*
-
 - [ ] **Brainstorm on ROADMAP**
 - [ ] **Brainstorm on To-Do-List**
 - [ ] **LCP Solver:**
@@ -255,8 +249,6 @@
 ---
 
 ## Phase 10: Distributed Parallelism (MPI)
-
-*Key differentiator for HPC centre and national lab roles. Demonstrates scalability beyond shared memory.*
 
 - [ ] **Brainstorm on ROADMAP**
 - [ ] **Brainstorm on To-Do-List**

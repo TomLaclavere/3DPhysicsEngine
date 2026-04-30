@@ -19,3 +19,6 @@ __pycache__/
 
 # Data formats
 *.csv
+
+# Claude
+CLAUDE.md

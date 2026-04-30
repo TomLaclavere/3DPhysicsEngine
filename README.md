@@ -9,34 +9,185 @@
 [![Last Commit](https://img.shields.io/github/last-commit/tomlaclavere/3DPhysicsEngine?style=flat)](https://github.com/tomlaclavere/3DPhysicsEngine/commits/main)
 
 ## Project Overview
-A modular 3D physics engine written in modern C++, designed to combine scientific rigour with high-performance computing techniques.
-The project focuses on numerical accuracy, clean architecture, and scalability, while remaining efficient on modern hardware.
 
-This engine is primarily developed as a technical and scientific showcase,
-demonstrating advanced C++ design, HPC-oriented optimizations, and physically sound simulation methods.
+A modular rigid-body physics engine written in modern C++23, built from scratch with a focus on numerical accuracy and HPC scalability.
 
-While initially a personal research and engineering project, the codebase is designed with long-term maintainability and extensibility in mind.
+The project covers the full simulation stack: custom 3D math library, configurable numerical integrators, a two-phase collision pipeline, two collision response models, and a systematic benchmark suite comparing solvers across accuracy and performance metrics. It is designed as a technical showcase for numerical simulation and high-performance computing, with a roadmap toward parallelisation (OpenMP, CUDA/SYCL, MPI).
 
-Contributions are welcome. Please read CONTRIBUTING.md and CLA.md before submitting a pull request.
+Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) and [CLA.md](CLA.md) before submitting a pull request.
 
 ---
 
 ## Table of Contents
- - [Installation](#installation)
- - [Build and Run](#build-and-run)
- - [Developer scripts](#developer-scripts)
- - [Doxygen Documentation](#doxygen-documentation)
- - [Tech Stack](#tech-stack)
- - [Deliverables](#deliverables)
- - [License](#license)
+
+- [Features](#features)
+- [Architecture](#architecture)
+- [Benchmark Results](#benchmark-results)
+- [Quick Start](#quick-start)
+- [Installation](#installation)
+- [Build and Run](#build-and-run)
+- [Developer Scripts](#developer-scripts)
+- [Doxygen Documentation](#doxygen-documentation)
+- [Tech Stack](#tech-stack)
+- [License](#license)
+
+---
+
+## Features
+
+**Numerical Integrators**
+- Semi-implicit Euler — O(dt), symplectic, fast
+- Störmer-Verlet — O(dt²), near-perfect energy conservation in free dynamics
+- Runge-Kutta 4 — O(dt⁴), highest accuracy, 4th-order convergence verified
+
+**Physics & Forces**
+- Gravity with configurable constant
+- Two collision response modes, selectable at runtime:
+  - **Impulse-based**: instantaneous velocity correction via restitution coefficient + Coulomb friction
+  - **Contact forces**: continuous spring-damper model (Hooke restoring force + viscous damping + Coulomb friction)
+- Position correction to prevent interpenetration drift
+
+**Collision Pipeline**
+- Broad phase: AABB-based early rejection
+- Narrow phase: analytical contact computation for Sphere–Sphere, Sphere–Plane, AABB–AABB
+- Contact struct: normal, penetration depth, contact point
+
+**Material System**
+- Per-object material properties: density, stiffness, damping ratio, restitution, friction
+- YAML-defined materials (steel, aluminium, rubber, wood) loaded at runtime
+
+**Precision & Configuration**
+- Compile-time precision switch: `float` (default) or `double` via `-D3DPE_USE_DOUBLE_PRECISION`
+- YAML config file + command-line overrides + runtime interactive CLI
+- Solver and collision mode selectable at runtime
+
+**Validation & Testing**
+- 5 GoogleTest targets — ~3,700 lines across mathematics, collision, world, objects, utilities
+- Energy monitoring (kinetic + potential) at every timestep
+- CSV output for post-processing and comparison with analytical solutions
+- 5 example simulations: free fall, projectile motion, bouncing ball (3 materials), rolling
+
+**Benchmarks**
+- Systematic solver comparison: 150+ (solver × timestep) configurations per scenario
+- Metrics: contact time error, max energy drift, final energy drift, CPU time
+- Scenarios: free fall (no collision) and bouncing ball (contact forces mode)
+- Jupyter notebooks + PDF reports in [`benchmarks/`](benchmarks/)
+
+---
+
+## Architecture
+
+```
+3DPhysicsEngine/
+│
+├── lib/                        # Public API (headers)
+│   ├── mathematics/            # Vector3D, Matrix3D, Quaternion, precision types
+│   ├── objects/                # Object (base), Sphere, AABB, Plane, Material
+│   ├── collision/              # BroadCollision, NarrowCollision, CollisionResponse, Contact
+│   ├── world/                  # PhysicsWorld, Config (singleton), Physics (forces), integrators
+│   └── utilities/              # Timer, CSV I/O, command parser
+│
+├── src/                        # Implementations (mirrors lib/)
+├── examples/                   # 5 standalone simulation programs
+├── benchmarks/                 # Solver accuracy & performance benchmarks
+├── tests/                      # GoogleTest suites (5 targets)
+└── data/materials/             # YAML material files
+```
+
+**Module dependencies:**
+
+```
+PhysicsWorld
+  ├── Config          (YAML + CLI + runtime, singleton)
+  ├── Object          (Sphere / AABB / Plane + Material)
+  ├── Physics         (gravity, contact forces, impulse response)
+  ├── Collision       (BroadPhase → NarrowPhase → Response)
+  └── Integrators     (Euler / Verlet / RK4)
+```
+
+The math layer (`Vector3D`, `Matrix3D`, `Quaternion`) has no external dependencies — all types are implemented from scratch using `std::array` with constexpr helpers and a user-defined `decimal` literal for compile-time precision control.
+
+---
+
+## Benchmark Results
+
+### Free Fall (no collision)
+
+Measures energy conservation and contact time accuracy across solvers.
+
+| Solver      | dt (s)  | Max energy drift      | Contact time error | CPU time |
+|-------------|---------|----------------------|--------------------|----------|
+| Euler       | 1e-3    | ~0.2%                | ~0.008 s           | ~108 ms  |
+| Verlet      | 1e-3    | < 1e-12 (negligible) | < 0.001 s          | ~159 ms  |
+| RK4         | 1e-3    | < 1e-12 (negligible) | < 0.001 s          | ~332 ms  |
+
+Verlet and RK4 achieve near-exact energy conservation in free dynamics, consistent with their symplectic/high-order properties. Euler introduces a systematic drift proportional to dt.
+
+### Bouncing Ball (contact forces mode)
+
+Measures solver behaviour under repeated collisions with the spring-damper contact model.
+
+| Solver      | dt (s)  | Max height error | Energy drift | CPU time |
+|-------------|---------|-----------------|--------------|----------|
+| Euler       | 1e-3    | ~0.008 m        | ~0.73%       | ~1.1 ms  |
+| Verlet      | 1e-3    | < 0.001 m       | ~0.73%       | ~1.8 ms  |
+| RK4         | 1e-3    | < 0.001 m       | ~0.73%       | ~3.9 ms  |
+
+The ~0.73% energy drift is solver-independent, which isolates the dissipation source to the spring-damper contact model itself rather than the integrator — a physically meaningful result.
+
+Full benchmark data, convergence plots and analysis: [`benchmarks/`](benchmarks/)
+
+---
+
+## Quick Start
+
+### Run an example
+
+```bash
+# Clone and build
+git clone git@github.com:TomLaclavere/3DPhysicsEngine.git
+cd 3DPhysicsEngine
+mkdir build && cd build
+cmake .. -D3DPE_BUILD_EXAMPLES=ON -D3DPE_USE_DOUBLE_PRECISION=ON
+make -j$(nproc)
+
+# Run the bouncing ball example
+./bin/Bouncing
+```
+
+### Configure a simulation
+
+Each simulation reads a YAML config file at startup. Parameters can also be overridden from the command line:
+
+```bash
+./bin/Bouncing --solver=rk4 --dt=0.001 --duration=5.0 --save=true
+```
+
+Available solvers: `euler`, `verlet`, `rk4`.
+
+### Run the benchmarks
+
+```bash
+cmake .. -D3DPE_BUILD_BENCHMARKS=ON
+make -j$(nproc)
+./benchmarks/Free_Fall
+./benchmarks/Bouncing
+# Results written to CSV — open benchmarks/*/benchmark_analysis.ipynb to analyse
+```
+
+### Run the tests
+
+```bash
+cmake .. -D3DPE_BUILD_TESTS=ON
+make -j$(nproc)
+ctest -j$(nproc) --output-on-failure
+```
+
+---
 
 ## Installation
 
-This project relies mainly on basic packages to run easily without installing many external dependencies. Below is a step-by-step guide to get the project running.
-
 ### Get the project
-
-Clone this repository using `git`:
 
 ```bash
 git clone git@github.com:TomLaclavere/3DPhysicsEngine.git
@@ -47,38 +198,34 @@ cd 3DPhysicsEngine
 
 #### Build system
 
- - CMake >= 3.22
- - GCC (included in `build-essential`) or Clang
- - (optional) Ninja
+- CMake >= 3.22
+- GCC (included in `build-essential`) or Clang
+- (optional) Ninja
 
-#### External lib
+#### External libraries
 
- - yaml-cpp
+- yaml-cpp
 
 #### Tests
 
- - git (for `FetchContent`, used to install `GoogleTest`)
+- git (for `FetchContent`, used to install GoogleTest automatically)
 
 #### Coverage tools
 
- - gcovr (for GCC)
- - llvm-cov + llvm-profdata (for Clang)
+- gcovr (for GCC)
+- llvm-cov + llvm-profdata (for Clang)
 
-#### Documentation generation
+#### Documentation
 
- - Doxygen
+- Doxygen + Graphviz
 
-#### Installation 
-
-You can install the essential dependencies using:
+#### Installation commands
 
 ```bash
 # Ubuntu
 sudo apt update
 sudo apt install -y build-essential cmake git libyaml-cpp-dev gcovr
-```
 
-```bash
 # Arch Linux
 sudo pacman -Syu --needed base-devel cmake git yaml-cpp gcovr
 ```
@@ -88,9 +235,7 @@ For Clang and optional Ninja:
 ```bash
 # Ubuntu
 sudo apt install -y clang ninja-build
-```
 
-```bash
 # Arch Linux
 sudo pacman -S --needed clang ninja llvm
 ```
@@ -100,112 +245,94 @@ For documentation:
 ```bash
 # Ubuntu
 sudo apt-get install -y doxygen graphviz
-```
 
-```bash
 # Arch Linux
 sudo pacman -S --needed doxygen graphviz
 ```
 
-## How to build and run
+---
+
+## Build and Run
 
 ```bash
 mkdir build && cd build
-cmake .. [-OPTIONS]
+cmake .. [OPTIONS]
 make -j$(nproc)
 ```
 
-CMake takes multiple parameters to define different compilations :
-- `-D3DPE_USE_CLANG` : uses clang++ to compile. By default, CMake uses g++.
-- `-D3DPE_USE_DOUBLE_PRECISION` : uses double precision. By default, use simple float precision.
-- `-D3DPE_BUILD_EXAMPLES` : compiles the unit example repository. To run an example, the executables are accessible at : `./build/examples/`.
-- `-D3DPE_BUILD_TESTS` : compiles the unit testing repository. To run the test, you can use : `ctest -j$(nproc)`.
-- `-D3DPE_ENABLE_COVERAGE` : allows performing coverage analysis. Two options are available, to run after build : `make coverage` which will save a detailed coverage reports as HTML file at the following location : `build/coverage_report/`; and `make coverage-console` to print the results in the console. Be careful: `gcovr` needs to be installed for GCC compilation.
-- `-D3DPE_BUILD_BENCHMARKS` : compiles the benchmark repository. To run benchmarks, the executables are accessible at : `./build/benchmarks/` : NOT IMPLEMENTED YET.
-- `-D3DPE_ENABLE_CLANG_TIDY` : enables static analysis with clang-tidy during the build. Clang-tidy must be installed on the system. By default, it is disabled. Must be activated for development builds.
-- `-D3DPE_WARNINGS_AS_ERRORS` : treats all compiler warnings as errors. By default, it is enabled.
+### CMake options
 
-## Developer scripts
+| Option | Description | Default |
+|---|---|---|
+| `-D3DPE_USE_CLANG` | Use Clang instead of GCC | OFF |
+| `-D3DPE_USE_DOUBLE_PRECISION` | Use `double` instead of `float` | OFF |
+| `-D3DPE_BUILD_EXAMPLES` | Build the 5 example simulations | OFF |
+| `-D3DPE_BUILD_TESTS` | Build GoogleTest suite, run with `ctest` | OFF |
+| `-D3DPE_BUILD_BENCHMARKS` | Build solver benchmark executables | OFF |
+| `-D3DPE_ENABLE_COVERAGE` | Generate coverage report (`make coverage` or `make coverage-console`) | OFF |
+| `-D3DPE_ENABLE_CLANG_TIDY` | Enable static analysis during build | OFF |
+| `-D3DPE_WARNINGS_AS_ERRORS` | Treat all warnings as errors | ON |
 
-For convenience, bash scripts can be used to run common tasks : build, run, tests, coverage and clean. These executable files are provided in `scripts/` repository folder :
+---
+
+## Developer Scripts
+
+Bash scripts for common tasks are provided in `scripts/`:
 
 ```
 scripts/
 ├─ build.sh        # configure & build with CMake
 ├─ run.sh          # build (if needed) and run the executable
 ├─ tests.sh        # build (if needed) and run tests via CTest
-├─ coverage.sh     # build+generate coverage (html or console)
+├─ coverage.sh     # build and generate coverage (HTML or console)
 └─ clean.sh        # remove the build directory
 ```
 
-These scripts are designed to be simple and CI-friendly. They accept arguments and environment variables to adapt to different workflows.
+These scripts are CI-friendly and accept arguments and environment variables. See `scripts/USAGE.md` for the full option reference.
 
-### Make sure scripts are executable
-The executable files should be committed to Git. If it is not yet set, run locally : 
+Make sure they are executable:
 
 ```bash
 chmod +x scripts/*.sh
 ```
-If someone clones the repo on a system that does not preserve the executable bit (Windows), they can still run scripts with `bash scripts/build.sh`.
 
-### How to use ?
-
-A detailed explanation can be found in `scripts/USAGE.md`, to explain the different options, parameters and options to use these bash scripts.
+---
 
 ## Doxygen Documentation
 
-To generate the project documentation using Doxygen, run the following command :
+Generate locally:
+
 ```bash
 doxygen Doxyfile
+xdg-open docs/html/index.html   # Linux
 ```
 
-It will generate two repositories in `docs/` : `html/` and `latex/`. To visualise the documentation, use the command : 
-```bash
-xdg-open docs/html/index.html      # Linux
-open docs/html/index.html          # macOS
-start docs/html/index.html         # Windows
-```
+The documentation is automatically generated on each commit to `main` and published at:
 
-The documentation is generated at each commit on the main branch, and accessible at : [![Documentation](https://img.shields.io/badge/docs-online-brightgreen)](https://tomlaclavere.github.io/3DPhysicsEngine/)
+[![Documentation](https://img.shields.io/badge/docs-online-brightgreen)](https://tomlaclavere.github.io/3DPhysicsEngine/)
 
+---
 
 ## Tech Stack
 
-- Language: C++23
+| | |
+|---|---|
+| Language | C++23 |
+| Build | CMake 3.22+ |
+| Math | Custom (`Vector3D`, `Matrix3D`, `Quaternion`) — no external dependency |
+| Configuration | yaml-cpp |
+| Testing | GoogleTest (fetched via CMake FetchContent) |
+| CI | GitHub Actions |
+| Documentation | Doxygen + GitHub Pages |
+| Analysis | Python, Jupyter, Matplotlib (benchmarks) |
+| Planned | OpenMP, CUDA/SYCL, MPI |
 
-- Build System: CMake
-
-- Maths Library: 
-
-- Rendering: 
-
-- Testing & CI: GoogleTest, GitHub Actions
-
-- Documentation: Doxygen
-
-- Focus areas: numerical methods, performance, parallelism, modular design
-
-## Deliverables
-
-- Modular, well-documented C++ codebase
-
-- Scientifically sound physics models
-
-- High-performance and scalable architecture
-
-- Doxygen-generated API documentation
-
-- Benchmarks and example simulations
-
-- Long-term roadmap
+---
 
 ## License
+
 This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0).
 
-You are free to use, modify, and redistribute this software under the terms of the AGPL-3.0.
-Any modified version that is distributed or made available over a network must also make its source code available under the same license.
+You are free to use, modify, and redistribute this software under the terms of the AGPL-3.0. Any modified version that is distributed or made available over a network must also make its source code available under the same license.
 
-Commercial licensing
-
-Commercial licenses are available for proprietary, closed-source, or commercial use.
-Please contact the author to discuss licensing terms.
+**Commercial licensing:** Commercial licenses are available for proprietary or closed-source use. Please contact the author to discuss terms.

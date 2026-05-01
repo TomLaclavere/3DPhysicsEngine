@@ -117,8 +117,8 @@
 - [x] **Benchmark extension:**
   - [x] Add bounce count vs restitution coefficient sweep
   - [x] Automated benchmark runner (script that builds, runs all benchmarks, generates CSV)
-- [ ] **Validation & Release:**
-  - [ ] Publish key results' table in README
+- [x] **Validation & Release:**
+  - [x] Publish key results' table in README
   - [x] **Standard testing:** reference scenes updated with energy checks
   - [x] **Check energy conservation** (close Phase 4 validation item)
   - [x] **Documentation:**
@@ -130,27 +130,36 @@
 
 ## Phase 6: CPU Performance Engineering
 
-- [ ] **Profiling:**
-  - [ ] Identify hotspot with `perf` or Intel VTune
-  - [ ] **Roofline model analysis:**
-    - [ ] Measure arithmetic intensity (FLOP / byte) of main loops
-    - [ ] Determine if code is compute-bound or memory-bandwidth-bound
-    - [ ] Plot on Roofline chart
+See [`docs/benchmark.md`](benchmark.md) for more details.
+- [x] **Brainstorm on ROADMAP**
+- [x] **Brainstorm on To-Do-List**
+- [ ] **Tools implementation:**
+  - [ ] Reproducible benchmark simulation script
+    - [ ] Recompilation with proper flags (compiler optimisation, release build, precision, ...)
+    - [ ] Benchmark parameters (Number of Simulation, Number of objects, timestep, integrator, ...)
+    - [ ] Saving tools
+  - [ ] **Analysis tools wrappers :**
+    - [ ] perf
+    - [ ] malt
+    - [ ] maqao
+  - [ ] Plotting tools
+- [ ] **Reference bencharks:**
+  - [ ] Scalar reference case
+  - [ ] Compiler-optimised single-core
+- [ ] **Data layout optimisation:**
+  - [ ] Evaluate SoA vs AoS based on memory access patterns and SIMD efficiency
+  - [ ] Optimise memory layout if SoA improves cache efficiency
 - [ ] **SIMD Vectorisation:**
   - [ ] Vectorise `Vector3D` inner operations (AVX2 / SSE)
-  - [ ] Measure FLOP/s improvement vs scalar baseline
   - [ ] Evaluate auto-vectorisation via compiler reports (`-fopt-info-vec`)
-  - [ ] Manual intrinsics if auto-vectorisation is insufficient
+  - [ ] Manual intrinsics if auto-vectorisation is insufficient (Eve ?)
 - [ ] **OpenMP Parallelisation:**
+  - [ ] OpenMP / TBB
   - [ ] Parallelise force computation loop over objects
   - [ ] Parallelise broad-phase pair checks
   - [ ] Handle thread safety for shared state (contact list, Config)
-  - [ ] **Strong scaling study:** fix total N, measure speedup vs thread count (1 → max cores)
+  - [ ] **Strong scaling study:** fix total N, measure speed-up vs thread count (1 → max cores)
   - [ ] Amdahl's law analysis: estimate parallel fraction
-- [ ] **Memory Optimisation:**
-  - [ ] Profile cache miss rate (`perf stat -e cache-misses`)
-  - [ ] Evaluate Structure-of-Arrays (SoA) vs Array-of-Structures (AoS) for object data
-  - [ ] Optimise memory layout if SoA improves cache efficiency
 - [ ] **Benchmarks:**
   - [ ] Scalability: CPU time vs N objects (N = 10², 10³, 10⁴, 10⁵)
   - [ ] Comparison table: scalar vs SIMD vs OpenMP

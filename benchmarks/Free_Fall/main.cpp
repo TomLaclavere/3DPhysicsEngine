@@ -123,18 +123,20 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, b
             result.contactTime     = time + alpha * timeStep;
         }
 
-        // Energy drift
-        const decimal E     = computeEnergy(*sphere);
-        const decimal drift = (E0 != 0_d) ? commonMaths::absVal((E - E0) / E0) : commonMaths::absVal(E - E0);
-
-        if (drift > result.maxEnergyDrift)
-            result.maxEnergyDrift = drift;
-
-        // Optional E(t) recording
-        if (recordEnergy && (counter % recordEvery == 0))
+        // Energy drift — only valid before first collision
+        if (std::isnan(result.contactTime))
         {
-            result.energyTimes.push_back(time);
-            result.energyDrifts.push_back(drift);
+            const decimal E     = computeEnergy(*sphere);
+            const decimal drift = (E0 != 0_d) ? commonMaths::absVal((E - E0) / E0) : commonMaths::absVal(E - E0);
+
+            if (drift > result.maxEnergyDrift)
+                result.maxEnergyDrift = drift;
+
+            if (recordEnergy && (counter % recordEvery == 0))
+            {
+                result.energyTimes.push_back(time);
+                result.energyDrifts.push_back(drift);
+            }
         }
 
         ++counter;
@@ -142,7 +144,8 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, b
 
     result.cpuMs = simulationTimer.elapsedMicroseconds();
 
-    // Final energy drift
+    // Final energy drift — only meaningful if collision never occurred
+    if (std::isnan(result.contactTime))
     {
         const decimal E = computeEnergy(*sphere);
         result.finalEnergyDrift =

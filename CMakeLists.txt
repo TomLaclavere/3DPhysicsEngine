@@ -35,7 +35,7 @@ endif()
 # =============================================
 # Project Options
 # =============================================
-option(3DPE_USE_DOUBLE_PRECISION "Compile using double precision floating values" OFF)
+option(3DPE_USE_DOUBLE_PRECISION "Compile using double precision floating values" ON)
 option(3DPE_BUILD_EXAMPLES "Build example applications" ON)
 option(3DPE_BUILD_BENCHMARKS "Build benchmark applications" ON)
 option(3DPE_BUILD_TESTS "Build unit tests" ON)

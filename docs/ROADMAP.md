@@ -92,12 +92,12 @@
   - [x] **Position correction** to prevent interpenetration drift
   - [x] **Runtime switch** between impulse and contact forces modes
 - [ ] **Validation & Release:**
-  - [ ] **Standard testing:** reference scenes, physical validity
-  - [ ] **Check energy / momentum conservation**
+  - [x] **Standard testing:** reference scenes, physical validity
+  - [x] **Check energy conservation**
   - [ ] **Documentation:**
     - [ ] *Doxygen & GitHub Pages*
-    - [ ] *Installation & Usage guides*
-    - [ ] *GitHub notes*
+    - [x] *Installation & Usage guides*
+    - [x] *GitHub notes*
 
 ---
 
@@ -105,33 +105,31 @@
 
 *Close out Phase 4 with rigorous numerical evidence.*
 
-- [ ] **Convergence analysis:**
-  - [ ] Log-log plot of position/energy error vs dt for each integrator
-    - [ ] Verify slope ≈ 1 for Euler, ≈ 2 for Verlet, ≈ 4 for RK4
-  - [ ] Add convergence plots to Jupyter notebooks in `benchmarks/`
-- [ ] **Energy analysis:**
-  - [ ] Document solver-independent ~0.73% energy drift in contact-forces mode
-    - [ ] Explain: dissipation is a property of the spring-damper model, not the integrator
-  - [ ] Confirm near-zero energy drift for Verlet and RK4 in free-dynamics scenario
-  - [ ] Compare impulse mode vs contact forces mode energy behaviour
-- [ ] **Benchmark extension:**
-  - [ ] Add bounce count vs restitution coefficient sweep
-  - [ ] Automated benchmark runner (script that builds, runs all benchmarks, generates CSV)
+- [x] **Convergence analysis:**
+  - [x] Log-log plot of position/energy error vs dt for each integrator
+    - [x] Verify slope ≈ 1 for Euler, ≈ 2 for Verlet, ≈ 4 for RK4
+  - [x] Add convergence plots to Jupyter notebooks in `benchmarks/`
+- [x] **Energy analysis:**
+  - [x] Document solver-independent ~0.73% energy drift in contact-forces mode
+    - [x] Explain: dissipation is a property of the spring-damper model, not the integrator
+  - [x] Confirm near-zero energy drift for Verlet and RK4 in free-dynamics scenario
+  - [x] Compare impulse mode vs contact forces mode energy behaviour
+- [x] **Benchmark extension:**
+  - [x] Add bounce count vs restitution coefficient sweep
+  - [x] Automated benchmark runner (script that builds, runs all benchmarks, generates CSV)
 - [ ] **Validation & Release:**
   - [ ] Publish key results table in README
-  - [ ] **Standard testing:** reference scenes updated with energy checks
-  - [ ] **Check energy / momentum conservation** (close Phase 4 validation item)
-  - [ ] **Documentation:**
-    - [ ] *Doxygen & GitHub Pages*
-    - [ ] *Benchmark report update*
-    - [ ] *GitHub notes*
+  - [x] **Standard testing:** reference scenes updated with energy checks
+  - [x] **Check energy conservation** (close Phase 4 validation item)
+  - [x] **Documentation:**
+    - [x] *Doxygen & GitHub Pages*
+    - [x] *Benchmark report update*
+    - [x] *GitHub notes*
 
 ---
 
 ## Phase 6: CPU Performance Engineering
 
-- [ ] **Brainstorm on ROADMAP**
-- [ ] **Brainstorm on To-Do-List**
 - [ ] **Profiling:**
   - [ ] Identify hotspot with `perf` or Intel VTune
   - [ ] **Roofline model analysis:**

@@ -164,6 +164,8 @@ set(3DPE_COMMON_WARNINGS
     -Wsign-conversion
     -Wold-style-cast
     -Wunused
+    -g 
+    -fno-omit-frame-pointer 
 )
 
 
@@ -345,6 +347,25 @@ if(3DPE_BUILD_BENCHMARKS)
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         DEPENDS benchmark_Bouncing
         COMMENT "Running benchmark: Bouncing"
+    )
+
+    # ---------------------------------------------
+    # Benchmark: Bouncing Ball
+    # ---------------------------------------------
+    add_executable(benchmark_Bouncing_Conservative benchmarks/Bouncing_Conservative/main.cpp)
+    target_link_libraries(benchmark_Bouncing_Conservative PRIVATE 3DPhysicsEngine)
+    target_include_directories(benchmark_Bouncing_Conservative PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+    set_target_properties(benchmark_Bouncing_Conservative PROPERTIES
+        OUTPUT_NAME "Bouncing_Conservative"
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/benchmarks
+        FOLDER "Benchmarks"
+    )
+
+    add_custom_target(Bouncing_Conservative_Benchmark
+        COMMAND $<TARGET_FILE:benchmark_Bouncing_Conservative>
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        DEPENDS benchmark_Bouncing_Conservative
+        COMMENT "Running benchmark: Bouncing_Conservative"
     )
 
     # ---------------------------------------------

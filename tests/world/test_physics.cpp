@@ -82,14 +82,14 @@ TEST(PhysicsTest, DampingForce)
     obj1.setPosition(Vector3D(0_d));
     obj2.setPosition(Vector3D(1_d, 0_d, 0_d));
 
-    obj1.setVelocity(Vector3D(1_d, 0_d, 0_d));
-    obj2.setVelocity(Vector3D(0_d));
+    obj2.setVelocity(Vector3D(10_d, 0_d, 0_d));
+    obj1.setVelocity(Vector3D(0_d));
 
     obj1.setMass(1_d);
     obj2.setMass(2_d);
 
-    obj1.setSize(Vector3D(2_d));
-    obj2.setSize(Vector3D(2_d));
+    obj1.setSize(Vector3D(1.1_d));
+    obj2.setSize(Vector3D(1.1_d));
 
     obj1.setStiffnessCst(2_d);
     obj2.setStiffnessCst(3_d);
@@ -101,6 +101,7 @@ TEST(PhysicsTest, DampingForce)
     obj1.computeCollision(obj2, contact12);
 
     Vector3D f = Physics::computeDampingForce(obj1, obj2, contact12);
+
     EXPECT_NE(f.getX(), 0_d); // damping applied along x
 
     // Test k==0 case for computeDampingForce with explicit e and k

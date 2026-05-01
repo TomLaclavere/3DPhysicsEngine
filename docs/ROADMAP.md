@@ -118,7 +118,7 @@
   - [x] Add bounce count vs restitution coefficient sweep
   - [x] Automated benchmark runner (script that builds, runs all benchmarks, generates CSV)
 - [ ] **Validation & Release:**
-  - [ ] Publish key results table in README
+  - [ ] Publish key results' table in README
   - [x] **Standard testing:** reference scenes updated with energy checks
   - [x] **Check energy conservation** (close Phase 4 validation item)
   - [x] **Documentation:**

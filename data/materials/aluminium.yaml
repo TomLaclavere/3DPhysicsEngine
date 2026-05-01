@@ -1,5 +1,6 @@
 name: aluminum
-young: 1e6
-damping: 0.2
-friction: 0.4
-restitution: 0.6
+density: 2700        # kg/m^3
+stiffness: 3e9       # N/m   
+damping: 0.75        # ratio ζ 
+friction: 0.45        # μ 
+restitution: 0.5     # e 

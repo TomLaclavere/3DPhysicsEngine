@@ -1,7 +1,8 @@
 # config.yaml
 gravity: 9.81
-timestep: 0.001
-duration: 6
-solver: "Euler"
+timestep: 0.0001
+duration: 10
+solver: "RK4"
 verbose: true
 save: true
+simplifiedCollision: false

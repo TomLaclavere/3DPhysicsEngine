@@ -4,7 +4,9 @@
  *
  */
 #pragma once
+#include "mathematics/vector.hpp"
 #include "objects/object.hpp"
+#include "utilities/csv.hpp"
 #include "world/config.hpp"
 #include "world/integrateRK4.hpp"
 #include "world/physics.hpp"
@@ -12,6 +14,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <unordered_map>
 #include <vector>
 
 /**
@@ -25,18 +28,24 @@
 struct PhysicsWorld
 {
 private:
-    Config&                                        config = Config::get();
-    std::vector<Object*>                           objects;
-    std::ofstream                                  objectFile;
-    std::vector<std::pair<Object*, std::ofstream>> motionFiles;
+    // World
+    Config&                                    config = Config::get();
+    std::vector<Object*>                       objects;
+    std::ofstream                              objectFile;
+    std::unordered_map<Object*, std::ofstream> motionFiles;
 
+    // Simulation
     bool     isRunning = false;
     Solver   solver;
     decimal  timeStep   = config.getTimeStep();
     decimal  gravityCst = config.getGravity();
     Vector3D gravityAcc = Physics::computeGravityAcc(gravityCst);
 
-    unsigned int nextObjectId = 0;
+    // Utilites
+    unsigned int            nextObjectId = 0;
+    static constexpr size_t FLUSH_EVERY  = 500;
+    std::vector<MotionCSV>  motionBuffer;
+    void                    flushMotionBuffer();
 
 public:
     // ============================================================================
@@ -56,7 +65,7 @@ public:
     /// @name Getters
     // ============================================================================
     /// @{
-    Config&      getConfig() const;
+    Config&      getConfig();
     bool         getIsRunning() const;
     decimal      getTimeStep() const;
     decimal      getGravityCst() const;
@@ -92,6 +101,7 @@ public:
             obj->setAcceleration(Vector3D(0_d));
         }
     }
+
     /// @}
 
     // ============================================================================
@@ -103,20 +113,18 @@ public:
     void applyGravityForce(Object& obj);
     /// Apply gravitational force to all movable objects.
     void applyGravityForces();
-    /// Apply spring forces on a single object due to another.
-    void applySpringForces(Object& obj, Object& other);
-    /// Apply dampling forces on a single object due to another.
-    void applyDamplingForces(Object& obj, Object& other);
-    /// Apply friction forces on a single object due to another.
-    void applyFrictionForces(Object& obj, Object& other);
     /// Apply contact forces (spring + damping + friction) between two objects.
-    void applyContactForces(Object& obj, Object& other);
-    /// Compute and apply all forces for the curent physics step on one Object.
-    void computeAcceleration(Object& obj);
-    /// Compute and apply all forces for the current physics step.
+    void applyContactForces(Object& obj, Object& other, Contact& contact);
+    /// Compute and apply contact forces for the current physics step.
+    void applyContact();
+    /// Apply all forces to all objects.
     void applyForces();
     /// Solve collisions between objects.
     void solveCollisions();
+    /// Compute gravitational force only.
+    Vector3D computeAccelerationGravityOnly();
+    /// Compute acceleration from forces.
+    Vector3D computeAcceleration(Object& obj);
     /// @}
 
     // ============================================================================
@@ -126,11 +134,10 @@ public:
 
     /// Semi-implicit Euler integrator for one object.
     void integrateEuler(Object& obj, decimal dt);
-    /// Verlet integrator for one object.
-    void integrateVerlet(Object& obj, decimal dt);
-    /// Runge-Kutta 4 integrator for one object.
-    Derivative evaluateRK4(const Object& obj, const Derivative& d, decimal dt);
-    void       integrateRK4(Object& obj, decimal dt);
+    /// Verlet integrator for all objects.
+    void integrateVerlet(decimal dt);
+    /// RK4 integrator for all objects.
+    void integrateRK4(decimal dt);
     /// @brief Integrate all objects over one time step without collision resolution.
     /// Only for testing purposes.
     void integrateWithoutCollisions();
@@ -176,6 +183,8 @@ public:
     void printState() const;
     void initCSV(const std::string& directory);
     void saveObjectsCSV();
+    void flushMotionCSV();
     void saveMotionCSV(decimal time);
+    void closeCSV();
     /// @}
 };

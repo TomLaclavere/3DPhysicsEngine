@@ -1,5 +1,6 @@
 name: rubber
-young: 5e3
-damping: 1.0
-friction: 0.9
-restitution: 0.85
+density: 1000        # kg/m^3
+stiffness: 5e6       # N/m   
+damping: 0.15         # ratio ζ 
+friction: 1          # μ 
+restitution: 0.9     # e 

@@ -16,20 +16,32 @@
 #include "collision/broad_collision.hpp"
 #include "collision/narrow_collision.hpp"
 #include "mathematics/common.hpp"
+#include "mathematics/vector.hpp"
+#include "objects/object.hpp"
+#include "precision.hpp"
 
-// ============================================================================
 //  Getters
-// ============================================================================
 ObjectType      Plane::getType() const { return ObjectType::Plane; }
 const Vector3D& Plane::getNormal() const { return normal; }
 const Vector3D& Plane::getU() const { return u; }
 const Vector3D& Plane::getV() const { return v; }
 decimal         Plane::getHalfWidth() const { return halfWidth; }
 decimal         Plane::getHalfHeight() const { return halfHeight; }
+decimal         Plane::getVolume() const
+{
+    Vector3D size   = getSize();
+    decimal  volume = size[0] * size[1];
+    return volume;
+}
 
-// ============================================================================
+//  Setters
+void Plane::setMaterial(const Material& mat)
+{
+    Object::setMaterial(mat);
+    setMass(mat.getDensity() * getVolume());
+}
+
 //  Utilities
-// ============================================================================
 void Plane::updateLocalAxes()
 {
     Vector3D n = normal; // already normalized externally
@@ -64,9 +76,7 @@ bool Plane::containsPoint(const Vector3D& point) const
             commonMaths::approxSmallerOrEqualThan(std::abs(t), halfHeight));
 }
 
-// ============================================================================
 //  Collision
-// ============================================================================
 /**
  * @brief Checks broad collision between two Planes.
  */

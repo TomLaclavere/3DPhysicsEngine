@@ -1,5 +1,6 @@
 name: wood
-young: 1e5
-damping: 0.5
-friction: 0.5
-restitution: 0.3
+density: 600           # kg/m^3 
+stiffness: 5e7         # N/m 
+damping: 0.45          # ratio ζ 
+friction: 0.5          # μ 
+restitution: 0.6       # e 

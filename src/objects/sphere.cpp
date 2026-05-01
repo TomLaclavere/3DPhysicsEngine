@@ -15,18 +15,29 @@
 
 #include "collision/broad_collision.hpp"
 #include "collision/narrow_collision.hpp"
+#include "objects/object.hpp"
 
-// ============================================================================
+#include <numbers>
+
 //  Getters
-// ============================================================================
 ObjectType Sphere::getType() const { return ObjectType::Sphere; }
 Vector3D   Sphere::getCenter() const { return getPosition(); }
 decimal    Sphere::getDiameter() const { return getSize().getX(); }
 decimal    Sphere::getRadius() const { return getDiameter() * 0.5_d; }
+decimal    Sphere::getVolume() const
+{
+    decimal radius = getRadius();
+    return radius * radius * std::numbers::pi_v<decimal>;
+}
 
-// ============================================================================
+//  Setters
+void Sphere::setMaterial(const Material& mat)
+{
+    Object::setMaterial(mat);
+    setMass(mat.getDensity() * getVolume());
+}
+
 //  Collision
-// ============================================================================
 /**
  * @brief Checks broad collision between two Sphere.s
  */

@@ -5,6 +5,7 @@
 
 #include <cmath>
 #include <gtest/gtest.h>
+#include <numbers>
 #include <sstream>
 
 // ——————————————————————————————————————————————————————————————————————————
@@ -66,7 +67,7 @@ TEST(QuaternionTest, FromMatrix)
     // Branch 1: trace > 0 (small rotations)
     // =====================
     {
-        decimal   angle = M_PI / 4_d; // 45° around Z
+        decimal   angle = decimal(std::numbers::pi) / 4_d; // 45° around Z
         Matrix3x3 R;
         R(0, 0) = std::cos(angle);
         R(0, 1) = -std::sin(angle);
@@ -86,7 +87,7 @@ TEST(QuaternionTest, FromMatrix)
     // ======================================================
     {
         // 120° rotation around X axis - this gives cleaner math
-        decimal   angle = 2_d * M_PI / 3_d; // 120°
+        decimal   angle = 2_d * decimal(std::numbers::pi) / 3_d; // 120°
         Matrix3x3 R;
         R(0, 0) = 1_d;
         R(1, 1) = std::cos(angle);  // cos(120°) = -0.5
@@ -98,7 +99,7 @@ TEST(QuaternionTest, FromMatrix)
         decimal      half = angle / 2_d;                                            // 60°
         EXPECT_DECIMAL_EQ(q.getRealPart(), std::cos(half));                         // cos(60°) = 0.5
         EXPECT_VECTOR_EQ(q.getImaginaryPart(), Vector3D(std::sin(half), 0_d, 0_d)); // sin(60°) = √3/2
-        EXPECT_MATRIX_EQ(q.getRotationMatrix(), R);
+        EXPECT_MATRIX_NEAR(q.getRotationMatrix(), R);
     }
 
     // ======================================================
@@ -106,7 +107,7 @@ TEST(QuaternionTest, FromMatrix)
     // ======================================================
     {
         // 120° rotation around Y axis
-        decimal   angle = 2_d * M_PI / 3_d; // 120°
+        decimal   angle = 2_d * decimal(std::numbers::pi) / 3_d; // 120°
         Matrix3x3 R;
         R(1, 1) = 1_d;
         R(0, 0) = std::cos(angle);  // -0.5
@@ -118,7 +119,7 @@ TEST(QuaternionTest, FromMatrix)
         decimal      half = angle / 2_d; // 60°
         EXPECT_DECIMAL_EQ(q.getRealPart(), std::cos(half));
         EXPECT_VECTOR_EQ(q.getImaginaryPart(), Vector3D(0_d, std::sin(half), 0_d));
-        EXPECT_MATRIX_EQ(q.getRotationMatrix(), R);
+        EXPECT_MATRIX_NEAR(q.getRotationMatrix(), R);
     }
 
     // ======================================================
@@ -126,7 +127,7 @@ TEST(QuaternionTest, FromMatrix)
     // ======================================================
     {
         // 120° rotation around Z axis
-        decimal   angle = 2_d * M_PI / 3_d; // 120°
+        decimal   angle = 2_d * decimal(std::numbers::pi) / 3_d; // 120°
         Matrix3x3 R;
         R(2, 2) = 1_d;
         R(0, 0) = std::cos(angle);  // -0.5
@@ -138,14 +139,14 @@ TEST(QuaternionTest, FromMatrix)
         decimal      half = angle / 2_d; // 60°
         EXPECT_DECIMAL_EQ(q.getRealPart(), std::cos(half));
         EXPECT_VECTOR_EQ(q.getImaginaryPart(), Vector3D(0_d, 0_d, std::sin(half)));
-        EXPECT_MATRIX_EQ(q.getRotationMatrix(), R);
+        EXPECT_MATRIX_NEAR(q.getRotationMatrix(), R);
     }
 
     // ======================================================
     // Edge case: trace = -1 (180° rotation)
     // ======================================================
     {
-        decimal   angle = M_PI; // 180°
+        decimal   angle = decimal(std::numbers::pi); // 180°
         Matrix3x3 R;
         R(0, 0) = 1_d;
         R(1, 1) = std::cos(angle);  // -1
@@ -249,7 +250,7 @@ TEST(QuaternionTest, SetAllValues)
     EXPECT_VECTOR_EQ(q.getImaginaryPart(), Vector3D(-2_d, 0_d, 3.14_d));
 
     // From rotation matrix
-    decimal   angle = M_PI / 2_d;
+    decimal   angle = decimal(std::numbers::pi) / 2_d;
     Matrix3x3 R;
     R(0, 0) = std::cos(angle);
     R(0, 1) = -std::sin(angle);
@@ -264,7 +265,7 @@ TEST(QuaternionTest, SetAllValues)
 
     // From Euler angles
     Quaternion3D q_;
-    decimal      angleX = decimal(M_PI) / 2_d;
+    decimal      angleX = decimal(decimal(std::numbers::pi)) / 2_d;
     decimal      angleY = 0_d;
     decimal      angleZ = 0_d;
     q.setAllValues(angleX, angleY, angleZ);

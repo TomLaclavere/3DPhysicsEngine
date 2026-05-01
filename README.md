@@ -111,31 +111,63 @@ The math layer (`Vector3D`, `Matrix3D`, `Quaternion`) has no external dependenci
 
 ## Benchmark Results
 
-### Free Fall (no collision)
+Four scenarios benchmark solver accuracy, energy conservation, and performance across a range of timesteps and collision models. Full data, convergence plots, and Jupyter analysis: [`benchmarks/`](benchmarks/)
 
-Measures energy conservation and contact time accuracy across solvers.
+### Free Fall (no collision, dt = 1e-3 s)
 
-| Solver      | dt (s)  | Max energy drift      | Contact time error | CPU time |
-|-------------|---------|----------------------|--------------------|----------|
-| Euler       | 1e-3    | ~0.2%                | ~0.008 s           | ~108 ms  |
-| Verlet      | 1e-3    | < 1e-12 (negligible) | < 0.001 s          | ~159 ms  |
-| RK4         | 1e-3    | < 1e-12 (negligible) | < 0.001 s          | ~332 ms  |
+Path: [`benchmarks/Free_Fall/`](benchmarks/Free_Fall/benchmark_analysis.ipynb)
 
-Verlet and RK4 achieve near-exact energy conservation in free dynamics, consistent with their symplectic/high-order properties. Euler introduces a systematic drift proportional to dt.
+Sphere falls under gravity. Measures contact-time accuracy and energy conservation with no collision model noise.
 
-### Bouncing Ball (contact forces mode)
+| Solver | Contact time error | Max energy drift    | CPU (relative) |
+|--------|--------------------|---------------------|----------------|
+| Euler  | ~1e-3 s            | ~0.1% (O(dt))       | 1×             |
+| Verlet | ~1e-4 s            | ~1e-12 (negligible) | 1.5×           |
+| RK4    | ~1e-5 s            | ~1e-15 (negligible) | 3×             |
 
-Measures solver behaviour under repeated collisions with the spring-damper contact model.
+**Key insight:** Verlet and RK4 conserve energy at machine precision for this polynomial trajectory. Euler injects energy linearly with dt.
 
-| Solver      | dt (s)  | Max height error | Energy drift | CPU time |
-|-------------|---------|-----------------|--------------|----------|
-| Euler       | 1e-3    | ~0.008 m        | ~0.73%       | ~1.1 ms  |
-| Verlet      | 1e-3    | < 0.001 m       | ~0.73%       | ~1.8 ms  |
-| RK4         | 1e-3    | < 0.001 m       | ~0.73%       | ~3.9 ms  |
+### Bouncing — impulse model, e = 0.9 (dissipative, dt = 1e-3 s)
 
-The ~0.73% energy drift is solver-independent, which isolates the dissipation source to the spring-damper contact model itself rather than the integrator — a physically meaningful result.
+Path: [`benchmarks/Bouncing/`](benchmarks/Bouncing/benchmark_analysis.ipynb)
 
-Full benchmark data, convergence plots and analysis: [`benchmarks/`](benchmarks/)
+Ball bounces 6–7 times with energy loss at each contact. Tests solver behaviour under repeated discrete impulses.
+
+| Solver | Max height error | Total energy drift | CPU (relative) |
+|--------|------------------|--------------------|----------------|
+| Euler  | ~0.009 m         | ~68%               | 1×             |
+| Verlet | ~0.001 m         | ~68%               | 1.8×           |
+| RK4    | ~0.001 m         | ~68%               | 3.9×           |
+
+**Key insight:** The ~68% energy drift is physical — cumulative loss from 6–7 bounces at e = 0.9, not a numerical artefact. All solvers converge at the same O(dt) rate: discrete impulse contact detection imposes a timing-error floor that dominates integrator order.
+
+### Bouncing Conservative — impulse model, e = 1.0 (elastic, dt = 1e-4 s)
+
+Path: [`benchmarks/Bouncing_Conservative/`](benchmarks/Bouncing_Conservative/benchmaark_analysis.ipynb)
+
+Perfect elasticity removes the physical energy sink, isolating integrator differences cleanly.
+
+| Solver | Convergence order | Peak height error |
+|--------|-------------------|-------------------|
+| Euler  | O(dt¹)            | ~4.8e-5 m         |
+| Verlet | O(dt²)            | ~4.7e-5 m         |
+| RK4    | O(dt²)            | ~3.8e-7 m         |
+
+**Key insight:** With e = 1.0, Verlet and RK4 recover O(dt²) convergence — they integrate the quadratic free-flight trajectory exactly, so the contact-timing error cancels algebraically in the peak-height formula. Euler's O(dt) position error prevents this cancellation.
+
+### Contact Forces — spring-damper model (dt = 5e-4 s, k = 1e4 N/m)
+
+Path: [`benchmarks/Contact_Forces/`](benchmarks/Contact_Forces/benchmaark_analysis.ipynb)
+
+Continuous Hooke + viscous-damping contact force instead of discrete impulse. Tests accuracy and stability under stiff contact.
+
+| Solver | Convergence order | Peak height error | Max stable k |
+|--------|-------------------|-------------------|--------------|
+| Euler  | O(dt^1.2)         | ~4.5e-3 m         | 5e3 N/m      |
+| Verlet | O(dt^1.1)         | ~4.8e-3 m         | 1e4 N/m      |
+| RK4    | O(dt^2.4)         | ~2.3e-4 m         | 1e5 N/m      |
+
+**Key insight:** Convergence orders fall below theory due to the C⁰ discontinuity at contact onset/offset. Despite this, RK4 is 10–100× more accurate than Euler at the same dt and tolerates 41% larger timesteps at a given stiffness — making it the right choice for stiff contact problems.
 
 ---
 

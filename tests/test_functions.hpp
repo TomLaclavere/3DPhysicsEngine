@@ -43,6 +43,30 @@
     }                                                        \
     while (0)
 
+// Compare two Matrix3x3 with a tolerance of 8×PRECISION_MACHINE.
+// Use for roundtrip checks (matrix → quaternion → matrix) where accumulated
+// floating-point error can reach ~2 ULPs, exceeding the strict 1-ULP bound.
+#define EXPECT_MATRIX_NEAR(a, b)                                                           \
+    do                                                                                     \
+    {                                                                                      \
+        const Matrix3x3& _ma = (a);                                                        \
+        const Matrix3x3& _mb = (b);                                                        \
+        const decimal    _tol = 8 * PRECISION_MACHINE;                                     \
+        for (int _i = 0; _i < 3; ++_i)                                                    \
+            for (int _j = 0; _j < 3; ++_j)                                                \
+            {                                                                              \
+                decimal _a = _ma(_i, _j);                                                  \
+                decimal _b = _mb(_i, _j);                                                  \
+                if (!commonMaths::approxEqual(_a, _b, _tol))                               \
+                {                                                                          \
+                    ADD_FAILURE_AT(__FILE__, __LINE__)                                      \
+                        << "Matrix[" << _i << "][" << _j << "]: " << _a << " ≈ " << _b    \
+                        << "\nDifference: " << std::abs(_a - _b) << "\nTolerance: " << _tol; \
+                }                                                                          \
+            }                                                                              \
+    }                                                                                      \
+    while (0)
+
 // Compare two Quaternion3D
 #define EXPECT_QUATERNION_EQ(a, b)                                        \
     do                                                                    \

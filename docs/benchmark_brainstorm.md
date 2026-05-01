@@ -5,6 +5,7 @@ I will first implement a reproducible benchmarking pipeline to evaluate performa
 ## Metric to collect
 
 - Wall-clock simulation time
+- FLOP/s
 - Time per step
 - Scaling behaviour (vs dt, vs N ?)
 - CPU metrics :
@@ -33,7 +34,7 @@ Before optimisation, I will establish two performance baselines: a scalar refere
 The first one will use low compiler optimisation with auto-vectorisation disabled and no multithreading:
 
 ```bash
--O2 -fno-tree-vectorize
+-O2 -fno-tree-vectorize -fno-inline
 ```
 
 The second one will use full compiler optimisations enabled with auto-vectorisation and single-thread execution:
@@ -79,7 +80,7 @@ The goal is to identify:
 4. GPU
     - CUDA/SYCL (low-level)
     - Kokkos (abstraction)
-    - ncv++ (compiler)
+    - nvc++ (compiler)
 
 ## External
 

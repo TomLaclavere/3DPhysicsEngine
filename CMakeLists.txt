@@ -387,6 +387,19 @@ if(3DPE_BUILD_BENCHMARKS)
         COMMENT "Running benchmark: Contact_Forces"
     )
 
+    # ---------------------------------------------
+    # Profiling target — minimal simulation loop, no I/O
+    # Designed to be profiled with perf via profiling/perf/profile.sh
+    # ---------------------------------------------
+    add_executable(perf_target profiling/perf/perf_target.cpp)
+    target_link_libraries(perf_target PRIVATE 3DPhysicsEngine)
+    target_include_directories(perf_target PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+    set_target_properties(perf_target PROPERTIES
+        OUTPUT_NAME "perf_target"
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/profiling
+        FOLDER "Profiling"
+    )
+
 endif()
 
 # =============================================

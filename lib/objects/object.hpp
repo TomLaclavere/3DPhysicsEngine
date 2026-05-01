@@ -49,7 +49,7 @@ inline std::string toString(ObjectType type)
  * Can be extended for specific object types (e.g., Sphere, AABB, Plane).
  *
  */
-struct Object
+class Object
 {
 private:
     Vector3D position     = Vector3D();
@@ -61,9 +61,6 @@ private:
     Vector3D torque       = Vector3D();
     decimal  mass         = 0_d; // static by default
     Material material;
-    decimal  stiffnessCst   = 0_d;
-    decimal  restitutionCst = 0_d;
-    decimal  frictionCst    = 0_d;
 
     bool         fixed = true;
     unsigned int id;
@@ -99,8 +96,13 @@ public:
     Vector3D           getTorque() const;
     decimal            getMass() const;
     decimal            getStiffnessCst() const;
-    decimal            getRestitutionCst() const;
     decimal            getFrictionCst() const;
+    decimal            getDampingCst() const;
+    decimal            getRestitutionCst() const;
+    virtual decimal    getVolume() const;
+    decimal            getKineticEnergy() const;
+    decimal            getPotentielEnergy(decimal g) const;
+    decimal            getTotalEnergy(decimal g) const;
     Material           getMaterial() const;
     virtual ObjectType getType() const;
     bool               getIsFixed() const;
@@ -110,21 +112,22 @@ public:
 
     /// @name Setters
     /// @{
-    void setPosition(const Vector3D& _position);
-    void setRotation(const Vector3D& _rotation);
-    void setSize(const Vector3D& _size);
-    void setVelocity(const Vector3D& _velocity);
-    void setAcceleration(const Vector3D& _acceleration);
-    void setForce(const Vector3D& _force);
-    void setTorque(const Vector3D& _torque);
-    void setMass(const decimal _mass);
-    void setStiffnessCst(decimal k);
-    void setRestitutionCst(decimal e);
-    void setFrictionCst(decimal mu);
-    void setMaterial(const Material& mat);
-    void setIsFixed(bool b);
-    void setId(unsigned int _id) { id = _id; }
-    void setName(const std::string& _name) { name = _name; }
+    void         setPosition(const Vector3D& _position);
+    void         setRotation(const Vector3D& _rotation);
+    void         setSize(const Vector3D& _size);
+    void         setVelocity(const Vector3D& _velocity);
+    void         setAcceleration(const Vector3D& _acceleration);
+    void         setForce(const Vector3D& _force);
+    void         setTorque(const Vector3D& _torque);
+    void         setMass(const decimal _mass);
+    void         setStiffnessCst(decimal k);
+    void         setDampingCst(decimal d);
+    void         setFrictionCst(decimal mu);
+    void         setRestitutionCst(decimal e);
+    void         setIsFixed(bool b);
+    void         setId(unsigned int _id) { id = _id; }
+    void         setName(const std::string& _name) { name = _name; }
+    virtual void setMaterial(const Material& mat);
 
     /// @}
 

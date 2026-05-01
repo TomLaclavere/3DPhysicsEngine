@@ -5,3 +5,4 @@ duration: 5
 solver: "Euler"
 verbose: true
 save: true
+simplifiedCollision: false

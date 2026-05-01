@@ -3,25 +3,33 @@
 #include <stdexcept>
 #include <string>
 
-struct Material
+class Material
 {
 private:
-    std::string name;
-    decimal     young;
-    decimal     damping;
-    decimal     friction;
-    decimal     restitution = 0.5_d; // For simplified collision
+    std::string name        = "default";
+    decimal     density     = 1000_d;
+    decimal     stiffness   = 0_d;
+    decimal     damping     = 0_d;
+    decimal     friction    = 0_d;
+    decimal     restitution = 1_d; // For simplified collision
 
 public:
     /// @name Constructors
     /// @{
 
-    Material()                           = default;
-    Material(const Material&)            = default;
-    Material& operator=(const Material&) = default;
-    Material(std::string name, decimal young, decimal damping, decimal friction, decimal restitution)
+    Material()                               = default;
+    Material(const Material&)                = default;
+    Material& operator=(const Material&)     = default;
+    Material(Material&&) noexcept            = default;
+    Material& operator=(Material&&) noexcept = default;
+
+    explicit Material(const std::string& pathfile) { loadFromFile(pathfile); }
+
+    Material(std::string name, decimal density, decimal stiffness, decimal damping, decimal friction,
+             decimal restitution)
         : name(std::move(name))
-        , young(young)
+        , density(density)
+        , stiffness(stiffness)
         , damping(damping)
         , friction(friction)
         , restitution(restitution)
@@ -34,7 +42,8 @@ public:
 
     Material&   get() const;
     std::string getName() const;
-    decimal     getYoung() const;
+    decimal     getDensity() const;
+    decimal     getStiffness() const;
     decimal     getDamping() const;
     decimal     getFriction() const;
     decimal     getRestitution() const;
@@ -45,11 +54,12 @@ public:
     /// @{
 
     void setName(std::string _name) { name = _name; }
-    void setYoung(decimal _young)
+    void setDensity(decimal _rho) { density = _rho; }
+    void setStiffness(decimal _stiffness)
     {
-        if (_young < 0)
-            throw std::invalid_argument("Young module cannot be negative");
-        young = _young;
+        if (_stiffness < 0)
+            throw std::invalid_argument("stiffness module cannot be negative");
+        stiffness = _stiffness;
     }
     void setDamping(decimal _damping)
     {

@@ -9,8 +9,8 @@
 #include "object.hpp"
 
 // Forward declaration
-struct Sphere;
-struct Plane;
+class Sphere;
+class Plane;
 
 /**
  * @class AABB
@@ -21,14 +21,13 @@ struct Plane;
  *
  * The AABB supports collision detection with other AABBs, Spheres, and Planes.
  */
-struct AABB : public Object
+class AABB : public Object
 {
 private:
 public:
-    // ============================================================================
     /// @name Constructors / Destructors
-    // ============================================================================
     /// @{
+
     AABB() = default;
     explicit AABB(const Vector3D& position)
         : Object(position)
@@ -41,10 +40,10 @@ public:
     virtual ~AABB() = default;
     /// @}
 
-    // ============================================================================
     /// @name Getters
-    // ============================================================================
     /// @{
+
+    decimal    getVolume() const override;
     ObjectType getType() const override;
     Vector3D   getHalfExtents() const;
     /// Return the minimum corner of the AABB.
@@ -53,9 +52,13 @@ public:
     Vector3D getMax() const;
     /// @}
 
-    // ============================================================================
+    /// @name Setters
+    /// @{
+
+    void setMaterial(const Material& mat) override;
+    /// @}
+
     /// @name Collision
-    // ============================================================================
     /// @{
 
     /// Check broad collision between two AABBs.

@@ -164,6 +164,8 @@ set(3DPE_COMMON_WARNINGS
     -Wsign-conversion
     -Wold-style-cast
     -Wunused
+    -g 
+    -fno-omit-frame-pointer 
 )
 
 
@@ -310,7 +312,7 @@ if(3DPE_BUILD_BENCHMARKS)
     message(STATUS "Building benchmarks")
 
     # ---------------------------------------------
-    # Example: Free Fall benchmark
+    # Benchmark: Free Fall
     # ---------------------------------------------
     add_executable(benchmark_Free_Fall benchmarks/Free_Fall/main.cpp)
     target_link_libraries(benchmark_Free_Fall PRIVATE 3DPhysicsEngine)
@@ -326,6 +328,76 @@ if(3DPE_BUILD_BENCHMARKS)
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         DEPENDS benchmark_Free_Fall
         COMMENT "Running benchmark: Free_Fall"
+    )
+
+    # ---------------------------------------------
+    # Benchmark: Bouncing Ball
+    # ---------------------------------------------
+    add_executable(benchmark_Bouncing benchmarks/Bouncing/main.cpp)
+    target_link_libraries(benchmark_Bouncing PRIVATE 3DPhysicsEngine)
+    target_include_directories(benchmark_Bouncing PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+    set_target_properties(benchmark_Bouncing PROPERTIES
+        OUTPUT_NAME "Bouncing"
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/benchmarks
+        FOLDER "Benchmarks"
+    )
+
+    add_custom_target(Bouncing_Benchmark
+        COMMAND $<TARGET_FILE:benchmark_Bouncing>
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        DEPENDS benchmark_Bouncing
+        COMMENT "Running benchmark: Bouncing"
+    )
+
+    # ---------------------------------------------
+    # Benchmark: Bouncing Ball
+    # ---------------------------------------------
+    add_executable(benchmark_Bouncing_Conservative benchmarks/Bouncing_Conservative/main.cpp)
+    target_link_libraries(benchmark_Bouncing_Conservative PRIVATE 3DPhysicsEngine)
+    target_include_directories(benchmark_Bouncing_Conservative PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+    set_target_properties(benchmark_Bouncing_Conservative PROPERTIES
+        OUTPUT_NAME "Bouncing_Conservative"
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/benchmarks
+        FOLDER "Benchmarks"
+    )
+
+    add_custom_target(Bouncing_Conservative_Benchmark
+        COMMAND $<TARGET_FILE:benchmark_Bouncing_Conservative>
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        DEPENDS benchmark_Bouncing_Conservative
+        COMMENT "Running benchmark: Bouncing_Conservative"
+    )
+
+    # ---------------------------------------------
+    # Benchmark: Contact Forces
+    # ---------------------------------------------
+    add_executable(benchmark_Contact_Forces benchmarks/Contact_Forces/main.cpp)
+    target_link_libraries(benchmark_Contact_Forces PRIVATE 3DPhysicsEngine)
+    target_include_directories(benchmark_Contact_Forces PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+    set_target_properties(benchmark_Contact_Forces PROPERTIES
+        OUTPUT_NAME "Contact_Forces"
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/benchmarks
+        FOLDER "Benchmarks"
+    )
+
+    add_custom_target(Contact_Forces_Benchmark
+        COMMAND $<TARGET_FILE:benchmark_Contact_Forces>
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        DEPENDS benchmark_Contact_Forces
+        COMMENT "Running benchmark: Contact_Forces"
+    )
+
+    # ---------------------------------------------
+    # Profiling target — minimal simulation loop, no I/O
+    # Designed to be profiled with perf via profiling/perf/profile.sh
+    # ---------------------------------------------
+    add_executable(perf_target profiling/perf/perf_target.cpp)
+    target_link_libraries(perf_target PRIVATE 3DPhysicsEngine)
+    target_include_directories(perf_target PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+    set_target_properties(perf_target PROPERTIES
+        OUTPUT_NAME "perf_target"
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/profiling
+        FOLDER "Profiling"
     )
 
 endif()

@@ -66,6 +66,10 @@ The goal is to identify:
     - Analysis tools wrappers
     - Plotting tools to save results
 
+0.5 Reference benchmarks
+    - Scalar reference
+    - Compiler-optimised single-core
+
 1. Data layout optimisation
     - Evaluate SoA vs AoS based on memory access patterns and SIMD efficiency
 

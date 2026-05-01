@@ -146,6 +146,7 @@ See [`docs/benchmark.md`](benchmark.md) for more details.
 - [ ] **Reference bencharks:**
   - [ ] Scalar reference case
   - [ ] Compiler-optimised single-core
+- [ ] **Add GitHub flag to keep the current status of software as reference**
 - [ ] **Data layout optimisation:**
   - [ ] Evaluate SoA vs AoS based on memory access patterns and SIMD efficiency
   - [ ] Optimise memory layout if SoA improves cache efficiency

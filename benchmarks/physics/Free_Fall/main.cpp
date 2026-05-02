@@ -26,6 +26,7 @@
 
 #include <array>
 #include <cmath>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <limits>
@@ -126,8 +127,9 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, b
         // Energy drift — only valid before first collision
         if (std::isnan(result.contactTime))
         {
-            const decimal E     = computeEnergy(*sphere);
-            const decimal drift = (E0 != 0_d) ? commonMaths::absVal((E - E0) / E0) : commonMaths::absVal(E - E0);
+            const decimal E = computeEnergy(*sphere);
+            const decimal drift =
+                (E0 != 0_d) ? commonMaths::absVal((E - E0) / E0) : commonMaths::absVal(E - E0);
 
             if (drift > result.maxEnergyDrift)
                 result.maxEnergyDrift = drift;
@@ -162,6 +164,7 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, b
 
 int main(int argc, char** argv)
 {
+    const std::string outputPath = "benchmarks/physics/Free_Fall/results";
     // Analytical reference
     // Free fall: z0=20, v0z=-1, r=0.2, g=9.81
     // Contact when z_centre = r  =>  20 - t - 0.5*9.81*t^2 = 0.2
@@ -220,13 +223,16 @@ int main(int argc, char** argv)
         }
     }
 
+    // Created results directory
+    std::filesystem::create_directory(outputPath);
+
     //--------------------------------------------------------------------
     // CSV 1: benchmark.csv
     // Columns: solver, dt, contact_error, max_energy_drift,
     //          final_energy_drift, cpu_ms, ops_total
     //--------------------------------------------------------------------
     {
-        std::ofstream file("benchmarks/Free_Fall/benchmark.csv");
+        std::ofstream file(outputPath + "/benchmark.csv");
         if (!file)
         {
             std::cerr << "Cannot open benchmark.csv\n";
@@ -264,7 +270,7 @@ int main(int argc, char** argv)
     // Contains E(t) samples for selected dt values
     //--------------------------------------------------------------------
     {
-        std::ofstream file("benchmarks/Free_Fall/energy_drift.csv");
+        std::ofstream file(outputPath + "/energy_drift.csv");
         if (!file)
         {
             std::cerr << "Cannot open energy_drift.csv\n";
@@ -287,6 +293,6 @@ int main(int argc, char** argv)
         }
     }
 
-    std::cout << "\nCSV files written to benchmarks/Free_Fall/\n";
+    std::cout << "\nCSV files written to " << outputPath << "\n";
     return 0;
 }

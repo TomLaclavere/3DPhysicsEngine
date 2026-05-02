@@ -311,10 +311,29 @@ endif()
 if(3DPE_BUILD_BENCHMARKS)
     message(STATUS "Building benchmarks")
 
+        # ---------------------------------------------
+    # Benchmark: Performances
+    # ---------------------------------------------
+    add_executable(benchmark_Performance benchmarks/performance/main.cpp)
+    target_link_libraries(benchmark_Performance PRIVATE 3DPhysicsEngine)
+    target_include_directories(benchmark_Performance PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+    set_target_properties(benchmark_Performance PROPERTIES
+        OUTPUT_NAME "Performance"
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/benchmarks
+        FOLDER "Benchmarks"
+    )
+
+    add_custom_target(Performance_Benchmark
+        COMMAND $<TARGET_FILE:benchmark_Performance>
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        DEPENDS benchmark_Performance
+        COMMENT "Running benchmark: Performance"
+    )
+
     # ---------------------------------------------
     # Benchmark: Free Fall
     # ---------------------------------------------
-    add_executable(benchmark_Free_Fall benchmarks/Free_Fall/main.cpp)
+    add_executable(benchmark_Free_Fall benchmarks/physics/Free_Fall/main.cpp)
     target_link_libraries(benchmark_Free_Fall PRIVATE 3DPhysicsEngine)
     target_include_directories(benchmark_Free_Fall PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
     set_target_properties(benchmark_Free_Fall PROPERTIES
@@ -333,7 +352,7 @@ if(3DPE_BUILD_BENCHMARKS)
     # ---------------------------------------------
     # Benchmark: Bouncing Ball
     # ---------------------------------------------
-    add_executable(benchmark_Bouncing benchmarks/Bouncing/main.cpp)
+    add_executable(benchmark_Bouncing benchmarks/physics/Bouncing/main.cpp)
     target_link_libraries(benchmark_Bouncing PRIVATE 3DPhysicsEngine)
     target_include_directories(benchmark_Bouncing PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
     set_target_properties(benchmark_Bouncing PROPERTIES
@@ -352,7 +371,7 @@ if(3DPE_BUILD_BENCHMARKS)
     # ---------------------------------------------
     # Benchmark: Bouncing Ball
     # ---------------------------------------------
-    add_executable(benchmark_Bouncing_Conservative benchmarks/Bouncing_Conservative/main.cpp)
+    add_executable(benchmark_Bouncing_Conservative benchmarks/physics/Bouncing_Conservative/main.cpp)
     target_link_libraries(benchmark_Bouncing_Conservative PRIVATE 3DPhysicsEngine)
     target_include_directories(benchmark_Bouncing_Conservative PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
     set_target_properties(benchmark_Bouncing_Conservative PROPERTIES
@@ -371,7 +390,7 @@ if(3DPE_BUILD_BENCHMARKS)
     # ---------------------------------------------
     # Benchmark: Contact Forces
     # ---------------------------------------------
-    add_executable(benchmark_Contact_Forces benchmarks/Contact_Forces/main.cpp)
+    add_executable(benchmark_Contact_Forces benchmarks/physics/Contact_Forces/main.cpp)
     target_link_libraries(benchmark_Contact_Forces PRIVATE 3DPhysicsEngine)
     target_include_directories(benchmark_Contact_Forces PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
     set_target_properties(benchmark_Contact_Forces PROPERTIES

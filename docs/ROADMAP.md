@@ -77,7 +77,7 @@
 
 ---
 
-## Phase 4: Collisions *(validation pending)*
+## Phase 4: Collisions
 
 - [x] **Collision Detection:**
   - [x] Implement simple collision model
@@ -131,10 +131,12 @@
 ## Phase 6: CPU Performance Engineering
 
 See [`docs/benchmark.md`](benchmark.md) for more details.
+
 - [x] **Brainstorm on ROADMAP**
 - [x] **Brainstorm on To-Do-List**
 - [ ] **Tools implementation:**
   - [ ] Reproducible benchmark simulation script
+    - [ ] Simulation code (similar than examples)
     - [ ] Recompilation with proper flags (compiler optimisation, release build, precision, ...)
     - [ ] Benchmark parameters (Number of Simulation, Number of objects, timestep, integrator, ...)
     - [ ] Saving tools

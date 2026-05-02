@@ -31,6 +31,7 @@
 
 #include <array>
 #include <cmath>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -96,7 +97,7 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, b
         std::make_unique<Sphere>(Vector3D(0_d, 0_d, 20_d), 2_d, 1_d); // radius=2, mass=1, v0=(0,0,0)
 
     sphere->setIsFixed(false);
-    sphere->setRestitutionCst(0.9_d);
+    sphere->setRestitutionCst(1_d);
     world.addObject(sphere.get());
     world.addObject(ground.get());
     world.start();
@@ -227,7 +228,8 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, b
 
 int main(int argc, char** argv)
 {
-    const decimal totalTime = 18_d; // long enough to observe multiple bounces
+    const std::string outputPath = "benchmarks/physics/Bouncing_Conservative/results";
+    const decimal     totalTime  = 22_d; // long enough to observe multiple bounces
 
     // Timesteps: logarithmic spacing
     constexpr std::size_t     N_DT = 50;
@@ -276,12 +278,15 @@ int main(int argc, char** argv)
         }
     }
 
+    // Created results directory
+    std::filesystem::create_directory(outputPath);
+
     // CSV 1: benchmark.csv
     // Columns: solver, dt, max_height_error, max_energy_drift,
     //          final_energy_drift, cpu_us, ops_total, bounce_count
 
     {
-        std::ofstream file("benchmarks/Bouncing/benchmark.csv");
+        std::ofstream file(outputPath + "/benchmark.csv");
         if (!file)
         {
             std::cerr << "Cannot open benchmark.csv\n";
@@ -313,7 +318,7 @@ int main(int argc, char** argv)
     // Columns: solver, dt, time, energy_drift
 
     {
-        std::ofstream file("benchmarks/Bouncing/energy_drift.csv");
+        std::ofstream file(outputPath + "/energy_drift.csv");
         if (!file)
         {
             std::cerr << "Cannot open energy_drift.csv\n";
@@ -336,6 +341,6 @@ int main(int argc, char** argv)
         }
     }
 
-    std::cout << "\nCSV files written to benchmarks/Bouncing/\n";
+    std::cout << "\nCSV files written to " << outputPath << "\n";
     return 0;
 }

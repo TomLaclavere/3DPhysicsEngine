@@ -17,6 +17,23 @@ ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 BUILD_SCRIPT="$SCRIPT_DIR/build.sh"
 
 # =====================================================================
+# Perf parameters
+# =====================================================================
+TARGET_REL="benchmarks/Performance"   # path relative to build/
+OPEN_HOTSPOT=false
+MEASURE_MFLOPS=true
+FREQ=999
+CALL_GRAPH="dwarf"
+BIN_ARGS=()   # extra args forwarded to the profiled binary (after --)
+
+REPO="${ROOT}/benchmarks/performance"
+RESULTS_DIR="${REPO}/results"
+PERF_DATA="${RESULTS_DIR}/perf.data"
+PERF_SCRIPT="${RESULTS_DIR}/perf.script"
+FLAME_SVG="${RESULTS_DIR}/flame.svg"
+ANALYSE_PY="${REPO}/analyse_perf.py"
+
+# =====================================================================
 # Defaults
 # =====================================================================
 MODE="both"           # scalar | optimised | both
@@ -114,7 +131,109 @@ run_benchmarks() {
     echo "======================================================"
 
     cd "$ROOT"
-    "$bin_dir/Performance"
+
+    # Perf
+    # while [[ $# -gt 0 ]]; do
+    #     case "$1" in
+    #         --target)   TARGET_REL="$2"; shift 2 ;;
+    #         --hotspot)  OPEN_HOTSPOT=true; shift ;;
+    #         --freq)     FREQ="$2"; shift 2 ;;
+    #         --fp)       CALL_GRAPH="fp"; shift ;;
+    #         -h|--help)  usage; exit 0 ;;
+    #         --)         shift; BIN_ARGS=("$@"); break ;;
+    #         *) echo "Unknown option: $1" >&2; usage; exit 1 ;;
+    #     esac
+    # done
+
+    BINARY="${ROOT}/build/${TARGET_REL}"
+
+    # Preflight checks
+    if ! command -v perf &>/dev/null; then
+        echo "Error: 'perf' not found on PATH." >&2
+        exit 1
+    fi
+
+    if [[ ! -x "${BINARY}" ]]; then
+        echo "Error: binary not found or not executable: ${BINARY}" >&2
+        echo "Build the project first: ./scripts/build.sh" >&2
+        exit 1
+    fi
+
+    STACKCOLLAPSE=$(command -v stackcollapse-perf.pl 2>/dev/null || true)
+    FLAMEGRAPH=$(command -v flamegraph.pl 2>/dev/null || true)
+    HAVE_FLAMEGRAPH=false
+    if [[ -x "${STACKCOLLAPSE}" && -x "${FLAMEGRAPH}" ]]; then
+        HAVE_FLAMEGRAPH=true
+    fi
+
+    mkdir -p "${RESULTS_DIR}"
+    
+
+    # Step 1: Record
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "  Profiling: ${BINARY}"
+    [[ ${#BIN_ARGS[@]} -gt 0 ]] && echo "  Args:      ${BIN_ARGS[*]}"
+    echo "  Frequency: ${FREQ} Hz   Call graph: ${CALL_GRAPH}"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+    cd "${ROOT}"
+
+    perf record -F "${FREQ}" -g --call-graph "${CALL_GRAPH}" \
+        -o "${PERF_DATA}" \
+        "${BINARY}" "${BIN_ARGS[@]}"
+
+    echo ""
+    echo "✓ Raw data  →  ${PERF_DATA}"
+
+    # Step 2: Convert to text script
+    echo "Converting to perf.script …"
+    perf script -i "${PERF_DATA}" > "${PERF_SCRIPT}"
+    echo "✓ Script    →  ${PERF_SCRIPT}"
+
+    # Step 3: Flamegraph
+    if ${HAVE_FLAMEGRAPH}; then
+        echo "Generating flamegraph …"
+        "${STACKCOLLAPSE}" "${PERF_SCRIPT}" | "${FLAMEGRAPH}" > "${FLAME_SVG}"
+        echo "✓ Flamegraph →  ${FLAME_SVG}"
+    else
+        echo "⚠  stackcollapse-perf.pl / flamegraph.pl not found — skipping flamegraph."
+    fi
+
+    # Step 4: Python analysis
+    echo ""
+    if [[ -f "${ANALYSE_PY}" ]] && command -v python3 &>/dev/null; then
+        python3 "${ANALYSE_PY}" \
+            --input  "${PERF_SCRIPT}" \
+            --output "${RESULTS_DIR}/hotspots.png"
+    else
+        echo "⚠  analyze.py not found or python3 unavailable — skipping automated report."
+    fi
+
+    # Step 5: Summary
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "  Output files:"
+    echo "    ${PERF_DATA}"
+    echo "    ${PERF_SCRIPT}"
+    ${HAVE_FLAMEGRAPH} && echo "    ${FLAME_SVG}"
+    [[ -f "${RESULTS_DIR}/hotspots.png" ]] && echo "    ${RESULTS_DIR}/hotspots.png"
+    echo ""
+    echo "  Next steps:"
+    echo "    perf report -i ${PERF_DATA}"
+    [[ -f "${FLAME_SVG}" ]] && echo "    xdg-open ${FLAME_SVG}"
+    echo "    hotspot ${PERF_DATA}"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+    # Step 6: Optional hotspot GUI
+    if ${OPEN_HOTSPOT}; then
+        if command -v hotspot &>/dev/null; then
+            echo "Opening hotspot …"
+            hotspot "${PERF_DATA}" &
+        else
+            echo "⚠  hotspot not found on PATH." >&2
+        fi
+    fi
+
+
     if [[ "$archive" == true ]]; then
         rm -rf "benchmarks/performance/results_${profile}"
         cp -r  "benchmarks/performance/results" \
@@ -152,8 +271,16 @@ run_mode() {
 
     run_benchmarks "$profile" "$archive"
 
-    if [[ "$SKIP_ANALYSIS" == false ]]; then
-        run_analysis
+    # if [[ "$SKIP_ANALYSIS" == false ]]; then
+    #     run_analysis
+    # fi
+    echo ""
+    if [[ -f "${ANALYSE_PY}" ]] && command -v python3 &>/dev/null; then
+        python3 "${ANALYSE_PY}" \
+            --input  "${PERF_SCRIPT}" \
+            --output "${RESULTS_DIR}/hotspots.png"
+    else
+        echo "⚠  analyze.py not found or python3 unavailable — skipping automated report."
     fi
 }
 

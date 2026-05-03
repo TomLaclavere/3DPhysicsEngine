@@ -36,8 +36,6 @@ struct SimResult
 
     // Derived metrics
     decimal   timePerStep_us;
-    long long estimatedFlopsTotal; // flopsPerStep * numSteps — approximate
-    decimal   mflopsPerSecond;
 
     // Energy time series (last timing run only, when recordEnergy = true)
     std::vector<decimal> energyTimes;
@@ -65,7 +63,7 @@ static inline decimal analyticalPeakHeight(decimal z0, decimal radius, decimal r
 }
 
 SimResult simulation(const std::string& solver, decimal timestep, int maxiter, int nWarmup, int nTimingRuns,
-                     int flopsPerStep, bool recordEnergy = false)
+                     bool recordEnergy = false)
 {
     Config& config = Config::get();
     config.setSolver(solver);
@@ -230,13 +228,6 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, i
 
     result.timePerStep_us = static_cast<decimal>(result.cpuUs_mean) / static_cast<decimal>(maxiter);
 
-    result.estimatedFlopsTotal = static_cast<long long>(flopsPerStep) * static_cast<long long>(maxiter);
-    result.mflopsPerSecond =
-        (result.cpuUs_mean > 0) ? static_cast<decimal>(result.estimatedFlopsTotal) /
-                                      (static_cast<decimal>(result.cpuUs_mean) * static_cast<decimal>(1e-6)) /
-                                      static_cast<decimal>(1e6)
-                                : 0_d;
-
     return result;
 }
 
@@ -249,10 +240,6 @@ int main(int argc, char** argv)
 
     constexpr int N_WARMUP      = 1;
     constexpr int N_TIMING_RUNS = 5;
-
-    // Estimated FLOPs per step for 1-sphere/1-plane simplified collision:
-    // Euler ~20, Verlet ~35, RK4 ~100. Exact figures need a profiler (perf/Maqao).
-    const std::array<int, 3> flopsPerStep { 20, 35, 100 };
 
     // Timesteps: logarithmic spacing
     constexpr std::size_t     N_DT = 50;
@@ -292,7 +279,7 @@ int main(int argc, char** argv)
         for (size_t jDt = 0; jDt < N_DT; ++jDt)
         {
             results[iS][jDt] = simulation(solvers[iS], timesteps[jDt], maxIterations[jDt], N_WARMUP,
-                                          N_TIMING_RUNS, flopsPerStep[iS], shouldRecord(jDt));
+                                          N_TIMING_RUNS, shouldRecord(jDt));
 
             std::cout << "  dt=" << timesteps[jDt] << "  height_error=" << results[iS][jDt].maxHeightError
                       << "  bounces=" << results[iS][jDt].bounceCount
@@ -318,7 +305,7 @@ int main(int argc, char** argv)
         file << "solver,dt,max_height_error,max_energy_drift,final_energy_drift,"
                 "max_flight_energy_drift,bounce_count,"
                 "cpu_us_mean,cpu_us_min,cpu_us_max,cpu_us_stddev,"
-                "time_per_step_us,estimated_flops_total,mflops_per_second\n";
+                "time_per_step_us\n";
 
         for (size_t iS = 0; iS < solvers.size(); ++iS)
         {
@@ -329,8 +316,7 @@ int main(int argc, char** argv)
                 file << solvers[iS] << "," << timesteps[jDt] << "," << r.maxHeightError << ","
                      << r.maxEnergyDrift << "," << r.finalEnergyDrift << "," << r.maxFlightEnergyDrift << ","
                      << r.bounceCount << "," << r.cpuUs_mean << "," << r.cpuUs_min << "," << r.cpuUs_max
-                     << "," << r.cpuUs_stddev << "," << r.timePerStep_us << "," << r.estimatedFlopsTotal
-                     << "," << r.mflopsPerSecond << "\n";
+                     << "," << r.cpuUs_stddev << "," << r.timePerStep_us << "\n";
             }
         }
     }

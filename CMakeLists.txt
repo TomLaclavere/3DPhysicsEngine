@@ -311,7 +311,7 @@ endif()
 if(3DPE_BUILD_BENCHMARKS)
     message(STATUS "Building benchmarks")
 
-        # ---------------------------------------------
+    # ---------------------------------------------
     # Benchmark: Performances
     # ---------------------------------------------
     add_executable(benchmark_Performance benchmarks/performance/main.cpp)
@@ -410,7 +410,7 @@ if(3DPE_BUILD_BENCHMARKS)
     # Profiling target — minimal simulation loop, no I/O
     # Designed to be profiled with perf via profiling/perf/profile.sh
     # ---------------------------------------------
-    add_executable(perf_target profiling/perf/perf_target.cpp)
+    add_executable(perf_target benchmarks/performance/perf/perf_target.cpp)
     target_link_libraries(perf_target PRIVATE 3DPhysicsEngine)
     target_include_directories(perf_target PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
     set_target_properties(perf_target PROPERTIES

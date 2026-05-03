@@ -16,6 +16,7 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 # Defaults
 TARGET_REL="profiling/perf_target"   # path relative to build/
 OPEN_HOTSPOT=false
+MEASURE_MFLOPS=true
 FREQ=999
 CALL_GRAPH="dwarf"
 BIN_ARGS=()   # extra args forwarded to the profiled binary (after --)
@@ -24,7 +25,8 @@ RESULTS_DIR="${REPO_ROOT}/profiling/perf/results"
 PERF_DATA="${RESULTS_DIR}/perf.data"
 PERF_SCRIPT="${RESULTS_DIR}/perf.script"
 FLAME_SVG="${RESULTS_DIR}/flame.svg"
-ANALYZE_PY="${SCRIPT_DIR}/analyze.py"
+MFLOPS_JSON="${RESULTS_DIR}/mflops_stats.json"
+ANALYZE_PY="${SCRIPT_DIR}/analyse_perf.py"
 
 # Argument parsing
 usage() {
@@ -34,6 +36,7 @@ Usage: $(basename "$0") [OPTIONS] [-- BINARY_ARGS...]
 Options:
   --target PATH   Binary to profile, relative to build/ (default: profiling/perf_target)
   --hotspot       Open hotspot GUI after profiling
+  --mflops        Measure MFLOP/s (floating-point operations per second)
   --freq N        Sampling frequency in Hz (default: 999)
   --fp            Use frame-pointer call graph instead of DWARF (faster, shallower stacks)
   -h, --help      Show this help
@@ -57,6 +60,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --target)   TARGET_REL="$2"; shift 2 ;;
         --hotspot)  OPEN_HOTSPOT=true; shift ;;
+        --mflops)   MEASURE_MFLOPS=true; shift ;;
         --freq)     FREQ="$2"; shift 2 ;;
         --fp)       CALL_GRAPH="fp"; shift ;;
         -h|--help)  usage; exit 0 ;;
@@ -88,11 +92,67 @@ fi
 
 mkdir -p "${RESULTS_DIR}"
 
+# MFLOP/s measurement function
+measure_mflops() {
+    local binary="$1"
+    shift
+    local temp_json=$(mktemp)
+    trap "rm -f ${temp_json}" RETURN
+    
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "  Measuring MFLOP/s…"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    
+    perf stat -e cycles,instructions,fp_arith_inst_retired:u -j \
+        -o "${temp_json}" \
+        "${binary}" "$@" 2>&1 | tail -20
+    
+    # Parse JSON and calculate MFLOP/s
+    if [[ -f "${temp_json}" ]]; then
+        python3 << 'PYTHON_EOF' "${temp_json}" "${MFLOPS_JSON}"
+import json
+import sys
+
+try:
+    with open(sys.argv[1]) as f:
+        data = json.load(f)
+    
+    fp_ops = 0
+    elapsed_ns = 0
+    
+    for entry in data:
+        if entry.get('event') == 'fp_arith_inst_retired:u':
+            fp_ops = entry.get('value', 0)
+        if entry.get('unit') == 'msec':
+            elapsed_ns = int(entry.get('value', 0) * 1e6)  # ms to ns
+    
+    if fp_ops > 0 and elapsed_ns > 0:
+        elapsed_s = elapsed_ns / 1e9
+        mflops = (fp_ops / elapsed_s) / 1e6
+        print(f"\n✓ MFLOP/s: {mflops:,.2f}")
+        print(f"  Total FP operations: {fp_ops:,}")
+        print(f"  Elapsed time: {elapsed_s:.3f}s")
+        with open(sys.argv[2], 'w') as out:
+            json.dump({
+                'mflops': mflops,
+                'fp_operations': fp_ops,
+                'elapsed_seconds': elapsed_s
+            }, out, indent=2)
+    else:
+        print("⚠  Could not extract FP operation count or timing.")
+        print("  Ensure perf has access to fp_arith_inst_retired event.")
+except Exception as e:
+    print(f"⚠  Error calculating MFLOP/s: {e}", file=sys.stderr)
+PYTHON_EOF
+    fi
+}
+
 # Step 1: Record
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  Profiling: ${BINARY}"
 [[ ${#BIN_ARGS[@]} -gt 0 ]] && echo "  Args:      ${BIN_ARGS[*]}"
 echo "  Frequency: ${FREQ} Hz   Call graph: ${CALL_GRAPH}"
+${MEASURE_MFLOPS} && echo "  MFLOP/s:   enabled"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 cd "${REPO_ROOT}"
@@ -118,7 +178,13 @@ else
     echo "⚠  stackcollapse-perf.pl / flamegraph.pl not found — skipping flamegraph."
 fi
 
-# Step 4: Python analysis
+# Step 4: MFLOP/s measurement (optional)
+if ${MEASURE_MFLOPS}; then
+    echo ""
+    measure_mflops "${BINARY}" "${BIN_ARGS[@]}"
+fi
+
+# Step 5: Python analysis
 echo ""
 if [[ -f "${ANALYZE_PY}" ]] && command -v python3 &>/dev/null; then
     python3 "${ANALYZE_PY}" \
@@ -128,13 +194,14 @@ else
     echo "⚠  analyze.py not found or python3 unavailable — skipping automated report."
 fi
 
-# Step 5: Summary
+# Step 6: Summary
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  Output files:"
 echo "    ${PERF_DATA}"
 echo "    ${PERF_SCRIPT}"
 ${HAVE_FLAMEGRAPH} && echo "    ${FLAME_SVG}"
 [[ -f "${RESULTS_DIR}/hotspots.png" ]] && echo "    ${RESULTS_DIR}/hotspots.png"
+${MEASURE_MFLOPS} && [[ -f "${MFLOPS_JSON}" ]] && echo "    ${MFLOPS_JSON}"
 echo ""
 echo "  Next steps:"
 echo "    perf report -i ${PERF_DATA}"
@@ -142,7 +209,7 @@ echo "    perf report -i ${PERF_DATA}"
 echo "    hotspot ${PERF_DATA}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-# Step 6: Optional hotspot GUI
+# Step 7: Optional hotspot GUI
 if ${OPEN_HOTSPOT}; then
     if command -v hotspot &>/dev/null; then
         echo "Opening hotspot …"

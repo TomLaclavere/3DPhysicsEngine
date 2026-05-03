@@ -8,6 +8,15 @@
 [![GitHub Repo Size](https://img.shields.io/github/repo-size/tomlaclavere/3DPhysicsEngine?style=flat)](https://github.com/tomlaclavere/3DPhysicsEngine)
 [![Last Commit](https://img.shields.io/github/last-commit/tomlaclavere/3DPhysicsEngine?style=flat)](https://github.com/tomlaclavere/3DPhysicsEngine/commits/main)
 
+<p align="center">
+  <img src="docs/logo/logo.png" width="250"/>
+</p>
+
+<h1 align="center">3DPhysicsEngine</h1>
+<p align="center">
+  High-performance 3D physics simulation engine
+</p>
+
 ## Project Overview
 
 A modular rigid-body physics engine written in modern C++23, built from scratch with a focus on numerical accuracy and HPC scalability.

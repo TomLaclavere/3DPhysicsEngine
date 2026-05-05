@@ -9,7 +9,7 @@
 [![Last Commit](https://img.shields.io/github/last-commit/tomlaclavere/3DPhysicsEngine?style=flat)](https://github.com/tomlaclavere/3DPhysicsEngine/commits/main)
 
 <p align="center">
-  <img src="docs/logo/logo.png" width="250"/>
+  <img src="docs/logo/Logo_wo_Background_White.png" width="250"/>
 </p>
 
 <h1 align="center">3DPhysicsEngine</h1>

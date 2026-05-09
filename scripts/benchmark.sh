@@ -31,12 +31,14 @@ FLAME_SVG="${RESULTS_DIR}/flame.svg"
 FREQ=999
 CALL_GRAPH="dwarf"
 
-# Solvers and dt sweep
+# Solvers, dt sweep, and object-count sweep
 SOLVERS=("Euler" "Verlet" "RK4")
+N_OBJECTS=(1 2 5 10 20)
 DT_MIN="1e-5"
 DT_MAX="1e-2"
 DT_N=5
 PERF_DT=""          # empty = use DT_MIN for perf stat (finest dt → most stable counters)
+PERF_N_OBJ=""       # empty = use N_OBJECTS[0] (smallest count → cleanest signal) for perf stat
 
 # Simulation parameters
 DUR="22.0"
@@ -57,10 +59,12 @@ Usage: ./scripts/benchmark.sh [options]
 
 Options:
   --solvers LIST     space-separated solver names  (default: "Euler Verlet RK4")
-  --dt-min VALUE     smallest timestep  (default: 1e-4)
-  --dt-max VALUE     largest timestep   (default: 1e-1)
-  --dt-n N           number of log-spaced dt values  (default: 20)
+  --n-objects LIST   space-separated object counts  (default: "1 5 10 25 50")
+  --dt-min VALUE     smallest timestep  (default: 1e-5)
+  --dt-max VALUE     largest timestep   (default: 1e-2)
+  --dt-n N           number of log-spaced dt values  (default: 5)
   --perf-dt VALUE    dt used for perf stat  (default: DT_MIN)
+  --perf-n-obj N     object count used for perf stat  (default: N_OBJECTS[0])
   --dur VALUE        simulated duration in s  (default: 22.0)
   --n-warmup N       discarded warmup runs  (default: 1)
   --n-runs N         timed runs  (default: 5)
@@ -83,17 +87,19 @@ EOF
 # =====================================================================
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --solvers)       read -ra SOLVERS <<< "$2"; shift 2 ;;
-        --dt-min)        DT_MIN="$2";           shift 2 ;;
-        --dt-max)        DT_MAX="$2";           shift 2 ;;
-        --dt-n)          DT_N="$2";             shift 2 ;;
-        --perf-dt)       PERF_DT="$2";          shift 2 ;;
-        --dur)           DUR="$2";              shift 2 ;;
-        --n-warmup)      N_WARMUP="$2";         shift 2 ;;
-        --n-runs)        N_RUNS="$2";           shift 2 ;;
-        --skip-build)    SKIP_BUILD=true;       shift ;;
-        --skip-perf)     SKIP_PERF=true;        shift ;;
-        --skip-analysis) SKIP_ANALYSIS=true;    shift ;;
+        --solvers)       read -ra SOLVERS    <<< "$2"; shift 2 ;;
+        --n-objects)     read -ra N_OBJECTS  <<< "$2"; shift 2 ;;
+        --dt-min)        DT_MIN="$2";              shift 2 ;;
+        --dt-max)        DT_MAX="$2";              shift 2 ;;
+        --dt-n)          DT_N="$2";                shift 2 ;;
+        --perf-dt)       PERF_DT="$2";             shift 2 ;;
+        --perf-n-obj)    PERF_N_OBJ="$2";          shift 2 ;;
+        --dur)           DUR="$2";                 shift 2 ;;
+        --n-warmup)      N_WARMUP="$2";            shift 2 ;;
+        --n-runs)        N_RUNS="$2";              shift 2 ;;
+        --skip-build)    SKIP_BUILD=true;          shift ;;
+        --skip-perf)     SKIP_PERF=true;           shift ;;
+        --skip-analysis) SKIP_ANALYSIS=true;       shift ;;
         -h|--help) usage; exit 0 ;;
         *) echo "Unknown argument: $1" >&2; usage; exit 1 ;;
     esac
@@ -162,20 +168,23 @@ run_benchmark() {
 
     local first=true
     for solver in "${SOLVERS[@]}"; do
-        echo ""
-        echo "  Solver: ${solver}"
-        for dt in "${DT_VALUES[@]}"; do
-            local append_flag=""
-            $first || append_flag="--append"
-            first=false
+        for n_obj in "${N_OBJECTS[@]}"; do
+            echo ""
+            echo "  Solver: ${solver}  n_objects: ${n_obj}"
+            for dt in "${DT_VALUES[@]}"; do
+                local append_flag=""
+                $first || append_flag="--append"
+                first=false
 
-            "$bin" \
-                --solver   "$solver"   \
-                --dt       "$dt"       \
-                --dur      "$DUR"      \
-                --n_warmup "$N_WARMUP" \
-                --n_runs   "$N_RUNS"   \
-                $append_flag
+                "$bin" \
+                    --solver     "$solver"   \
+                    --dt         "$dt"       \
+                    --dur        "$DUR"      \
+                    --n_warmup   "$N_WARMUP" \
+                    --n_runs     "$N_RUNS"   \
+                    --n_objects  "$n_obj"    \
+                    $append_flag
+            done
         done
     done
 }
@@ -195,10 +204,12 @@ run_perf_stat() {
 
     cd "$ROOT"
 
+    local rep_n_obj="${PERF_N_OBJ:-${N_OBJECTS[0]}}"
+
     for solver in "${SOLVERS[@]}"; do
         local out="${RESULTS_DIR}/perf_stat_${profile}_${solver}.txt"
         echo ""
-        echo "  solver: ${solver} → ${out}"
+        echo "  solver: ${solver}  n_objects: ${rep_n_obj} → ${out}"
 
         perf stat \
             -e cycles,instructions \
@@ -207,12 +218,13 @@ run_perf_stat() {
             -e branches,branch-misses \
             -e stalled-cycles-frontend,stalled-cycles-backend \
             "$bin" \
-                --solver   "$solver"  \
-                --dt       "$rep_dt"  \
-                --dur      "$DUR"     \
-                --n_warmup 0          \
-                --n_runs   1          \
-                --append   \
+                --solver    "$solver"    \
+                --dt        "$rep_dt"    \
+                --dur       "$DUR"       \
+                --n_warmup  0            \
+                --n_runs    1            \
+                --n_objects "$rep_n_obj" \
+                --append                 \
             2>&1 | tee "$out"
     done
 }
@@ -233,14 +245,17 @@ run_perf_record() {
 
     cd "$ROOT"
 
+    local rep_n_obj="${PERF_N_OBJ:-${N_OBJECTS[0]}}"
+
     perf record -F "${FREQ}" -g --call-graph "${CALL_GRAPH}" \
         -o "${PERF_DATA}" \
         "$bin" \
-            --solver   "$rep_solver" \
-            --dt       "$rep_dt"     \
-            --dur      "$DUR"        \
-            --n_warmup 0             \
-            --n_runs   1             \
+            --solver    "$rep_solver" \
+            --dt        "$rep_dt"     \
+            --dur       "$DUR"        \
+            --n_warmup  0             \
+            --n_runs    1             \
+            --n_objects "$rep_n_obj"  \
             --append
 
     perf script -i "${PERF_DATA}" > "${PERF_SCRIPT_OUT}"
@@ -281,7 +296,6 @@ run_analysis() {
 # =====================================================================
 run_mode() {
     local profile="$1"
-    local archive="$2"   # true | false
 
     mkdir -p "${RESULTS_DIR}"
 
@@ -298,19 +312,20 @@ run_mode() {
         fi
     fi
 
-    if [[ "$archive" == true ]]; then
-        rm -rf "${REPO}/results_${profile}"
-        cp -r  "${RESULTS_DIR}" "${REPO}/results_${profile}"
-        echo "Results archived → ${REPO}/results_${profile}/"
+    # Archive scalar results before the optimised run overwrites results/
+    if [[ "$profile" == "scalar" ]]; then
+        rm -rf "${REPO}/results_scalar"
+        cp -r  "${RESULTS_DIR}" "${REPO}/results_scalar"
+        echo "Results archived → ${REPO}/results_scalar/"
     fi
 }
 
 # =====================================================================
-# Main
+# Main — always scalar then optimised, no --mode flag
 # =====================================================================
 build_dt_array
-run_mode scalar    true   # archive scalar before optimised overwrites results/
-run_mode optimised false
+run_mode scalar
+run_mode optimised
 
 [[ "$SKIP_ANALYSIS" == false ]] && run_analysis
 
@@ -318,4 +333,4 @@ run_mode optimised false
     cp "${RESULTS_DIR}/benchmark_report.pdf" "${REPO}/"
 
 echo ""
-echo "solvers=${SOLVERS[*]}  dt_n=${DT_N}  dt=${DT_MIN}..${DT_MAX}  dur=${DUR}"
+echo "solvers=${SOLVERS[*]}  n_objects=${N_OBJECTS[*]}  dt_n=${DT_N}  dt=${DT_MIN}..${DT_MAX}  dur=${DUR}"

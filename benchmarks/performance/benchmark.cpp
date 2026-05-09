@@ -37,22 +37,35 @@ struct SimResult
     long long flopsPerStep;
     decimal   gflops_per_second;
 
+    // Step-level timing distribution (one dedicated profiling run, batch-averaged)
+    // Measures algorithm regularity: jitter from collision branches, cache warm-up, etc.
+    decimal stepUs_mean;
+    decimal stepUs_min;
+    decimal stepUs_max;
+    decimal stepUs_stddev;
+    decimal stepUs_cv;
+
     // Memory
     long long peakRSS_kb; // peak resident set size at benchmark end (kilobytes)
 };
 
-// Analytical FLOP estimate for the benchmark scene: 1 dynamic sphere + 1 fixed plane, impulse mode.
-// Euler/Verlet: 1 force eval per step. RK4: 4 force evals per step. See md for more details.
-long long estimateFlopsPerStep(const std::string& solver)
+// Analytical FLOP estimate.
+// Force phases scale as: gravity O(N), collision detection O(N²) with ~45 FLOPs/pair.
+// Integration scales as O(N). RK4 re-evaluates forces 4× per step.
+long long estimateFlopsPerStep(const std::string& solver, int nObjects)
 {
+    const long long n               = static_cast<long long>(nObjects);
+    const long long gravity_flops   = 6LL * n;
+    const long long collision_flops = 45LL * n * (n - 1) / 2;
+    const long long force_flops     = gravity_flops + collision_flops;
+    const long long integrate_flops = (solver == "Verlet") ? 18LL : 12LL;
     if (solver == "RK4")
-        return 192LL;
-    if (solver == "Verlet")
-        return 54LL;
-    return 48LL; // Euler
+        return force_flops * 4LL + integrate_flops * n;
+    return force_flops + integrate_flops * n;
 }
 
-SimResult simulation(const std::string& solver, decimal timestep, int maxiter, int nWarmup, int nTimingRuns)
+SimResult simulation(const std::string& solver, decimal timestep, int maxiter, int nObjects, int nWarmup,
+                     int nTimingRuns)
 {
     Config& config = Config::get();
     config.setSolver(solver);
@@ -67,39 +80,53 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, i
     std::vector<long long> timings;
     timings.reserve(static_cast<size_t>(nTimingRuns));
 
+    // Grid layout for N spheres.
+    // Spheres are arranged in a ceil(sqrt(N)) × ceil(N/cols) grid, spaced 3 radii apart
+    // so they do not overlap at t=0 and have room to fall independently.
+    const decimal sphRadius = 2_d;
+    const decimal spacing   = sphRadius * 3_d;
+    const int     ncols = std::max(1, static_cast<int>(std::ceil(std::sqrt(static_cast<double>(nObjects)))));
+    const int     nrows = (nObjects + ncols - 1) / ncols;
+    const decimal halfSize = std::max(50_d, static_cast<decimal>(ncols + 1) * spacing);
+
+    // Lambda that builds a fresh scene into `world` and returns the sphere handles.
+    // `world` must already be constructed; objects are owned by the returned vector.
+    auto buildScene = [&](PhysicsWorld& world)
+    {
+        auto ground = std::make_unique<Plane>(Vector3D(0_d), Vector3D(halfSize, halfSize, 0_d),
+                                              Vector3D(0_d, 0_d, 1_d));
+
+        std::vector<std::unique_ptr<Sphere>> spheres;
+        spheres.reserve(static_cast<size_t>(nObjects));
+        for (int obj = 0; obj < nObjects; ++obj)
+        {
+            const int     col = obj % ncols;
+            const int     row = obj / ncols;
+            const decimal x   = (static_cast<decimal>(col) - static_cast<decimal>(ncols - 1) / 2_d) * spacing;
+            const decimal y   = (static_cast<decimal>(row) - static_cast<decimal>(nrows - 1) / 2_d) * spacing;
+            auto          sph = std::make_unique<Sphere>(Vector3D(x, y, 20_d), sphRadius, 1_d);
+            sph->setIsFixed(false);
+            sph->setRestitutionCst(1_d);
+            world.addObject(sph.get());
+            spheres.push_back(std::move(sph));
+        }
+        world.addObject(ground.get());
+        world.start();
+        // Return both so ownership keeps objects alive for the duration of the run.
+        return std::make_pair(std::move(ground), std::move(spheres));
+    };
+
     const int totalRuns = nWarmup + nTimingRuns;
 
     for (int run = 0; run < totalRuns; ++run)
     {
-        const bool isWarmup  = (run < nWarmup);
-        const bool isLastRun = (run == totalRuns - 1);
+        const bool isWarmup = (run < nWarmup);
 
-        // Scene setup
         PhysicsWorld world(config);
-        auto         ground =
-            std::make_unique<Plane>(Vector3D(0_d), Vector3D(50_d, 50_d, 0_d), Vector3D(0_d, 0_d, 1_d));
-        auto sphere = std::make_unique<Sphere>(Vector3D(0_d, 0_d, 20_d), 2_d, 1_d);
-        sphere->setIsFixed(false);
-        sphere->setRestitutionCst(1_d);
-        world.addObject(sphere.get());
-        world.addObject(ground.get());
-        world.start();
+        auto [ground, spheres] = buildScene(world);
 
-        const decimal z0          = sphere->getPosition().getZ();
-        const decimal radius      = sphere->getRadius();
-        const decimal restitution = sphere->getRestitutionCst();
-
-        decimal runMaxEnergyDrift       = 0_d;
-        decimal runFinalEnergyDrift     = 0_d;
-        decimal runMaxFlightEnergyDrift = 0_d;
-        int     runBounceCount          = 0;
-        decimal runMaxHeightError       = 0_d;
-
-        size_t  counter     = 0;
-        decimal previousVz  = sphere->getVelocity().getZ();
-        decimal currentPeak = z0;
-
-        Timer runTimer;
+        size_t counter = 0;
+        Timer  runTimer;
 
         while (counter < maxIter && world.getIsRunning())
         {
@@ -116,6 +143,49 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, i
             timings.push_back(elapsed);
 
         world.clearObjects();
+    }
+
+    // ── Step-level profiling run ───────────────────────────────────────────
+    // Separate from the timed runs: measures per-step cost distribution using
+    // batch timing so that clock overhead (~50 ns/call) is negligible even at
+    // fine dt (many steps). Batch size targets ~500 samples regardless of dt.
+    {
+        const int              batchSize = std::max(1, maxiter / 500);
+        std::vector<long long> stepTimings;
+        stepTimings.reserve(static_cast<size_t>((maxiter + batchSize - 1) / batchSize));
+
+        PhysicsWorld world(config);
+        auto [ground, spheres] = buildScene(world);
+
+        Timer  batchTimer;
+        size_t counter = 0;
+        while (counter < maxIter && world.getIsRunning())
+        {
+            const int thisBatch = std::min(batchSize, static_cast<int>(maxIter - counter));
+            batchTimer.reset();
+            for (int b = 0; b < thisBatch; ++b, ++counter)
+                world.integrate();
+            const long long batchUs = batchTimer.elapsedMicroseconds();
+            stepTimings.push_back(batchUs / static_cast<long long>(thisBatch));
+        }
+
+        world.clearObjects();
+
+        const long long ssum = std::accumulate(stepTimings.begin(), stepTimings.end(), 0LL);
+        const auto      sn   = static_cast<int>(stepTimings.size());
+        result.stepUs_mean   = static_cast<decimal>(ssum) / static_cast<decimal>(sn);
+        result.stepUs_min    = static_cast<decimal>(*std::ranges::min_element(stepTimings));
+        result.stepUs_max    = static_cast<decimal>(*std::ranges::max_element(stepTimings));
+
+        decimal ssq = 0_d;
+        for (const long long t : stepTimings)
+        {
+            const decimal d = static_cast<decimal>(t) - result.stepUs_mean;
+            ssq += d * d;
+        }
+        result.stepUs_stddev = (sn > 1) ? std::sqrt(ssq / static_cast<decimal>(sn - 1)) : 0_d;
+        result.stepUs_cv =
+            (result.stepUs_mean > 0_d) ? 100_d * result.stepUs_stddev / result.stepUs_mean : 0_d;
     }
 
     // Timing statistics
@@ -141,7 +211,7 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, i
     result.stepsPerSecond = (result.timePerStep_us > 0_d) ? 1'000'000.0_d / result.timePerStep_us : 0_d;
 
     // FLOP/s
-    result.flopsPerStep       = estimateFlopsPerStep(solver);
+    result.flopsPerStep       = estimateFlopsPerStep(solver, nObjects);
     const decimal total_flops = static_cast<decimal>(result.flopsPerStep) * static_cast<decimal>(maxiter);
     result.gflops_per_second  = (result.wallTime_s > 0_d) ? total_flops / (result.wallTime_s * 1e9_d) : 0_d;
 
@@ -165,6 +235,7 @@ int main(int argc, char** argv)
     bool        appendMode    = false;
     int         N_WARMUP      = 1;
     int         N_RUN         = 5;
+    int         nObjects      = 1;
 
     // Argument parsing
     for (int i = 1; i < argc; ++i)
@@ -181,10 +252,12 @@ int main(int argc, char** argv)
             appendMode = true;
         else if (std::strcmp(argv[i], "--n_warmup") == 0 && i + 1 < argc)
             N_WARMUP = std::atoi(argv[++i]);
-        else if (std::strcmp(argv[i], "--n_warmpup") == 0 && i + 1 < argc)  // legacy typo
+        else if (std::strcmp(argv[i], "--n_warmpup") == 0 && i + 1 < argc) // legacy typo
             N_WARMUP = std::atoi(argv[++i]);
         else if (std::strcmp(argv[i], "--n_runs") == 0 && i + 1 < argc)
             N_RUN = std::atoi(argv[++i]);
+        else if (std::strcmp(argv[i], "--n_objects") == 0 && i + 1 < argc)
+            nObjects = std::atoi(argv[++i]);
     }
 
     const int         maxIterations = static_cast<int>(duration / timestep);
@@ -194,15 +267,16 @@ int main(int argc, char** argv)
     SimResult results;
 
     // Run benchmark
-    std::cout << "Solver: " << solver << "\n";
+    std::cout << "Solver: " << solver << "  n_objects=" << nObjects << "\n";
 
-    results = simulation(solver, timestep, maxIterations, N_WARMUP, N_RUN);
+    results = simulation(solver, timestep, maxIterations, nObjects, N_WARMUP, N_RUN);
 
     std::cout << "  dt=" << timestep << "  wall=" << results.wallTime_s << " s"
               << "  cpu_mean=" << results.cpuUs_mean << " µs"
               << "  stddev=" << results.cpuUs_stddev << " µs"
               << "  CV=" << results.cv_percent << "%"
-              << "  time/step=" << results.timePerStep_us << " µs"
+              << "  step_mean=" << results.stepUs_mean << " µs"
+              << "  step_cv=" << results.stepUs_cv << "%"
               << "  steps/s=" << results.stepsPerSecond << "  GFLOP/s=" << results.gflops_per_second
               << "  RSS=" << results.peakRSS_kb << " kB\n";
 
@@ -212,9 +286,8 @@ int main(int argc, char** argv)
     // CSV 1: benchmark.csv
     // --append skips the header so the shell can accumulate rows across invocations.
     {
-        const auto openMode = appendMode
-                                  ? (std::ios::out | std::ios::app)
-                                  : (std::ios::out | std::ios::trunc);
+        const auto openMode =
+            appendMode ? (std::ios::out | std::ios::app) : (std::ios::out | std::ios::trunc);
         std::ofstream file(outputPath + "/benchmark.csv", openMode);
         if (!file)
         {
@@ -223,17 +296,20 @@ int main(int argc, char** argv)
         }
 
         if (!appendMode)
-            file << "solver,dt,"
+            file << "solver,dt,n_objects,"
                     "cpu_us_mean,cpu_us_min,cpu_us_max,cpu_us_stddev,cv_percent,"
                     "wall_time_s,time_per_step_us,steps_per_second,"
-                    "flops_per_step,gflops_per_second,peak_rss_kb\n";
+                    "flops_per_step,gflops_per_second,"
+                    "step_us_mean,step_us_min,step_us_max,step_us_stddev,step_us_cv,"
+                    "peak_rss_kb\n";
 
         const SimResult& r = results;
 
-        file << solver << "," << timestep << "," << r.cpuUs_mean << "," << r.cpuUs_min << "," << r.cpuUs_max
-             << "," << r.cpuUs_stddev << "," << r.cv_percent << "," << r.wallTime_s << "," << r.timePerStep_us
-             << "," << r.stepsPerSecond << "," << r.flopsPerStep << "," << r.gflops_per_second << ","
-             << r.peakRSS_kb << "\n";
+        file << solver << "," << timestep << "," << nObjects << "," << r.cpuUs_mean << "," << r.cpuUs_min
+             << "," << r.cpuUs_max << "," << r.cpuUs_stddev << "," << r.cv_percent << "," << r.wallTime_s
+             << "," << r.timePerStep_us << "," << r.stepsPerSecond << "," << r.flopsPerStep << ","
+             << r.gflops_per_second << "," << r.stepUs_mean << "," << r.stepUs_min << "," << r.stepUs_max
+             << "," << r.stepUs_stddev << "," << r.stepUs_cv << "," << r.peakRSS_kb << "\n";
     }
 
     // CSV 2: energy_drift.csv

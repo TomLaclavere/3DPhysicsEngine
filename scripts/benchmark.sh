@@ -1,44 +1,51 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Benchmark pipeline following docs/benchmark.md.
+# Benchmark pipeline
 #
-# Two baseline modes:
-#   scalar    — -O2 -fno-tree-vectorize -fno-inline  (scalar reference, no SIMD)
-#   optimised — -O3 -march=native                    (full compiler optimisations, single-core)
+# Two compiler profiles:
+#   scalar     -O2 -fno-tree-vectorize -fno-inline  (scalar reference baseline)
+#   optimised  -O3 -march=native                    (full optimisations, single-core)
 #
-# Steps per mode:
-#   1. Recompile (Release, tests/coverage disabled, with the appropriate flags)
-#   2. Run benchmark executable(s) → CSV written under benchmarks/performance
-#   3. Run Python analysis 
+# Steps per profile:
+#   1. Build   — recompile with the appropriate flags
+#   2. Run     — for each solver × dt: execute benchmark binary → append to benchmark.csv
+#   3. Stat    — perf stat per solver at DT_MIN (finest dt, most iterations)
+#   4. Record  — perf record → flamegraph (first solver, DT_MIN)
+#   5. Analyse — Python post-processing
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 BUILD_SCRIPT="$SCRIPT_DIR/build.sh"
 
-# =====================================================================
-# Perf parameters
-# =====================================================================
-TARGET_REL="benchmarks/Performance"   # path relative to build/
-OPEN_HOTSPOT=false
-MEASURE_MFLOPS=true
-FREQ=999
-CALL_GRAPH="dwarf"
-BIN_ARGS=()   # extra args forwarded to the profiled binary (after --)
-
 REPO="${ROOT}/benchmarks/performance"
 RESULTS_DIR="${REPO}/results"
-PERF_DATA="${RESULTS_DIR}/perf.data"
-PERF_SCRIPT="${RESULTS_DIR}/perf.script"
-FLAME_SVG="${RESULTS_DIR}/flame.svg"
-ANALYSE_PY="${REPO}/analyse_perf.py"
+ANALYSE_PY="${REPO}/benchmark_analysis.py"
 
-# =====================================================================
-# Defaults
-# =====================================================================
-MODE="both"           # scalar | optimised | both
-BENCHMARK="performance" 
+# perf record output files (overwritten per profile)
+PERF_DATA="${RESULTS_DIR}/perf.data"
+PERF_SCRIPT_OUT="${RESULTS_DIR}/perf.script"
+FLAME_SVG="${RESULTS_DIR}/flame.svg"
+
+# perf record settings
+FREQ=999
+CALL_GRAPH="dwarf"
+
+# Solvers and dt sweep
+SOLVERS=("Euler" "Verlet" "RK4")
+DT_MIN="1e-5"
+DT_MAX="1e-2"
+DT_N=5
+PERF_DT=""          # empty = use DT_MIN for perf stat (finest dt → most stable counters)
+
+# Simulation parameters
+DUR="22.0"
+N_WARMUP=1
+N_RUNS=5
+
+# Pipeline control
 SKIP_BUILD=false
+SKIP_PERF=false
 SKIP_ANALYSIS=false
 
 # =====================================================================
@@ -49,46 +56,60 @@ usage() {
 Usage: ./scripts/benchmark.sh [options]
 
 Options:
-  --mode MODE        Compiler mode: scalar | optimised | both (default: both)
-  --skip-build       Reuse existing binaries, do not recompile
-  --skip-analysis    Skip the Python analysis step
-  -h, --help         Show this help message
-
-Modes:
-  scalar      -O2 -fno-tree-vectorize -fno-inline  (scalar reference baseline)
-  optimised   -O3 -march=native                    (compiler-optimised single-core baseline)
-  both        Run scalar first, then optimised
+  --solvers LIST     space-separated solver names  (default: "Euler Verlet RK4")
+  --dt-min VALUE     smallest timestep  (default: 1e-4)
+  --dt-max VALUE     largest timestep   (default: 1e-1)
+  --dt-n N           number of log-spaced dt values  (default: 20)
+  --perf-dt VALUE    dt used for perf stat  (default: DT_MIN)
+  --dur VALUE        simulated duration in s  (default: 22.0)
+  --n-warmup N       discarded warmup runs  (default: 1)
+  --n-runs N         timed runs  (default: 5)
+  --skip-build       reuse existing binaries
+  --skip-perf        skip perf stat and perf record
+  --skip-analysis    skip Python analysis step
+  -h, --help         show this help
 
 Output:
-  Results are written to benchmarks/performance/results/.
-  When running both modes, each profile's results are also archived to
-  benchmarks/performance/results/ before the next run overwrites them.
-
-Examples:
-  ./scripts/benchmark.sh
-  ./scripts/benchmark.sh --mode optimised
-  ./scripts/benchmark.sh --mode scalar
-  ./scripts/benchmark.sh --skip-build --skip-analysis
+  benchmarks/performance/results/
+    benchmark.csv              timing + FLOP/s for all (solver, dt) combinations
+    perf_stat_<p>_<s>.txt     perf stat per profile+solver at DT_MIN
+    perf.data / perf.script    raw perf record data
+    flame.svg                  flamegraph (requires flamegraph.pl)
 EOF
 }
 
 # =====================================================================
-# Parse arguments
+# Argument parsing
 # =====================================================================
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --mode)       MODE="$2";      shift 2;;
-        --skip-build)    SKIP_BUILD=true;    shift;;
-        --skip-analysis) SKIP_ANALYSIS=true; shift;;
-        -h|--help) usage; exit 0;;
-        *) echo "Unknown argument: $1"; usage; exit 1;;
+        --solvers)       read -ra SOLVERS <<< "$2"; shift 2 ;;
+        --dt-min)        DT_MIN="$2";           shift 2 ;;
+        --dt-max)        DT_MAX="$2";           shift 2 ;;
+        --dt-n)          DT_N="$2";             shift 2 ;;
+        --perf-dt)       PERF_DT="$2";          shift 2 ;;
+        --dur)           DUR="$2";              shift 2 ;;
+        --n-warmup)      N_WARMUP="$2";         shift 2 ;;
+        --n-runs)        N_RUNS="$2";           shift 2 ;;
+        --skip-build)    SKIP_BUILD=true;       shift ;;
+        --skip-perf)     SKIP_PERF=true;        shift ;;
+        --skip-analysis) SKIP_ANALYSIS=true;    shift ;;
+        -h|--help) usage; exit 0 ;;
+        *) echo "Unknown argument: $1" >&2; usage; exit 1 ;;
     esac
 done
 
-case "$MODE" in
-    scalar|optimised|both) ;;
-    *) echo "Error: invalid --mode '$MODE'"; usage; exit 1;;
-esac
+# =====================================================================
+# Generate dt array (log-spaced via python3)
+# =====================================================================
+build_dt_array() {
+    mapfile -t DT_VALUES < <(python3 -c "
+import numpy as np
+for x in np.geomspace($DT_MIN, $DT_MAX, $DT_N):
+    print(f'{x:.6e}')
+")
+    echo "[dt] ${#DT_VALUES[@]} values from ${DT_MIN} to ${DT_MAX}"
+}
 
 # =====================================================================
 # Build
@@ -99,8 +120,8 @@ build_profile() {
 
     local release_flags
     case "$profile" in
-        scalar)    release_flags="-O2 -fno-tree-vectorize -fno-inline -DNDEBUG";;
-        optimised) release_flags="-O3 -march=native -DNDEBUG";;
+        scalar)    release_flags="-O2 -fno-tree-vectorize -fno-inline -DNDEBUG" ;;
+        optimised) release_flags="-O3 -march=native -DNDEBUG" ;;
     esac
 
     echo ""
@@ -110,6 +131,7 @@ build_profile() {
     echo "======================================================"
 
     "$BUILD_SCRIPT" \
+        --clean \
         --build-dir  "$build_dir" \
         --build-type Release \
         "-D3DPE_BUILD_TESTS=OFF" \
@@ -118,133 +140,127 @@ build_profile() {
 }
 
 # =====================================================================
-# Run benchmarks
+# Run benchmark — solver × dt double loop, append after first row
 # =====================================================================
-run_benchmarks() {
+run_benchmark() {
     local profile="$1"
-    local archive="$2"   # true | false — whether to copy results to results_<profile>/
-    local bin_dir="$ROOT/build/benchmark_${profile}/benchmarks"
+    local bin="$ROOT/build/benchmark_${profile}/benchmarks/Performance"
 
     echo ""
     echo "======================================================"
     echo " Run — profile: ${profile}"
+    echo "   solvers: ${SOLVERS[*]}"
+    echo "   dt: ${DT_VALUES[0]} … ${DT_VALUES[-1]}  (${#DT_VALUES[@]} values)"
+    echo "======================================================"
+
+    if [[ ! -x "$bin" ]]; then
+        echo "Error: binary not found or not executable: ${bin}" >&2
+        exit 1
+    fi
+
+    cd "$ROOT"
+
+    local first=true
+    for solver in "${SOLVERS[@]}"; do
+        echo ""
+        echo "  Solver: ${solver}"
+        for dt in "${DT_VALUES[@]}"; do
+            local append_flag=""
+            $first || append_flag="--append"
+            first=false
+
+            "$bin" \
+                --solver   "$solver"   \
+                --dt       "$dt"       \
+                --dur      "$DUR"      \
+                --n_warmup "$N_WARMUP" \
+                --n_runs   "$N_RUNS"   \
+                $append_flag
+        done
+    done
+}
+
+# =====================================================================
+# perf stat — per solver at representative dt
+# =====================================================================
+run_perf_stat() {
+    local profile="$1"
+    local bin="$ROOT/build/benchmark_${profile}/benchmarks/Performance"
+    local rep_dt="${PERF_DT:-$DT_MIN}"
+
+    echo ""
+    echo "======================================================"
+    echo " perf stat — profile: ${profile}  dt=${rep_dt}"
     echo "======================================================"
 
     cd "$ROOT"
 
-    # Perf
-    # while [[ $# -gt 0 ]]; do
-    #     case "$1" in
-    #         --target)   TARGET_REL="$2"; shift 2 ;;
-    #         --hotspot)  OPEN_HOTSPOT=true; shift ;;
-    #         --freq)     FREQ="$2"; shift 2 ;;
-    #         --fp)       CALL_GRAPH="fp"; shift ;;
-    #         -h|--help)  usage; exit 0 ;;
-    #         --)         shift; BIN_ARGS=("$@"); break ;;
-    #         *) echo "Unknown option: $1" >&2; usage; exit 1 ;;
-    #     esac
-    # done
+    for solver in "${SOLVERS[@]}"; do
+        local out="${RESULTS_DIR}/perf_stat_${profile}_${solver}.txt"
+        echo ""
+        echo "  solver: ${solver} → ${out}"
 
-    BINARY="${ROOT}/build/${TARGET_REL}"
-
-    # Preflight checks
-    if ! command -v perf &>/dev/null; then
-        echo "Error: 'perf' not found on PATH." >&2
-        exit 1
-    fi
-
-    if [[ ! -x "${BINARY}" ]]; then
-        echo "Error: binary not found or not executable: ${BINARY}" >&2
-        echo "Build the project first: ./scripts/build.sh" >&2
-        exit 1
-    fi
-
-    STACKCOLLAPSE=$(command -v stackcollapse-perf.pl 2>/dev/null || true)
-    FLAMEGRAPH=$(command -v flamegraph.pl 2>/dev/null || true)
-    HAVE_FLAMEGRAPH=false
-    if [[ -x "${STACKCOLLAPSE}" && -x "${FLAMEGRAPH}" ]]; then
-        HAVE_FLAMEGRAPH=true
-    fi
-
-    mkdir -p "${RESULTS_DIR}"
-    
-
-    # Step 1: Record
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "  Profiling: ${BINARY}"
-    [[ ${#BIN_ARGS[@]} -gt 0 ]] && echo "  Args:      ${BIN_ARGS[*]}"
-    echo "  Frequency: ${FREQ} Hz   Call graph: ${CALL_GRAPH}"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-    cd "${ROOT}"
-
-    perf record -F "${FREQ}" -g --call-graph "${CALL_GRAPH}" \
-        -o "${PERF_DATA}" \
-        "${BINARY}" "${BIN_ARGS[@]}"
-
-    echo ""
-    echo "✓ Raw data  →  ${PERF_DATA}"
-
-    # Step 2: Convert to text script
-    echo "Converting to perf.script …"
-    perf script -i "${PERF_DATA}" > "${PERF_SCRIPT}"
-    echo "✓ Script    →  ${PERF_SCRIPT}"
-
-    # Step 3: Flamegraph
-    if ${HAVE_FLAMEGRAPH}; then
-        echo "Generating flamegraph …"
-        "${STACKCOLLAPSE}" "${PERF_SCRIPT}" | "${FLAMEGRAPH}" > "${FLAME_SVG}"
-        echo "✓ Flamegraph →  ${FLAME_SVG}"
-    else
-        echo "⚠  stackcollapse-perf.pl / flamegraph.pl not found — skipping flamegraph."
-    fi
-
-    # Step 4: Python analysis
-    echo ""
-    if [[ -f "${ANALYSE_PY}" ]] && command -v python3 &>/dev/null; then
-        python3 "${ANALYSE_PY}" \
-            --input  "${PERF_SCRIPT}" \
-            --output "${RESULTS_DIR}/hotspots.png"
-    else
-        echo "⚠  analyze.py not found or python3 unavailable — skipping automated report."
-    fi
-
-    # Step 5: Summary
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "  Output files:"
-    echo "    ${PERF_DATA}"
-    echo "    ${PERF_SCRIPT}"
-    ${HAVE_FLAMEGRAPH} && echo "    ${FLAME_SVG}"
-    [[ -f "${RESULTS_DIR}/hotspots.png" ]] && echo "    ${RESULTS_DIR}/hotspots.png"
-    echo ""
-    echo "  Next steps:"
-    echo "    perf report -i ${PERF_DATA}"
-    [[ -f "${FLAME_SVG}" ]] && echo "    xdg-open ${FLAME_SVG}"
-    echo "    hotspot ${PERF_DATA}"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-    # Step 6: Optional hotspot GUI
-    if ${OPEN_HOTSPOT}; then
-        if command -v hotspot &>/dev/null; then
-            echo "Opening hotspot …"
-            hotspot "${PERF_DATA}" &
-        else
-            echo "⚠  hotspot not found on PATH." >&2
-        fi
-    fi
-
-
-    if [[ "$archive" == true ]]; then
-        rm -rf "benchmarks/performance/results_${profile}"
-        cp -r  "benchmarks/performance/results" \
-                "benchmarks/performance/results_${profile}"
-        echo "[run] Results archived to benchmarks/performance/results_${profile}/"
-    fi
-
+        perf stat \
+            -e cycles,instructions \
+            -e L1-dcache-loads,L1-dcache-load-misses \
+            -e LLC-loads,LLC-load-misses \
+            -e branches,branch-misses \
+            -e stalled-cycles-frontend,stalled-cycles-backend \
+            "$bin" \
+                --solver   "$solver"  \
+                --dt       "$rep_dt"  \
+                --dur      "$DUR"     \
+                --n_warmup 0          \
+                --n_runs   1          \
+                --append   \
+            2>&1 | tee "$out"
+    done
 }
 
 # =====================================================================
-# Analysis
+# perf record → flamegraph (first solver, finest dt)
+# =====================================================================
+run_perf_record() {
+    local profile="$1"
+    local bin="$ROOT/build/benchmark_${profile}/benchmarks/Performance"
+    local rep_solver="${SOLVERS[0]}"
+    local rep_dt="${PERF_DT:-$DT_MIN}"
+
+    echo ""
+    echo "======================================================"
+    echo " perf record — profile: ${profile}  solver=${rep_solver}  dt=${rep_dt}"
+    echo "======================================================"
+
+    cd "$ROOT"
+
+    perf record -F "${FREQ}" -g --call-graph "${CALL_GRAPH}" \
+        -o "${PERF_DATA}" \
+        "$bin" \
+            --solver   "$rep_solver" \
+            --dt       "$rep_dt"     \
+            --dur      "$DUR"        \
+            --n_warmup 0             \
+            --n_runs   1             \
+            --append
+
+    perf script -i "${PERF_DATA}" > "${PERF_SCRIPT_OUT}"
+    echo "perf record → ${PERF_DATA}"
+    echo "perf script → ${PERF_SCRIPT_OUT}"
+
+    local stackcollapse flamegraph_bin
+    stackcollapse=$(command -v stackcollapse-perf.pl 2>/dev/null || true)
+    flamegraph_bin=$(command -v flamegraph.pl 2>/dev/null || true)
+
+    if [[ -x "${stackcollapse}" && -x "${flamegraph_bin}" ]]; then
+        "${stackcollapse}" "${PERF_SCRIPT_OUT}" | "${flamegraph_bin}" > "${FLAME_SVG}"
+        echo "flamegraph  → ${FLAME_SVG}"
+    else
+        echo "⚠  flamegraph tools not found — skipping (install FlameGraph from Brendan Gregg)"
+    fi
+}
+
+# =====================================================================
+# Python analysis
 # =====================================================================
 run_analysis() {
     echo ""
@@ -252,51 +268,54 @@ run_analysis() {
     echo " Analysis"
     echo "======================================================"
 
-    cd "$ROOT/benchmarks/performance"
-    python3 benchmark_analysis.py
-    cd "$ROOT"
-    
+    if ! command -v python3 &>/dev/null; then
+        echo "⚠  python3 not found — skipping analysis"
+        return
+    fi
+
+    python3 "$ANALYSE_PY"
+}
+
+# =====================================================================
+# Orchestration
+# =====================================================================
+run_mode() {
+    local profile="$1"
+    local archive="$2"   # true | false
+
+    mkdir -p "${RESULTS_DIR}"
+
+    [[ "$SKIP_BUILD" == false ]] && build_profile "$profile"
+
+    run_benchmark "$profile"
+
+    if [[ "$SKIP_PERF" == false ]]; then
+        if command -v perf &>/dev/null; then
+            run_perf_stat   "$profile"
+            run_perf_record "$profile"
+        else
+            echo "⚠  perf not found on PATH — skipping hardware counters"
+        fi
+    fi
+
+    if [[ "$archive" == true ]]; then
+        rm -rf "${REPO}/results_${profile}"
+        cp -r  "${RESULTS_DIR}" "${REPO}/results_${profile}"
+        echo "Results archived → ${REPO}/results_${profile}/"
+    fi
 }
 
 # =====================================================================
 # Main
 # =====================================================================
-run_mode() {
-    local profile="$1"
-    local archive="$2"
+build_dt_array
+run_mode scalar    true   # archive scalar before optimised overwrites results/
+run_mode optimised false
 
-    if [[ "$SKIP_BUILD" == false ]]; then
-        build_profile "$profile"
-    fi
+[[ "$SKIP_ANALYSIS" == false ]] && run_analysis
 
-    run_benchmarks "$profile" "$archive"
-
-    # if [[ "$SKIP_ANALYSIS" == false ]]; then
-    #     run_analysis
-    # fi
-    echo ""
-    if [[ -f "${ANALYSE_PY}" ]] && command -v python3 &>/dev/null; then
-        python3 "${ANALYSE_PY}" \
-            --input  "${PERF_SCRIPT}" \
-            --output "${RESULTS_DIR}/hotspots.png"
-    else
-        echo "⚠  analyze.py not found or python3 unavailable — skipping automated report."
-    fi
-}
-
-case "$MODE" in
-    scalar)
-        run_mode scalar false
-        ;;
-    optimised)
-        run_mode optimised false
-        ;;
-    both)
-        # Archive scalar results so the optimised run doesn't overwrite them.
-        run_mode scalar    true
-        run_mode optimised false
-        ;;
-esac
+[[ -f "${RESULTS_DIR}/benchmark_report.pdf" ]] && \
+    cp "${RESULTS_DIR}/benchmark_report.pdf" "${REPO}/"
 
 echo ""
-echo "[DONE] Benchmark pipeline completed  (mode=${MODE}, benchmark=${BENCHMARK})"
+echo "solvers=${SOLVERS[*]}  dt_n=${DT_N}  dt=${DT_MIN}..${DT_MAX}  dur=${DUR}"

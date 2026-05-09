@@ -16,6 +16,7 @@
 #include <memory>
 #include <numeric>
 #include <string>
+#include <sys/resource.h>
 #include <vector>
 
 struct SimResult
@@ -25,10 +26,31 @@ struct SimResult
     long long cpuUs_min;
     long long cpuUs_max;
     decimal   cpuUs_stddev; // sample std dev (Bessel-corrected)
+    decimal   cv_percent;   // coefficient of variation
 
-    // Derived metrics
-    decimal timePerStep_us;
+    // Derived timing
+    decimal wallTime_s;     // mean wall-clock duration of one full run (seconds)
+    decimal timePerStep_us; // mean wall-clock time per integration step (µs)
+    decimal stepsPerSecond; // effective throughput
+
+    // FLOP/s (analytical estimate, not hardware-counter measured)
+    long long flopsPerStep;
+    decimal   gflops_per_second;
+
+    // Memory
+    long long peakRSS_kb; // peak resident set size at benchmark end (kilobytes)
 };
+
+// Analytical FLOP estimate for the benchmark scene: 1 dynamic sphere + 1 fixed plane, impulse mode.
+// Euler/Verlet: 1 force eval per step. RK4: 4 force evals per step. See md for more details.
+long long estimateFlopsPerStep(const std::string& solver)
+{
+    if (solver == "RK4")
+        return 192LL;
+    if (solver == "Verlet")
+        return 54LL;
+    return 48LL; // Euler
+}
 
 SimResult simulation(const std::string& solver, decimal timestep, int maxiter, int nWarmup, int nTimingRuns)
 {
@@ -52,7 +74,7 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, i
         const bool isWarmup  = (run < nWarmup);
         const bool isLastRun = (run == totalRuns - 1);
 
-        // Scene setup (recreated each run so state is identical)
+        // Scene setup
         PhysicsWorld world(config);
         auto         ground =
             std::make_unique<Plane>(Vector3D(0_d), Vector3D(50_d, 50_d, 0_d), Vector3D(0_d, 0_d, 1_d));
@@ -90,6 +112,9 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, i
 
         const long long elapsed = runTimer.elapsedMicroseconds();
 
+        if (!isWarmup)
+            timings.push_back(elapsed);
+
         world.clearObjects();
     }
 
@@ -108,8 +133,22 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, i
     }
     const int n         = static_cast<int>(timings.size());
     result.cpuUs_stddev = (n > 1) ? std::sqrt(sq_sum / static_cast<decimal>(n - 1)) : 0_d;
+    result.cv_percent   = (result.cpuUs_mean > 0) ? 100_d * result.cpuUs_stddev / mean_d : 0_d;
 
-    result.timePerStep_us = static_cast<decimal>(result.cpuUs_mean) / static_cast<decimal>(maxiter);
+    // Derived timing
+    result.wallTime_s     = mean_d * 1e-6_d;
+    result.timePerStep_us = mean_d / static_cast<decimal>(maxiter);
+    result.stepsPerSecond = (result.timePerStep_us > 0_d) ? 1'000'000.0_d / result.timePerStep_us : 0_d;
+
+    // FLOP/s
+    result.flopsPerStep       = estimateFlopsPerStep(solver);
+    const decimal total_flops = static_cast<decimal>(result.flopsPerStep) * static_cast<decimal>(maxiter);
+    result.gflops_per_second  = (result.wallTime_s > 0_d) ? total_flops / (result.wallTime_s * 1e9_d) : 0_d;
+
+    // Peak memory
+    struct rusage usage {};
+    getrusage(RUSAGE_SELF, &usage);
+    result.peakRSS_kb = usage.ru_maxrss;
 
     return result;
 }
@@ -123,6 +162,7 @@ int main(int argc, char** argv)
     double      timestep      = 1e-3;
     double      duration      = 22.0;
     bool        contactForces = false;
+    bool        appendMode    = false;
     int         N_WARMUP      = 1;
     int         N_RUN         = 5;
 
@@ -137,7 +177,11 @@ int main(int argc, char** argv)
             duration = std::atof(argv[++i]);
         else if (std::strcmp(argv[i], "--contact-forces") == 0)
             contactForces = true;
-        else if (std::strcmp(argv[i], "--n_warmpup") == 0 && i + 1 < argc)
+        else if (std::strcmp(argv[i], "--append") == 0)
+            appendMode = true;
+        else if (std::strcmp(argv[i], "--n_warmup") == 0 && i + 1 < argc)
+            N_WARMUP = std::atoi(argv[++i]);
+        else if (std::strcmp(argv[i], "--n_warmpup") == 0 && i + 1 < argc)  // legacy typo
             N_WARMUP = std::atoi(argv[++i]);
         else if (std::strcmp(argv[i], "--n_runs") == 0 && i + 1 < argc)
             N_RUN = std::atoi(argv[++i]);
@@ -154,30 +198,42 @@ int main(int argc, char** argv)
 
     results = simulation(solver, timestep, maxIterations, N_WARMUP, N_RUN);
 
-    std::cout << "  dt=" << timestep << "  cpu_mean=" << results.cpuUs_mean << " µs"
-              << "  stddev=" << results.cpuUs_stddev << " µs\n";
+    std::cout << "  dt=" << timestep << "  wall=" << results.wallTime_s << " s"
+              << "  cpu_mean=" << results.cpuUs_mean << " µs"
+              << "  stddev=" << results.cpuUs_stddev << " µs"
+              << "  CV=" << results.cv_percent << "%"
+              << "  time/step=" << results.timePerStep_us << " µs"
+              << "  steps/s=" << results.stepsPerSecond << "  GFLOP/s=" << results.gflops_per_second
+              << "  RSS=" << results.peakRSS_kb << " kB\n";
 
     // Created results directory
     std::filesystem::create_directory(outputPath);
 
     // CSV 1: benchmark.csv
+    // --append skips the header so the shell can accumulate rows across invocations.
     {
-        std::ofstream file(outputPath + "/benchmark.csv");
+        const auto openMode = appendMode
+                                  ? (std::ios::out | std::ios::app)
+                                  : (std::ios::out | std::ios::trunc);
+        std::ofstream file(outputPath + "/benchmark.csv", openMode);
         if (!file)
         {
             std::cerr << "Cannot open benchmark.csv\n";
             return 1;
         }
 
-        file << "solver,dt,max_height_error,max_energy_drift,final_energy_drift,"
-                "max_flight_energy_drift,bounce_count,"
-                "cpu_us_mean,cpu_us_min,cpu_us_max,cpu_us_stddev,"
-                "time_per_step_us\n";
+        if (!appendMode)
+            file << "solver,dt,"
+                    "cpu_us_mean,cpu_us_min,cpu_us_max,cpu_us_stddev,cv_percent,"
+                    "wall_time_s,time_per_step_us,steps_per_second,"
+                    "flops_per_step,gflops_per_second,peak_rss_kb\n";
 
         const SimResult& r = results;
 
         file << solver << "," << timestep << "," << r.cpuUs_mean << "," << r.cpuUs_min << "," << r.cpuUs_max
-             << "," << r.cpuUs_stddev << "," << r.timePerStep_us << "\n";
+             << "," << r.cpuUs_stddev << "," << r.cv_percent << "," << r.wallTime_s << "," << r.timePerStep_us
+             << "," << r.stepsPerSecond << "," << r.flopsPerStep << "," << r.gflops_per_second << ","
+             << r.peakRSS_kb << "\n";
     }
 
     // CSV 2: energy_drift.csv

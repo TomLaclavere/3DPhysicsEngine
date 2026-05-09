@@ -25,6 +25,7 @@ __pycache__/
 *.data
 *.data.old
 *.script
+*.txt
 
 # Claude
 CLAUDE.md

@@ -314,7 +314,7 @@ if(3DPE_BUILD_BENCHMARKS)
     # ---------------------------------------------
     # Benchmark: Performances
     # ---------------------------------------------
-    add_executable(benchmark_Performance benchmarks/performance/main.cpp)
+    add_executable(benchmark_Performance benchmarks/performance/benchmark.cpp)
     target_link_libraries(benchmark_Performance PRIVATE 3DPhysicsEngine)
     target_include_directories(benchmark_Performance PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
     set_target_properties(benchmark_Performance PROPERTIES

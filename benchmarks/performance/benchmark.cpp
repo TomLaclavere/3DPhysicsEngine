@@ -54,7 +54,7 @@ struct SimResult
 // Integration scales as O(N). RK4 re-evaluates forces 4× per step.
 long long estimateFlopsPerStep(const std::string& solver, int nObjects)
 {
-    const long long n               = static_cast<long long>(nObjects);
+    const auto      n               = static_cast<long long>(nObjects);
     const long long gravity_flops   = 6LL * n;
     const long long collision_flops = 45LL * n * (n - 1) / 2;
     const long long force_flops     = gravity_flops + collision_flops;
@@ -90,7 +90,6 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, i
     const decimal halfSize = std::max(50_d, static_cast<decimal>(ncols + 1) * spacing);
 
     // Lambda that builds a fresh scene into `world` and returns the sphere handles.
-    // `world` must already be constructed; objects are owned by the returned vector.
     auto buildScene = [&](PhysicsWorld& world)
     {
         auto ground = std::make_unique<Plane>(Vector3D(0_d), Vector3D(halfSize, halfSize, 0_d),
@@ -251,8 +250,6 @@ int main(int argc, char** argv)
         else if (std::strcmp(argv[i], "--append") == 0)
             appendMode = true;
         else if (std::strcmp(argv[i], "--n_warmup") == 0 && i + 1 < argc)
-            N_WARMUP = std::atoi(argv[++i]);
-        else if (std::strcmp(argv[i], "--n_warmpup") == 0 && i + 1 < argc) // legacy typo
             N_WARMUP = std::atoi(argv[++i]);
         else if (std::strcmp(argv[i], "--n_runs") == 0 && i + 1 < argc)
             N_RUN = std::atoi(argv[++i]);

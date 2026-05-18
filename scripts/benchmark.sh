@@ -33,7 +33,7 @@ CALL_GRAPH="dwarf"
 
 # Solvers, dt sweep, and object-count sweep
 SOLVERS=("Euler" "Verlet" "RK4")
-N_OBJECTS=(1 2 5 10 20)
+N_OBJECTS=(1 2 5 10 20 50 100)
 DT_MIN="1e-5"
 DT_MAX="1e-2"
 DT_N=5
@@ -146,7 +146,7 @@ build_profile() {
 }
 
 # =====================================================================
-# Run benchmark — solver × dt double loop, append after first row
+# Run benchmark — solver × Nobj x dt triple loop
 # =====================================================================
 run_benchmark() {
     local profile="$1"
@@ -190,7 +190,7 @@ run_benchmark() {
 }
 
 # =====================================================================
-# perf stat — per solver at representative dt
+# perf stat — per solver at smallest dt
 # =====================================================================
 run_perf_stat() {
     local profile="$1"
@@ -230,7 +230,7 @@ run_perf_stat() {
 }
 
 # =====================================================================
-# perf record → flamegraph (first solver, finest dt)
+# perf record → flamegraph (first solver, smaller dt)
 # =====================================================================
 run_perf_record() {
     local profile="$1"

@@ -47,7 +47,11 @@ void PhysicsWorld::setSolver(const std::string& _solver)
     solver = parseSolver(_solver);
     config.setSolver(_solver);
 }
-void PhysicsWorld::setTimeStep(decimal ind) { timeStep = ind; }
+void PhysicsWorld::setTimeStep(decimal ind)
+{
+    timeStep = ind;
+    config.setTimeStep(ind);
+}
 void PhysicsWorld::setGravityCst(decimal g) { gravityCst = g; }
 void PhysicsWorld::setGravityAcc(const Vector3D& acc) { gravityAcc = acc; }
 
@@ -508,8 +512,7 @@ void PhysicsWorld::integrate()
 }
 void PhysicsWorld::run()
 {
-    const decimal timeStep = config.getTimeStep();
-    const size_t  maxIter  = config.getMaxIterations();
+    const size_t maxIter = config.getMaxIterations();
     size_t        cpt      = 0;
 
     // Printing

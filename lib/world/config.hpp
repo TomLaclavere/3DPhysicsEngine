@@ -29,6 +29,12 @@ private:
     bool        save                   = false;
     bool        useSimplifiedCollision = true;
 
+    // Default material constants (applied to newly created objects)
+    decimal defaultStiffness   = 1000.0_d;
+    decimal defaultDamping     = 50.0_d;
+    decimal defaultFriction    = 0.4_d;
+    decimal defaultRestitution = 0.7_d;
+
     /// Singleton constructor
     Config() = default;
 
@@ -50,6 +56,10 @@ public:
     bool           getVerbose() const;
     bool           getSave() const;
     bool           getSimplifiedCollision() const;
+    decimal        getDefaultStiffness() const;
+    decimal        getDefaultDamping() const;
+    decimal        getDefaultFriction() const;
+    decimal        getDefaultRestitution() const;
     /// @}
 
     /// @name Setters
@@ -65,7 +75,8 @@ public:
     {
         if (dt <= 0)
             throw std::invalid_argument("Time step must be positive");
-        timeStep = dt;
+        timeStep     = dt;
+        maxIterations = static_cast<std::size_t>(std::round(simulationDuration / timeStep));
     }
 
     /**
@@ -96,6 +107,10 @@ public:
     void setVerbose(bool verb) { verbose = verb; }
     void setSave(bool sav) { save = sav; }
     void setSimplifiedCollision(bool simpColl) { useSimplifiedCollision = simpColl; }
+    void setDefaultStiffness(decimal k) { defaultStiffness = k; }
+    void setDefaultDamping(decimal d) { defaultDamping = d; }
+    void setDefaultFriction(decimal mu) { defaultFriction = mu; }
+    void setDefaultRestitution(decimal e) { defaultRestitution = e; }
     /// @}
 
     /// @name Loading Methods

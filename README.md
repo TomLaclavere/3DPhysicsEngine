@@ -34,6 +34,7 @@ Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) and [C
 - [Benchmark Results](#benchmark-results)
 - [Quick Start](#quick-start)
 - [Installation](#installation)
+- [Graphical Interface](#graphical-interface)
 - [Build and Run](#build-and-run)
 - [Developer Scripts](#developer-scripts)
 - [Doxygen Documentation](#doxygen-documentation)
@@ -246,6 +247,7 @@ cd 3DPhysicsEngine
 #### External libraries
 
 - yaml-cpp
+- **Qt6 Widgets** *(optional)* — required to build the graphical interface (auto-detected by CMake)
 
 #### Tests
 
@@ -271,6 +273,16 @@ sudo apt install -y build-essential cmake git libyaml-cpp-dev gcovr
 sudo pacman -Syu --needed base-devel cmake git yaml-cpp gcovr
 ```
 
+For the optional Qt6 graphical interface:
+
+```bash
+# Ubuntu
+sudo apt install -y qt6-base-dev
+
+# Arch Linux
+sudo pacman -S --needed qt6-base
+```
+
 For Clang and optional Ninja:
 
 ```bash
@@ -290,6 +302,41 @@ sudo apt-get install -y doxygen graphviz
 # Arch Linux
 sudo pacman -S --needed doxygen graphviz
 ```
+
+---
+
+## Graphical Interface
+
+A Qt6 GUI (`PhysicsEngineGui`) wraps all interactive CLI commands in a window and adds plot generation buttons backed by the existing Python/Plotly utilities.
+
+**Requirements:** Qt6 Widgets installed on the system (see [Installation](#installation)). CMake detects Qt6 automatically — no extra option needed.
+
+**Launch**:
+
+```bash
+./build/PhysicsEngineGui
+```
+
+**Feature overview:**
+
+| Panel | Features |
+| --- | --- |
+| Simulation | Init, Start, Stop, Run *(background thread — UI stays responsive)*, Print, Step |
+| Config | Set gravity, dt, solver (Euler / Verlet / RK4), Apply |
+| Add Object | Choose type (sphere / aabb / plane), optional name |
+| Objects table | Live list — id, type, position, fixed status |
+| Selected Object | Edit pos, vel, size, mass, fixed; Set / Del buttons |
+| Plots | Three buttons — each opens an interactive Plotly HTML in the browser |
+
+**Plot buttons:**
+
+| Button | Opens |
+| --- | --- |
+| Trajectories | Z-position of all objects vs time |
+| 3D Objects | 3D scene at initial and final simulation states |
+| Animation | Full animated 3D scene with Play/Pause and time slider |
+
+> **Note:** Plot buttons require CSV data. Enable saving in `src/config.yaml` (`save: true`) before running the simulation.
 
 ---
 

@@ -22,6 +22,10 @@ std::string Config::getSolver() const { return solver; }
 bool        Config::getVerbose() const { return verbose; }
 bool        Config::getSave() const { return save; }
 bool        Config::getSimplifiedCollision() const { return useSimplifiedCollision; }
+decimal     Config::getDefaultStiffness() const { return defaultStiffness; }
+decimal     Config::getDefaultDamping() const { return defaultDamping; }
+decimal     Config::getDefaultFriction() const { return defaultFriction; }
+decimal     Config::getDefaultRestitution() const { return defaultRestitution; }
 
 //  Loading Methods
 void Config::loadFromFile(const std::string& path)
@@ -44,6 +48,14 @@ void Config::loadFromFile(const std::string& path)
             setSave(node["save"].as<bool>());
         if (node["simplifiedCollision"])
             setSimplifiedCollision(node["simplifiedCollision"].as<bool>());
+        if (node["material"])
+        {
+            const auto& m = node["material"];
+            if (m["stiffness"])   setDefaultStiffness(m["stiffness"].as<decimal>());
+            if (m["damping"])     setDefaultDamping(m["damping"].as<decimal>());
+            if (m["friction"])    setDefaultFriction(m["friction"].as<decimal>());
+            if (m["restitution"]) setDefaultRestitution(m["restitution"].as<decimal>());
+        }
     }
     catch (const std::exception& e)
     {

@@ -86,13 +86,44 @@ void MainWindow::buildUi()
     m_dtBox->setRange(1e-6, 10.0);
     m_dtBox->setDecimals(6);
     m_dtBox->setValue(static_cast<double>(m_config.getTimeStep()));
+    m_durationBox = new QDoubleSpinBox;
+    m_durationBox->setRange(0.001, 86400.0);
+    m_durationBox->setDecimals(2);
+    m_durationBox->setValue(static_cast<double>(m_config.getSimulationDuration()));
     m_solverBox = new QComboBox;
     m_solverBox->addItems({"Euler", "Verlet", "RK4"});
     m_solverBox->setCurrentText(QString::fromStdString(m_config.getSolver()));
+    m_simplifiedCollisionBox = new QCheckBox;
+    m_simplifiedCollisionBox->setChecked(m_config.getSimplifiedCollision());
+    m_cfgStiffnessBox   = new QDoubleSpinBox;
+    m_cfgDampingBox     = new QDoubleSpinBox;
+    m_cfgFrictionBox    = new QDoubleSpinBox;
+    m_cfgRestitutionBox = new QDoubleSpinBox;
+    for (auto* s : {m_cfgStiffnessBox, m_cfgDampingBox})
+    {
+        s->setRange(0.0, 1e8);
+        s->setDecimals(2);
+    }
+    for (auto* s : {m_cfgFrictionBox, m_cfgRestitutionBox})
+    {
+        s->setRange(0.0, 1.0);
+        s->setDecimals(4);
+    }
+    m_cfgStiffnessBox->setValue(static_cast<double>(m_config.getDefaultStiffness()));
+    m_cfgDampingBox->setValue(static_cast<double>(m_config.getDefaultDamping()));
+    m_cfgFrictionBox->setValue(static_cast<double>(m_config.getDefaultFriction()));
+    m_cfgRestitutionBox->setValue(static_cast<double>(m_config.getDefaultRestitution()));
     m_btnApplyConfig = new QPushButton("Apply");
     configForm->addRow("Gravity (m/s²):", m_gravityBox);
     configForm->addRow("dt (s):", m_dtBox);
+    configForm->addRow("Duration (s):", m_durationBox);
     configForm->addRow("Solver:", m_solverBox);
+    configForm->addRow("Simplified collision:", m_simplifiedCollisionBox);
+    configForm->addRow(new QLabel("— Default material —"));
+    configForm->addRow("Stiffness (N/m):", m_cfgStiffnessBox);
+    configForm->addRow("Damping:", m_cfgDampingBox);
+    configForm->addRow("Friction:", m_cfgFrictionBox);
+    configForm->addRow("Restitution:", m_cfgRestitutionBox);
     configForm->addRow(m_btnApplyConfig);
 
     // Add object
@@ -108,13 +139,21 @@ void MainWindow::buildUi()
     addLayout->addWidget(m_btnAdd);
 
     // Plots
-    auto* plotBox    = new QGroupBox("Plots");
-    auto* plotLayout = new QHBoxLayout(plotBox);
-    m_csvDir         = new QLineEdit("output/CSV");
-    auto* btnPlots   = new QPushButton("Generate && Open");
-    plotLayout->addWidget(new QLabel("CSV dir:"));
-    plotLayout->addWidget(m_csvDir);
-    plotLayout->addWidget(btnPlots);
+    auto* plotBox     = new QGroupBox("Plots");
+    auto* plotLayout  = new QVBoxLayout(plotBox);
+    auto* csvRow      = new QHBoxLayout;
+    m_csvDir          = new QLineEdit("output/CSV");
+    csvRow->addWidget(new QLabel("CSV dir:"));
+    csvRow->addWidget(m_csvDir);
+    auto* btnRow      = new QHBoxLayout;
+    auto* btnTraj     = new QPushButton("Trajectories");
+    auto* btnObjs     = new QPushButton("3D Objects");
+    auto* btnAnim     = new QPushButton("Animation");
+    btnRow->addWidget(btnTraj);
+    btnRow->addWidget(btnObjs);
+    btnRow->addWidget(btnAnim);
+    plotLayout->addLayout(csvRow);
+    plotLayout->addLayout(btnRow);
 
     leftLayout->addWidget(ctrlBox);
     leftLayout->addWidget(intBox);
@@ -155,10 +194,14 @@ void MainWindow::buildUi()
     m_sizeX = makeSpin(0.0, 1e6);
     m_sizeY = makeSpin(0.0, 1e6);
     m_sizeZ = makeSpin(0.0, 1e6);
-    m_massBox  = makeSpin(0.0, 1e9);
-    m_fixedBox = new QCheckBox;
-    m_btnSet   = new QPushButton("Set");
-    m_btnDel   = new QPushButton("Del");
+    m_massBox       = makeSpin(0.0, 1e9);
+    m_fixedBox      = new QCheckBox;
+    m_stiffnessBox  = makeSpin(0.0, 1e8);
+    m_dampingBox    = makeSpin(0.0, 1e8);
+    m_frictionBox   = makeSpin(0.0, 1.0);
+    m_restitutionBox = makeSpin(0.0, 1.0);
+    m_btnSet        = new QPushButton("Set");
+    m_btnDel        = new QPushButton("Del");
 
     int r = 0;
     propLayout->addWidget(m_selectedLabel, r++, 0, 1, 7);
@@ -181,6 +224,16 @@ void MainWindow::buildUi()
     propLayout->addWidget(m_massBox, r, 1);
     propLayout->addWidget(new QLabel("Fixed:"), r, 2);
     propLayout->addWidget(m_fixedBox, r, 3);
+    ++r;
+    propLayout->addWidget(new QLabel("Stiffness:"), r, 0);
+    propLayout->addWidget(m_stiffnessBox, r, 1);
+    propLayout->addWidget(new QLabel("Damping:"), r, 2);
+    propLayout->addWidget(m_dampingBox, r, 3);
+    ++r;
+    propLayout->addWidget(new QLabel("Friction:"), r, 0);
+    propLayout->addWidget(m_frictionBox, r, 1);
+    propLayout->addWidget(new QLabel("Restitution:"), r, 2);
+    propLayout->addWidget(m_restitutionBox, r, 3);
     ++r;
     propLayout->addWidget(m_btnSet, r, 0, 1, 2);
     propLayout->addWidget(m_btnDel, r, 2, 1, 2);
@@ -211,7 +264,9 @@ void MainWindow::buildUi()
     connect(m_btnAdd,         &QPushButton::clicked,       this, &MainWindow::onAddObject);
     connect(m_btnSet,         &QPushButton::clicked,       this, &MainWindow::onSetObject);
     connect(m_btnDel,         &QPushButton::clicked,       this, &MainWindow::onDelObject);
-    connect(btnPlots,         &QPushButton::clicked,       this, &MainWindow::onGeneratePlots);
+    connect(btnTraj,          &QPushButton::clicked,       this, &MainWindow::onPlotTrajectories);
+    connect(btnObjs,          &QPushButton::clicked,       this, &MainWindow::onPlotObjects);
+    connect(btnAnim,          &QPushButton::clicked,       this, &MainWindow::onPlotAnimation);
     connect(m_objectTable,    &QTableWidget::cellClicked,  this, &MainWindow::onObjectTableClicked);
     connect(&m_thread,        &SimulationThread::simulationFinished,
             this, &MainWindow::onSimulationFinished);
@@ -331,10 +386,17 @@ void MainWindow::onApplyConfig()
 {
     m_world.setGravityCst(static_cast<decimal>(m_gravityBox->value()));
     m_world.setTimeStep(static_cast<decimal>(m_dtBox->value()));
+    m_config.setSimulationDuration(static_cast<decimal>(m_durationBox->value()));
     m_world.setSolver(m_solverBox->currentText().toStdString());
-    log(QString("Config applied: g=%1, dt=%2, solver=%3")
+    m_config.setSimplifiedCollision(m_simplifiedCollisionBox->isChecked());
+    m_config.setDefaultStiffness(static_cast<decimal>(m_cfgStiffnessBox->value()));
+    m_config.setDefaultDamping(static_cast<decimal>(m_cfgDampingBox->value()));
+    m_config.setDefaultFriction(static_cast<decimal>(m_cfgFrictionBox->value()));
+    m_config.setDefaultRestitution(static_cast<decimal>(m_cfgRestitutionBox->value()));
+    log(QString("Config applied: g=%1, dt=%2, duration=%3s, solver=%4")
             .arg(m_gravityBox->value())
             .arg(m_dtBox->value())
+            .arg(m_durationBox->value())
             .arg(m_solverBox->currentText()));
     statusBar()->showMessage("Config applied");
 }
@@ -397,6 +459,10 @@ void MainWindow::onObjectTableClicked(int row, int col)
 
     m_massBox->setValue(static_cast<double>(obj->getMass()));
     m_fixedBox->setChecked(obj->isFixed());
+    m_stiffnessBox->setValue(static_cast<double>(obj->getStiffnessCst()));
+    m_dampingBox->setValue(static_cast<double>(obj->getDampingCst()));
+    m_frictionBox->setValue(static_cast<double>(obj->getFrictionCst()));
+    m_restitutionBox->setValue(static_cast<double>(obj->getRestitutionCst()));
 }
 
 void MainWindow::onSetObject()
@@ -424,6 +490,10 @@ void MainWindow::onSetObject()
                           static_cast<decimal>(m_sizeZ->value())));
     obj->setMass(static_cast<decimal>(m_massBox->value()));
     obj->setIsFixed(m_fixedBox->isChecked());
+    obj->setStiffnessCst(static_cast<decimal>(m_stiffnessBox->value()));
+    obj->setDampingCst(static_cast<decimal>(m_dampingBox->value()));
+    obj->setFrictionCst(static_cast<decimal>(m_frictionBox->value()));
+    obj->setRestitutionCst(static_cast<decimal>(m_restitutionBox->value()));
 
     refreshObjectTable();
     log(QString("Object %1 updated.").arg(id));
@@ -456,12 +526,16 @@ void MainWindow::onDelObject()
 // Slots — plots
 // ============================================================================
 
-void MainWindow::onGeneratePlots()
+void MainWindow::runPlotScript(const QString& mode)
 {
     const QString scriptPath = "python/generate_plots.py";
-    const bool    ok         = QProcess::startDetached("python3", {scriptPath, m_csvDir->text()});
+    const bool    ok         = QProcess::startDetached("python3", {scriptPath, m_csvDir->text(), mode});
     if (ok)
-        log("Generating plots — opening in browser...");
+        log(QString("Opening %1 plot in browser...").arg(mode));
     else
         log("Failed to start python3. Make sure it is on PATH and run from the project root.");
 }
+
+void MainWindow::onPlotTrajectories() { runPlotScript("trajectories"); }
+void MainWindow::onPlotObjects()      { runPlotScript("objects"); }
+void MainWindow::onPlotAnimation()    { runPlotScript("animation"); }

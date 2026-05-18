@@ -1,8 +1,15 @@
 # config.yaml
 gravity: 9.81
-timestep: 0.01
-duration: 5
+timestep: 0.001
+duration: 10
 solver: "Euler"
 verbose: true
 save: true
-simplifiedCollision: false
+simplifiedCollision: true
+
+# Default material constants applied to newly created objects
+material:
+  stiffness: 1e10       # N/m   
+  damping: 0.85         # ratio ζ 
+  friction: 0.6        # μ 
+  restitution: 0.4     # e 

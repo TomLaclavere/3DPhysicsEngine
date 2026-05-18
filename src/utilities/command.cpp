@@ -31,10 +31,11 @@ void printUsage()
         << "  init                                 (Re-)Initialize world.\n"
         << "-------------------------------------------------------------------------------------\n"
         << "World:\n"
-        << "  set <dt|g> <value>                   Set timestep/grav acceleration to <value>.\n"
-        << "  set obj <id> <property> [...values]  Set property for a given object, identified by its ID "
-           "(see 'list'). Properties can be: pos, size, vel, acc, rot, mass, fixed. values can "
-           "be either one value (ex: mass) or three values separated by spaces (ex: position).\n"
+        << "  set <dt|g|duration> <value>          Set timestep / gravity / simulation duration.\n"
+        << "  set obj <id> <property> [...values]  Set property for a given object (see 'list').\n"
+        << "    Kinematics : pos, size, vel, acc, rot (3 values each), mass (1 value)\n"
+        << "    Constraints: fixed (0|1|true|false), name\n"
+        << "    Material   : stiffness, damping, friction, restitution (1 value each)\n"
         << "  add <sphere|plane|AABB>              Add an object to the world.\n"
         << "  list                                 List all objects in the format <id> <ObjectType> "
            "<position> <velocity> <fixed>.\n"
@@ -112,8 +113,12 @@ static const std::unordered_map<std::string, PropertySetter> PROPERTY_SETTERS = 
     { "acc", [](Object* o, const auto& a) { setVector3Property(o, a, &Object::setAcceleration, "acc"); } },
     { "rot", [](Object* o, const auto& a) { setVector3Property(o, a, &Object::setRotation, "rot"); } },
     { "mass", [](Object* o, const auto& a) { setScalarProperty(o, a, &Object::setMass, "mass"); } },
-    { "fixed", [](Object* o, const auto& a) { setFixedProperty(o, a); } },
-    { "name", [](Object* o, const auto& a) { setNameProperty(o, a); } },
+    { "fixed",       [](Object* o, const auto& a) { setFixedProperty(o, a); } },
+    { "name",        [](Object* o, const auto& a) { setNameProperty(o, a); } },
+    { "stiffness",   [](Object* o, const auto& a) { setScalarProperty(o, a, &Object::setStiffnessCst,   "stiffness"); } },
+    { "damping",     [](Object* o, const auto& a) { setScalarProperty(o, a, &Object::setDampingCst,     "damping"); } },
+    { "friction",    [](Object* o, const auto& a) { setScalarProperty(o, a, &Object::setFrictionCst,    "friction"); } },
+    { "restitution", [](Object* o, const auto& a) { setScalarProperty(o, a, &Object::setRestitutionCst, "restitution"); } },
 };
 
 bool handleSetCommand(PhysicsWorld& world, std::deque<std::string>& words)
@@ -136,6 +141,14 @@ bool handleSetCommand(PhysicsWorld& world, std::deque<std::string>& words)
         world.setGravityCst(value);
         world.setGravityAcc(Physics::computeGravityAcc(value));
         std::cout << "Gravity set to " << value << " m/s².\n";
+        return true;
+    }
+    if (what == "duration" && !words.empty())
+    {
+        const decimal value = stringToDecimal(popNext(words));
+        world.getConfig().setSimulationDuration(value);
+        std::cout << "Duration set to " << value << " s ("
+                  << world.getConfig().getMaxIterations() << " iterations).\n";
         return true;
     }
     if (what == "obj" && words.size() >= 2)
@@ -200,6 +213,12 @@ bool handleAddCommand(PhysicsWorld& world, std::deque<std::string>& words)
     }
 
     obj->setName(name);
+
+    const Config& cfg = world.getConfig();
+    obj->setStiffnessCst(cfg.getDefaultStiffness());
+    obj->setDampingCst(cfg.getDefaultDamping());
+    obj->setFrictionCst(cfg.getDefaultFriction());
+    obj->setRestitutionCst(cfg.getDefaultRestitution());
 
     world.addObject(obj.release());
 

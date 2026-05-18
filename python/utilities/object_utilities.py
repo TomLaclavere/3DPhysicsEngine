@@ -92,8 +92,34 @@ class ObjectPlotting:
             z_range=z_range,)
         fig.show()
 
-    def animate_objects(self, stride: int = 1):
-        """Build a Plotly animation with Play / Pause buttons and a time slider."""
+    def animate_objects(
+        self,
+        stride: int | None = None,
+        target_fps: int = 30,
+        target_speed: float = 5.0,
+    ):
+        """Build a Plotly animation with Play / Pause buttons and a time slider.
+
+        Parameters
+        ----------
+        stride : int or None
+            Number of simulation steps between successive animation frames.
+            If None (default), computed automatically from *dt*, *target_fps*,
+            and *target_speed* so the animation always plays at a consistent speed.
+        target_fps : int
+            Visual frame rate of the animation (frames per second).
+        target_speed : float
+            Playback speed multiplier relative to real simulation time.
+            5.0 means the animation runs 5× faster than real time.
+        """
+        dt = float(self.time[1] - self.time[0]) if len(self.time) > 1 else 0.01
+
+        if stride is None:
+            # stride * dt * target_fps = target_speed  →  consistent visual speed
+            stride = max(1, round(target_speed / (dt * target_fps)))
+
+        frame_duration_ms = max(10, round(1000 / target_fps))
+
         fig = go.Figure()
         n_frames = len(self.time)
 
@@ -124,7 +150,7 @@ class ObjectPlotting:
             z_range=z_range,
         )
         fig.update_layout(
-            updatemenus=[self._play_pause_menu()],
+            updatemenus=[self._play_pause_menu(frame_duration_ms)],
             sliders=[self._time_slider(n_frames, stride)],
         )
         fig.show()
@@ -320,7 +346,7 @@ class ObjectPlotting:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _play_pause_menu() -> dict:
+    def _play_pause_menu(frame_duration_ms: int = 30) -> dict:
         return {
             "type": "buttons",
             "direction": "left",
@@ -340,7 +366,7 @@ class ObjectPlotting:
                     "args": [
                         None,
                         {
-                            "frame": {"duration": 30, "redraw": True},
+                            "frame": {"duration": frame_duration_ms, "redraw": True},
                             "fromcurrent": True,
                             "mode": "immediate",
                         },

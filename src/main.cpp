@@ -118,6 +118,7 @@ int main(int argc, char** argv)
     std::cout << "Simulation Parameters:\n";
     std::cout << "  Gravity: " << config.getGravity() << " m/s²\n";
     std::cout << "  Timestep: " << config.getTimeStep() << " s\n";
+    std::cout << "  Duration: " << config.getSimulationDuration() << " s\n";
     std::cout << "  Max iterations: " << config.getMaxIterations() << "\n";
     std::cout << "  Config load time: " << configTimer.elapsedMilliseconds() << " ms\n";
     std::cout << "----------------------------------------\n";

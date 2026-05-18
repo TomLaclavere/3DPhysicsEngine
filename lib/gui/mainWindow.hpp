@@ -33,7 +33,9 @@ private slots:
     void onObjectTableClicked(int row, int col);
     void onSetObject();
     void onDelObject();
-    void onGeneratePlots();
+    void onPlotTrajectories();
+    void onPlotObjects();
+    void onPlotAnimation();
     void onSimulationFinished();
 
 private:
@@ -41,6 +43,7 @@ private:
     void refreshObjectTable();
     void setControlsEnabled(bool enabled);
     void log(const QString& msg);
+    void runPlotScript(const QString& mode);
 
     Config&          m_config;
     PhysicsWorld     m_world;
@@ -49,7 +52,16 @@ private:
     // Config widgets
     QDoubleSpinBox* m_gravityBox{};
     QDoubleSpinBox* m_dtBox{};
+    QDoubleSpinBox* m_durationBox{};
     QComboBox*      m_solverBox{};
+
+    QCheckBox*      m_simplifiedCollisionBox{};
+
+    // Config default material widgets
+    QDoubleSpinBox* m_cfgStiffnessBox{};
+    QDoubleSpinBox* m_cfgDampingBox{};
+    QDoubleSpinBox* m_cfgFrictionBox{};
+    QDoubleSpinBox* m_cfgRestitutionBox{};
 
     // Add object widgets
     QComboBox* m_typeBox{};
@@ -71,6 +83,10 @@ private:
     QDoubleSpinBox* m_sizeZ{};
     QDoubleSpinBox* m_massBox{};
     QCheckBox*      m_fixedBox{};
+    QDoubleSpinBox* m_stiffnessBox{};
+    QDoubleSpinBox* m_dampingBox{};
+    QDoubleSpinBox* m_frictionBox{};
+    QDoubleSpinBox* m_restitutionBox{};
 
     // Integrate widget
     QDoubleSpinBox* m_stepDt{};

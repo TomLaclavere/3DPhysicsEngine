@@ -196,6 +196,34 @@ set_source_files_properties(
 add_executable(PhysicsEngine src/main.cpp)
 target_link_libraries(PhysicsEngine PRIVATE 3DPhysicsEngine)
 
+# =============================================
+# Qt6 GUI Application
+# =============================================
+find_package(Qt6 QUIET COMPONENTS Widgets)
+
+if(Qt6_FOUND)
+    message(STATUS "Qt6 found — building PhysicsEngineGui")
+    add_executable(PhysicsEngineGui
+        src/gui/main_qt.cpp
+        src/gui/mainWindow.cpp
+        src/gui/simulationThread.cpp
+        lib/gui/mainWindow.hpp
+        lib/gui/simulationThread.hpp
+    )
+    set_target_properties(PhysicsEngineGui PROPERTIES
+        AUTOMOC ON
+        AUTOUIC ON
+        AUTORCC ON
+    )
+    target_link_libraries(PhysicsEngineGui PRIVATE Qt6::Widgets 3DPhysicsEngine)
+    target_include_directories(PhysicsEngineGui PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/gui
+    )
+else()
+    message(STATUS "Qt6 not found — skipping PhysicsEngineGui")
+endif()
+
 add_custom_target(run
     COMMAND $<TARGET_FILE:PhysicsEngine>
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}

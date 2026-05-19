@@ -1,1 +1,3 @@
 *.ipynb linguist-generated=true
+*.ipynb filter=nbstripout
+*.ipynb diff=ipynb

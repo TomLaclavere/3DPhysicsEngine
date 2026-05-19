@@ -419,6 +419,8 @@ The documentation is automatically generated on each commit to `main` and publis
 
 ## License
 
+Copyright (C) 2025 Tom Laclavère
+
 This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0).
 
 You are free to use, modify, and redistribute this software under the terms of the AGPL-3.0. Any modified version that is distributed or made available over a network must also make its source code available under the same license.

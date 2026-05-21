@@ -53,6 +53,7 @@ int main(int argc, char** argv)
 
     sphere->setIsFixed(false);
     sphere->setName("Bouncing Ball");
+    sphere->setRestitutionCst(0.7_d);
     ground_1->setName("Ground 1");
     ground_2->setName("Ground 2");
     world.addObject(sphere);

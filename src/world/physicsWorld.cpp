@@ -60,7 +60,8 @@ void PhysicsWorld::setGravityAcc(const Vector3D& acc) { gravityAcc = acc; }
 // ============================================================================
 void PhysicsWorld::initialise()
 {
-    isRunning = false;
+    isRunning    = false;
+    nextObjectId = 0;
     objects.clear();
 
     solver     = parseSolver(config.getSolver());
@@ -513,7 +514,7 @@ void PhysicsWorld::integrate()
 void PhysicsWorld::run()
 {
     const size_t maxIter = config.getMaxIterations();
-    size_t        cpt      = 0;
+    size_t       cpt     = 0;
 
     // Printing
     // Column widths
@@ -540,7 +541,6 @@ void PhysicsWorld::run()
         const decimal time = static_cast<decimal>(cpt) * timeStep;
 
         integrate();
-        saveMotionCSV(time);
 
         // Printing
         if (config.getVerbose())
@@ -559,6 +559,8 @@ void PhysicsWorld::run()
             }
         }
         cpt++;
+
+        saveMotionCSV(time);
     }
 
     // Close buffer

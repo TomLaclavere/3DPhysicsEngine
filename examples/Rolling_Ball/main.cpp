@@ -54,6 +54,7 @@ int main(int argc, char** argv)
 
     sphere->setIsFixed(false);
     sphere->setName("Bouncing Ball");
+    sphere->setRestitutionCst(0.8_d);
     ground->setName("Ground");
     ramp->setName("Ramp");
     wall->setName("Wall");

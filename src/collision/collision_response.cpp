@@ -34,8 +34,8 @@ void reboundCollision(Object& A, Object& B, Contact& contact)
         return;
 
     Vector3D n = contact.normal;
-    // if ((A.getPosition() - B.getPosition()).dotProduct(n) < 0_d)
-    //     n = -n;
+    if ((A.getPosition() - B.getPosition()).dotProduct(n) < 0_d)
+        n = -n;
 
     positionCorrection(A, B, contact);
 

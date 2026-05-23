@@ -45,11 +45,14 @@ class MotionPlotting:
     # Multi-object plotting
     # ---------------------------
 
-    def plot_positions(self, savepath=None):
+    def plot_positions(self, savepath=None, plot_fixed=False):
 
         fig = go.Figure()
 
-        for motion in self.motions:
+        for imotion, motion in enumerate(self.motions):
+            
+            if not plot_fixed  and self.object_df.iloc[imotion]["fixed"]:
+                continue
 
             fig.add_trace(go.Scatter(
                 x=motion.time,
@@ -83,11 +86,14 @@ class MotionPlotting:
         else:
             fig.show()
 
-    def plot_positions_z(self, savepath=None):
+    def plot_positions_z(self, savepath=None, plot_fixed=False):
 
         fig = go.Figure()
 
-        for motion in self.motions:
+        for imotion, motion in enumerate(self.motions):
+            if not plot_fixed and self.object_df.iloc[imotion]["fixed"]:
+                continue
+
             fig.add_trace(go.Scatter(
                 x=motion.time,
                 y=motion.pos[:, 2],
@@ -106,11 +112,13 @@ class MotionPlotting:
         else:
             fig.show()
 
-    def plot_velocities(self, savepath=None):
+    def plot_velocities(self, savepath=None, plot_fixed=False):
 
         fig = go.Figure()
 
-        for motion in self.motions:
+        for imotion, motion in enumerate(self.motions):
+            if not plot_fixed and self.object_df.iloc[imotion]["fixed"]:
+                continue
 
             fig.add_trace(go.Scatter(
                 x=motion.time,
@@ -144,11 +152,13 @@ class MotionPlotting:
         else:
             fig.show()
 
-    def plot_accelerations(self, savepath=None):
+    def plot_accelerations(self, savepath=None, plot_fixed=False):
 
         fig = go.Figure()
 
-        for motion in self.motions:
+        for imotion, motion in enumerate(self.motions):
+            if not plot_fixed and self.object_df.iloc[imotion]["fixed"]:
+                continue
 
             fig.add_trace(go.Scatter(
                 x=motion.time,

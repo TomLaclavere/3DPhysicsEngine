@@ -66,8 +66,9 @@ int main(int argc, char** argv)
     ground->setName("Ground");
     world.addObject(wood);
     world.addObject(steel);
-    world.addObject(rubber);
     world.addObject(ground);
+    world.addObject(rubber);
+
     world.start();
     std::cout << "Ground | " << "e : " << ground->getRestitutionCst()
               << "stiff : " << ground->getStiffnessCst() << "damp : " << ground->getDampingCst() << "\n";

@@ -4,8 +4,25 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 ## General Tasks
 
-- [ ] Benchmark performance : 
-    - [ ] adjust script to add flag to change solver, timestep or maxiteration + Nmb of run
-    - [ ] add perf in script
-    - [ ] add loop over timestep in script
-    - [ ] add MFLOP/s with perf
+- [x] Benchmark performance : 
+    - [x] adjust script to add flag to change solver, timestep or maxiteration + Nmb of run
+    - [x] add perf in script
+    - [x] add loop over timestep in script
+    - [x] add MFLOP/s with perf
+
+- [ ] Benchmark :
+    - [ ] Correct benchmark process
+        - [ ] Lot of misses
+        - [ ] Inconsistent results / bad stability
+        - [ ] Analyse results
+    - [ ] Profiling
+        - [ ] Maqao
+        - [ ] Malt
+
+
+
+- [ ] Code Quality
+    - [ ] Unit Testing
+        - [ ] Add tests for new files
+        - [ ] Add basic physical examples as unit tests, to ensure correctness after each changes
+    - [ ] Documentation for new files

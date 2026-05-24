@@ -135,13 +135,13 @@ See [`docs/benchmark.md`](benchmark.md) for more details.
 - [x] **Brainstorm on ROADMAP**
 - [x] **Brainstorm on To-Do-List**
 - [ ] **Tools implementation:**
-  - [ ] Reproducible benchmark simulation script
-    - [ ] Simulation code (similar than examples)
-    - [ ] Recompilation with proper flags (compiler optimisation, release build, precision, ...)
-    - [ ] Benchmark parameters (Number of Simulation, Number of objects, timestep, integrator, ...)
-    - [ ] Saving tools
+  - [x] Reproducible benchmark simulation script
+    - [x] Simulation code (similar than examples)
+    - [x] Recompilation with proper flags (compiler optimisation, release build, precision, ...)
+    - [x] Benchmark parameters (Number of Simulation, Number of objects, timestep, integrator, ...)
+    - [x] Saving tools
   - [ ] **Analysis tools wrappers :**
-    - [ ] perf
+    - [x] perf
     - [ ] malt
     - [ ] maqao
   - [ ] Plotting tools

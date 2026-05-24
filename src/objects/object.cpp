@@ -61,7 +61,7 @@ Object::Object(const Vector3D& position, const Vector3D& normal, const Vector3D&
 
 //  Getters
 Vector3D Object::getPosition() const { return position; }
-Vector3D Object::getNormal() const { return normal; }
+const Vector3D& Object::getNormal() const { return normal; }
 Vector3D Object::getSize() const { return size; }
 Vector3D Object::getVelocity() const { return velocity; }
 Vector3D Object::getAcceleration() const { return acceleration; }

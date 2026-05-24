@@ -88,7 +88,7 @@ public:
     /// @name Getters
     /// @{
     Vector3D           getPosition() const;
-    Vector3D           getNormal() const;
+    virtual const Vector3D& getNormal() const;
     Vector3D           getSize() const;
     Vector3D           getVelocity() const;
     Vector3D           getAcceleration() const;
@@ -113,8 +113,8 @@ public:
     /// @name Setters
     /// @{
     void         setPosition(const Vector3D& _position);
-    void         setNormal(const Vector3D& _normal);
-    void         setSize(const Vector3D& _size);
+    virtual void setNormal(const Vector3D& _normal);
+    virtual void setSize(const Vector3D& _size);
     void         setVelocity(const Vector3D& _velocity);
     void         setAcceleration(const Vector3D& _acceleration);
     void         setForce(const Vector3D& _force);

@@ -22,7 +22,6 @@
 
 //  Getters
 ObjectType      Plane::getType() const { return ObjectType::Plane; }
-const Vector3D& Plane::getNormal() const { return normal; }
 const Vector3D& Plane::getU() const { return u; }
 const Vector3D& Plane::getV() const { return v; }
 decimal         Plane::getHalfWidth() const { return halfWidth; }
@@ -44,7 +43,7 @@ void Plane::setMaterial(const Material& mat)
 //  Utilities
 void Plane::updateLocalAxes()
 {
-    Vector3D n = normal; // already normalized externally
+    Vector3D n = getNormal();
 
     // 1. Pick a vector not parallel to n
     Vector3D tangent;
@@ -63,8 +62,9 @@ void Plane::updateLocalAxes()
 }
 Vector3D Plane::projectPoint(const Vector3D& point) const
 {
-    decimal dist = (point - getPosition()).dotProduct(normal);
-    return point - dist * normal;
+    Vector3D n    = getNormal();
+    decimal  dist = (point - getPosition()).dotProduct(n);
+    return point - dist * n;
 }
 
 bool Plane::containsPoint(const Vector3D& point) const

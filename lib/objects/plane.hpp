@@ -26,71 +26,59 @@ class AABB;
 class Plane : public Object
 {
 private:
-    Vector3D normal = Vector3D(0_d, 0_d, 1_d); // Normal direction (unit vector)
-    Vector3D u;                                // Tangent axis 1 (unit vector)
-    Vector3D v;                                // Tangent axis 2 (unit vector)
-    decimal  halfHeight = 1_d;                 // Half extent along v
-    decimal  halfWidth  = 1_d;                 // Half extent along u
+    Vector3D u;           // Tangent axis 1 (unit vector)
+    Vector3D v;           // Tangent axis 2 (unit vector)
+    decimal  halfHeight = 1_d;
+    decimal  halfWidth  = 1_d;
 
 public:
     /// @name Constructors / Destructors
     /// @{
 
-    Plane() { updateLocalAxes(); }
+    Plane() { setNormal(Vector3D(0_d, 0_d, 1_d)); }
 
     explicit Plane(const Vector3D& position)
         : Object(position)
     {
-        Object::setNormal(normal);
-        updateLocalAxes();
+        setNormal(Vector3D(0_d, 0_d, 1_d));
     }
     Plane(const Vector3D& position, const Vector3D& _normal)
         : Object(position)
-        , normal(_normal.getNormalised())
     {
-        Object::setNormal(normal);
-        updateLocalAxes();
+        setNormal(_normal);
     }
     Plane(const Vector3D& position, const Vector3D& size, const Vector3D& _normal)
         : Object(position, size)
-        , normal(_normal.getNormalised())
         , halfHeight { size[0] * 0.5_d }
         , halfWidth { size[1] * 0.5_d }
     {
-        updateLocalAxes();
-        setNormal(normal);
+        setNormal(_normal);
     }
     Plane(const Vector3D& position, const Vector3D& size, decimal mass, const Vector3D& _normal)
         : Object(position, size, mass)
-        , normal(_normal.getNormalised())
         , halfHeight { size[0] * 0.5_d }
         , halfWidth { size[1] * 0.5_d }
     {
-        updateLocalAxes();
-        setNormal(normal);
+        setNormal(_normal);
         checkFixed();
     }
     Plane(const Vector3D& position, const Vector3D& size, const Vector3D& velocity, decimal mass,
           const Vector3D& _normal)
         : Object(position, size, velocity, mass)
-        , normal(_normal.getNormalised())
         , halfHeight { size[0] * 0.5_d }
         , halfWidth { size[1] * 0.5_d }
     {
-        updateLocalAxes();
-        setNormal(normal);
+        setNormal(_normal);
         checkFixed();
     }
-    Plane(const Vector3D& position, const Vector3D& normal, const Vector3D& size, const Vector3D& velocity,
+    Plane(const Vector3D& position, const Vector3D& obj_normal, const Vector3D& size, const Vector3D& velocity,
           const Vector3D& acceleration, const Vector3D& force, const Vector3D& torque, decimal mass,
           const Vector3D& _normal)
-        : Object(position, normal, size, velocity, acceleration, force, torque, mass)
-        , normal(_normal.getNormalised())
+        : Object(position, obj_normal, size, velocity, acceleration, force, torque, mass)
         , halfHeight { size[0] * 0.5_d }
         , halfWidth { size[1] * 0.5_d }
     {
-        updateLocalAxes();
-        setNormal(normal);
+        setNormal(_normal);
         checkFixed();
     }
 
@@ -102,7 +90,6 @@ public:
 
     decimal         getVolume() const override;
     ObjectType      getType() const override;
-    const Vector3D& getNormal() const;
     const Vector3D& getU() const;
     const Vector3D& getV() const;
     decimal         getHalfWidth() const;
@@ -114,19 +101,36 @@ public:
 
     void setMaterial(const Material& mat) override;
     /// Set normal axis and recompute the two tangent axes.
-    void setNormal(const Vector3D& n)
+    void setNormal(const Vector3D& n) override
     {
-        normal = n.getNormalised();
-        Object::setNormal(normal);
+        Object::setNormal(n.getNormalised());
         updateLocalAxes();
     }
-    void setHalfWidth(decimal halfwidth) { halfWidth = halfwidth; }
-    void setHalfHeight(decimal halfheight) { halfHeight = halfheight; }
+    void setSize(const Vector3D& s) override
+    {
+        Object::setSize(s);
+        halfHeight = s[0] * 0.5_d;
+        halfWidth  = s[1] * 0.5_d;
+    }
+    void setHalfWidth(decimal halfwidth)
+    {
+        halfWidth = halfwidth;
+        Vector3D s = getSize();
+        Object::setSize(Vector3D(s[0], halfwidth * 2_d, s[2]));
+    }
+    void setHalfHeight(decimal halfheight)
+    {
+        halfHeight = halfheight;
+        Vector3D s = getSize();
+        Object::setSize(Vector3D(halfheight * 2_d, s[1], s[2]));
+    }
     /// Set half-width and half-height.
     void setSize(decimal halfwidth, decimal halfheight)
     {
         halfWidth  = halfwidth;
         halfHeight = halfheight;
+        Vector3D s = getSize();
+        Object::setSize(Vector3D(halfheight * 2_d, halfwidth * 2_d, s[2]));
     }
     /// @}
 

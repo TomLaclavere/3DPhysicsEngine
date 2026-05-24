@@ -81,6 +81,9 @@ private:
     QDoubleSpinBox* m_sizeX {};
     QDoubleSpinBox* m_sizeY {};
     QDoubleSpinBox* m_sizeZ {};
+    QDoubleSpinBox* m_normalX {};
+    QDoubleSpinBox* m_normalY {};
+    QDoubleSpinBox* m_normalZ {};
     QDoubleSpinBox* m_massBox {};
     QCheckBox*      m_fixedBox {};
     QDoubleSpinBox* m_stiffnessBox {};

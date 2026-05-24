@@ -39,7 +39,7 @@ mp = MotionPlotting(objectpath, motionpaths)
 op = ObjectPlotting(objectpath, motionpaths)
 
 if mode == "trajectories":
-    mp.plot_positions_z()
+    mp.plot_positions()
 elif mode == "objects":
     op.plot_objects_init()
     op.plot_objects_final()

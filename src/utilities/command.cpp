@@ -159,7 +159,7 @@ bool handleSetCommand(PhysicsWorld& world, std::deque<std::string>& words)
         size_t      id   = std::stoul(popNext(words));
         std::string prop = popNext(words);
 
-        Object* obj = world.getObject(id);
+        Object* obj = world.findById(static_cast<unsigned int>(id));
         if (obj && PROPERTY_SETTERS.count(prop))
         {
             std::vector<std::string> args(words.begin(), words.end());

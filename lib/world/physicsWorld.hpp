@@ -165,12 +165,32 @@ public:
     void removeObject(Object* obj)
     {
         objects.erase(std::remove(objects.begin(), objects.end(), obj), objects.end());
+        delete obj;
     }
     /// Clear Object array
-    void    clearObjects() { objects.clear(); }
+    void clearObjects()
+    {
+        for (auto* obj : objects)
+            delete obj;
+        objects.clear();
+    }
     size_t  getObjectCount() const { return objects.size(); }
     Object* getObject(size_t index) const { return (index < objects.size()) ? objects[index] : nullptr; }
     Object* getObject(size_t index) { return (index < objects.size()) ? objects[index] : nullptr; }
+    Object* findById(unsigned int id)
+    {
+        for (auto* obj : objects)
+            if (obj && obj->getId() == id)
+                return obj;
+        return nullptr;
+    }
+    const Object* findById(unsigned int id) const
+    {
+        for (const auto* obj : objects)
+            if (obj && obj->getId() == id)
+                return obj;
+        return nullptr;
+    }
     std::vector<Object*> getObject() { return objects; }
     /// @}
 

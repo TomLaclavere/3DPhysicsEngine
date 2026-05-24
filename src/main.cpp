@@ -24,7 +24,7 @@ void listObjects(const PhysicsWorld& world)
     {
         const Object* obj = world.getObject(i);
         if (obj)
-            std::cout << "  [" << i << "] " << toString(obj->getType()) << " | pos=" << obj->getPosition()
+            std::cout << "  [" << obj->getId() << "] " << toString(obj->getType()) << " | pos=" << obj->getPosition()
                       << " | vel=" << obj->getVelocity() << " | fixed=" << (obj->isFixed() ? "True" : "False")
                       << "\n";
     }
@@ -32,7 +32,7 @@ void listObjects(const PhysicsWorld& world)
 
 void showObject(const PhysicsWorld& world, size_t id)
 {
-    const Object* obj = world.getObject(id);
+    const Object* obj = world.findById(static_cast<unsigned int>(id));
     if (!obj)
     {
         std::cout << "No object with id " << id << "\n";
@@ -246,7 +246,7 @@ int main(int argc, char** argv)
             if (!words.empty())
             {
                 size_t id = std::stoul(popNext(words));
-                world.removeObject(world.getObject(id));
+                world.removeObject(world.findById(static_cast<unsigned int>(id)));
                 std::cout << "Removed object " << id << "\n";
                 success = true;
             }

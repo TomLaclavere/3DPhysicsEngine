@@ -2,6 +2,7 @@
 
 #include "mathematics/vector.hpp"
 #include "objects/object.hpp"
+#include "precision.hpp"
 #include "utilities/command.hpp"
 
 #include <QCheckBox>
@@ -192,6 +193,9 @@ void MainWindow::buildUi()
     m_velX           = makeSpin(-1e6, 1e6);
     m_velY           = makeSpin(-1e6, 1e6);
     m_velZ           = makeSpin(-1e6, 1e6);
+    m_normalX        = makeSpin(-1e6, 1e6);
+    m_normalY        = makeSpin(-1e6, 1e6);
+    m_normalZ        = makeSpin(-1e6, 1e6);
     m_sizeX          = makeSpin(0.0, 1e6);
     m_sizeY          = makeSpin(0.0, 1e6);
     m_sizeZ          = makeSpin(0.0, 1e6);
@@ -215,6 +219,11 @@ void MainWindow::buildUi()
     propLayout->addWidget(m_velX, r, 1);
     propLayout->addWidget(m_velY, r, 2);
     propLayout->addWidget(m_velZ, r, 3);
+    ++r;
+    propLayout->addWidget(new QLabel("Normal:"), r, 0);
+    propLayout->addWidget(m_normalX, r, 1);
+    propLayout->addWidget(m_normalY, r, 2);
+    propLayout->addWidget(m_normalZ, r, 3);
     ++r;
     propLayout->addWidget(new QLabel("Size:"), r, 0);
     propLayout->addWidget(m_sizeX, r, 1);
@@ -435,8 +444,8 @@ void MainWindow::onObjectTableClicked(int row, int col)
     if (!item)
         return;
 
-    const auto    id  = static_cast<size_t>(item->text().toUInt());
-    const Object* obj = m_world.getObject(id);
+    const auto    id  = item->text().toUInt();
+    const Object* obj = m_world.findById(id);
     if (!obj)
         return;
 
@@ -452,6 +461,11 @@ void MainWindow::onObjectTableClicked(int row, int col)
     m_velX->setValue(static_cast<double>(vel.getX()));
     m_velY->setValue(static_cast<double>(vel.getY()));
     m_velZ->setValue(static_cast<double>(vel.getZ()));
+
+    const Vector3D normal = obj->getNormal();
+    m_normalX->setValue(static_cast<double>(normal.getX()));
+    m_normalY->setValue(static_cast<double>(normal.getY()));
+    m_normalZ->setValue(static_cast<double>(normal.getZ()));
 
     const Vector3D sz = obj->getSize();
     m_sizeX->setValue(static_cast<double>(sz.getX()));
@@ -475,8 +489,8 @@ void MainWindow::onSetObject()
     if (!item)
         return;
 
-    const auto id  = static_cast<size_t>(item->text().toUInt());
-    Object*    obj = m_world.getObject(id);
+    const auto id  = item->text().toUInt();
+    Object*    obj = m_world.findById(id);
     if (!obj)
         return;
 
@@ -484,6 +498,9 @@ void MainWindow::onSetObject()
                               static_cast<decimal>(m_posZ->value())));
     obj->setVelocity(Vector3D(static_cast<decimal>(m_velX->value()), static_cast<decimal>(m_velY->value()),
                               static_cast<decimal>(m_velZ->value())));
+    obj->setNormal(Vector3D(static_cast<decimal>(m_normalX->value()),
+                            static_cast<decimal>(m_normalY->value()),
+                            static_cast<decimal>(m_normalZ->value())));
     obj->setSize(Vector3D(static_cast<decimal>(m_sizeX->value()), static_cast<decimal>(m_sizeY->value()),
                           static_cast<decimal>(m_sizeZ->value())));
     obj->setMass(static_cast<decimal>(m_massBox->value()));
@@ -507,8 +524,8 @@ void MainWindow::onDelObject()
     if (!item)
         return;
 
-    const auto id  = static_cast<size_t>(item->text().toUInt());
-    Object*    obj = m_world.getObject(id);
+    const auto id  = item->text().toUInt();
+    Object*    obj = m_world.findById(id);
     if (!obj)
         return;
 

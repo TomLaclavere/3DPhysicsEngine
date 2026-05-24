@@ -1,4 +1,5 @@
 #include "gui/mainWindow.hpp"
+
 #include "mathematics/vector.hpp"
 #include "objects/object.hpp"
 #include "utilities/command.hpp"
@@ -19,7 +20,6 @@
 #include <QTableWidget>
 #include <QTextEdit>
 #include <QVBoxLayout>
-
 #include <deque>
 #include <sstream>
 #include <string>
@@ -55,18 +55,18 @@ void MainWindow::buildUi()
     // Simulation controls
     auto* ctrlBox    = new QGroupBox("Simulation");
     auto* ctrlLayout = new QHBoxLayout(ctrlBox);
-    m_btnInit  = new QPushButton("Init");
-    m_btnStart = new QPushButton("Start");
-    m_btnStop  = new QPushButton("Stop");
-    m_btnRun   = new QPushButton("Run");
-    m_btnPrint = new QPushButton("Print");
-    for (auto* btn : {m_btnInit, m_btnStart, m_btnStop, m_btnRun, m_btnPrint})
+    m_btnInit        = new QPushButton("Init");
+    m_btnStart       = new QPushButton("Start");
+    m_btnStop        = new QPushButton("Stop");
+    m_btnRun         = new QPushButton("Run");
+    m_btnPrint       = new QPushButton("Print");
+    for (auto* btn : { m_btnInit, m_btnStart, m_btnStop, m_btnRun, m_btnPrint })
         ctrlLayout->addWidget(btn);
 
     // Integrate
     auto* intBox    = new QGroupBox("Integrate");
     auto* intLayout = new QHBoxLayout(intBox);
-    m_stepDt = new QDoubleSpinBox;
+    m_stepDt        = new QDoubleSpinBox;
     m_stepDt->setRange(1e-6, 10.0);
     m_stepDt->setDecimals(4);
     m_stepDt->setValue(static_cast<double>(m_config.getTimeStep()));
@@ -78,7 +78,7 @@ void MainWindow::buildUi()
     // Config
     auto* configBox  = new QGroupBox("Config");
     auto* configForm = new QFormLayout(configBox);
-    m_gravityBox = new QDoubleSpinBox;
+    m_gravityBox     = new QDoubleSpinBox;
     m_gravityBox->setRange(0.0, 100.0);
     m_gravityBox->setDecimals(4);
     m_gravityBox->setValue(static_cast<double>(m_config.getGravity()));
@@ -91,7 +91,7 @@ void MainWindow::buildUi()
     m_durationBox->setDecimals(2);
     m_durationBox->setValue(static_cast<double>(m_config.getSimulationDuration()));
     m_solverBox = new QComboBox;
-    m_solverBox->addItems({"Euler", "Verlet", "RK4"});
+    m_solverBox->addItems({ "Euler", "Verlet", "RK4" });
     m_solverBox->setCurrentText(QString::fromStdString(m_config.getSolver()));
     m_simplifiedCollisionBox = new QCheckBox;
     m_simplifiedCollisionBox->setChecked(m_config.getSimplifiedCollision());
@@ -99,12 +99,12 @@ void MainWindow::buildUi()
     m_cfgDampingBox     = new QDoubleSpinBox;
     m_cfgFrictionBox    = new QDoubleSpinBox;
     m_cfgRestitutionBox = new QDoubleSpinBox;
-    for (auto* s : {m_cfgStiffnessBox, m_cfgDampingBox})
+    for (auto* s : { m_cfgStiffnessBox, m_cfgDampingBox })
     {
         s->setRange(0.0, 1e8);
         s->setDecimals(2);
     }
-    for (auto* s : {m_cfgFrictionBox, m_cfgRestitutionBox})
+    for (auto* s : { m_cfgFrictionBox, m_cfgRestitutionBox })
     {
         s->setRange(0.0, 1.0);
         s->setDecimals(4);
@@ -129,8 +129,8 @@ void MainWindow::buildUi()
     // Add object
     auto* addBox    = new QGroupBox("Add Object");
     auto* addLayout = new QHBoxLayout(addBox);
-    m_typeBox = new QComboBox;
-    m_typeBox->addItems({"sphere", "aabb", "plane"});
+    m_typeBox       = new QComboBox;
+    m_typeBox->addItems({ "sphere", "aabb", "plane" });
     m_nameEdit = new QLineEdit;
     m_nameEdit->setPlaceholderText("name (optional)");
     m_btnAdd = new QPushButton("Add");
@@ -139,16 +139,16 @@ void MainWindow::buildUi()
     addLayout->addWidget(m_btnAdd);
 
     // Plots
-    auto* plotBox     = new QGroupBox("Plots");
-    auto* plotLayout  = new QVBoxLayout(plotBox);
-    auto* csvRow      = new QHBoxLayout;
-    m_csvDir          = new QLineEdit("output/CSV");
+    auto* plotBox    = new QGroupBox("Plots");
+    auto* plotLayout = new QVBoxLayout(plotBox);
+    auto* csvRow     = new QHBoxLayout;
+    m_csvDir         = new QLineEdit("output/CSV");
     csvRow->addWidget(new QLabel("CSV dir:"));
     csvRow->addWidget(m_csvDir);
-    auto* btnRow      = new QHBoxLayout;
-    auto* btnTraj     = new QPushButton("Trajectories");
-    auto* btnObjs     = new QPushButton("3D Objects");
-    auto* btnAnim     = new QPushButton("Animation");
+    auto* btnRow  = new QHBoxLayout;
+    auto* btnTraj = new QPushButton("Trajectories");
+    auto* btnObjs = new QPushButton("3D Objects");
+    auto* btnAnim = new QPushButton("Animation");
     btnRow->addWidget(btnTraj);
     btnRow->addWidget(btnObjs);
     btnRow->addWidget(btnAnim);
@@ -168,7 +168,7 @@ void MainWindow::buildUi()
 
     // Object table
     m_objectTable = new QTableWidget(0, 6);
-    m_objectTable->setHorizontalHeaderLabels({"ID", "Type", "Pos X", "Pos Y", "Pos Z", "Fixed"});
+    m_objectTable->setHorizontalHeaderLabels({ "ID", "Type", "Pos X", "Pos Y", "Pos Z", "Fixed" });
     m_objectTable->horizontalHeader()->setStretchLastSection(true);
     m_objectTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_objectTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -179,41 +179,42 @@ void MainWindow::buildUi()
     auto* propLayout = new QGridLayout(propBox);
     m_selectedLabel  = new QLabel("No selection");
 
-    auto makeSpin = [](double min, double max, int decimals = 4) -> QDoubleSpinBox* {
+    auto makeSpin = [](double min, double max, int decimals = 4) -> QDoubleSpinBox*
+    {
         auto* s = new QDoubleSpinBox;
         s->setRange(min, max);
         s->setDecimals(decimals);
         return s;
     };
-    m_posX  = makeSpin(-1e6, 1e6);
-    m_posY  = makeSpin(-1e6, 1e6);
-    m_posZ  = makeSpin(-1e6, 1e6);
-    m_velX  = makeSpin(-1e6, 1e6);
-    m_velY  = makeSpin(-1e6, 1e6);
-    m_velZ  = makeSpin(-1e6, 1e6);
-    m_sizeX = makeSpin(0.0, 1e6);
-    m_sizeY = makeSpin(0.0, 1e6);
-    m_sizeZ = makeSpin(0.0, 1e6);
-    m_massBox       = makeSpin(0.0, 1e9);
-    m_fixedBox      = new QCheckBox;
-    m_stiffnessBox  = makeSpin(0.0, 1e8);
-    m_dampingBox    = makeSpin(0.0, 1e8);
-    m_frictionBox   = makeSpin(0.0, 1.0);
+    m_posX           = makeSpin(-1e6, 1e6);
+    m_posY           = makeSpin(-1e6, 1e6);
+    m_posZ           = makeSpin(-1e6, 1e6);
+    m_velX           = makeSpin(-1e6, 1e6);
+    m_velY           = makeSpin(-1e6, 1e6);
+    m_velZ           = makeSpin(-1e6, 1e6);
+    m_sizeX          = makeSpin(0.0, 1e6);
+    m_sizeY          = makeSpin(0.0, 1e6);
+    m_sizeZ          = makeSpin(0.0, 1e6);
+    m_massBox        = makeSpin(0.0, 1e9);
+    m_fixedBox       = new QCheckBox;
+    m_stiffnessBox   = makeSpin(0.0, 1e8);
+    m_dampingBox     = makeSpin(0.0, 1e8);
+    m_frictionBox    = makeSpin(0.0, 1.0);
     m_restitutionBox = makeSpin(0.0, 1.0);
-    m_btnSet        = new QPushButton("Set");
-    m_btnDel        = new QPushButton("Del");
+    m_btnSet         = new QPushButton("Set");
+    m_btnDel         = new QPushButton("Del");
 
     int r = 0;
     propLayout->addWidget(m_selectedLabel, r++, 0, 1, 7);
-    propLayout->addWidget(new QLabel("Pos:"),  r, 0);
-    propLayout->addWidget(m_posX,  r, 1);
-    propLayout->addWidget(m_posY,  r, 2);
-    propLayout->addWidget(m_posZ,  r, 3);
+    propLayout->addWidget(new QLabel("Pos:"), r, 0);
+    propLayout->addWidget(m_posX, r, 1);
+    propLayout->addWidget(m_posY, r, 2);
+    propLayout->addWidget(m_posZ, r, 3);
     ++r;
-    propLayout->addWidget(new QLabel("Vel:"),  r, 0);
-    propLayout->addWidget(m_velX,  r, 1);
-    propLayout->addWidget(m_velY,  r, 2);
-    propLayout->addWidget(m_velZ,  r, 3);
+    propLayout->addWidget(new QLabel("Vel:"), r, 0);
+    propLayout->addWidget(m_velX, r, 1);
+    propLayout->addWidget(m_velY, r, 2);
+    propLayout->addWidget(m_velZ, r, 3);
     ++r;
     propLayout->addWidget(new QLabel("Size:"), r, 0);
     propLayout->addWidget(m_sizeX, r, 1);
@@ -254,22 +255,21 @@ void MainWindow::buildUi()
     statusBar()->showMessage("Ready");
 
     // Signals
-    connect(m_btnInit,        &QPushButton::clicked,       this, &MainWindow::onInit);
-    connect(m_btnStart,       &QPushButton::clicked,       this, &MainWindow::onStart);
-    connect(m_btnStop,        &QPushButton::clicked,       this, &MainWindow::onStop);
-    connect(m_btnRun,         &QPushButton::clicked,       this, &MainWindow::onRun);
-    connect(m_btnPrint,       &QPushButton::clicked,       this, &MainWindow::onPrint);
-    connect(m_btnStep,        &QPushButton::clicked,       this, &MainWindow::onStep);
-    connect(m_btnApplyConfig, &QPushButton::clicked,       this, &MainWindow::onApplyConfig);
-    connect(m_btnAdd,         &QPushButton::clicked,       this, &MainWindow::onAddObject);
-    connect(m_btnSet,         &QPushButton::clicked,       this, &MainWindow::onSetObject);
-    connect(m_btnDel,         &QPushButton::clicked,       this, &MainWindow::onDelObject);
-    connect(btnTraj,          &QPushButton::clicked,       this, &MainWindow::onPlotTrajectories);
-    connect(btnObjs,          &QPushButton::clicked,       this, &MainWindow::onPlotObjects);
-    connect(btnAnim,          &QPushButton::clicked,       this, &MainWindow::onPlotAnimation);
-    connect(m_objectTable,    &QTableWidget::cellClicked,  this, &MainWindow::onObjectTableClicked);
-    connect(&m_thread,        &SimulationThread::simulationFinished,
-            this, &MainWindow::onSimulationFinished);
+    connect(m_btnInit, &QPushButton::clicked, this, &MainWindow::onInit);
+    connect(m_btnStart, &QPushButton::clicked, this, &MainWindow::onStart);
+    connect(m_btnStop, &QPushButton::clicked, this, &MainWindow::onStop);
+    connect(m_btnRun, &QPushButton::clicked, this, &MainWindow::onRun);
+    connect(m_btnPrint, &QPushButton::clicked, this, &MainWindow::onPrint);
+    connect(m_btnStep, &QPushButton::clicked, this, &MainWindow::onStep);
+    connect(m_btnApplyConfig, &QPushButton::clicked, this, &MainWindow::onApplyConfig);
+    connect(m_btnAdd, &QPushButton::clicked, this, &MainWindow::onAddObject);
+    connect(m_btnSet, &QPushButton::clicked, this, &MainWindow::onSetObject);
+    connect(m_btnDel, &QPushButton::clicked, this, &MainWindow::onDelObject);
+    connect(btnTraj, &QPushButton::clicked, this, &MainWindow::onPlotTrajectories);
+    connect(btnObjs, &QPushButton::clicked, this, &MainWindow::onPlotObjects);
+    connect(btnAnim, &QPushButton::clicked, this, &MainWindow::onPlotAnimation);
+    connect(m_objectTable, &QTableWidget::cellClicked, this, &MainWindow::onObjectTableClicked);
+    connect(&m_thread, &SimulationThread::simulationFinished, this, &MainWindow::onSimulationFinished);
 }
 
 // ============================================================================
@@ -290,25 +290,26 @@ void MainWindow::refreshObjectTable()
 
         const Vector3D pos = obj->getPosition();
         m_objectTable->setItem(row, 0, new QTableWidgetItem(QString::number(obj->getId())));
-        m_objectTable->setItem(row, 1, new QTableWidgetItem(QString::fromStdString(toString(obj->getType()))));
-        m_objectTable->setItem(row, 2, new QTableWidgetItem(QString::number(static_cast<double>(pos.getX()), 'f', 3)));
-        m_objectTable->setItem(row, 3, new QTableWidgetItem(QString::number(static_cast<double>(pos.getY()), 'f', 3)));
-        m_objectTable->setItem(row, 4, new QTableWidgetItem(QString::number(static_cast<double>(pos.getZ()), 'f', 3)));
+        m_objectTable->setItem(row, 1,
+                               new QTableWidgetItem(QString::fromStdString(toString(obj->getType()))));
+        m_objectTable->setItem(
+            row, 2, new QTableWidgetItem(QString::number(static_cast<double>(pos.getX()), 'f', 3)));
+        m_objectTable->setItem(
+            row, 3, new QTableWidgetItem(QString::number(static_cast<double>(pos.getY()), 'f', 3)));
+        m_objectTable->setItem(
+            row, 4, new QTableWidgetItem(QString::number(static_cast<double>(pos.getZ()), 'f', 3)));
         m_objectTable->setItem(row, 5, new QTableWidgetItem(obj->isFixed() ? "Yes" : "No"));
     }
 }
 
 void MainWindow::setControlsEnabled(bool enabled)
 {
-    for (auto* btn : {m_btnInit, m_btnStart, m_btnStop, m_btnRun, m_btnPrint,
-                      m_btnStep, m_btnApplyConfig, m_btnAdd, m_btnSet, m_btnDel})
+    for (auto* btn : { m_btnInit, m_btnStart, m_btnStop, m_btnRun, m_btnPrint, m_btnStep, m_btnApplyConfig,
+                       m_btnAdd, m_btnSet, m_btnDel })
         btn->setEnabled(enabled);
 }
 
-void MainWindow::log(const QString& msg)
-{
-    m_console->append(msg);
-}
+void MainWindow::log(const QString& msg) { m_console->append(msg); }
 
 // ============================================================================
 // Slots — simulation control
@@ -434,7 +435,7 @@ void MainWindow::onObjectTableClicked(int row, int col)
     if (!item)
         return;
 
-    const auto   id  = static_cast<size_t>(item->text().toUInt());
+    const auto    id  = static_cast<size_t>(item->text().toUInt());
     const Object* obj = m_world.getObject(id);
     if (!obj)
         return;
@@ -479,14 +480,11 @@ void MainWindow::onSetObject()
     if (!obj)
         return;
 
-    obj->setPosition(Vector3D(static_cast<decimal>(m_posX->value()),
-                              static_cast<decimal>(m_posY->value()),
+    obj->setPosition(Vector3D(static_cast<decimal>(m_posX->value()), static_cast<decimal>(m_posY->value()),
                               static_cast<decimal>(m_posZ->value())));
-    obj->setVelocity(Vector3D(static_cast<decimal>(m_velX->value()),
-                              static_cast<decimal>(m_velY->value()),
+    obj->setVelocity(Vector3D(static_cast<decimal>(m_velX->value()), static_cast<decimal>(m_velY->value()),
                               static_cast<decimal>(m_velZ->value())));
-    obj->setSize(Vector3D(static_cast<decimal>(m_sizeX->value()),
-                          static_cast<decimal>(m_sizeY->value()),
+    obj->setSize(Vector3D(static_cast<decimal>(m_sizeX->value()), static_cast<decimal>(m_sizeY->value()),
                           static_cast<decimal>(m_sizeZ->value())));
     obj->setMass(static_cast<decimal>(m_massBox->value()));
     obj->setIsFixed(m_fixedBox->isChecked());
@@ -529,7 +527,7 @@ void MainWindow::onDelObject()
 void MainWindow::runPlotScript(const QString& mode)
 {
     const QString scriptPath = "python/generate_plots.py";
-    const bool    ok         = QProcess::startDetached("python3", {scriptPath, m_csvDir->text(), mode});
+    const bool    ok         = QProcess::startDetached("python3", { scriptPath, m_csvDir->text(), mode });
     if (ok)
         log(QString("Opening %1 plot in browser...").arg(mode));
     else
@@ -537,5 +535,5 @@ void MainWindow::runPlotScript(const QString& mode)
 }
 
 void MainWindow::onPlotTrajectories() { runPlotScript("trajectories"); }
-void MainWindow::onPlotObjects()      { runPlotScript("objects"); }
-void MainWindow::onPlotAnimation()    { runPlotScript("animation"); }
+void MainWindow::onPlotObjects() { runPlotScript("objects"); }
+void MainWindow::onPlotAnimation() { runPlotScript("animation"); }

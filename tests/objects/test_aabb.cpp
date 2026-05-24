@@ -10,7 +10,7 @@
 TEST(AABBTest, ConstructorsAndGetters)
 {
     Vector3D position(1_d, 2_d, 3_d);
-    Vector3D rotation(0_d, 0_d, 0_d);
+    Vector3D normal(0_d, 0_d, 0_d);
     Vector3D size(4_d, 5_d, 6_d);
     Vector3D velocity(0.1_d, 0.2_d, 0.3_d);
     Vector3D acceleration(0.01_d, 0.02_d, 0.03_d);
@@ -18,10 +18,10 @@ TEST(AABBTest, ConstructorsAndGetters)
     Vector3D torque(0.0001_d, 0.0002_d, 0.0003_d);
     decimal  mass = 10.0_d;
 
-    AABB aabb(position, rotation, size, velocity, acceleration, force, torque, mass);
+    AABB aabb(position, normal, size, velocity, acceleration, force, torque, mass);
 
     EXPECT_EQ(aabb.getPosition(), position);
-    EXPECT_EQ(aabb.getRotation(), rotation);
+    EXPECT_EQ(aabb.getNormal(), normal);
     EXPECT_EQ(aabb.getSize(), size);
     EXPECT_EQ(aabb.getVelocity(), velocity);
     EXPECT_EQ(aabb.getAcceleration(), acceleration);
@@ -37,7 +37,7 @@ TEST(AABBTest, ConstructorsAndGetters)
     EXPECT_EQ(aabb_.getTorque(), Vector3D());
 
     AABB aabb_test(position, size, velocity, mass);
-    EXPECT_EQ(aabb_test.getRotation(), Vector3D());
+    EXPECT_EQ(aabb_test.getNormal(), Vector3D());
 }
 
 TEST(AABBTest, Setters)
@@ -72,7 +72,7 @@ TEST(AABBTest, Setters)
 TEST(AABBTest, integrate)
 {
     Vector3D position(1_d, 2_d, 3_d);
-    Vector3D rotation(0_d, 0_d, 0_d);
+    Vector3D normal(0_d, 0_d, 0_d);
     Vector3D size(4_d, 5_d, 6_d);
     Vector3D velocity(-1_d, 0_d, 0.5_d);
     Vector3D acceleration(2_d, 5_d, -2_d);
@@ -80,7 +80,7 @@ TEST(AABBTest, integrate)
     Vector3D torque(0.0001_d, 0.0002_d, 0.0003_d);
     decimal  mass = 10.0_d;
 
-    AABB    aabb(position, rotation, size, velocity, acceleration, force, torque, mass);
+    AABB    aabb(position, normal, size, velocity, acceleration, force, torque, mass);
     decimal dt = 2.0_d;
 
     aabb.integrate(dt);

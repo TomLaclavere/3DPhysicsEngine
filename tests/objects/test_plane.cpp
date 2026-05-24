@@ -10,7 +10,6 @@
 TEST(PlaneTest, ConstructorsAndGetters)
 {
     Vector3D position(1_d, 2_d, 3_d);
-    Vector3D rotation(0_d, 0_d, 0_d);
     Vector3D size(4_d, 5_d, 6_d);
     Vector3D velocity(0.1_d, 0.2_d, 0.3_d);
     Vector3D acceleration(0.01_d, 0.02_d, 0.03_d);
@@ -19,10 +18,10 @@ TEST(PlaneTest, ConstructorsAndGetters)
     decimal  mass = 10.0_d;
     Vector3D normal(0_d, 0_d, 1_d);
 
-    Plane plane(position, rotation, size, velocity, acceleration, force, torque, mass, normal);
+    Plane plane(position, normal, size, velocity, acceleration, force, torque, mass, normal);
 
     EXPECT_EQ(plane.getPosition(), position);
-    EXPECT_EQ(plane.getRotation(), normal);
+    EXPECT_EQ(plane.getNormal(), normal);
     EXPECT_EQ(plane.getSize(), size);
     EXPECT_EQ(plane.getVelocity(), velocity);
     EXPECT_EQ(plane.getAcceleration(), acceleration);

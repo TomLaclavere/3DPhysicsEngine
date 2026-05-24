@@ -15,33 +15,32 @@
 // ============================================================================
 void printUsage()
 {
-    std::cout
-        << "Available commands:\n"
-        << "-------------------------------------------------------------------------------------\n"
-        << "Commands:\n"
-        << "  help / h                             Show this help message.\n"
-        << "  exit / quit / q                      Quit program.\n"
-        << "-------------------------------------------------------------------------------------\n"
-        << "Simulation:\n"
-        << "  start                                Start simulation.\n"
-        << "  stop                                 Stop simulation.\n"
-        << "  run                                  Run the simulation with set parameters.\n"
-        << "  integrate <dt>                       Integrate one timestep.\n"
-        << "  print                                Print world summary.\n"
-        << "  init                                 (Re-)Initialize world.\n"
-        << "-------------------------------------------------------------------------------------\n"
-        << "World:\n"
-        << "  set <dt|g|duration> <value>          Set timestep / gravity / simulation duration.\n"
-        << "  set obj <id> <property> [...values]  Set property for a given object (see 'list').\n"
-        << "    Kinematics : pos, size, vel, acc, rot (3 values each), mass (1 value)\n"
-        << "    Constraints: fixed (0|1|true|false), name\n"
-        << "    Material   : stiffness, damping, friction, restitution (1 value each)\n"
-        << "  add <sphere|plane|AABB>              Add an object to the world.\n"
-        << "  list                                 List all objects in the format <id> <ObjectType> "
-           "<position> <velocity> <fixed>.\n"
-        << "  show <id>                            Show a specific object.\n"
-        << "  del <id>                             Delete an object by ID.\n"
-        << "-------------------------------------------------------------------------------------\n";
+    std::cout << "Available commands:\n"
+              << "-------------------------------------------------------------------------------------\n"
+              << "Commands:\n"
+              << "  help / h                             Show this help message.\n"
+              << "  exit / quit / q                      Quit program.\n"
+              << "-------------------------------------------------------------------------------------\n"
+              << "Simulation:\n"
+              << "  start                                Start simulation.\n"
+              << "  stop                                 Stop simulation.\n"
+              << "  run                                  Run the simulation with set parameters.\n"
+              << "  integrate <dt>                       Integrate one timestep.\n"
+              << "  print                                Print world summary.\n"
+              << "  init                                 (Re-)Initialize world.\n"
+              << "-------------------------------------------------------------------------------------\n"
+              << "World:\n"
+              << "  set <dt|g|duration> <value>          Set timestep / gravity / simulation duration.\n"
+              << "  set obj <id> <property> [...values]  Set property for a given object (see 'list').\n"
+              << "    Kinematics : pos, size, vel, acc, rot (3 values each), mass (1 value)\n"
+              << "    Constraints: fixed (0|1|true|false), name\n"
+              << "    Material   : stiffness, damping, friction, restitution (1 value each)\n"
+              << "  add <sphere|plane|AABB>              Add an object to the world.\n"
+              << "  list                                 List all objects in the format <id> <ObjectType> "
+                 "<position> <velocity> <fixed>.\n"
+              << "  show <id>                            Show a specific object.\n"
+              << "  del <id>                             Delete an object by ID.\n"
+              << "-------------------------------------------------------------------------------------\n";
 }
 
 std::deque<std::string> parseWords(const std::string& command)
@@ -111,14 +110,18 @@ static const std::unordered_map<std::string, PropertySetter> PROPERTY_SETTERS = 
     { "size", [](Object* o, const auto& a) { setVector3Property(o, a, &Object::setSize, "size"); } },
     { "vel", [](Object* o, const auto& a) { setVector3Property(o, a, &Object::setVelocity, "vel"); } },
     { "acc", [](Object* o, const auto& a) { setVector3Property(o, a, &Object::setAcceleration, "acc"); } },
-    { "rot", [](Object* o, const auto& a) { setVector3Property(o, a, &Object::setRotation, "rot"); } },
+    { "rot", [](Object* o, const auto& a) { setVector3Property(o, a, &Object::setNormal, "normal"); } },
     { "mass", [](Object* o, const auto& a) { setScalarProperty(o, a, &Object::setMass, "mass"); } },
-    { "fixed",       [](Object* o, const auto& a) { setFixedProperty(o, a); } },
-    { "name",        [](Object* o, const auto& a) { setNameProperty(o, a); } },
-    { "stiffness",   [](Object* o, const auto& a) { setScalarProperty(o, a, &Object::setStiffnessCst,   "stiffness"); } },
-    { "damping",     [](Object* o, const auto& a) { setScalarProperty(o, a, &Object::setDampingCst,     "damping"); } },
-    { "friction",    [](Object* o, const auto& a) { setScalarProperty(o, a, &Object::setFrictionCst,    "friction"); } },
-    { "restitution", [](Object* o, const auto& a) { setScalarProperty(o, a, &Object::setRestitutionCst, "restitution"); } },
+    { "fixed", [](Object* o, const auto& a) { setFixedProperty(o, a); } },
+    { "name", [](Object* o, const auto& a) { setNameProperty(o, a); } },
+    { "stiffness",
+      [](Object* o, const auto& a) { setScalarProperty(o, a, &Object::setStiffnessCst, "stiffness"); } },
+    { "damping",
+      [](Object* o, const auto& a) { setScalarProperty(o, a, &Object::setDampingCst, "damping"); } },
+    { "friction",
+      [](Object* o, const auto& a) { setScalarProperty(o, a, &Object::setFrictionCst, "friction"); } },
+    { "restitution",
+      [](Object* o, const auto& a) { setScalarProperty(o, a, &Object::setRestitutionCst, "restitution"); } },
 };
 
 bool handleSetCommand(PhysicsWorld& world, std::deque<std::string>& words)
@@ -147,8 +150,8 @@ bool handleSetCommand(PhysicsWorld& world, std::deque<std::string>& words)
     {
         const decimal value = stringToDecimal(popNext(words));
         world.getConfig().setSimulationDuration(value);
-        std::cout << "Duration set to " << value << " s ("
-                  << world.getConfig().getMaxIterations() << " iterations).\n";
+        std::cout << "Duration set to " << value << " s (" << world.getConfig().getMaxIterations()
+                  << " iterations).\n";
         return true;
     }
     if (what == "obj" && words.size() >= 2)

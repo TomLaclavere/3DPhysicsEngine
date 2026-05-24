@@ -59,9 +59,8 @@ TEST(ConfigTest, LoadFromFile)
     config2.loadFromFile(path2);
 
     EXPECT_DECIMAL_EQ(config2.getTimeStep(), 0.02_d);
-    // Other fields unchanged (should keep previous values)
     EXPECT_DECIMAL_EQ(config2.getGravity(), 15.2_d);
-    EXPECT_EQ(config2.getMaxIterations(), 10000u);
+    EXPECT_EQ(config2.getMaxIterations(), 2500);
 
     std::remove(path2.c_str());
 

@@ -166,10 +166,10 @@ class ObjectPlotting:
         name = obj["name"]
         color = _get_color(idx)
         normal = self._normal(obj)
-        
+
         if obj_type == "Sphere":
             return self._sphere_trace(pos, size[0], name, color)
-        elif obj_type in ("AABB"):
+        elif obj_type == "AABB":
             return self._box_trace(pos, size, name, color)
         elif obj_type == "Plane":
             return self._plane_trace(pos, size, normal, name, color)
@@ -229,7 +229,6 @@ class ObjectPlotting:
 
     @staticmethod
     def _box_trace(pos: np.ndarray, size: tuple, name: str, color: str) -> go.Mesh3d:
-
         sx, sy, sz = size
         cx, cy, cz = pos
 
@@ -260,13 +259,13 @@ class ObjectPlotting:
 
     @staticmethod
     def _plane_trace(pos: np.ndarray, size: tuple, normal : tuple, name: str, color: str) -> go.Surface:
-
+       
         sx, sy, _ = size
         cx, cy, cz = pos
 
         # normalisation
         n = np.asarray(normal, dtype=float)
-        n = normal / np.linalg.norm(n)
+        n = n / np.linalg.norm(n)
 
         if abs(n[0]) < 0.9:
             tangent = np.array([1.0, 0.0, 0.0])

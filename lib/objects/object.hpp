@@ -3,7 +3,7 @@
  * @brief Object class representing physical entities in the simulation.
  *
  * This class encapsulates the properties and behaviors of objects within the physics simulation,
- * including their position, rotation, size, and physical forces acting upon them.
+ * including their position, normal, size, and physical forces acting upon them.
  * It serves as a base class for specific object types like Sphere, AABB, and Plane.
  */
 #pragma once
@@ -45,7 +45,7 @@ inline std::string toString(ObjectType type)
  * @brief Object class representing a physical entity in the simulation.
  *
  * Holds physical intrinsics properties like mass (`decimal`) or size (`Vector3D`), as well as dynamic
- * properties: position, rotation, velocity, acceleration, forces, and torques (`Vector3D`).
+ * properties: position, normal, velocity, acceleration, forces, and torques (`Vector3D`).
  * Can be extended for specific object types (e.g., Sphere, AABB, Plane).
  *
  */
@@ -53,7 +53,7 @@ class Object
 {
 private:
     Vector3D position     = Vector3D();
-    Vector3D rotation     = Vector3D();
+    Vector3D normal       = Vector3D();
     Vector3D size         = Vector3D(1_d, 1_d, 1_d);
     Vector3D velocity     = Vector3D();
     Vector3D acceleration = Vector3D();
@@ -80,7 +80,7 @@ public:
     Object(const Vector3D& position, const Vector3D& size);
     Object(const Vector3D& position, const Vector3D& size, decimal mass);
     Object(const Vector3D& position, const Vector3D& size, const Vector3D& velocity, decimal mass);
-    Object(const Vector3D& position, const Vector3D& rotation, const Vector3D& size, const Vector3D& velocity,
+    Object(const Vector3D& position, const Vector3D& normal, const Vector3D& size, const Vector3D& velocity,
            const Vector3D& acceleration, const Vector3D& force, const Vector3D& torque, decimal mass);
     virtual ~Object() = default;
     /// @}
@@ -88,7 +88,7 @@ public:
     /// @name Getters
     /// @{
     Vector3D           getPosition() const;
-    Vector3D           getRotation() const;
+    Vector3D           getNormal() const;
     Vector3D           getSize() const;
     Vector3D           getVelocity() const;
     Vector3D           getAcceleration() const;
@@ -113,7 +113,7 @@ public:
     /// @name Setters
     /// @{
     void         setPosition(const Vector3D& _position);
-    void         setRotation(const Vector3D& _rotation);
+    void         setNormal(const Vector3D& _normal);
     void         setSize(const Vector3D& _size);
     void         setVelocity(const Vector3D& _velocity);
     void         setAcceleration(const Vector3D& _acceleration);

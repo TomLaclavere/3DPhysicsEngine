@@ -44,11 +44,11 @@ Object::Object(const Vector3D& position, const Vector3D& size, const Vector3D& v
 {
     checkFixed();
 }
-Object::Object(const Vector3D& position, const Vector3D& rotation, const Vector3D& size,
+Object::Object(const Vector3D& position, const Vector3D& normal, const Vector3D& size,
                const Vector3D& velocity, const Vector3D& acceleration, const Vector3D& force,
                const Vector3D& torque, decimal mass)
     : position { position }
-    , rotation { rotation }
+    , normal { normal }
     , size { size }
     , velocity { velocity }
     , acceleration { acceleration }
@@ -61,7 +61,7 @@ Object::Object(const Vector3D& position, const Vector3D& rotation, const Vector3
 
 //  Getters
 Vector3D Object::getPosition() const { return position; }
-Vector3D Object::getRotation() const { return rotation; }
+Vector3D Object::getNormal() const { return normal; }
 Vector3D Object::getSize() const { return size; }
 Vector3D Object::getVelocity() const { return velocity; }
 Vector3D Object::getAcceleration() const { return acceleration; }
@@ -86,7 +86,7 @@ bool       Object::getIsFixed() const { return fixed; }
 
 //  Setters
 void Object::setPosition(const Vector3D& _position) { position = _position; }
-void Object::setRotation(const Vector3D& _rotation) { rotation = _rotation; }
+void Object::setNormal(const Vector3D& _normal) { normal = _normal; }
 void Object::setSize(const Vector3D& _size) { size = _size; }
 void Object::setVelocity(const Vector3D& _velocity) { velocity = _velocity; }
 void Object::setAcceleration(const Vector3D& _acceleration) { acceleration = _acceleration; }
@@ -143,7 +143,7 @@ bool Object::saveObjectCSV(std::ofstream& file)
     }
     Vector3D size = getSize();
     Vector3D pos  = getPosition();
-    Vector3D rota = getRotation();
+    Vector3D rota = getNormal();
     file << getId() << "," << getName() << "," << getType() << "," << getMass() << "," << pos.getX() << ","
          << pos.getY() << "," << pos.getZ() << "," << size.getX() << "," << size.getY() << "," << size.getZ()
          << "," << rota.getX() << "," << rota.getY() << "," << rota.getZ() << "," << getIsFixed() << "\n";

@@ -41,13 +41,14 @@ public:
     explicit Plane(const Vector3D& position)
         : Object(position)
     {
+        Object::setNormal(normal);
         updateLocalAxes();
     }
     Plane(const Vector3D& position, const Vector3D& _normal)
         : Object(position)
         , normal(_normal.getNormalised())
     {
-
+        Object::setNormal(normal);
         updateLocalAxes();
     }
     Plane(const Vector3D& position, const Vector3D& size, const Vector3D& _normal)
@@ -57,7 +58,7 @@ public:
         , halfWidth { size[1] * 0.5_d }
     {
         updateLocalAxes();
-        setRotation(normal);
+        setNormal(normal);
     }
     Plane(const Vector3D& position, const Vector3D& size, decimal mass, const Vector3D& _normal)
         : Object(position, size, mass)
@@ -66,7 +67,7 @@ public:
         , halfWidth { size[1] * 0.5_d }
     {
         updateLocalAxes();
-        setRotation(normal);
+        setNormal(normal);
         checkFixed();
     }
     Plane(const Vector3D& position, const Vector3D& size, const Vector3D& velocity, decimal mass,
@@ -77,19 +78,19 @@ public:
         , halfWidth { size[1] * 0.5_d }
     {
         updateLocalAxes();
-        setRotation(normal);
+        setNormal(normal);
         checkFixed();
     }
-    Plane(const Vector3D& position, const Vector3D& rotation, const Vector3D& size, const Vector3D& velocity,
+    Plane(const Vector3D& position, const Vector3D& normal, const Vector3D& size, const Vector3D& velocity,
           const Vector3D& acceleration, const Vector3D& force, const Vector3D& torque, decimal mass,
           const Vector3D& _normal)
-        : Object(position, rotation, size, velocity, acceleration, force, torque, mass)
+        : Object(position, normal, size, velocity, acceleration, force, torque, mass)
         , normal(_normal.getNormalised())
         , halfHeight { size[0] * 0.5_d }
         , halfWidth { size[1] * 0.5_d }
     {
         updateLocalAxes();
-        setRotation(normal);
+        setNormal(normal);
         checkFixed();
     }
 
@@ -116,6 +117,7 @@ public:
     void setNormal(const Vector3D& n)
     {
         normal = n.getNormalised();
+        Object::setNormal(normal);
         updateLocalAxes();
     }
     void setHalfWidth(decimal halfwidth) { halfWidth = halfwidth; }

@@ -1,8 +1,20 @@
+/**
+ * @file quaternion.cpp
+ * @brief Implementation of Quaternion3D class methods and free functions.
+ */
 #include "mathematics/quaternion.hpp"
 
 // ============================================================================
 //  Constructors
 // ============================================================================
+/**
+ * @brief Construct a quaternion from a rotation matrix using Shepperd's method.
+ *
+ * Branches on the largest diagonal element to maximise numerical stability
+ * (avoids near-zero square roots).
+ *
+ * @param m A 3×3 rotation matrix.
+ */
 Quaternion3D::Quaternion3D(const Matrix3x3& m)
 {
     decimal trace = m.getTrace();
@@ -59,6 +71,7 @@ Quaternion3D::Quaternion3D(const Matrix3x3& m)
 // ============================================================================
 //  Utilities
 // ============================================================================
+/// @brief Normalise in-place. If norm ~ 0, resets to the null quaternion (0, 0, 0, 0).
 void Quaternion3D::normalise()
 
 {
@@ -71,6 +84,7 @@ void Quaternion3D::normalise()
         v /= norm;
     }
 }
+/// @brief Invert in-place: negate the imaginary part (conjugate), then normalise.
 void Quaternion3D::inverse()
 {
     (*this).conjugate();
@@ -107,6 +121,11 @@ decimal  Quaternion3D::at(std::size_t i) const { return v.at(i); }
 // ============================================================================
 //  In-Place Arithmetic Operators
 // ============================================================================
+/**
+ * @brief Element-wise division by another quaternion.
+ * This is NOT a quaternion algebraic inverse; each component (w, x, y, z) is divided independently.
+ * @throws std::invalid_argument if any component of `other` is zero.
+ */
 Quaternion3D& Quaternion3D::operator/=(const Quaternion3D& other)
 {
     // Check for division by zero
@@ -121,6 +140,7 @@ Quaternion3D& Quaternion3D::operator/=(const Quaternion3D& other)
     return (*this);
 }
 
+/// @throws std::invalid_argument if scalar ~ 0.
 Quaternion3D& Quaternion3D::operator/=(decimal scalar)
 {
     if (commonMaths::approxEqual(scalar, decimal(0)))
@@ -133,7 +153,8 @@ Quaternion3D& Quaternion3D::operator/=(decimal scalar)
 // ============================================================================
 //  Free Arithmetic Operators
 // ============================================================================
-// Quaternion3D op Quaternion3D
+// Quaternion3D op Quaternion3D (element-wise)
+/// @throws std::invalid_argument if any component of rhs is zero.
 Quaternion3D operator/(const Quaternion3D& lhs, const Quaternion3D& rhs)
 {
     // Check for division by zero
@@ -145,13 +166,15 @@ Quaternion3D operator/(const Quaternion3D& lhs, const Quaternion3D& rhs)
     return Quaternion3D::apply(lhs, rhs, std::divides<decimal>());
 }
 // Quaternion3D op decimal
+/// @throws std::invalid_argument if rhs ≈ 0.
 Quaternion3D operator/(const Quaternion3D& lhs, decimal rhs)
 {
     if (commonMaths::approxEqual(rhs, decimal(0)))
         throw std::invalid_argument("Division by zero");
     return Quaternion3D::apply(lhs, rhs, std::divides<decimal>());
 }
-// decimal op Quaternion3D
+// decimal op Quaternion3D (element-wise lhs / rhs[i])
+/// @throws std::invalid_argument if any component of rhs is zero.
 Quaternion3D operator/(decimal lhs, const Quaternion3D& rhs)
 {
     // Check for division by zero

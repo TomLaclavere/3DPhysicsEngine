@@ -1,3 +1,7 @@
+/**
+ * @file command.cpp
+ * @brief Implementation of CLI command parsing and handling utilities.
+ */
 #include "utilities/command.hpp"
 
 #include "objects/aabb.hpp"
@@ -124,6 +128,17 @@ static const std::unordered_map<std::string, PropertySetter> PROPERTY_SETTERS = 
       [](Object* o, const auto& a) { setScalarProperty(o, a, &Object::setRestitutionCst, "restitution"); } },
 };
 
+/**
+ * @brief Dispatch the "set" command to update world or object properties.
+ *
+ * Subcommands:
+ *  - "dt <value>"                  Set the world time step.
+ *  - "g <value>"                   Set gravity and recompute the gravity vector.
+ *  - "duration <value>"            Set simulation duration.
+ *  - "obj <id> <property> [args]"  Apply a named property setter to an object.
+ *
+ * @return True on success, false on invalid input or unknown property.
+ */
 bool handleSetCommand(PhysicsWorld& world, std::deque<std::string>& words)
 {
     if (words.empty())
@@ -172,6 +187,16 @@ bool handleSetCommand(PhysicsWorld& world, std::deque<std::string>& words)
     return false;
 }
 
+/**
+ * @brief Create and add a default-sized object of the requested type to the world.
+ *
+ * Default spawning positions/sizes: Sphere (r=1, z=10), Plane (10x10, z-normal),
+ * AABB (1x1x1, z=5). Material constants are taken from Config defaults.
+ *
+ * @param world Target physics world.
+ * @param words Tokens: first is type ("sphere"|"plane"|"aabb"), second optional name.
+ * @return True on success, false on unknown type.
+ */
 bool handleAddCommand(PhysicsWorld& world, std::deque<std::string>& words)
 {
     if (words.empty())

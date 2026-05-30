@@ -1,3 +1,7 @@
+/**
+ * @file main_qt.cpp
+ * @brief Qt GUI entry point: initialises Config and launches the MainWindow.
+ */
 #include "gui/mainWindow.hpp"
 #include "world/config.hpp"
 

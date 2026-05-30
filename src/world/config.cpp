@@ -1,4 +1,7 @@
-// config.cpp
+/**
+ * @file config.cpp
+ * @brief Implementation of Config singleton: getters, setters, YAML loader, and CLI overrides.
+ */
 #include "world/config.hpp"
 
 #include "precision.hpp"
@@ -28,6 +31,16 @@ decimal     Config::getDefaultFriction() const { return defaultFriction; }
 decimal     Config::getDefaultRestitution() const { return defaultRestitution; }
 
 //  Loading Methods
+/**
+ * @brief Load simulation parameters from a YAML file.
+ *
+ * Recognised keys: gravity, timestep, duration, solver, verbose, save,
+ * simplifiedCollision, and material.{stiffness, damping, friction, restitution}.
+ * Missing keys are silently ignored; existing values are preserved.
+ *
+ * @param path Path to the YAML file.
+ * @throws Propagates any exception from yaml-cpp on parse failure.
+ */
 void Config::loadFromFile(const std::string& path)
 {
     try
@@ -64,6 +77,12 @@ void Config::loadFromFile(const std::string& path)
     }
 }
 
+/**
+ * @brief Override config values from CLI arguments.
+ *
+ * Recognised flags (each followed by its value): --gravity, --timestep,
+ * --duration, --iters, --solver, --verbose, --save. Unknown flags are skipped.
+ */
 void Config::overrideFromCommandLine(int argc, char** argv)
 {
     for (int i = 1; i < argc; i++)

@@ -1,3 +1,11 @@
+/**
+ * @file main.cpp
+ * @brief CLI entry point for the physics simulation.
+ *
+ * Loads configuration, initialises the PhysicsWorld, then enters an
+ * interactive read-eval-print loop backed by linenoise for history and
+ * tab-completion.
+ */
 #include "external/linenoise/history.hpp"
 #include "external/linenoise/linenoise.h"
 #include "precision.hpp"

@@ -1,3 +1,7 @@
+/**
+ * @file mainWindow.cpp
+ * @brief Implementation of the Qt main window: UI construction, slot handlers, and plot integration.
+ */
 #include "gui/mainWindow.hpp"
 
 #include "mathematics/vector.hpp"
@@ -38,6 +42,7 @@ MainWindow::MainWindow(QWidget* parent)
 // UI construction
 // ============================================================================
 
+/// @brief Build the entire Qt widget tree and connect all signals to slots.
 void MainWindow::buildUi()
 {
     setWindowTitle("3D Physics Engine");
@@ -285,6 +290,7 @@ void MainWindow::buildUi()
 // Helpers
 // ============================================================================
 
+/// @brief Rebuild the object table from the current world state.
 void MainWindow::refreshObjectTable()
 {
     m_objectTable->setRowCount(0);
@@ -324,6 +330,7 @@ void MainWindow::log(const QString& msg) { m_console->append(msg); }
 // Slots — simulation control
 // ============================================================================
 
+/// @brief Re-initialise the world, clear the table, and reset the selection.
 void MainWindow::onInit()
 {
     m_world.initialise();
@@ -348,6 +355,7 @@ void MainWindow::onStop()
     statusBar()->showMessage("Stopped");
 }
 
+/// @brief Start the simulation loop on the background thread. Guards against running when stopped.
 void MainWindow::onRun()
 {
     if (!m_world.getIsRunning())
@@ -361,6 +369,7 @@ void MainWindow::onRun()
     m_thread.start();
 }
 
+/// @brief Re-enable controls and refresh the object table when the simulation thread completes.
 void MainWindow::onSimulationFinished()
 {
     setControlsEnabled(true);
@@ -369,6 +378,7 @@ void MainWindow::onSimulationFinished()
     statusBar()->showMessage("Simulation finished");
 }
 
+/// @brief Redirect stdout to capture PhysicsWorld::printState() output into the console widget.
 void MainWindow::onPrint()
 {
     std::ostringstream oss;
@@ -378,6 +388,7 @@ void MainWindow::onPrint()
     log(QString::fromStdString(oss.str()));
 }
 
+/// @brief Read dt from the spinbox, advance one integration step, and refresh the table.
 void MainWindow::onStep()
 {
     const decimal dt = static_cast<decimal>(m_stepDt->value());
@@ -392,6 +403,7 @@ void MainWindow::onStep()
 // Slots — config
 // ============================================================================
 
+/// @brief Read all config spinboxes and apply their values to Config and PhysicsWorld.
 void MainWindow::onApplyConfig()
 {
     m_world.setGravityCst(static_cast<decimal>(m_gravityBox->value()));
@@ -415,6 +427,7 @@ void MainWindow::onApplyConfig()
 // Slots — object management
 // ============================================================================
 
+/// @brief Build an add command from the type/name widgets and delegate to handleAddCommand.
 void MainWindow::onAddObject()
 {
     std::deque<std::string> words;
@@ -435,6 +448,7 @@ void MainWindow::onAddObject()
     }
 }
 
+/// @brief Populate the property form with the selected object's current values.
 void MainWindow::onObjectTableClicked(int row, int col)
 {
     Q_UNUSED(col)
@@ -480,6 +494,7 @@ void MainWindow::onObjectTableClicked(int row, int col)
     m_restitutionBox->setValue(static_cast<double>(obj->getRestitutionCst()));
 }
 
+/// @brief Read all property widgets and push their values onto the currently selected object.
 void MainWindow::onSetObject()
 {
     if (m_selectedRow < 0)
@@ -515,6 +530,7 @@ void MainWindow::onSetObject()
     statusBar()->showMessage("Object updated");
 }
 
+/// @brief Remove the selected object from the world and clear the selection.
 void MainWindow::onDelObject()
 {
     if (m_selectedRow < 0)
@@ -541,6 +557,10 @@ void MainWindow::onDelObject()
 // Slots — plots
 // ============================================================================
 
+/**
+ * @brief Launch python/generate_plots.py as a detached process.
+ * @param mode Plot type passed as CLI argument ("trajectories", "objects", or "animation").
+ */
 void MainWindow::runPlotScript(const QString& mode)
 {
     const QString scriptPath = "python/generate_plots.py";

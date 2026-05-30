@@ -4,10 +4,11 @@
 #include "test_functions.hpp"
 
 #include <gtest/gtest.h>
+#include <numbers>
 
-// ——————————————————————————————————————————————————————————————————————————
+// --------------------------------------------------------------------------
 //  Constructors, Getters, and Setters
-// ——————————————————————————————————————————————————————————————————————————
+// --------------------------------------------------------------------------
 
 TEST(SphereTest, ConstructorsAndGetters)
 {
@@ -59,9 +60,28 @@ TEST(SphereTest, Setters)
     EXPECT_DECIMAL_EQ(sphere.getMass(), newMass);
 }
 
-// ——————————————————————————————————————————————————————————————————————————
+// --------------------------------------------------------------------------
 //  Utilities
-// ——————————————————————————————————————————————————————————————————————————
+// --------------------------------------------------------------------------
+
+TEST(SphereTest, DerivedGetters)
+{
+    Sphere sphere(Vector3D(1_d, 2_d, 3_d), 4_d); // diameter = 4
+
+    EXPECT_DECIMAL_EQ(sphere.getDiameter(), 4_d);
+    EXPECT_DECIMAL_EQ(sphere.getRadius(), 2_d);
+    EXPECT_VECTOR_EQ(sphere.getCenter(), sphere.getPosition());
+
+    // volume = π * r² with r=2
+    decimal expected_volume = 2_d * 2_d * std::numbers::pi_v<decimal>;
+    EXPECT_DECIMAL_EQ(sphere.getVolume(), expected_volume);
+
+    // setMaterial updates mass = density * volume
+    Material mat("rubber", 1200_d, 100_d, 5_d, 0.6_d, 0.8_d);
+    sphere.setMaterial(mat);
+    EXPECT_EQ(sphere.getMaterial().getName(), "rubber");
+    EXPECT_DECIMAL_EQ(sphere.getMass(), 1200_d * expected_volume);
+}
 
 TEST(SphereTest, Integrate)
 {

@@ -113,6 +113,29 @@ TEST(PlaneTest, ProjectPoint)
     EXPECT_DECIMAL_EQ((pt - proj).getNorm(), 5_d);
 }
 
+TEST(PlaneTest, DerivedGetters)
+{
+    Vector3D normal(0_d, 0_d, 1_d);
+    Vector3D size(6_d, 4_d, 0_d);
+    Plane    plane(Vector3D(0_d), size, normal);
+
+    // getVolume = size.x * size.y
+    EXPECT_DECIMAL_EQ(plane.getVolume(), 6_d * 4_d);
+
+    // setNormal triggers updateLocalAxes, axes must remain orthonormal
+    plane.setNormal(Vector3D(1_d, 0_d, 0_d));
+    EXPECT_DECIMAL_EQ(plane.getNormal().dotProduct(plane.getU()), 0_d);
+    EXPECT_DECIMAL_EQ(plane.getNormal().dotProduct(plane.getV()), 0_d);
+    EXPECT_DECIMAL_EQ(plane.getU().getNorm(), 1_d);
+    EXPECT_DECIMAL_EQ(plane.getV().getNorm(), 1_d);
+
+    // setMaterial updates mass = density * volume
+    Material mat("wood", 600_d, 10000_d, 100_d, 0.4_d, 0.5_d);
+    plane.setMaterial(mat);
+    EXPECT_EQ(plane.getMaterial().getName(), "wood");
+    EXPECT_DECIMAL_EQ(plane.getMass(), 600_d * plane.getVolume());
+}
+
 TEST(PlaneTest, ContainsPoint)
 {
     Plane p(Vector3D(0_d, 0_d, 0_d), Vector3D(2_d, 4_d, 0_d), Vector3D(0_d, 0_d, 1_d));

@@ -1,8 +1,21 @@
+/**
+ * @file material.hpp
+ * @brief Material class holding physical properties for simulation objects.
+ */
 #include "precision.hpp"
 
 #include <stdexcept>
 #include <string>
 
+/**
+ * @class Material
+ * @brief Physical properties of a simulation object's surface.
+ *
+ * Stores density, stiffness, damping, friction, and restitution coefficients.
+ * Can be loaded from a file or constructed directly.
+ *
+ * Default values: density=1000, stiffness=0, damping=0, friction=0, restitution=1.
+ */
 class Material
 {
 private:

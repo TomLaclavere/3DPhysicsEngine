@@ -1,3 +1,11 @@
+/**
+ * @file physics.hpp
+ * @brief Physics force computations used by @ref PhysicsWorld.
+ *
+ * Provides helpers for reduced mass / effective material constants, and
+ * functions to compute gravity, spring/damping, friction, and combined
+ * contact forces between pairs of objects.
+ */
 #include "collision/contact.hpp"
 #include "mathematics/vector.hpp"
 #include "objects/object.hpp"

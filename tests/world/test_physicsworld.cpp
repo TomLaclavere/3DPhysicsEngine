@@ -1,239 +1,643 @@
-// #include "objects/object.hpp"
-// #include "test_functions.hpp"
-// #include "world/physicsWorld.hpp"
+#include "objects/sphere.hpp"
+#include "test_functions.hpp"
+#include "world/physics.hpp"
+#include "world/physicsWorld.hpp"
+#include "world/solver.hpp"
 
-// #include <gtest/gtest.h>
+#include <gtest/gtest.h>
+#include <string>
 
-// // Dummy Object implementation for testing
-// struct DummyObject : public Object
-// {
-//     ObjectType getType() const override { return ObjectType::Generic; }
-//     bool       checkCollision(const Object&) override { return false; }
-// };
+// --------------------------------------------------------------------------
+//  Setters and Getters
+// --------------------------------------------------------------------------
 
-// // ============================================================================
-// //  Fixture
-// // ============================================================================
-// class PhysicsWorldTest : public ::testing::Test
-// {
-// protected:
-//     PhysicsWorld world;
-//     DummyObject  obj1;
-//     DummyObject  obj2;
+TEST(PhysicsWorldTest, SettersAndGetters)
+{
+    PhysicsWorld world;
 
-//     void SetUp() override
-//     {
-//         Config::get();
-//         world.clearObjects();
-//         obj1.setIsFixed(false);
-//         obj2.setIsFixed(true);
-//         world.addObject(&obj1);
-//         world.addObject(&obj2);
-//         world.addObject(nullptr); // cover null branch
-//     }
-// };
+    world.setTimeStep(0.05_d);
+    EXPECT_DECIMAL_EQ(world.getTimeStep(), 0.05_d);
 
-// // ============================================================================
-// //  Test
-// // ============================================================================
-// TEST_F(PhysicsWorldTest, SetSolverParses)
-// {
-//     world.setSolver("Euler");
-//     EXPECT_EQ(world.getSolver(), Solver::Euler);
+    world.setGravityCst(5_d);
+    EXPECT_DECIMAL_EQ(world.getGravityCst(), 5_d);
 
-//     world.setSolver("Verlet");
-//     EXPECT_EQ(world.getSolver(), Solver::Verlet);
+    world.setGravityAcc(Vector3D(0_d, 0_d, -5_d));
+    EXPECT_VECTOR_EQ(world.getGravityAcc(), Vector3D(0_d, 0_d, -5_d));
 
-//     world.setSolver("RK4");
-//     EXPECT_EQ(world.getSolver(), Solver::RK4);
+    EXPECT_FALSE(world.getIsRunning());
+    world.start();
+    EXPECT_TRUE(world.getIsRunning());
+    world.stop();
+    EXPECT_FALSE(world.getIsRunning());
 
-//     world.setSolver("gkjrehogidrjlgmksj");
-//     EXPECT_EQ(world.getSolver(), Solver::Unknown);
-//     world.integrate(); // should not throw
-// }
+    world.setSolver("Euler");
+    EXPECT_EQ(world.getSolver(), Solver::Euler);
+    world.setSolver("Verlet");
+    EXPECT_EQ(world.getSolver(), Solver::Verlet);
+    world.setSolver("RK4");
+    EXPECT_EQ(world.getSolver(), Solver::RK4);
+    world.setSolver("unknown_solver");
+    EXPECT_EQ(world.getSolver(), Solver::Unknown);
+}
 
-// TEST_F(PhysicsWorldTest, InitialiseSetsConfigValues)
-// {
-//     Config::get();
-//     char  arg0[] = "prog";
-//     char  arg1[] = "--gravity";
-//     char  arg2[] = "12.0";
-//     char  arg3[] = "--timestep";
-//     char  arg4[] = "0.05";
-//     char  arg5[] = "--iters";
-//     char  arg6[] = "5";
-//     char* argv[] = { arg0, arg1, arg2, arg3, arg4, arg5, arg6 };
-//     int   argc   = 7;
+// --------------------------------------------------------------------------
+//  Object management
+// --------------------------------------------------------------------------
 
-//     Config::get().overrideFromCommandLine(argc, argv);
-//     world.initialise();
-//     Config& config = world.getConfig();
+TEST(PhysicsWorldTest, ObjectManagement)
+{
+    PhysicsWorld world;
 
-//     EXPECT_FALSE(world.getIsRunning());
-//     EXPECT_DECIMAL_EQ(world.getObjectCount(), 0);
-//     EXPECT_DECIMAL_EQ(world.getTimeStep(), 0.05_d);
-//     EXPECT_DECIMAL_EQ(world.getGravityCst(), 12.0_d);
-//     EXPECT_VECTOR_EQ(world.getGravityAcc(), Vector3D(0_d, 0_d, -12.0_d));
-// }
+    EXPECT_EQ(world.getObjectCount(), 0u);
 
-// TEST_F(PhysicsWorldTest, ApplyGravityAffectsAcceleration)
-// {
-//     world.start();
-//     world.applyGravityForces();
-//     EXPECT_VECTOR_EQ(obj1.getAcceleration(), Vector3D(0_d, 0_d, -9.81_d));
-//     EXPECT_VECTOR_EQ(obj2.getAcceleration(), Vector3D(0_d, 0_d, 0_d));
+    // addObject increments ID counter and count
+    Sphere* s1 = new Sphere(Vector3D(0_d), 1_d, 1_d);
+    Sphere* s2 = new Sphere(Vector3D(1_d, 0_d, 0_d), 1_d, 2_d);
+    world.addObject(s1);
+    world.addObject(s2);
 
-//     world.resetAcc();
-//     world.setGravityCst(5_d);
-//     world.setGravityAcc(Physics::computeGravityAcc(world.getGravityCst()));
-//     world.applyForces();
-//     EXPECT_VECTOR_EQ(obj1.getAcceleration(), Vector3D(0_d, 0_d, -5_d));
-//     EXPECT_VECTOR_EQ(obj2.getAcceleration(), Vector3D(0_d, 0_d, 0_d));
-// }
+    EXPECT_EQ(world.getObjectCount(), 2u);
+    EXPECT_EQ(world.getObject(0), s1);
+    EXPECT_EQ(world.getObject(1), s2);
+    EXPECT_EQ(world.getObject(99), nullptr); // out of range
 
-// TEST_F(PhysicsWorldTest, UpdateDoesNothingWhenNotRunning)
-// {
-//     world.stop();
-//     obj1.setVelocity(Vector3D(1_d, 0_d, 0_d));
-//     obj1.setAcceleration(Vector3D(0_d, 1_d, 0_d));
-//     world.integrate();
-//     EXPECT_VECTOR_EQ(obj1.getPosition(), Vector3D(0_d, 0_d, 0_d)); // unchanged
-// }
+    EXPECT_EQ(s1->getId(), 0u);
+    EXPECT_EQ(s2->getId(), 1u);
+    EXPECT_EQ(world.getNextObjectId(), 2u);
 
-// TEST_F(PhysicsWorldTest, IntegrateEulerUpdatesObjects)
-// {
-//     world.resetAcc();
-//     world.start();
-//     world.setTimeStep(0.1_d);
-//     world.setGravityAcc(Vector3D(0_d, 0_d, -9.81_d));
+    // findById
+    EXPECT_EQ(world.findById(0), s1);
+    EXPECT_EQ(world.findById(1), s2);
+    EXPECT_EQ(world.findById(99), nullptr);
 
-//     obj1.setVelocity(Vector3D(0_d, 0_d, 0_d));
-//     obj1.setPosition(Vector3D(0_d, 0_d, 10_d));
-//     obj1.setAcceleration(Vector3D(0_d, 0_d, -9.81_d));
+    // clearObjects deletes and empties
+    world.clearObjects();
+    EXPECT_EQ(world.getObjectCount(), 0u);
+}
 
-//     world.integrateEuler(obj1, world.getTimeStep());
-//     world.integrateEuler(obj2, world.getTimeStep());
+// --------------------------------------------------------------------------
+//  initialise
+// --------------------------------------------------------------------------
 
-//     // v = v + a * dt = (0,0,-0.981)
-//     // p = p + v * dt = (0,0,9.9019)
-//     EXPECT_DECIMAL_EQ(obj1.getVelocity().getZ(), -0.981_d);
-//     EXPECT_DECIMAL_EQ(obj1.getPosition().getZ(), 9.9019_d);
-//     EXPECT_DECIMAL_EQ(obj1.getAcceleration().getZ(), -9.81_d);
-//     EXPECT_DECIMAL_EQ(obj2.getVelocity().getZ(), 0_d);
-//     EXPECT_DECIMAL_EQ(obj2.getPosition().getZ(), 0_d);
-//     EXPECT_DECIMAL_EQ(obj2.getAcceleration().getZ(), 0_d);
-// }
+TEST(PhysicsWorldTest, Initialise)
+{
+    PhysicsWorld world;
+    world.start();
 
-// TEST_F(PhysicsWorldTest, IntegrateEulerSkipsNullObjects)
-// {
-//     world.resetAcc();
-//     world.addObject(nullptr); // explicit null coverage
-//     world.integrate();
+    world.initialise();
 
-//     SUCCEED();
-// }
+    EXPECT_FALSE(world.getIsRunning());
+    EXPECT_EQ(world.getObjectCount(), 0u);
+    // Values come from singleton Config defaults
+    EXPECT_DECIMAL_EQ(world.getTimeStep(), Config::get().getTimeStep());
+    EXPECT_DECIMAL_EQ(world.getGravityCst(), Config::get().getGravity());
+    EXPECT_VECTOR_EQ(world.getGravityAcc(), Vector3D(0_d, 0_d, -Config::get().getGravity()));
+}
 
-// TEST_F(PhysicsWorldTest, IntegrateVerlet)
-// {
-//     world.resetAcc();
-//     world.start();
-//     world.setTimeStep(0.1_d);
-//     world.setGravityAcc(Vector3D(0_d, 0_d, -9.81_d));
+// --------------------------------------------------------------------------
+//  Gravity application
+// --------------------------------------------------------------------------
 
-//     obj1.setPosition(Vector3D(0_d, 0_d, 10_d));
-//     obj1.setVelocity(Vector3D(0_d, 0_d, 0_d));
-//     obj1.setAcceleration(Vector3D(0_d, 0_d, -9.81_d));
+TEST(PhysicsWorldTest, ApplyGravityForces)
+{
+    PhysicsWorld world;
+    world.setGravityCst(9.81_d);
+    world.setGravityAcc(Vector3D(0_d, 0_d, -9.81_d));
 
-//     world.integrateVerlet(obj1, world.getTimeStep());
+    // Non-fixed sphere (mass > 0)
+    Sphere* moving = new Sphere(Vector3D(0_d), 1_d, 1_d);
+    moving->setAcceleration(Vector3D(0_d));
+    world.addObject(moving);
 
-//     EXPECT_LT(obj1.getPosition().getZ(), 10_d);
-//     EXPECT_LT(obj1.getVelocity().getZ(), 0_d);
+    // Fixed sphere (mass = 0 → fixed by default)
+    Sphere* fixed = new Sphere(Vector3D(5_d, 0_d, 0_d));
+    fixed->setAcceleration(Vector3D(0_d));
+    world.addObject(fixed);
 
-//     world.setSolver("Verlet");
-//     world.integrate();
+    world.applyGravityForces();
 
-//     EXPECT_LT(obj1.getPosition().getZ(), 10_d);
-//     EXPECT_LT(obj1.getVelocity().getZ(), 0_d);
-// }
+    // Non-fixed: gravity added to acceleration
+    EXPECT_VECTOR_EQ(moving->getAcceleration(), Vector3D(0_d, 0_d, -9.81_d));
+    // Fixed: acceleration unchanged
+    EXPECT_VECTOR_EQ(fixed->getAcceleration(), Vector3D(0_d));
 
-// TEST_F(PhysicsWorldTest, IntegrateRK4)
-// {
-//     world.resetAcc();
-//     world.start();
-//     world.setTimeStep(0.1_d);
-//     world.setGravityAcc(Vector3D(0_d, 0_d, -9.81_d));
+    world.clearObjects();
+}
 
-//     obj1.setPosition(Vector3D(0_d, 0_d, 10_d));
-//     obj1.setVelocity(Vector3D(0_d, 0_d, 0_d));
-//     obj1.setAcceleration(Vector3D(0_d, 0_d, -9.81_d));
+// --------------------------------------------------------------------------
+//  Euler integrator
+// --------------------------------------------------------------------------
 
-//     world.integrateRK4(obj1, world.getTimeStep());
+TEST(PhysicsWorldTest, IntegrateEuler)
+{
+    PhysicsWorld world;
 
-//     EXPECT_LT(obj1.getPosition().getZ(), 10_d);
-//     EXPECT_LT(obj1.getVelocity().getZ(), 0_d);
+    Sphere sphere(Vector3D(0_d, 0_d, 10_d), 1_d, 1_d);
+    sphere.setVelocity(Vector3D(0_d));
+    sphere.setAcceleration(Vector3D(0_d, 0_d, -9.81_d));
 
-//     world.setSolver("RK4");
-//     world.integrate();
+    const decimal dt = 0.1_d;
+    world.integrateEuler(sphere, dt);
 
-//     EXPECT_LT(obj1.getPosition().getZ(), 10_d);
-//     EXPECT_LT(obj1.getVelocity().getZ(), 0_d);
-// }
+    // v = v0 + a*dt = (0, 0, -0.981)
+    EXPECT_DECIMAL_EQ(sphere.getVelocity().getZ(), -0.981_d);
+    // p = p0 + v_new*dt = (0, 0, 10 - 0.0981) = (0, 0, 9.9019)
+    EXPECT_DECIMAL_EQ(sphere.getPosition().getZ(), 9.9019_d);
 
-// TEST_F(PhysicsWorldTest, IntegrateSkipsFixedAndNullObjects)
-// {
-//     world.resetAcc();
-//     world.start();
-//     world.setTimeStep(0.1_d);
+    // Fixed object must not move when called via the loop
+    Sphere fixed(Vector3D(0_d, 0_d, 5_d));
+    fixed.setAcceleration(Vector3D(0_d, 0_d, -9.81_d));
+    // integrateEuler itself has no fixed check — the caller's loop skips fixed;
+    // here we just verify the math on a second call
+    world.integrateEuler(fixed, dt);
+    EXPECT_DECIMAL_EQ(fixed.getVelocity().getZ(), -0.981_d);
+}
 
-//     obj2.setIsFixed(true);    // should be skipped
-//     world.addObject(nullptr); // null object should be skipped
+// --------------------------------------------------------------------------
+//  Verlet integrator
+// --------------------------------------------------------------------------
 
-//     EXPECT_NO_THROW(world.integrate());
-// }
+TEST(PhysicsWorldTest, IntegrateVerlet)
+{
+    PhysicsWorld world;
+    world.setGravityCst(9.81_d);
+    world.setGravityAcc(Vector3D(0_d, 0_d, -9.81_d));
 
-// TEST_F(PhysicsWorldTest, ApplyContactForcesAvoidsOverlap)
-// {
-//     DummyObject objA, objB;
-//     objA.setPosition(Vector3D(0_d, 0_d, 0_d));
-//     objB.setPosition(Vector3D(0_d, 0_d, 0_d)); // colliding
+    Sphere* s = new Sphere(Vector3D(0_d, 0_d, 10_d), 1_d, 1_d);
+    s->setVelocity(Vector3D(0_d));
+    world.addObject(s);
 
-//     objA.setIsFixed(false);
-//     objB.setIsFixed(false);
+    world.integrateVerlet(0.1_d);
 
-//     world.addObject(&objA);
-//     world.addObject(&objB);
+    EXPECT_LT(s->getPosition().getZ(), 10_d);
+    EXPECT_LT(s->getVelocity().getZ(), 0_d);
 
-//     world.computeAcceleration(objA);
-//     world.computeAcceleration(objB);
+    world.clearObjects();
+}
 
-//     EXPECT_VECTOR_EQ(objA.getVelocity(), Vector3D(0_d));
-//     EXPECT_VECTOR_EQ(objB.getVelocity(), Vector3D(0_d));
-// }
+// --------------------------------------------------------------------------
+//  RK4 integrator
+// --------------------------------------------------------------------------
 
-// TEST_F(PhysicsWorldTest, RunLoopExecutesWithoutError)
-// {
-//     world.start();
-//     world.setTimeStep(0.1_d);
-//     Config::get().overrideFromCommandLine(1, nullptr); // minimal
+TEST(PhysicsWorldTest, IntegrateRK4)
+{
+    PhysicsWorld world;
+    world.setGravityCst(9.81_d);
+    world.setGravityAcc(Vector3D(0_d, 0_d, -9.81_d));
 
-//     EXPECT_NO_THROW(world.run());
-// }
+    Sphere* s = new Sphere(Vector3D(0_d, 0_d, 10_d), 1_d, 1_d);
+    s->setVelocity(Vector3D(0_d));
+    world.addObject(s);
 
-// TEST_F(PhysicsWorldTest, Collision)
-// {
-//     DummyObject objA, objB, objFixed;
-//     objA.setPosition(Vector3D(0_d));
-//     objB.setPosition(Vector3D(0_d)); // colliding
-//     objFixed.setPosition(Vector3D(0_d));
-//     objFixed.setIsFixed(true);
+    world.integrateRK4(0.1_d);
 
-//     world.addObject(&objA);
-//     world.addObject(&objB);
-//     world.addObject(&objFixed);
+    EXPECT_LT(s->getPosition().getZ(), 10_d);
+    EXPECT_LT(s->getVelocity().getZ(), 0_d);
 
-//     world.applyForces();
+    world.clearObjects();
+}
 
-//     EXPECT_VECTOR_EQ(objA.getAcceleration(), Vector3D(0_d));
-//     EXPECT_VECTOR_EQ(objB.getAcceleration(), Vector3D(0_d));
-//     EXPECT_VECTOR_EQ(objFixed.getAcceleration(), Vector3D(0_d));
-// }
+// --------------------------------------------------------------------------
+//  integrate() dispatch
+// --------------------------------------------------------------------------
+
+TEST(PhysicsWorldTest, IntegrateDispatch)
+{
+    // integrate() does nothing when not running
+    {
+        PhysicsWorld world;
+        world.setSolver("Euler");
+        world.setTimeStep(0.1_d);
+        world.setGravityAcc(Vector3D(0_d, 0_d, -9.81_d));
+
+        Sphere* s = new Sphere(Vector3D(0_d, 0_d, 10_d), 1_d, 1_d);
+        world.addObject(s);
+
+        world.stop();
+        world.integrate(); // should do nothing
+        EXPECT_DECIMAL_EQ(s->getPosition().getZ(), 10_d);
+
+        world.clearObjects();
+    }
+
+    // Euler: position updates after start + integrate
+    {
+        PhysicsWorld world;
+        world.setSolver("Euler");
+        world.setTimeStep(0.1_d);
+        world.setGravityCst(9.81_d);
+        world.setGravityAcc(Vector3D(0_d, 0_d, -9.81_d));
+
+        Sphere* s = new Sphere(Vector3D(0_d, 0_d, 10_d), 1_d, 1_d);
+        s->setVelocity(Vector3D(0_d));
+        s->setAcceleration(Vector3D(0_d));
+        world.addObject(s);
+
+        world.start();
+        world.integrate();
+        EXPECT_LT(s->getPosition().getZ(), 10_d);
+
+        world.clearObjects();
+    }
+
+    // Verlet dispatch
+    {
+        PhysicsWorld world;
+        world.setSolver("Verlet");
+        world.setTimeStep(0.1_d);
+        world.setGravityCst(9.81_d);
+        world.setGravityAcc(Vector3D(0_d, 0_d, -9.81_d));
+
+        Sphere* s = new Sphere(Vector3D(0_d, 0_d, 10_d), 1_d, 1_d);
+        s->setVelocity(Vector3D(0_d));
+        world.addObject(s);
+
+        world.start();
+        world.integrate();
+        EXPECT_LT(s->getPosition().getZ(), 10_d);
+
+        world.clearObjects();
+    }
+
+    // RK4 dispatch
+    {
+        PhysicsWorld world;
+        world.setSolver("RK4");
+        world.setTimeStep(0.1_d);
+        world.setGravityCst(9.81_d);
+        world.setGravityAcc(Vector3D(0_d, 0_d, -9.81_d));
+
+        Sphere* s = new Sphere(Vector3D(0_d, 0_d, 10_d), 1_d, 1_d);
+        s->setVelocity(Vector3D(0_d));
+        world.addObject(s);
+
+        world.start();
+        world.integrate();
+        EXPECT_LT(s->getPosition().getZ(), 10_d);
+
+        world.clearObjects();
+    }
+
+    // Unknown solver: integrate() prints warning but does not crash
+    {
+        PhysicsWorld world;
+        world.setSolver("unknown_solver");
+        world.setTimeStep(0.1_d);
+        world.setGravityAcc(Vector3D(0_d, 0_d, -9.81_d));
+
+        Sphere* s = new Sphere(Vector3D(0_d, 0_d, 10_d), 1_d, 1_d);
+        world.addObject(s);
+
+        world.start();
+        EXPECT_NO_THROW(world.integrate());
+
+        world.clearObjects();
+    }
+
+    // Non-simplified Euler: covers the force-based integrate() branch
+    {
+        PhysicsWorld world;
+        Config::get().setSimplifiedCollision(false);
+        world.setSolver("Euler");
+        world.setTimeStep(0.1_d);
+        world.setGravityCst(9.81_d);
+        world.setGravityAcc(Vector3D(0_d, 0_d, -9.81_d));
+
+        Sphere* s = new Sphere(Vector3D(0_d, 0_d, 10_d), 1_d, 1_d);
+        s->setVelocity(Vector3D(0_d));
+        s->setAcceleration(Vector3D(0_d));
+        world.addObject(s);
+
+        world.start();
+        world.integrate();
+        EXPECT_LT(s->getPosition().getZ(), 10_d);
+
+        world.clearObjects();
+        Config::get().setSimplifiedCollision(true); // restore default
+    }
+}
+
+// --------------------------------------------------------------------------
+//  Fixed-object branches in Verlet and RK4 (cover the continue paths)
+// --------------------------------------------------------------------------
+
+TEST(PhysicsWorldTest, IntegrateVerletWithFixed)
+{
+    PhysicsWorld world;
+    world.setGravityCst(9.81_d);
+    world.setGravityAcc(Vector3D(0_d, 0_d, -9.81_d));
+
+    Sphere* moving = new Sphere(Vector3D(0_d, 0_d, 10_d), 1_d, 1_d);
+    Sphere* fixed  = new Sphere(Vector3D(5_d, 0_d, 0_d)); // mass=0 → isFixed
+    moving->setVelocity(Vector3D(0_d));
+    world.addObject(moving);
+    world.addObject(fixed);
+
+    Vector3D fixedPosBefore = fixed->getPosition();
+    world.integrateVerlet(0.1_d);
+
+    EXPECT_LT(moving->getPosition().getZ(), 10_d);
+    EXPECT_VECTOR_EQ(fixed->getPosition(), fixedPosBefore); // fixed unchanged
+
+    world.clearObjects();
+}
+
+TEST(PhysicsWorldTest, IntegrateRK4WithFixed)
+{
+    PhysicsWorld world;
+    world.setGravityCst(9.81_d);
+    world.setGravityAcc(Vector3D(0_d, 0_d, -9.81_d));
+
+    Sphere* moving = new Sphere(Vector3D(0_d, 0_d, 10_d), 1_d, 1_d);
+    Sphere* fixed  = new Sphere(Vector3D(5_d, 0_d, 0_d)); // mass=0 → isFixed
+    moving->setVelocity(Vector3D(0_d));
+    world.addObject(moving);
+    world.addObject(fixed);
+
+    Vector3D fixedPosBefore = fixed->getPosition();
+    world.integrateRK4(0.1_d);
+
+    EXPECT_LT(moving->getPosition().getZ(), 10_d);
+    EXPECT_VECTOR_EQ(fixed->getPosition(), fixedPosBefore);
+
+    world.clearObjects();
+}
+
+// --------------------------------------------------------------------------
+//  integrateWithoutCollisions
+// --------------------------------------------------------------------------
+
+TEST(PhysicsWorldTest, IntegrateWithoutCollisions)
+{
+    // Early return when not running
+    {
+        PhysicsWorld world;
+        world.setSolver("Euler");
+        world.setTimeStep(0.1_d);
+        world.setGravityAcc(Vector3D(0_d, 0_d, -9.81_d));
+        Sphere* s = new Sphere(Vector3D(0_d, 0_d, 10_d), 1_d, 1_d);
+        world.addObject(s);
+        world.stop();
+        world.integrateWithoutCollisions(); // should return early
+        EXPECT_DECIMAL_EQ(s->getPosition().getZ(), 10_d);
+        world.clearObjects();
+    }
+
+    // Running path
+    {
+        PhysicsWorld world;
+        world.setSolver("Euler");
+        world.setTimeStep(0.1_d);
+        world.setGravityCst(9.81_d);
+        world.setGravityAcc(Vector3D(0_d, 0_d, -9.81_d));
+        Sphere* s = new Sphere(Vector3D(0_d, 0_d, 10_d), 1_d, 1_d);
+        s->setVelocity(Vector3D(0_d));
+        world.addObject(s);
+        world.start();
+        world.integrateWithoutCollisions();
+        EXPECT_LT(s->getPosition().getZ(), 10_d);
+        world.clearObjects();
+    }
+}
+
+// --------------------------------------------------------------------------
+//  Contact forces (applyContactForces, applyContact, applyForces, computeAcceleration non-simplified)
+// --------------------------------------------------------------------------
+
+TEST(PhysicsWorldTest, ApplyContactAndForces)
+{
+    Config::get().setSimplifiedCollision(false);
+
+    PhysicsWorld world;
+    world.setGravityCst(0_d);
+    world.setGravityAcc(Vector3D(0_d));
+
+    // Two overlapping spheres (diameter 2, touching at distance 1 → penetration = 1)
+    Sphere* s1 = new Sphere(Vector3D(0_d, 0_d, 0_d), 2_d, 1_d);
+    Sphere* s2 = new Sphere(Vector3D(1_d, 0_d, 0_d), 2_d, 1_d);
+    s1->setStiffnessCst(100_d);
+    s2->setStiffnessCst(100_d);
+    s1->setAcceleration(Vector3D(0_d));
+    s2->setAcceleration(Vector3D(0_d));
+    world.addObject(s1);
+    world.addObject(s2);
+
+    // applyContact applies contact forces directly
+    world.applyContact();
+    EXPECT_NE(s1->getAcceleration().getNorm(), 0_d);
+    EXPECT_NE(s2->getAcceleration().getNorm(), 0_d);
+
+    // computeAcceleration in non-simplified mode includes contact
+    s1->setAcceleration(Vector3D(0_d));
+    Vector3D acc = world.computeAcceleration(*s1);
+    EXPECT_NE(acc.getNorm(), 0_d);
+
+    // applyForces runs both gravity and contact
+    s1->setAcceleration(Vector3D(0_d));
+    s2->setAcceleration(Vector3D(0_d));
+    world.applyForces();
+    EXPECT_NE(s1->getAcceleration().getNorm(), 0_d);
+
+    world.clearObjects();
+    Config::get().setSimplifiedCollision(true); // restore
+}
+
+// --------------------------------------------------------------------------
+//  removeObject
+// --------------------------------------------------------------------------
+
+TEST(PhysicsWorldTest, RemoveObject)
+{
+    PhysicsWorld world;
+    Sphere*      s1 = new Sphere(Vector3D(0_d), 1_d, 1_d);
+    Sphere*      s2 = new Sphere(Vector3D(1_d, 0_d, 0_d), 1_d, 1_d);
+    world.addObject(s1);
+    world.addObject(s2);
+    EXPECT_EQ(world.getObjectCount(), 2u);
+
+    world.removeObject(s2); // deletes s2
+    EXPECT_EQ(world.getObjectCount(), 1u);
+    // s1 is deleted by world destructor
+}
+
+// --------------------------------------------------------------------------
+//  printState
+// --------------------------------------------------------------------------
+
+TEST(PhysicsWorldTest, PrintState)
+{
+    PhysicsWorld world;
+    world.setSolver("Euler");
+    world.setTimeStep(0.01_d);
+    world.setGravityCst(9.81_d);
+    Sphere* s = new Sphere(Vector3D(0_d, 0_d, 5_d), 1_d, 2_d);
+    world.addObject(s);
+    EXPECT_NO_THROW(world.printState());
+    world.clearObjects();
+}
+
+// --------------------------------------------------------------------------
+//  run()
+// --------------------------------------------------------------------------
+
+TEST(PhysicsWorldTest, Run)
+{
+    Config::get().setMaxIterations(3);
+    Config::get().setVerbose(false);
+    Config::get().setSave(false);
+
+    PhysicsWorld world;
+    world.setSolver("Euler");
+    world.setTimeStep(0.1_d);
+    world.setGravityCst(9.81_d);
+    world.setGravityAcc(Vector3D(0_d, 0_d, -9.81_d));
+
+    Sphere* s = new Sphere(Vector3D(0_d, 0_d, 100_d), 1_d, 1_d);
+    s->setVelocity(Vector3D(0_d));
+    world.addObject(s);
+
+    world.start();
+    world.run();
+
+    EXPECT_LT(s->getPosition().getZ(), 100_d);
+
+    world.clearObjects();
+}
+
+// --------------------------------------------------------------------------
+//  integrate() with fixed objects — covers continue branches (536, 548, 571, 579)
+// --------------------------------------------------------------------------
+
+TEST(PhysicsWorldTest, IntegrateWithFixedObjects)
+{
+    // Simplified Euler with a fixed sphere alongside the moving one
+    {
+        Config::get().setSimplifiedCollision(true);
+        PhysicsWorld world;
+        world.setSolver("Euler");
+        world.setTimeStep(0.1_d);
+        world.setGravityCst(9.81_d);
+        world.setGravityAcc(Vector3D(0_d, 0_d, -9.81_d));
+
+        Sphere* moving = new Sphere(Vector3D(0_d, 0_d, 10_d), 1_d, 1_d);
+        Sphere* fixed  = new Sphere(Vector3D(5_d, 0_d, 0_d)); // mass=0 → isFixed
+        world.addObject(moving);
+        world.addObject(fixed);
+
+        world.start();
+        world.integrate();
+
+        EXPECT_VECTOR_EQ(fixed->getPosition(), Vector3D(5_d, 0_d, 0_d));
+        world.clearObjects();
+    }
+
+    // Non-simplified Euler with a fixed sphere
+    {
+        Config::get().setSimplifiedCollision(false);
+        PhysicsWorld world;
+        world.setSolver("Euler");
+        world.setTimeStep(0.1_d);
+        world.setGravityCst(9.81_d);
+        world.setGravityAcc(Vector3D(0_d, 0_d, -9.81_d));
+
+        Sphere* moving = new Sphere(Vector3D(0_d, 0_d, 10_d), 1_d, 1_d);
+        Sphere* fixed  = new Sphere(Vector3D(5_d, 0_d, 0_d)); // mass=0 → isFixed
+        world.addObject(moving);
+        world.addObject(fixed);
+
+        world.start();
+        world.integrate();
+
+        EXPECT_VECTOR_EQ(fixed->getPosition(), Vector3D(5_d, 0_d, 0_d));
+        world.clearObjects();
+        Config::get().setSimplifiedCollision(true);
+    }
+}
+
+// --------------------------------------------------------------------------
+//  Non-simplified Verlet & RK4 (covers lines 584-591 in integrate())
+// --------------------------------------------------------------------------
+
+TEST(PhysicsWorldTest, NonSimplifiedVerletRK4)
+{
+    Config::get().setSimplifiedCollision(false);
+
+    for (const char* solver : { "Verlet", "RK4" })
+    {
+        PhysicsWorld world;
+        world.setSolver(solver);
+        world.setTimeStep(0.1_d);
+        world.setGravityCst(9.81_d);
+        world.setGravityAcc(Vector3D(0_d, 0_d, -9.81_d));
+
+        Sphere* s = new Sphere(Vector3D(0_d, 0_d, 10_d), 1_d, 1_d);
+        s->setVelocity(Vector3D(0_d));
+        world.addObject(s);
+
+        world.start();
+        world.integrate();
+
+        EXPECT_LT(s->getPosition().getZ(), 10_d);
+        world.clearObjects();
+    }
+
+    Config::get().setSimplifiedCollision(true);
+}
+
+// --------------------------------------------------------------------------
+//  solveCollisions() — called from integrate() when two spheres collide
+// --------------------------------------------------------------------------
+
+TEST(PhysicsWorldTest, SolveCollisions)
+{
+    Config::get().setSimplifiedCollision(true);
+    PhysicsWorld world;
+    world.setSolver("Euler");
+    world.setTimeStep(0.01_d);
+    world.setGravityCst(0_d);
+    world.setGravityAcc(Vector3D(0_d));
+
+    // Two overlapping spheres (radius 1 each, 1 unit apart → overlapping)
+    auto* s1 = new Sphere(Vector3D(0_d, 0_d, 0_d), 2_d, 1_d);
+    auto* s2 = new Sphere(Vector3D(1_d, 0_d, 0_d), 2_d, 1_d);
+    s1->setRestitutionCst(0.5_d);
+    s2->setRestitutionCst(0.5_d);
+    world.addObject(s1);
+    world.addObject(s2);
+
+    world.start();
+    EXPECT_NO_THROW(world.integrate()); // solveCollisions() triggers reboundCollision
+
+    world.clearObjects();
+}
+
+// --------------------------------------------------------------------------
+//  run() verbose path (covers print header and per-object rows)
+// --------------------------------------------------------------------------
+
+TEST(PhysicsWorldTest, RunVerbose)
+{
+    Config::get().setMaxIterations(2);
+    Config::get().setVerbose(true);
+    Config::get().setSave(false);
+
+    PhysicsWorld world;
+    world.setSolver("Euler");
+    world.setTimeStep(0.1_d);
+    world.setGravityCst(9.81_d);
+    world.setGravityAcc(Vector3D(0_d, 0_d, -9.81_d));
+
+    auto* s = new Sphere(Vector3D(0_d, 0_d, 10_d), 1_d, 1_d);
+    s->setVelocity(Vector3D(0_d));
+    world.addObject(s);
+
+    testing::internal::CaptureStdout();
+    world.start();
+    world.run();
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(output.find("Time"), std::string::npos);
+
+    world.clearObjects();
+    Config::get().setVerbose(false);
+}

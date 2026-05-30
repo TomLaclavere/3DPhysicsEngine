@@ -73,6 +73,7 @@ add_engine_test(object_test
     objects/test_aabb.cpp
     objects/test_object.cpp
     objects/test_plane.cpp
+    objects/test_material.cpp
 )
 add_engine_test(collision_test
     collision/test_broad_phase.cpp

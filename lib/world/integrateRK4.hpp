@@ -7,8 +7,9 @@
 #pragma once
 #include "mathematics/vector.hpp"
 
+/// One RK4 stage derivative: dx/dt = velocity, dv/dt = acceleration.
 struct Derivative
 {
-    Vector3D derivativeX; // d(position)/dit = velicity
-    Vector3D derivativeV; // d(vitesse)/dt = acceleration
+    Vector3D derivativeX; /// d(position)/dt = velocity.
+    Vector3D derivativeV; /// d(velocity)/dt = acceleration.
 };

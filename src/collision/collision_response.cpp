@@ -1,3 +1,7 @@
+/**
+ * @file collision_response.cpp
+ * @brief Implementation of impulse-based collision response: position correction and velocity rebound.
+ */
 #include "collision/collision_response.hpp"
 
 #include <algorithm>

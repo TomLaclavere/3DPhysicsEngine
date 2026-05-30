@@ -1,10 +1,10 @@
 /**
- * @file precision_constants.hpp
- * @brief Defines numerical precision and physical constants for the physics/math engine.
+ * @file config.hpp
+ * @brief Singleton configuration for the physics simulation.
  *
- * This file centralizes tolerance values and machine precision
- * used in floating-point comparisons and stability checks.
- * It also includes physical constants relevant to simulations.
+ * Centralises physical constants (gravity), simulation parameters (time step,
+ * duration, solver), and default material constants. Can be loaded from a
+ * YAML file or overridden from command-line arguments.
  */
 #pragma once
 

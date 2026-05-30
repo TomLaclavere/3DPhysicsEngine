@@ -92,6 +92,7 @@ void Object::setVelocity(const Vector3D& _velocity) { velocity = _velocity; }
 void Object::setAcceleration(const Vector3D& _acceleration) { acceleration = _acceleration; }
 void Object::setForce(const Vector3D& _force) { force = _force; }
 void Object::setTorque(const Vector3D& _torque) { torque = _torque; }
+/// @brief Set mass and update the fixed flag via checkFixed(). Setting mass ≤ 0 freezes the object.
 void Object::setMass(const decimal _mass)
 {
     mass = _mass;
@@ -101,6 +102,7 @@ void Object::setStiffnessCst(decimal k) { material.setStiffness(k); }
 void Object::setDampingCst(decimal d) { material.setDamping(d); }
 void Object::setFrictionCst(decimal mu) { material.setFriction(mu); }
 void Object::setRestitutionCst(decimal e) { material.setRestitution(e); }
+/// @brief Set the fixed flag. When true, also zeroes the mass so the object is treated as static.
 void Object::setIsFixed(bool b)
 {
     fixed = b;
@@ -109,6 +111,7 @@ void Object::setIsFixed(bool b)
 }
 
 //  Physics
+/// @brief Set `fixed = true` if mass ≤ 0 (static object), `fixed = false` otherwise.
 void Object::checkFixed()
 {
     if (mass <= 0_d)
@@ -117,9 +120,10 @@ void Object::checkFixed()
         fixed = false;
 }
 /**
- * Default implementation uses simple Euler integration.
- * Can be overridden by derived classes for more complex behaviors.
- * @param dt Time step for integration (`decimal`).
+ * @brief Semi-implicit Euler integration: update velocity then position.
+ *
+ * Default implementation; can be overridden by derived classes.
+ * @param dt Time step (s).
  */
 void Object::integrate(decimal dt)
 {

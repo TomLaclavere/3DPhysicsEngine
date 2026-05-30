@@ -1,3 +1,7 @@
+/**
+ * @file broad_collision.cpp
+ * @brief Implementation of broad-phase collision detection functions.
+ */
 #include "collision/broad_collision.hpp"
 
 #include "mathematics/common.hpp"

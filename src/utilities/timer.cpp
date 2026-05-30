@@ -1,3 +1,7 @@
+/**
+ * @file timer.cpp
+ * @brief Implementation of Timer high-resolution elapsed-time methods.
+ */
 #include "utilities/timer.hpp"
 
 void Timer::reset() { start_time = std::chrono::high_resolution_clock::now(); }

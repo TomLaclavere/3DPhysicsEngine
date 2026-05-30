@@ -1,3 +1,7 @@
+/**
+ * @file physics.cpp
+ * @brief Implementation of Physics force computation functions.
+ */
 #include "world/physics.hpp"
 
 #include "collision/contact.hpp"

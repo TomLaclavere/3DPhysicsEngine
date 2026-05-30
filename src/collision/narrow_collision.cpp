@@ -1,3 +1,7 @@
+/**
+ * @file narrow_collision.cpp
+ * @brief Implementation of narrow-phase collision detection and contact point computation.
+ */
 #include "collision/narrow_collision.hpp"
 
 #include "mathematics/common.hpp"

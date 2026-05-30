@@ -80,5 +80,8 @@ void setScalarProperty(Object* obj, const std::vector<std::string>& args, void (
 /// @param obj Object instance pointer.
 /// @param args Expected 1 token ("1"/"0"/"true"/"false"/"yes"/"no").
 void setFixedProperty(Object* obj, const std::vector<std::string>& args);
+/// @brief Set the object's name from the first token in args.
+/// @param obj Object instance pointer.
+/// @param args Expected 1 token (the name string).
 void setNameProperty(Object* obj, const std::vector<std::string>& args);
 /// @}

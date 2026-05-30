@@ -69,6 +69,25 @@ TEST(AABBTest, Setters)
     EXPECT_DECIMAL_EQ(aabb.getMass(), newMass);
 }
 
+TEST(AABBTest, DerivedGetters)
+{
+    Vector3D position(2_d, 4_d, 6_d);
+    Vector3D size(4_d, 6_d, 8_d);
+    AABB     aabb(position, size, 1_d);
+
+    // getHalfExtents = size / 2
+    EXPECT_VECTOR_EQ(aabb.getHalfExtents(), Vector3D(2_d, 3_d, 4_d));
+
+    // getVolume = size.x * size.y * size.z
+    EXPECT_DECIMAL_EQ(aabb.getVolume(), 4_d * 6_d * 8_d);
+
+    // setMaterial updates mass = density * volume
+    Material mat("concrete", 2400_d, 50000_d, 200_d, 0.6_d, 0.3_d);
+    aabb.setMaterial(mat);
+    EXPECT_EQ(aabb.getMaterial().getName(), "concrete");
+    EXPECT_DECIMAL_EQ(aabb.getMass(), 2400_d * aabb.getVolume());
+}
+
 TEST(AABBTest, integrate)
 {
     Vector3D position(1_d, 2_d, 3_d);

@@ -1,3 +1,7 @@
+/**
+ * @file matrix.cpp
+ * @brief Implementation of Matrix3x3 class methods and free functions.
+ */
 #include "mathematics/matrix.hpp"
 
 #include "mathematics/common.hpp"

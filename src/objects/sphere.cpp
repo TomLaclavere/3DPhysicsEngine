@@ -4,7 +4,7 @@
  *
  * This file provides the concrete implementations of collision checks involving Spheres:
  * - Sphere vs. Sphere
- * - Sphere vs. Sphere
+ * - Sphere vs. AABB
  * - Sphere vs. Plane
  *
  * It also implements the polymorphic collision check used by the Object hierarchy.

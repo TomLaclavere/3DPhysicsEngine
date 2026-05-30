@@ -1,3 +1,10 @@
+/**
+ * @file mainWindow.hpp
+ * @brief Qt main window for the physics simulation GUI.
+ *
+ * Provides controls for configuring the simulation, managing objects,
+ * stepping/running the integrator, and launching plot scripts.
+ */
 #pragma once
 #include "gui/simulationThread.hpp"
 #include "world/config.hpp"
@@ -14,6 +21,13 @@ class QPushButton;
 class QTableWidget;
 class QTextEdit;
 
+/**
+ * @class MainWindow
+ * @brief Top-level Qt window for the simulation GUI.
+ *
+ * Owns a @ref PhysicsWorld and a @ref SimulationThread. User interactions
+ * (buttons, spinboxes, object table) trigger slots that delegate to the world.
+ */
 class MainWindow : public QMainWindow
 {
     Q_OBJECT

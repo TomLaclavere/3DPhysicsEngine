@@ -5,7 +5,7 @@
  * This file provides the concrete implementations of collision checks involving Planes:
  * - Plane vs. Plane
  * - Plane vs. Sphere
- * - Plane vs. Plane
+ * - Plane vs. AABB
  *
  * It also implements the polymorphic collision check used by the Object hierarchy.
  *
@@ -41,6 +41,12 @@ void Plane::setMaterial(const Material& mat)
 }
 
 //  Utilities
+/**
+ * @brief Recompute the orthonormal tangent axes (u, v) from the current normal.
+ *
+ * Picks a reference vector not parallel to the normal, orthogonalises it to get u,
+ * then sets v = n x u. Called automatically by setNormal().
+ */
 void Plane::updateLocalAxes()
 {
     Vector3D n = getNormal();
@@ -60,6 +66,11 @@ void Plane::updateLocalAxes()
     v = n.crossProduct(u);
     v = v.getNormalised();
 }
+/**
+ * @brief Project a world-space point onto the infinite plane.
+ * @param point Point to project.
+ * @return Closest point on the plane to `point`.
+ */
 Vector3D Plane::projectPoint(const Vector3D& point) const
 {
     Vector3D n    = getNormal();
@@ -67,6 +78,11 @@ Vector3D Plane::projectPoint(const Vector3D& point) const
     return point - dist * n;
 }
 
+/**
+ * @brief Check whether a point lies within the finite rectangle of the plane.
+ * @param point World-space point (assumed near the plane surface).
+ * @return True if the projection onto (u, v) satisfies |s| ≤ halfWidth and |t| ≤ halfHeight.
+ */
 bool Plane::containsPoint(const Vector3D& point) const
 {
     Vector3D local = point - getPosition();

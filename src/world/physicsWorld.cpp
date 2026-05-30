@@ -1,3 +1,7 @@
+/**
+ * @file physicsWorld.cpp
+ * @brief Implementation of PhysicsWorld: simulation loop, integrators, force application, and CSV output.
+ */
 #include "world/physicsWorld.hpp"
 
 #include "collision/collision_response.hpp"
@@ -18,6 +22,7 @@
 // ============================================================================
 //  Solvers
 // ============================================================================
+/// @brief Convert a solver name string to a @ref Solver enum value. Returns Solver::Unknown on mismatch.
 static Solver parseSolver(const std::string& name)
 {
     if (name == "Euler")
@@ -42,11 +47,13 @@ Solver   PhysicsWorld::getSolver() const { return solver; }
 // ============================================================================
 //  Setters
 // ============================================================================
+/// @brief Set the solver by name and sync the change back to Config.
 void PhysicsWorld::setSolver(const std::string& _solver)
 {
     solver = parseSolver(_solver);
     config.setSolver(_solver);
 }
+/// @brief Set the time step and sync the change back to Config.
 void PhysicsWorld::setTimeStep(decimal ind)
 {
     timeStep = ind;
@@ -58,6 +65,7 @@ void PhysicsWorld::setGravityAcc(const Vector3D& acc) { gravityAcc = acc; }
 // ============================================================================
 //  Core simulation methods
 // ============================================================================
+/// @brief Reset the world: clear objects, reload solver/timestep/gravity from Config, set isRunning=false.
 void PhysicsWorld::initialise()
 {
     isRunning    = false;
@@ -86,6 +94,11 @@ void PhysicsWorld::applyGravityForces()
         applyGravityForce(*obj);
     }
 }
+/**
+ * @brief Compute the contact force between two objects and distribute it (Newton's 3rd law).
+ *
+ * The force on `obj` is +F/m, the force on `other` is -F/m. Fixed objects are skipped.
+ */
 void PhysicsWorld::applyContactForces(Object& obj, Object& other, Contact& contact)
 {
     Vector3D totalForce = Physics::computeContactForce(obj, other, contact);
@@ -94,6 +107,12 @@ void PhysicsWorld::applyContactForces(Object& obj, Object& other, Contact& conta
     if (!other.getIsFixed())
         other.addAcceleration(-totalForce / other.getMass());
 }
+/**
+ * @brief Run the full contact-force pipeline for all object pairs.
+ *
+ * For each pair: broad phase -> narrow phase -> applyContactForces.
+ * Used in the force-based (non-simplified) collision mode.
+ */
 void PhysicsWorld::applyContact()
 {
     const size_t n = objects.size();
@@ -124,6 +143,12 @@ void PhysicsWorld::applyContact()
         }
     }
 }
+/**
+ * @brief Apply all forces (gravity + contact) to all objects for one step.
+ *
+ * 1. Adds gravitational acceleration to every movable object.
+ * 2. For each colliding pair, computes and applies contact forces.
+ */
 void PhysicsWorld::applyForces()
 {
     {
@@ -156,6 +181,12 @@ void PhysicsWorld::applyForces()
         }
     }
 }
+/**
+ * @brief Resolve collisions for all object pairs using impulse-based response.
+ *
+ * For each pair: broad phase -> narrow phase -> reboundCollision (position correction + velocity impulse).
+ * Used in the simplified collision mode.
+ */
 void PhysicsWorld::solveCollisions()
 {
     const size_t n = objects.size();
@@ -187,6 +218,12 @@ void PhysicsWorld::solveCollisions()
     }
 }
 Vector3D PhysicsWorld::computeAccelerationGravityOnly() { return gravityAcc; }
+/**
+ * @brief Compute total acceleration for an object.
+ *
+ * In simplified mode (impulse-based), returns gravity only.
+ * In force-based mode, adds contact forces from every colliding neighbour.
+ */
 Vector3D PhysicsWorld::computeAcceleration(Object& obj)
 {
     // Impulse-based collisions pipeline : collision are solved with velocities, contact forces don't enter in
@@ -212,6 +249,15 @@ Vector3D PhysicsWorld::computeAcceleration(Object& obj)
 // ============================================================================
 //  Integration
 // ============================================================================
+/**
+ * @brief Semi-implicit Euler integrator for a single object.
+ *
+ *   v_{t+dt} = v_t + a_t * dt
+ *   x_{t+dt} = x_t + v_{t+dt} * dt
+ *
+ * @param obj Object to integrate.
+ * @param dt  Time step (s).
+ */
 void PhysicsWorld::integrateEuler(Object& obj, decimal dt)
 {
     // v_{t+dt} = v_t + a_t * dt
@@ -219,6 +265,16 @@ void PhysicsWorld::integrateEuler(Object& obj, decimal dt)
     // x_{t+dt} = x_t + v_{t+dt} * dt
     obj.setPosition(obj.getPosition() + obj.getVelocity() * dt);
 }
+/**
+ * @brief Velocity Verlet integrator for all objects.
+ *
+ * 1. Compute accelerations a(t).
+ * 2. Advance positions: x_{t+dt} = x_t + v_t*dt + 0.5*a(t)*dt².
+ * 3. Compute accelerations a(t+dt) from new positions.
+ * 4. Update velocities: v_{t+dt} = v_t + 0.5*(a(t)+a(t+dt))*dt.
+ *
+ * @param dt Time step (s).
+ */
 void PhysicsWorld::integrateVerlet(decimal dt)
 {
     const size_t n = objects.size();
@@ -261,6 +317,15 @@ void PhysicsWorld::integrateVerlet(decimal dt)
         obj->setVelocity(obj->getVelocity() + (prevAcc[i] + nextAcc[i]) * (0.5_d * dt));
     }
 }
+/**
+ * @brief Runge-Kutta 4 integrator for all objects.
+ *
+ * Computes four derivative estimates (k1–k4) and combines them as:
+ *   dx = (k1 + 2*k2 + 2*k3 + k4) / 6
+ * State is temporarily mutated for k2/k3/k4 and restored at the final update.
+ *
+ * @param dt Time step (s).
+ */
 void PhysicsWorld::integrateRK4(decimal dt)
 {
     const size_t n = objects.size();
@@ -362,6 +427,13 @@ void PhysicsWorld::integrateRK4(decimal dt)
         obj->setVelocity(s0[i].vel + dvdt * dt);
     }
 }
+/**
+ * @brief Integrate one step applying gravity only; freeze any objects that collide.
+ *
+ * Intended for testing: objects that collide after integration have their velocity
+ * zeroed and are marked fixed rather than receiving a collision response.
+ * Does nothing if the simulation is not running.
+ */
 void PhysicsWorld::integrateWithoutCollisions()
 {
     if (!isRunning)
@@ -438,6 +510,15 @@ void PhysicsWorld::integrateWithoutCollisions()
         }
     }
 }
+/**
+ * @brief Advance the simulation by one time step.
+ *
+ * Two pipelines depending on Config::getSimplifiedCollision():
+ *  - Simplified (impulse-based): reset acc -> gravity -> solveCollisions -> integrate.
+ *  - Force-based: reset acc -> gravity + contact forces -> integrate (computeAcceleration called internally).
+ *
+ * Does nothing if the simulation is not running.
+ */
 void PhysicsWorld::integrate()
 {
     if (!isRunning)
@@ -511,6 +592,13 @@ void PhysicsWorld::integrate()
         }
     }
 }
+/**
+ * @brief Run the full simulation for Config::getMaxIterations() steps.
+ *
+ * Each iteration calls integrate(), then prints a progress row every 25 steps
+ * (if verbose) and buffers motion data for CSV output (if save is enabled).
+ * Stops early if isRunning is set to false.
+ */
 void PhysicsWorld::run()
 {
     const size_t maxIter = config.getMaxIterations();
@@ -589,6 +677,14 @@ void PhysicsWorld::printState() const
         }
     }
 }
+/**
+ * @brief Open CSV output files for objects and per-object motion data.
+ *
+ * Creates `directory` if it does not exist, then opens `objects.csv` and one
+ * `motion_object_N.csv` per object. No-op if Config::getSave() is false.
+ *
+ * @throws std::runtime_error if objects.csv cannot be opened.
+ */
 void PhysicsWorld::initCSV(const std::string& directory)
 {
     if (!config.getSave())
@@ -639,6 +735,7 @@ void PhysicsWorld::saveObjectsCSV()
     }
     objectFile.close();
 }
+/// @brief Write all buffered MotionCSV snapshots to their respective files and clear the buffer.
 void PhysicsWorld::flushMotionBuffer()
 {
     if (motionBuffer.empty())
@@ -655,6 +752,12 @@ void PhysicsWorld::flushMotionBuffer()
 
     motionBuffer.clear();
 }
+/**
+ * @brief Snapshot all objects' kinematics into the motion buffer.
+ *
+ * Flushes the buffer to disk every FLUSH_EVERY entries. No-op if Config::getSave() is false.
+ * @param time Current simulation time (s).
+ */
 void PhysicsWorld::saveMotionCSV(decimal time)
 {
     if (!config.getSave())
@@ -672,6 +775,7 @@ void PhysicsWorld::saveMotionCSV(decimal time)
     if (motionBuffer.size() >= FLUSH_EVERY)
         flushMotionBuffer();
 }
+/// @brief Flush the motion buffer and close all open CSV file handles.
 void PhysicsWorld::closeCSV()
 {
     flushMotionBuffer(); // empty residual buffer

@@ -1,6 +1,7 @@
 #include "objects/aabb.hpp"
 #include "objects/plane.hpp"
 #include "objects/sphere.hpp"
+#include "test_functions.hpp"
 #include "utilities/command.hpp"
 #include "world/physicsWorld.hpp"
 
@@ -397,6 +398,94 @@ TEST_F(CommandUtilitiesTest, HandleAddCommand_NoArgs)
     EXPECT_TRUE(words.empty());
     EXPECT_FALSE(result);
     EXPECT_TRUE(output.find("Usage") != string::npos);
+}
+
+// ============================================================================
+// Coverage gap tests
+// ============================================================================
+
+TEST_F(CommandUtilitiesTest, PrintUsage)
+{
+    testing::internal::CaptureStdout();
+    printUsage();
+    string output = testing::internal::GetCapturedStdout();
+    EXPECT_FALSE(output.empty());
+    EXPECT_NE(output.find("Available commands"), string::npos);
+}
+
+TEST_F(CommandUtilitiesTest, HandleSetCommand_Duration)
+{
+    testing::internal::CaptureStdout();
+    deque<string> words = { "duration", "20.0" };
+    bool          ok    = handleSetCommand(*world, words);
+    testing::internal::GetCapturedStdout();
+    EXPECT_TRUE(ok);
+    EXPECT_DECIMAL_EQ(world->getConfig().getSimulationDuration(), 20_d);
+}
+
+TEST_F(CommandUtilitiesTest, HandleSetCommand_ObjectProperties)
+{
+    deque<string> addWords = { "sphere" };
+    testing::internal::CaptureStdout();
+    handleAddCommand(*world, addWords);
+    testing::internal::GetCapturedStdout();
+
+    auto setObj = [&](std::initializer_list<string> tokens)
+    {
+        deque<string> w(tokens);
+        testing::internal::CaptureStdout();
+        bool ok = handleSetCommand(*world, w);
+        testing::internal::GetCapturedStdout();
+        return ok;
+    };
+
+    EXPECT_TRUE(setObj({ "obj", "0", "pos", "1", "2", "3" }));
+    EXPECT_TRUE(setObj({ "obj", "0", "vel", "0.1", "0.2", "0.3" }));
+    EXPECT_TRUE(setObj({ "obj", "0", "acc", "0", "0", "-9.81" }));
+    EXPECT_TRUE(setObj({ "obj", "0", "size", "2", "2", "2" }));
+    EXPECT_TRUE(setObj({ "obj", "0", "rot", "0", "0", "1" }));
+    EXPECT_TRUE(setObj({ "obj", "0", "mass", "5" }));
+    EXPECT_TRUE(setObj({ "obj", "0", "stiffness", "500" }));
+    EXPECT_TRUE(setObj({ "obj", "0", "damping", "10" }));
+    EXPECT_TRUE(setObj({ "obj", "0", "friction", "0.3" }));
+    EXPECT_TRUE(setObj({ "obj", "0", "restitution", "0.8" }));
+    EXPECT_TRUE(setObj({ "obj", "0", "fixed", "false" }));
+}
+
+TEST_F(CommandUtilitiesTest, HandleSetCommand_NameProperty)
+{
+    deque<string> addWords = { "sphere" };
+    testing::internal::CaptureStdout();
+    handleAddCommand(*world, addWords);
+    testing::internal::GetCapturedStdout();
+
+    // name with a value
+    {
+        deque<string> w = { "obj", "0", "name", "myBall" };
+        testing::internal::CaptureStdout();
+        EXPECT_TRUE(handleSetCommand(*world, w));
+        testing::internal::GetCapturedStdout();
+        EXPECT_EQ(world->findById(0)->getName(), "myBall");
+    }
+
+    // name with no value : error, returns false via property setter
+    {
+        deque<string> w = { "obj", "0", "name" };
+        testing::internal::CaptureStdout();
+        handleSetCommand(*world, w); // internally calls setNameProperty with empty args
+        testing::internal::GetCapturedStdout();
+    }
+}
+
+TEST_F(CommandUtilitiesTest, HandleAddCommand_WithName)
+{
+    testing::internal::CaptureStdout();
+    deque<string> words = { "sphere", "myBall" };
+    bool          ok    = handleAddCommand(*world, words);
+    testing::internal::GetCapturedStdout();
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(world->getObjectCount(), 1u);
+    EXPECT_EQ(world->findById(0)->getName(), "myBall");
 }
 
 // ============================================================================

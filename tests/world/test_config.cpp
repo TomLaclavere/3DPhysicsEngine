@@ -83,6 +83,75 @@ TEST(ConfigTest, OverrideFromCommandLine)
     EXPECT_DECIMAL_EQ(config.getMaxIterations(), 200u); // unchanged
 }
 
+TEST(ConfigTest, AdditionalGetters)
+{
+    Config& config = Config::get();
+
+    EXPECT_FALSE(config.getSave()); // default is false
+    EXPECT_GE(config.getSimulationDuration(), 0_d);
+    EXPECT_GE(config.getDefaultStiffness(), 0_d);
+    EXPECT_GE(config.getDefaultDamping(), 0_d);
+    EXPECT_GE(config.getDefaultFriction(), 0_d);
+    EXPECT_GE(config.getDefaultRestitution(), 0_d);
+    EXPECT_TRUE(config.getSimplifiedCollision()); // default is true
+}
+
+TEST(ConfigTest, SetterValidation)
+{
+    Config& config = Config::get();
+
+    EXPECT_THROW(config.setGravity(-1_d), std::invalid_argument);
+    EXPECT_THROW(config.setTimeStep(-0.1_d), std::invalid_argument);
+    EXPECT_THROW(config.setTimeStep(0_d), std::invalid_argument);
+    EXPECT_THROW(config.setSimulationDuration(-5_d), std::invalid_argument);
+    EXPECT_THROW(config.setMaxIterations(0), std::invalid_argument);
+}
+
+TEST(ConfigTest, LoadFromFile_Extended)
+{
+    std::string yaml = R"(
+        save: true
+        simplifiedCollision: false
+        material:
+            stiffness: 2000.0
+            damping: 80.0
+            friction: 0.5
+            restitution: 0.6
+    )";
+    std::string path = createTempConfigFile(yaml);
+
+    Config& config = Config::get();
+    config.loadFromFile(path);
+
+    EXPECT_TRUE(config.getSave());
+    EXPECT_FALSE(config.getSimplifiedCollision());
+    EXPECT_DECIMAL_EQ(config.getDefaultStiffness(), 2000_d);
+    EXPECT_DECIMAL_EQ(config.getDefaultDamping(), 80_d);
+    EXPECT_DECIMAL_EQ(config.getDefaultFriction(), 0.5_d);
+    EXPECT_DECIMAL_EQ(config.getDefaultRestitution(), 0.6_d);
+
+    config.setSave(false);
+    config.setSimplifiedCollision(true);
+
+    std::remove(path.c_str());
+}
+
+TEST(ConfigTest, OverrideFromCommandLine_Extended)
+{
+    Config& config = Config::get();
+
+    const char* argv[] = { "prog", "--duration", "30.0", "--verbose", "false", "--save", "true" };
+    int         argc   = sizeof(argv) / sizeof(argv[0]);
+    config.overrideFromCommandLine(argc, const_cast<char**>(argv));
+
+    EXPECT_DECIMAL_EQ(config.getSimulationDuration(), 30_d);
+    EXPECT_FALSE(config.getVerbose());
+    EXPECT_TRUE(config.getSave());
+
+    config.setVerbose(true);
+    config.setSave(false);
+}
+
 TEST(ConfigTest, OverrideFromCommandLineInvalid)
 {
     Config& config = Config::get();

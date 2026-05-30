@@ -38,6 +38,21 @@ TEST(Common_Test, Greater_Than)
     EXPECT_FALSE(commonMaths::approxGreaterOrEqualThan(lhs, infinity));
 }
 
+TEST(Common_Test, Utils)
+{
+    EXPECT_DOUBLE_EQ(commonMaths::absVal(3.5), 3.5);
+    EXPECT_DOUBLE_EQ(commonMaths::absVal(-3.5), 3.5);
+    EXPECT_DOUBLE_EQ(commonMaths::absVal(0.0), 0.0);
+
+    EXPECT_EQ(commonMaths::sign(5_d), 1);
+    EXPECT_EQ(commonMaths::sign(-5_d), -1);
+    EXPECT_EQ(commonMaths::sign(0_d), 0);
+
+    EXPECT_TRUE(commonMaths::isFinite(1.0));
+    EXPECT_FALSE(commonMaths::isFinite(INFINITY));
+    EXPECT_FALSE(commonMaths::isFinite(NAN));
+}
+
 TEST(Common_Test, Smaller_Than)
 {
     decimal lhs              = 3;

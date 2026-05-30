@@ -65,7 +65,7 @@ TEST(CollisionResponseTest, ReturnCases)
     EXPECT_VECTOR_EQ(velB, B.getVelocity());
 }
 
-// ——————————————————————— X vs X Collisions ———————————————————————
+// ----------------------- X vs X Collisions -----------------------
 
 // Sphere vs Sphere
 
@@ -255,7 +255,7 @@ TEST(CollisionResponseTest, AABBAABBCollision)
     EXPECT_VECTOR_EQ(Vector3D(1_d, 0_d, 0_d), boxB.getVelocity());
 }
 
-// ——————————————————————— X vs Y Collisions ———————————————————————
+// ----------------------- X vs Y Collisions -----------------------
 
 // Sphere vs Plane
 
@@ -327,7 +327,7 @@ TEST(CollisionResponseTest, AABBPlaneCollision)
     EXPECT_VECTOR_EQ(Vector3D(0_d, 0_d, 5_d), box.getVelocity());
 }
 
-// ——————————————————————— X vs Unknown Collisions ———————————————————————
+// ----------------------- X vs Unknown Collisions -----------------------
 
 // Dummy class to simulate an unknown object type
 struct DummyObject : public Object

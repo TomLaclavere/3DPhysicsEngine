@@ -1,3 +1,7 @@
+/**
+ * @file material.cpp
+ * @brief Implementation of Material getters and YAML file loader.
+ */
 #include "objects/material.hpp"
 
 #include "precision.hpp"
@@ -19,6 +23,15 @@ decimal     Material::getFriction() const { return friction; }
 decimal     Material::getRestitution() const { return restitution; }
 
 // Loading Methods
+/**
+ * @brief Load material properties from a YAML file.
+ *
+ * Recognised keys: name, density, stiffness, damping, friction, restitution.
+ * Missing keys are silently ignored; existing values are preserved.
+ *
+ * @param path Path to the YAML file.
+ * @throws Propagates any exception from yaml-cpp on parse failure.
+ */
 void Material::loadFromFile(const std::string& path)
 {
     try

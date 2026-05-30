@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <sstream>
 
+/// @brief Format a Vector3D as a fixed-width scientific string "(x,  y,  z)" for console output.
 std::string formatVector(const Vector3D& v)
 {
     std::ostringstream oss;

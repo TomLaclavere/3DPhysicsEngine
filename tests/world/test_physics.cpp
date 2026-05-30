@@ -22,6 +22,14 @@ TEST(PhysicsTest, Helpers)
     EXPECT_DOUBLE_EQ(Physics::effectiveStiffness(0_d, 3.0_d), 3.0_d);
     EXPECT_DOUBLE_EQ(Physics::effectiveStiffness(2.0_d, 0_d), 2.0_d);
     EXPECT_DOUBLE_EQ(Physics::effectiveStiffness(0_d, 0_d), 0_d); // Both zero
+
+    EXPECT_DOUBLE_EQ(Physics::effectiveDamping(2.0_d, 3.0_d), 6.0_d / 5.0_d);
+    EXPECT_DOUBLE_EQ(Physics::effectiveDamping(0_d, 3.0_d), 3.0_d);
+    EXPECT_DOUBLE_EQ(Physics::effectiveDamping(2.0_d, 0_d), 2.0_d);
+
+    EXPECT_DOUBLE_EQ(Physics::effectiveFriction(4.0_d, 9.0_d), 6.0_d); // sqrt(4*9)=6
+    EXPECT_DOUBLE_EQ(Physics::effectiveFriction(0_d, 5.0_d), 0_d);
+    EXPECT_DOUBLE_EQ(Physics::effectiveFriction(2.0_d, 2.0_d), 2.0_d);
 }
 
 // ============================================================================

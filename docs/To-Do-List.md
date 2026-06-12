@@ -21,8 +21,8 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 
 
-- [ ] Code Quality
-    - [ ] Unit Testing
-        - [ ] Add tests for new files
-        - [ ] Add basic physical examples as unit tests, to ensure correctness after each changes
-    - [ ] Documentation for new files
+- [x] Code Quality
+    - [x] Unit Testing
+        - [x] Add tests for new files
+        - [x] Add basic physical examples as unit tests, to ensure correctness after each changes
+    - [x] Documentation for new files

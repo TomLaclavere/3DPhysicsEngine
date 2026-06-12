@@ -70,4 +70,4 @@ constexpr decimal operator""_d(unsigned long long val) { return static_cast<deci
  * - Approximate comparisons of floating-point numbers.
  * - Stability thresholds in numerical algorithms.
  */
-const decimal PRECISION_MACHINE = std::numeric_limits<decimal>::epsilon();
+constexpr decimal PRECISION_MACHINE = std::numeric_limits<decimal>::epsilon();

@@ -66,10 +66,10 @@ if [[ "$REBUILD" == true ]]; then
 else
     # If build directory missing or not configured, build
     if [[ ! -d "$BUILD_DIR" ]] || [[ ! -f "$BUILD_DIR/CMakeCache.txt" ]]; then
-        echo "[TEST] Build directory missing or not configured—running build..."
+        echo "[TEST] Build directory missing or not configured-running build..."
         ./scripts/build.sh --build-dir "$BUILD_DIR" --build-type "$BUILD_TYPE" "${CMAKE_ARGS[@]}"
     else
-        echo "[TEST] Build directory exists—incremental build"
+        echo "[TEST] Build directory exists-incremental build"
         cmake --build "$BUILD_DIR" --config "$BUILD_TYPE" -- -j "$(nproc)"
     fi
 fi

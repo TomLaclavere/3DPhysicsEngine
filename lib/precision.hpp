@@ -27,7 +27,7 @@ using decimal = float;
 
 inline decimal stringToDecimal(std::string str)
 {
-    // Choose scientific if float, default if double — optional behavior
+    // Choose scientific if float, default if double - optional behavior
 #ifdef IS_DOUBLE_PRECISION
     return std::stod(str);
 #else

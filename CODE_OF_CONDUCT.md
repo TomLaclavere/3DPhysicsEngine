@@ -23,7 +23,7 @@ We are committed to making participation in this project a harassment-free exper
 
 ## Scope
 
-This Code of Conduct applies in all project spaces — GitHub issues, pull requests, discussions, and any other forum used by this project.
+This Code of Conduct applies in all project spaces - GitHub issues, pull requests, discussions, and any other forum used by this project.
 
 ## Enforcement
 

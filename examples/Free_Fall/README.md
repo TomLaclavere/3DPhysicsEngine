@@ -12,7 +12,7 @@ Each object stops when it reaches the ground.
 For every object, the acceleration, velocity, position, and impact time are computed and compared with analytical results derived below.  
 
 **Note:**  
-Bouncing is not yet implemented — objects stop instantaneously when they hit the ground.
+Bouncing is not yet implemented - objects stop instantaneously when they hit the ground.
 Atmosphere effects are not added yet.
 ---
 

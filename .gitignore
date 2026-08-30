@@ -27,6 +27,13 @@ __pycache__/
 *.script
 *.txt
 
+# Profiling tool output (benchmarks/performance/{maqao,malt}/profile_*.sh) — ignored by
+# directory rather than extension: MAQAO's oneview pass writes .json/.html/.lua files and
+# copies the built binary itself into the experiment dir (no extension to match), and MALT's
+# report is .json. perf's own output is already covered by the extension patterns above.
+benchmarks/performance/maqao/results/
+benchmarks/performance/malt/results/
+
 # Claude
 CLAUDE.md
 graphify*

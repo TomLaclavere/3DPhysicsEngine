@@ -125,7 +125,7 @@ void MainWindow::buildUi()
     configForm->addRow("Duration (s):", m_durationBox);
     configForm->addRow("Solver:", m_solverBox);
     configForm->addRow("Simplified collision:", m_simplifiedCollisionBox);
-    configForm->addRow(new QLabel("— Default material —"));
+    configForm->addRow(new QLabel("- Default material -"));
     configForm->addRow("Stiffness (N/m):", m_cfgStiffnessBox);
     configForm->addRow("Damping:", m_cfgDampingBox);
     configForm->addRow("Friction:", m_cfgFrictionBox);
@@ -327,7 +327,7 @@ void MainWindow::setControlsEnabled(bool enabled)
 void MainWindow::log(const QString& msg) { m_console->append(msg); }
 
 // ============================================================================
-// Slots — simulation control
+// Slots - simulation control
 // ============================================================================
 
 /// @brief Re-initialise the world, clear the table, and reset the selection.
@@ -400,7 +400,7 @@ void MainWindow::onStep()
 }
 
 // ============================================================================
-// Slots — config
+// Slots - config
 // ============================================================================
 
 /// @brief Read all config spinboxes and apply their values to Config and PhysicsWorld.
@@ -424,7 +424,7 @@ void MainWindow::onApplyConfig()
 }
 
 // ============================================================================
-// Slots — object management
+// Slots - object management
 // ============================================================================
 
 /// @brief Build an add command from the type/name widgets and delegate to handleAddCommand.
@@ -554,7 +554,7 @@ void MainWindow::onDelObject()
 }
 
 // ============================================================================
-// Slots — plots
+// Slots - plots
 // ============================================================================
 
 /**

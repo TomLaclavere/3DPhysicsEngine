@@ -1,23 +1,23 @@
 # Script converted from notebook
 # %% [markdown]
-# # Performance Benchmark Analysis — Euler / Verlet / RK4
+# # Performance Benchmark Analysis - Euler / Verlet / RK4
 # 
 # Analyses two CSV files produced by the C++ benchmark:
-# - **`benchmark.csv`** — per (solver, dt): physics quality metrics + timing statistics
-# - **`energy_drift.csv`** — E(t) time series for 5 representative dt values
+# - **`benchmark.csv`** - per (solver, dt): physics quality metrics + timing statistics
+# - **`energy_drift.csv`** - E(t) time series for 5 representative dt values
 #
 # **Physics setup:** 1 sphere (r = 2 m, m = 1 kg) dropped from z₀ = 20 m, restitution e = 1.0 (elastic).
 # **Timing methodology:** 1 warm-up run + 5 timed runs per (solver, dt) combination.
 # CPU statistics (mean / min / max / σ) are computed across the 3 timed runs.
 #
 # Plots produced:
-# 1. Peak height error vs dt — convergence order
-# 2. Flight energy drift vs dt — integrator quality in free flight
+# 1. Peak height error vs dt - convergence order
+# 2. Flight energy drift vs dt - integrator quality in free flight
 # 3. Max energy drift vs dt
-# 4. **CPU time vs dt — with min/max timing band**
+# 4. **CPU time vs dt - with min/max timing band**
 # 5. **Time per step vs dt**
 # 6. Cost vs precision (CPU time vs height error)
-# 7. Bounce count vs dt — solver stability
+# 7. Bounce count vs dt - solver stability
 # 8. E(t) time series
 # 9. Summary statistics table
 
@@ -77,7 +77,7 @@ def log_slope(x, y, mask=None):
     return slope, r ** 2
 
 
-# Analytical parameters — must match C++ benchmark
+# Analytical parameters - must match C++ benchmark
 Z0          = 20.0
 RADIUS      =  2.0
 RESTITUTION =  1.0
@@ -106,7 +106,7 @@ print(f'energy_drift.csv : {len(ede)} rows')
 df.head()
 
 # %% [markdown]
-# ## Plot 1 — Peak height error vs dt (convergence order)
+# ## Plot 1 - Peak height error vs dt (convergence order)
 
 # %%
 fig, (ax, ax_n) = plt.subplots(1, 2, figsize=(15, 6), gridspec_kw={'width_ratios': [2, 1]})
@@ -137,7 +137,7 @@ handles_r = [Line2D([0],[0], color='k', ls=':', label='O(dt¹) ref.'),
 ax.legend(handles=handles_s + handles_r, fontsize=9, framealpha=0.5, ncol=2, loc='upper left')
 ax.set_xlabel('Time step  dt  (s)')
 ax.set_ylabel('|height_error|  (relative)')
-ax.set_title('Peak height error vs dt — convergence order  (e = 1.0)')
+ax.set_title('Peak height error vs dt - convergence order  (e = 1.0)')
 
 e_sl,  e_r2  = slopes.get('Euler',  (None, None))
 vl_sl, vl_r2 = slopes.get('Verlet', (None, None))
@@ -182,9 +182,9 @@ for solver, (sl, r2) in slopes.items():
         print('{:<10} {:>8}'.format(solver, 'n/a'))
 
 # %% [markdown]
-# ## Plot 2 — Flight energy drift vs dt (integrator quality in free flight)
+# ## Plot 2 - Flight energy drift vs dt (integrator quality in free flight)
 # 
-# Measures energy conservation error *between* bounces — during free-flight under constant gravity only.  
+# Measures energy conservation error *between* bounces - during free-flight under constant gravity only.  
 # Physical energy is conserved with e = 1.0, so any drift is purely numerical.  
 # The reference energy is reset after each bounce, isolating integrator error from contact-phase effects.
 
@@ -239,7 +239,7 @@ note(ax_n, [
     '  Verlet → exact  (machine ε)',
     '  RK4    → exact  (machine ε)',
     '',
-    'Conclusion: Verlet is optimal —',
+    'Conclusion: Verlet is optimal -',
     'same flight accuracy as RK4',
     'at ¼ the per-step FLOP cost.',
 ])
@@ -247,13 +247,13 @@ note(ax_n, [
 solver_legend(ax, loc='upper left')
 ax.set_xlabel('Time step  dt  (s)')
 ax.set_ylabel('Max |ΔE / E_ref|  between bounces')
-ax.set_title('Flight energy drift vs dt — integrator quality in free flight')
+ax.set_title('Flight energy drift vs dt - integrator quality in free flight')
 plt.tight_layout()
 plt.savefig('results/plot_flight_energy_drift.png', dpi=150, bbox_inches='tight')
 # plt.show()
 
 # %% [markdown]
-# ## Plot 3 — Max energy drift vs dt
+# ## Plot 3 - Max energy drift vs dt
 
 # %%
 fig, (ax, ax_n) = plt.subplots(1, 2, figsize=(15, 6), gridspec_kw={'width_ratios': [2, 1]})
@@ -269,7 +269,7 @@ for solver, grp in df.groupby('solver'):
 e_tun = df[(df['solver'] == 'Euler') & (df['bounce_count'] == 0)].sort_values('dt')
 if len(e_tun):
     ann = e_tun.iloc[len(e_tun) // 2]
-    ax.annotate('Euler (tunneling):\npure dissipation — up to 270%',
+    ax.annotate('Euler (tunneling):\npure dissipation - up to 270%',
                 xy=(ann['dt'], ann['max_energy_drift']),
                 xytext=(3e-3, 1.5),
                 arrowprops=dict(arrowstyle='->', color='#E24B4A', lw=1.2),
@@ -304,7 +304,7 @@ note(ax_n, [
     '  No plateau: e=1 removes the',
     '  masking from physical loss.',
     '',
-    'Large dt — tunneling:',
+    'Large dt - tunneling:',
     '  Euler: drift up to 270%.',
     '  Verlet/RK4: near zero.',
     '',
@@ -320,7 +320,7 @@ plt.savefig('results/plot_energy_drift_vs_dt.png', dpi=150, bbox_inches='tight')
 # plt.show()
 
 # %% [markdown]
-# ## Plot 4 — CPU time vs dt with min/max timing band
+# ## Plot 4 - CPU time vs dt with min/max timing band
 # 
 # The shaded band spans [min, max] across the 5 timed runs.  
 # The solid line is the mean. Band width reflects OS scheduling noise and cache variability.
@@ -380,13 +380,13 @@ note(ax_n, [
 ax.legend(framealpha=0.5, loc='upper right')
 ax.set_xlabel('Time step  dt  (s)')
 ax.set_ylabel('CPU time  (ms, mean)')
-ax.set_title('CPU time vs dt — with min/max timing band  (1 warm-up + 3 timed runs)')
+ax.set_title('CPU time vs dt - with min/max timing band  (1 warm-up + 3 timed runs)')
 plt.tight_layout()
 plt.savefig('results/plot_cpu_time.png', dpi=150, bbox_inches='tight')
 # plt.show()
 
 # %% [markdown]
-# ## Plot 5 — Time per step vs dt
+# ## Plot 5 - Time per step vs dt
 # 
 # `time_per_step_us = cpu_us_mean / num_steps`.  
 # At fine dt (many iterations), startup overhead is negligible and the plateau reveals the true per-step integration cost.  
@@ -446,7 +446,7 @@ plt.savefig('results/plot_time_per_step.png', dpi=150, bbox_inches='tight')
 # plt.show()
 
 # %% [markdown]
-# ## Plot 6 — Cost vs precision
+# ## Plot 6 - Cost vs precision
 #
 # X-axis: mean CPU time (measured cost, larger = more expensive).
 # Y-axis: peak height error (accuracy).
@@ -489,20 +489,20 @@ note(ax_n, [
     '',
     'Verlet is uniquely optimal:',
     '  O(dt²) accuracy at O(dt¹)',
-    '  cost — best achievable for',
+    '  cost - best achievable for',
     '  this contact model.',
 ])
 
 solver_legend(ax, loc='upper right')
 ax.set_xlabel('CPU time  (ms, mean)  (← more expensive)')
 ax.set_ylabel('|height_error|  (relative)')
-ax.set_title('Cost vs precision — measured CPU time comparison')
+ax.set_title('Cost vs precision - measured CPU time comparison')
 plt.tight_layout()
 plt.savefig('results/plot_cost_vs_precision.png', dpi=150, bbox_inches='tight')
 # plt.show()
 
 # %% [markdown]
-# ## Plot 8 — Bounce count vs dt (solver stability)
+# ## Plot 8 - Bounce count vs dt (solver stability)
 
 # %%
 def expected_bounces(total_time=TOTAL_TIME, z0=Z0, r=RADIUS, e=RESTITUTION, g=G):
@@ -563,13 +563,13 @@ note(ax_n, [
 solver_legend(ax, loc='lower left')
 ax.set_xlabel('Time step  dt  (s)')
 ax.set_ylabel('Bounce count  (detected)')
-ax.set_title(f'Bounce count vs dt — solver stability  ({TOTAL_TIME:.0f} s, e = {RESTITUTION})')
+ax.set_title(f'Bounce count vs dt - solver stability  ({TOTAL_TIME:.0f} s, e = {RESTITUTION})')
 plt.tight_layout()
 plt.savefig('results/plot_bounce_count.png', dpi=150, bbox_inches='tight')
 # plt.show()
 
 # %% [markdown]
-# ## Plot 9 — E(t) time series
+# ## Plot 9 - E(t) time series
 
 # %%
 selected_dts = sorted(ede['dt'].unique())
@@ -585,7 +585,7 @@ for i, dt_val in enumerate(selected_dts):
         s   = SOLVER_STYLE[solver]
         ax.semilogy(sub['time'], sub['energy_drift'].clip(lower=1e-17),
                     color=s['color'], ls=s['ls'], lw=1.4, label=solver, alpha=0.85)
-    ax.set_title(f'E(t) — dt = {dt_val:.2e} s  (e = 1.0)', fontsize=10)
+    ax.set_title(f'E(t) - dt = {dt_val:.2e} s  (e = 1.0)', fontsize=10)
     ax.set_ylabel('|E(t) − E₀| / E₀', fontsize=9)
     ax.set_xlabel('Time (s)', fontsize=9)
     solver_legend(ax, loc='upper left')
@@ -617,7 +617,7 @@ note(ax_n, [
     '  Verlet/RK4: machine ε.',
 ])
 
-fig.suptitle('E(t) time series — energy drift over simulation  (e = 1.0)', fontsize=12, y=1.005)
+fig.suptitle('E(t) time series - energy drift over simulation  (e = 1.0)', fontsize=12, y=1.005)
 plt.savefig('results/plot_energy_time_series.png', dpi=150, bbox_inches='tight')
 # plt.show()
 

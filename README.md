@@ -46,9 +46,9 @@ Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) and [C
 ## Features
 
 **Numerical Integrators**
-- Semi-implicit Euler — O(dt), symplectic, fast
-- Störmer-Verlet — O(dt²), near-perfect energy conservation in free dynamics
-- Runge-Kutta 4 — O(dt⁴), highest accuracy, 4th-order convergence verified
+- Semi-implicit Euler - O(dt), symplectic, fast
+- Störmer-Verlet - O(dt²), near-perfect energy conservation in free dynamics
+- Runge-Kutta 4 - O(dt⁴), highest accuracy, 4th-order convergence verified
 
 **Physics & Forces**
 - Gravity with configurable constant
@@ -72,7 +72,7 @@ Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) and [C
 - Solver and collision mode selectable at runtime
 
 **Validation & Testing**
-- 5 GoogleTest targets — ~3,700 lines across mathematics, collision, world, objects, utilities
+- 5 GoogleTest targets - ~3,700 lines across mathematics, collision, world, objects, utilities
 - Energy monitoring (kinetic + potential) at every timestep
 - CSV output for post-processing and comparison with analytical solutions
 - 5 example simulations: free fall, projectile motion, bouncing ball (3 materials), rolling
@@ -115,7 +115,7 @@ PhysicsWorld
   └── Integrators     (Euler / Verlet / RK4)
 ```
 
-The math layer (`Vector3D`, `Matrix3D`, `Quaternion`) has no external dependencies — all types are implemented from scratch using `std::array` with constexpr helpers and a user-defined `decimal` literal for compile-time precision control.
+The math layer (`Vector3D`, `Matrix3D`, `Quaternion`) has no external dependencies - all types are implemented from scratch using `std::array` with constexpr helpers and a user-defined `decimal` literal for compile-time precision control.
 
 ---
 
@@ -137,7 +137,7 @@ Sphere falls under gravity. Measures contact-time accuracy and energy conservati
 
 **Key insight:** Verlet and RK4 conserve energy at machine precision for this polynomial trajectory. Euler injects energy linearly with dt.
 
-### Bouncing — impulse model, e = 0.9 (dissipative, dt = 1e-3 s)
+### Bouncing - impulse model, e = 0.9 (dissipative, dt = 1e-3 s)
 
 Path: [`benchmarks/Bouncing/`](benchmarks/Bouncing/benchmark_analysis.ipynb)
 
@@ -149,9 +149,9 @@ Ball bounces 6–7 times with energy loss at each contact. Tests solver behaviou
 | Verlet | ~0.001 m         | ~68%               | 1.8×           |
 | RK4    | ~0.001 m         | ~68%               | 3.9×           |
 
-**Key insight:** The ~68% energy drift is physical — cumulative loss from 6–7 bounces at e = 0.9, not a numerical artefact. All solvers converge at the same O(dt) rate: discrete impulse contact detection imposes a timing-error floor that dominates integrator order.
+**Key insight:** The ~68% energy drift is physical - cumulative loss from 6–7 bounces at e = 0.9, not a numerical artefact. All solvers converge at the same O(dt) rate: discrete impulse contact detection imposes a timing-error floor that dominates integrator order.
 
-### Bouncing Conservative — impulse model, e = 1.0 (elastic, dt = 1e-4 s)
+### Bouncing Conservative - impulse model, e = 1.0 (elastic, dt = 1e-4 s)
 
 Path: [`benchmarks/Bouncing_Conservative/`](benchmarks/Bouncing_Conservative/benchmaark_analysis.ipynb)
 
@@ -163,9 +163,9 @@ Perfect elasticity removes the physical energy sink, isolating integrator differ
 | Verlet | O(dt²)            | ~4.7e-5 m         |
 | RK4    | O(dt²)            | ~3.8e-7 m         |
 
-**Key insight:** With e = 1.0, Verlet and RK4 recover O(dt²) convergence — they integrate the quadratic free-flight trajectory exactly, so the contact-timing error cancels algebraically in the peak-height formula. Euler's O(dt) position error prevents this cancellation.
+**Key insight:** With e = 1.0, Verlet and RK4 recover O(dt²) convergence - they integrate the quadratic free-flight trajectory exactly, so the contact-timing error cancels algebraically in the peak-height formula. Euler's O(dt) position error prevents this cancellation.
 
-### Contact Forces — spring-damper model (dt = 5e-4 s, k = 1e4 N/m)
+### Contact Forces - spring-damper model (dt = 5e-4 s, k = 1e4 N/m)
 
 Path: [`benchmarks/Contact_Forces/`](benchmarks/Contact_Forces/benchmaark_analysis.ipynb)
 
@@ -177,7 +177,7 @@ Continuous Hooke + viscous-damping contact force instead of discrete impulse. Te
 | Verlet | O(dt^1.1)         | ~4.8e-3 m         | 1e4 N/m      |
 | RK4    | O(dt^2.4)         | ~2.3e-4 m         | 1e5 N/m      |
 
-**Key insight:** Convergence orders fall below theory due to the C⁰ discontinuity at contact onset/offset. Despite this, RK4 is 10–100× more accurate than Euler at the same dt and tolerates 41% larger timesteps at a given stiffness — making it the right choice for stiff contact problems.
+**Key insight:** Convergence orders fall below theory due to the C⁰ discontinuity at contact onset/offset. Despite this, RK4 is 10–100× more accurate than Euler at the same dt and tolerates 41% larger timesteps at a given stiffness - making it the right choice for stiff contact problems.
 
 ---
 
@@ -214,7 +214,7 @@ cmake .. -D3DPE_BUILD_BENCHMARKS=ON
 make -j$(nproc)
 ./benchmarks/Free_Fall
 ./benchmarks/Bouncing
-# Results written to CSV — open benchmarks/*/benchmark_analysis.ipynb to analyse
+# Results written to CSV - open benchmarks/*/benchmark_analysis.ipynb to analyse
 ```
 
 ### Run the tests
@@ -247,7 +247,7 @@ cd 3DPhysicsEngine
 #### External libraries
 
 - yaml-cpp
-- **Qt6 Widgets** *(optional)* — required to build the graphical interface (auto-detected by CMake)
+- **Qt6 Widgets** *(optional)* - required to build the graphical interface (auto-detected by CMake)
 
 #### Tests
 
@@ -261,6 +261,10 @@ cd 3DPhysicsEngine
 #### Documentation
 
 - Doxygen + Graphviz
+
+#### Benchmarking & profiling tools *(optional)*
+
+- `perf`, [MAQAO](https://www.maqao.org/), [MALT](https://github.com/memtt/malt) - only needed for the deep-dive analysis scripts under [`benchmarks/performance/`](benchmarks/performance/) (hardware counters, vectorisation analysis, memory allocation profiling). Not required to build or run the project itself.
 
 #### Installation commands
 
@@ -303,13 +307,52 @@ sudo apt-get install -y doxygen graphviz
 sudo pacman -S --needed doxygen graphviz
 ```
 
+For the benchmarking & profiling tools:
+
+```bash
+# perf
+# Ubuntu
+sudo apt install -y linux-tools-common linux-tools-generic
+# Arch Linux
+sudo pacman -S perf
+```
+
+```bash
+# MAQAO - no package on Ubuntu; on any distro (incl. Arch as an AUR alternative: yay -S maqao-bin)
+# the generic binary release works (check maqao.org/download.html for the current version):
+curl -LO http://www.maqao.org/maqao_archive/maqao.x86_64.2025.1.0.tar.xz
+tar xf maqao.x86_64.2025.1.0.tar.xz
+export PATH="$PWD/maqao.x86_64.2025.1.0:$PATH"   # add to your shell rc to persist
+```
+
+```bash
+# MALT - no package on Ubuntu or Arch/AUR, build from source
+# Ubuntu
+sudo apt install cmake g++ make libssl-dev libunwind-dev libelf-dev nodejs npm \
+                  nlohmann-json3-dev graphviz python3-dev curl
+# Arch Linux
+sudo pacman -S --needed base-devel cmake gcc make openssl libunwind elfutils \
+                         nodejs npm nlohmann-json graphviz python curl
+
+git clone https://github.com/memtt/malt.git
+cd malt && mkdir build && cd build
+../configure --prefix=/usr/local
+make && sudo make install
+```
+
+**macOS:** none of the three are supported - `perf` wraps the Linux kernel's `perf_events`
+subsystem (no macOS equivalent), MAQAO ships Linux-only binaries, and MALT depends on
+`libelf`/`libunwind` (built around the ELF format macOS doesn't use). Full details, including
+the `flamegraph`/`hotspot` optional extras and a `malt-webview` linker gotcha, are in
+[`benchmarks/performance/README.md`](benchmarks/performance/README.md#installation-profiling-tools).
+
 ---
 
 ## Graphical Interface
 
 A Qt6 GUI (`PhysicsEngineGui`) wraps all interactive CLI commands in a window and adds plot generation buttons backed by the existing Python/Plotly utilities.
 
-**Requirements:** Qt6 Widgets installed on the system (see [Installation](#installation)). CMake detects Qt6 automatically — no extra option needed.
+**Requirements:** Qt6 Widgets installed on the system (see [Installation](#installation)). CMake detects Qt6 automatically - no extra option needed.
 
 **Launch**:
 
@@ -321,12 +364,12 @@ A Qt6 GUI (`PhysicsEngineGui`) wraps all interactive CLI commands in a window an
 
 | Panel | Features |
 | --- | --- |
-| Simulation | Init, Start, Stop, Run *(background thread — UI stays responsive)*, Print, Step |
+| Simulation | Init, Start, Stop, Run *(background thread - UI stays responsive)*, Print, Step |
 | Config | Set gravity, dt, solver (Euler / Verlet / RK4), Apply |
 | Add Object | Choose type (sphere / aabb / plane), optional name |
-| Objects table | Live list — id, type, position, fixed status |
+| Objects table | Live list - id, type, position, fixed status |
 | Selected Object | Edit pos, vel, size, mass, fixed; Set / Del buttons |
-| Plots | Three buttons — each opens an interactive Plotly HTML in the browser |
+| Plots | Three buttons - each opens an interactive Plotly HTML in the browser |
 
 **Plot buttons:**
 
@@ -407,7 +450,7 @@ The documentation is automatically generated on each commit to `main` and publis
 |---|---|
 | Language | C++23 |
 | Build | CMake 3.22+ |
-| Math | Custom (`Vector3D`, `Matrix3D`, `Quaternion`) — no external dependency |
+| Math | Custom (`Vector3D`, `Matrix3D`, `Quaternion`) - no external dependency |
 | Configuration | yaml-cpp |
 | Testing | GoogleTest (fetched via CMake FetchContent) |
 | CI | GitHub Actions |

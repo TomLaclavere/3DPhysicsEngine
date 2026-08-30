@@ -187,7 +187,7 @@ See [`docs/benchmark.md`](benchmark.md) for more details.
   - [ ] Data transfer: host → device (object list), device → host (contact list)
   - [ ] Minimise host–device transfer overhead (pinned memory, async transfers)
 - [ ] **Optimisation:**
-  - [ ] **Profiling:** NSight Compute / rocprof — thread occupancy, memory bandwidth
+  - [ ] **Profiling:** NSight Compute / rocprof - thread occupancy, memory bandwidth
   - [ ] **Tuning:** block sizes, shared memory usage, warp divergence
 - [ ] **Benchmarks:**
   - [ ] Throughput: GPU vs CPU broad-phase for N = 10³, 10⁴, 10⁵ object pairs
@@ -332,7 +332,7 @@ See [`docs/benchmark.md`](benchmark.md) for more details.
   - [ ] **Debug tools:**
     - [ ] Overlay: FPS, object state, contact normals
     - [ ] Runtime parameter tweaking
-    - [ ] Test scenes: towers, balls, pendulums — visual regression tests
+    - [ ] Test scenes: towers, balls, pendulums - visual regression tests
 - [ ] **Validation & Release:**
   - [ ] **Standard testing:** reference scenes, physical validity
   - [ ] **Documentation:**
@@ -344,4 +344,4 @@ See [`docs/benchmark.md`](benchmark.md) for more details.
 
 ## Dropped / Deprioritised
 
-**Fortran portage** — relevant only for legacy HPC centres (Météo-France, aerospace CFD, weather modelling). Low ROI for general numerical simulation roles. Can be reconsidered if a specific target requires it.
+**Fortran portage** - relevant only for legacy HPC centres (Météo-France, aerospace CFD, weather modelling). Low ROI for general numerical simulation roles. Can be reconsidered if a specific target requires it.

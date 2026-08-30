@@ -106,12 +106,16 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, i
             auto          sph = std::make_unique<Sphere>(Vector3D(x, y, 20_d), sphRadius, 1_d);
             sph->setIsFixed(false);
             sph->setRestitutionCst(1_d);
-            world.addObject(sph.get());
+            // PhysicsWorld::addObject() takes ownership (deletes on clearObjects()/dtor),
+            // so release() rather than get() - passing get() here left both the world and
+            // this unique_ptr owning the same pointer, double-freeing it once the run ends.
+            world.addObject(sph.release());
             spheres.push_back(std::move(sph));
         }
-        world.addObject(ground.get());
+        world.addObject(ground.release());
         world.start();
-        // Return both so ownership keeps objects alive for the duration of the run.
+        // ground/spheres are now empty (released to world); returned only so the caller's
+        // structured binding keeps compiling unchanged.
         return std::make_pair(std::move(ground), std::move(spheres));
     };
 

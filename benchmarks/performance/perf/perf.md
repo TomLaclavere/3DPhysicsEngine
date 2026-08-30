@@ -1,253 +1,142 @@
-# Profiling with `perf` — 3D Physics Engine
+# perf - tool-specific reference
+
+Quick reference for `benchmarks/performance/perf/profile_perf.sh`. Read
+[`BENCHMARK_TOOLS_GUIDE.md`](../BENCHMARK_TOOLS_GUIDE.md) Part 1 first if you haven't - it
+explains *why* each of the pieces below exists; this page is just the command/output
+reference once you already know that.
+
+## Install
+
+```bash
+# Arch (this machine, already installed):
+sudo pacman -S perf
+
+# Ubuntu/Debian:
+sudo apt install linux-tools-common linux-tools-generic
+```
+
+**macOS: not supported, no equivalent.** `perf` wraps the Linux kernel's `perf_events`
+subsystem directly — there's nothing to install on macOS because the subsystem itself doesn't
+exist there. The closest built-in tools are Instruments (GUI, ships with Xcode) or `dtrace`
+(command-line, but macOS's System Integrity Protection blocks much of what it can collect);
+neither is a drop-in for this pipeline's scripts.
+
+`perf --version` to confirm. Optional but referenced below: `flamegraph` (provides
+`stackcollapse-perf.pl`/`flamegraph.pl`, on Arch it's an AUR/chaotic-aur package, on
+Ubuntu/Debian it's cloned from Brendan Gregg's [FlameGraph repo](https://github.com/brendangregg/FlameGraph)
+rather than packaged) and `hotspot` (a GUI viewer — `chaotic-aur/hotspot` on Arch, `hotspot`
+via apt on recent Ubuntu). Neither is required — `profile_perf.sh` skips the flamegraph step
+gracefully if the tools aren't on `PATH`, and `hotspot` is only ever suggested as a manual
+follow-up, never invoked by the script.
 
 ## Quick reference
 
 | Goal | Command |
 |------|---------|
-| Record samples | `./profiling/perf/profile.sh` |
-| Custom target | `./profiling/perf/profile.sh --target benchmarks/Contact_Forces` |
-| Interactive TUI | `perf report -i profiling/perf/results/perf.data` |
-| Automated report | `python3 profiling/perf/analyse_perf.py` |
-| GUI viewer | `hotspot profiling/perf/results/perf.data` |
-| Hardware counters | `perf stat -e cycles,instructions,cache-misses ./build/benchmarks/Bouncing` |
-| Annotate source | Inside `perf report`: navigate to symbol → press `a` |
+| Full pipeline, both profiles | `./benchmarks/performance/perf/profile_perf.sh` |
+| One profile only | `./benchmarks/performance/perf/profile_perf.sh --profile optimised` |
+| Stat only, skip record/flamegraph | `./benchmarks/performance/perf/profile_perf.sh --skip-record` |
+| Reuse existing binaries | `./benchmarks/performance/perf/profile_perf.sh --skip-build` |
+| Different representative workload | `./benchmarks/performance/perf/profile_perf.sh --n-objects 100` |
+| Interactive TUI on the recorded data | `perf report -i benchmarks/performance/perf/results/perf_optimised.data` |
+| GUI viewer | `hotspot benchmarks/performance/perf/results/perf_optimised.data` |
 
----
+## What the script produces
 
-## Prerequisites
-
-**Check `perf` is available:**
-```bash
-perf stat ls
-```
-If it fails with "permission denied", lower the paranoia level (requires root once per session):
-```bash
-sudo sysctl kernel.perf_event_paranoid=1
+```text
+benchmarks/performance/perf/results/
+  perf_stat_<profile>.txt       grouped hardware counters, repeated 5x (mean +- stddev)
+  perf_topdown_<profile>.txt    Top-Down microarchitecture breakdown
+  perf_<profile>.data           raw perf record data
+  perf_<profile>.script         perf script -i ... output (resolved call stacks)
+  flame_<profile>.svg           flamegraph (needs stackcollapse-perf.pl + flamegraph.pl on PATH)
 ```
 
-**Optional tools (both already installed on this system):**
-- `/usr/bin/stackcollapse-perf.pl` and `/usr/bin/flamegraph.pl` — flamegraph generation
-- `hotspot` — GUI viewer (Qt-based, most ergonomic for iterative analysis)
+`<profile>` is `scalar` or `optimised` - see `benchmarks/performance/profiles.sh` for what
+those compiler flags are.
 
-**Build note:** The project always compiles with `-g -fno-omit-frame-pointer` (CMakeLists.txt line 168). No special build flags are needed — frame pointers and debug symbols are present in every build type.
+## This machine's specifics (check yours before trusting numbers blindly)
 
----
+- **Hybrid P-core/E-core CPU**: this machine exposes two PMUs, `cpu_core` (P-cores) and
+  `cpu_atom` (E-cores). A bare event name like `cycles` silently expands to both; whichever
+  PMU the process didn't run on reports `<not counted>` for every line - not a bug, just
+  noise. `profile_perf.sh` detects `/sys/devices/cpu_core` and, if present, pins the run to a
+  P-core with `taskset` and qualifies every event as `cpu_core/.../` so the report only
+  contains real numbers. If your machine isn't hybrid, the script skips this and uses plain
+  event names.
+- **`stalled-cycles-frontend`/`stalled-cycles-backend` may not exist on your CPU.** On this
+  machine they're unsupported outright (superseded by Top-Down on recent Intel parts) - the
+  script probes for them once at startup and drops them from the event groups if absent,
+  falling back entirely on the Top-Down pass for that question.
+- **`kernel.perf_event_paranoid`**: if `perf stat` fails with a permission error, run
+  `sudo sysctl kernel.perf_event_paranoid=1`. On this machine it's `2` by default but hardware
+  counters still work for a normal user - the script only warns, doesn't block.
 
-## Choosing a binary to profile
+## Reading `perf_stat_<profile>.txt`
 
-| Binary | When to use |
-|--------|-------------|
-| `./build/benchmarks/Bouncing` | **Default choice.** Fixed workload, deterministic, exits cleanly. |
-| `./build/benchmarks/Contact_Forces` | Profile the spring-damper contact model and stiff integration. |
-| `./build/benchmarks/Bouncing_Conservative` | Profile with perfectly elastic collisions (e = 1.0). |
-| `./build/examples/Bouncing` | Profile with YAML config loading, closer to real usage. |
-| `./build/PhysicsEngine` | Interactive engine — profile a specific user session. |
+Events are grouped with `{...}` so each group is counted simultaneously rather than
+multiplexed (see the guide §1.4) - the `( +- X% )` after each value is run-to-run variance
+from `-r 5`, not multiplexing.
 
-Benchmark binaries are preferred because they run a fixed workload and exit without user input.
+| Metric | How to read it |
+|---|---|
+| `cycles`, `instructions` | IPC = instructions ÷ cycles. Compare scalar vs optimised - see the worked example below, the direction can surprise you. |
+| `branches`, `branch-misses` | miss rate = branch-misses ÷ branches × 100. > 1-3% on a numeric loop is worth investigating. |
+| `L1-dcache-loads`, `L1-dcache-load-misses` | L1 miss rate. Needs a workload that actually touches enough memory to be interesting - see the caveat below. |
+| `LLC-loads`, `LLC-load-misses` | Same idea, one cache level further out - a miss here goes all the way to RAM. |
 
----
+## Reading `perf_topdown_<profile>.txt`
 
-## Recording with `perf record`
+Four percentages (`tma_retiring`, `tma_frontend_bound`, `tma_backend_bound`,
+`tma_bad_speculation`) summing to ~100% of pipeline slots. `<not counted>`/`nan` lines for
+`cpu_atom/...` are expected on a hybrid machine pinned to a P-core (see above) - ignore them,
+the `cpu_core/...` lines are the real numbers.
 
-### Full pipeline (recommended)
-```bash
-./profiling/perf/profile.sh
-```
-This records, generates the flamegraph, and prints the automated hotspot report in one command. See [profile.sh](#profilesh) below.
+## Reading the flamegraph / `perf report`
 
-### Manual recording
-```bash
-perf record -F 999 -g --call-graph dwarf \
-    -o profiling/perf/results/perf.data \
-    ./build/benchmarks/Bouncing
-```
+Covered in depth in the guide (§1.6-1.7). Short version: X-axis = fraction of samples (not
+time), Y-axis = call stack depth, wide flat plateaus at the top are your hotspots, click any
+frame to zoom. `perf report -i <data>` then `a` on a selected function shows annotated
+source+assembly with per-line hit counts.
 
-**Flag explanation:**
+## Worked example (this machine, `--solver Verlet --dt 5e-5 --dur 30 --n-objects 1`)
 
-| Flag | Meaning |
-|------|---------|
-| `-F 999` | Sample at 999 Hz — avoids aliasing with 1000 Hz kernel timers |
-| `-g --call-graph dwarf` | Capture full call stacks via DWARF unwind info. Required because the engine uses heavily inlined templates and `std` internals |
-| `--call-graph fp` | Faster alternative (uses frame pointers instead of DWARF). Slightly shallower stacks but lower overhead |
-| `-o path` | Output file for raw binary data |
+Real output from running `profile_perf.sh` on both profiles:
 
----
+| Metric | scalar | optimised |
+|---|---:|---:|
+| cycles | 2 611 357 084 | 445 340 440 |
+| instructions | 5 849 260 664 | 1 858 501 257 |
+| **IPC** | **2.24** | **4.17** |
+| Top-Down: Frontend-Bound | **57.2%** | 27.4% |
+| Top-Down: Retiring | 42.0% | **69.0%** |
+| Top-Down: Bad Speculation | 0.4% | 1.2% |
+| Top-Down: Backend-Bound | 0.4% | 2.4% |
+| wall time (5 timed runs, warmup discarded) | 180.6 ms | 30.4 ms |
 
-## Analysis methods
+Two things worth noticing:
 
-### 1. Automated report (`analyse_perf.py`)
+1. **IPC went *up* on the optimised build, not down.** The guide's Part 1.3 checkpoint
+   flagged this as a real possibility, not a certainty - here it happened: fewer, wider
+   (SIMD) instructions retiring more efficiently per cycle, on top of just needing 3.15x
+   fewer instructions in the first place. IPC alone would have told a correct but incomplete
+   story; MAQAO's vectorisation ratio (once installed) is what actually confirms *why* the
+   instruction count dropped, not just that IPC rose.
+2. **Scalar is Frontend-Bound at 57%** - plausibly `-fno-inline` doing exactly what it says:
+   many more, smaller function calls instead of inlined code, meaning far more instruction
+   fetch/decode work relative to actual arithmetic. This is a concrete, checkable hypothesis
+   the Top-Down number gives you for free, not a guess.
 
-```bash
-python3 profiling/perf/analyse_perf.py
-# or with options:
-python3 profiling/perf/analyse_perf.py --input profiling/perf/results/perf.script --top 30
-```
+**Caveat**: cache-miss and branch-miss rates were negligible in both profiles here
+(well under 0.01%) - expected and not informative at `--n-objects 1`: one sphere against one
+plane touches almost no memory and has one predictable branch path. Re-run with
+`--n-objects 100` (or higher) before drawing conclusions about cache behaviour or
+collision-detection branch prediction - this default workload is sized for a fast first look,
+not for stressing memory/branches.
 
-Parses `perf.script`, groups symbols by physics-engine subsystem, detects red flags, and writes `profiling/perf/results/hotspots.png`. See [analyse_perf.py](#analyse_perfpy) for full details.
+## Note on the old pipeline
 
----
-
-### 2. `perf report` — interactive TUI
-
-```bash
-perf report -i profiling/perf/results/perf.data
-```
-
-**Navigation:**
-
-| Key | Action |
-|-----|--------|
-| `↑` / `↓` | Move between functions |
-| `Enter` | Expand call tree for the selected function |
-| `a` | Annotate: show interleaved source + assembly with per-line hit counts |
-| `+` | Zoom in on a sub-tree |
-| `q` | Quit |
-
-**Key columns:**
-- `% Self` — time spent inside the function itself (the hottest indicator)
-- `% Children` — time including all callees
-- `Shared Object` — which binary or library the symbol comes from
-
-**Useful flags:**
-```bash
-# Show only self-time (no children aggregation) — cleaner view
-perf report --no-children -i profiling/perf/results/perf.data
-
-# Filter to a specific binary
-perf report -i profiling/perf/results/perf.data --dso=Bouncing
-```
-
-**What to look for in the physics engine:**
-
-| Symbol pattern | Interpretation |
-|---------------|----------------|
-| `PhysicsWorld::integrate` or `integrateVerlet` high self% | Integration loop is the bottleneck — expected for fine dt |
-| `computeAcceleration` or `computeContactForce` wide | Force evaluation expensive — consider caching or SIMD |
-| `solveCollisions` / `reboundCollision` dominant | Collision resolution overhead — check O(n²) broad phase |
-| `operator new` / `malloc` in top-20 | Dynamic allocation in the hot path — use pre-allocated containers |
-| `[unknown]` frames > 10% | Missing symbols — verify the binary was built with `-g` |
-| `Vector3D::` math primitives > 5% | Consider SIMD (`__m256d`) for batched vector ops |
-
----
-
-### 3. Flamegraph
-
-```bash
-# Generate from existing perf.data
-perf script -i profiling/perf/results/perf.data > profiling/perf/results/perf.script
-stackcollapse-perf.pl profiling/perf/results/perf.script \
-    | flamegraph.pl > profiling/perf/results/flame.svg
-```
-Then open `profiling/perf/results/flame.svg` in a browser.
-
-**Reading the flamegraph:**
-- **X-axis** — fraction of total samples (wider = more CPU time). Not chronological.
-- **Y-axis** — call stack depth: `main` at the bottom, leaf functions at the top.
-- **Wide, flat plateaus at the top** — functions with high self-time (the hotspots to optimize).
-- **Narrow, tall towers** — deep call chains with little branching (typically the integrator loop).
-- **Click any frame** — zooms in to show only that sub-tree, rescaled to 100%.
-
-**Physics-engine patterns to spot:**
-- A wide `integrate` plateau with `applyGravityForces` underneath → force evaluation dominates
-- A wide `solveCollisions` block → collision response is unexpectedly expensive
-- `std::vector` / `_M_realloc_insert` spikes → dynamic memory in the simulation loop
-- Mangled template names (`applyVector<std::minus...>`) → heavily inlined math; usually fine unless very wide
-
----
-
-### 4. `hotspot` GUI
-
-```bash
-hotspot profiling/perf/results/perf.data
-```
-
-Most ergonomic for iterative analysis. Key tabs:
-- **Summary** — quick overview with top functions
-- **FlameGraph** — interactive flamegraph (click to zoom, hover for %)
-- **Top-Down** — call tree from `main` down; expand to find where time goes
-- **Bottom-Up** — grouped by leaf function; best for finding hotspots
-- **Caller/Callee** — click any symbol to see exactly what called it and what it calls
-
----
-
-### 5. `perf stat` — hardware counters
-
-```bash
-perf stat -e cycles,instructions,cache-misses,cache-references,branch-misses \
-    ./build/benchmarks/Bouncing
-```
-
-**Interpreting the output:**
-
-| Metric | Concern threshold | Diagnosis |
-|--------|-----------------|-----------|
-| IPC (instructions / cycles) | < 1.0 | Memory-bound; consider data layout (AoS → SoA for Vector3D arrays) |
-| Cache miss rate | > 5% | Poor spatial/temporal locality; profile object storage order |
-| Branch miss rate | > 3% | Unpredictable conditionals in collision detection |
-| Very high cycle count with low IPC | — | Likely waiting on memory, not compute |
-
-```bash
-# Count-only run (no sampling overhead)
-perf stat ./build/benchmarks/Bouncing
-
-# Per-function cache miss breakdown (requires sampling)
-perf record -e cache-misses:u -g --call-graph dwarf \
-    -o profiling/perf/results/perf_cache.data \
-    ./build/benchmarks/Bouncing
-perf report -i profiling/perf/results/perf_cache.data
-```
-
----
-
-## `profile.sh`
-
-Automates the full record → flamegraph → analysis pipeline.
-
-```bash
-# Profile Bouncing benchmark (default)
-./profiling/perf/profile.sh
-
-# Profile a different binary
-./profiling/perf/profile.sh --target benchmarks/Contact_Forces
-./profiling/perf/profile.sh --target examples/Bouncing
-
-# Profile and open hotspot GUI afterwards
-./profiling/perf/profile.sh --target benchmarks/Bouncing --hotspot
-```
-
-Output files written to `profiling/perf/results/`:
-- `perf.data` — raw binary data
-- `perf.script` — text call stacks
-- `flame.svg` — flamegraph
-- `hotspots.png` — bar chart from `analyse_perf.py`
-
----
-
-## `analyse_perf.py`
-
-Python script that parses `perf.script` and prints a structured report.
-
-```bash
-python3 profiling/perf/analyse_perf.py
-python3 profiling/perf/analyse_perf.py --input profiling/perf/results/perf.script --top 30 --no-plot
-```
-
-**Report sections:**
-1. **Top-N self-time functions** — which functions appear most often as the leaf frame
-2. **Subsystem breakdown** — time grouped into Integration, Force computation, Collision, Math, Memory/STL, Other
-3. **Red flags** — automatic warnings for memory allocation in hot path, high `[unknown]` rate, dominant single bottleneck
-4. **`hotspots.png`** — horizontal bar chart of top-N by self-%, color-coded by subsystem
-
----
-
-## Worked example: interpreting a typical run
-
-After running `./profiling/perf/profile.sh` against the `Bouncing` benchmark:
-
-1. **Check `analyse_perf.py` output first** — if Integration > 80% and Math primitives < 2%, the bottleneck is the integration loop itself, not the math operations within it. Optimize `physicsWorld.cpp:integrate`.
-
-2. **Open the flamegraph** — look for anything unexpectedly wide outside `integrate`. A wide `loadFromFile` or YAML parsing block means the config-loading overhead is being profiled; use a benchmark binary instead.
-
-3. **Use `perf report -a`** on the hottest symbol — press `a` to see which line of `physicsWorld.cpp` accumulates the most hits. Often a single inner-loop line (e.g. the position update) accounts for > 30% of all samples.
-
-4. **Run `perf stat`** — if IPC < 1.5 on a modern CPU while integration dominates, the math is compute-bound. If IPC < 0.8, it's memory-bound and data layout should be reviewed.
+The old pipeline profiled a separate minimal binary, `perf_target.cpp` (removed, along with
+its CMake target, once nothing referenced it) - everything here targets
+`benchmarks/Performance` instead, for consistency with the MAQAO/MALT scripts (same binary,
+same representative workload, comparable reports).

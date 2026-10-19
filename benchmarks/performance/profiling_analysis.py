@@ -8,7 +8,7 @@
 #   maqao/results/lprof_<profile>/loops.txt   per-loop time share
 #   malt/results/malt_<profile>/*.json        heap allocations        (malt/profile_malt.sh)
 #
-# Output: profiling_report/fig_*.png and profiling_report/profiling_report.pdf
+# Output: profiling_report/fig_*.png and profiling_report/profiling_report.pdf (figures + how-to-read notes)
 #
 # Usage: python3 benchmarks/performance/profiling_analysis.py   (any working directory)
 
@@ -185,14 +185,6 @@ def parse_cqa(path: Path) -> dict[int, dict]:
     return loops
 
 
-def parse_lprof_alloc_caller(path: Path) -> str:
-    """Function that calls operator new, from Lprof's caller chains (functions.txt)."""
-    if not path.exists():
-        return ''
-    m = re.search(r'operator new\(unsigned long\) \([^)]*\) <-- ([\w:~<>]+\([^)]*\))', path.read_text())
-    return m.group(1) if m else ''
-
-
 def parse_lprof_loops(path: Path) -> list[dict]:
     """Lprof loop table: loop id, function, source, coverage (% of samples)."""
     rows = []
@@ -241,14 +233,6 @@ def parse_malt(directory: Path) -> dict:
         label = f'std::vector<{alloc_type}> buffers' if alloc_type else short_symbol(caller, 48)
         sites[label] = sites.get(label, 0) + count
 
-    # Every Performance invocation integrates (n_warmup + n_runs + 1 step-timing run) × dur/dt steps.
-    cmd = d['run'].get('command', '')
-    def arg(name, default):
-        m = re.search(rf'--{name}\s+(\S+)', cmd)
-        return float(m.group(1)) if m else default
-    runs = arg('n_warmup', 1) + arg('n_runs', 5) + 1
-    steps = runs * int(arg('dur', 22.0) / arg('dt', 1e-3))
-
     tl = d['timeline']['memoryTimeline']
     tps = d['globals']['ticksPerSecond']
     req = [v[0] for v in tl['values']]
@@ -262,12 +246,11 @@ def parse_malt(directory: Path) -> dict:
     return {'sites': major,
             'sizes': sorted(((int(k), v) for k, v in d['memStats']['sizeMap'].items()),
                             key=lambda kv: -kv[1]),
-            'total': total, 'steps': int(steps), 'leaks': len(d.get('leaks', [])),
-            'times': times, 'requested': req, 'n_objects': int(arg('n_objects', 1))}
+            'times': times, 'requested': req}
 
 
 # =============================================================================
-# Figures - each returns (figure, title, how-to-read, finding) or None
+# Figures - each returns (figure, title, how-to-read) or None
 # =============================================================================
 def _bar_labels(ax, bars, fmt):
     for b in bars:
@@ -296,17 +279,8 @@ def fig_perf_overview(stat):
         ax.set_ylim(0, max(vals) * 1.2)
         ax.grid(axis='x', visible=False)
     fig.tight_layout()
-
-    finding = ''
-    if len(have) == 2:
-        s, o = stat['scalar'], stat['optimised']
-        finding = (f"The optimised build runs {s['elapsed_s'] / o['elapsed_s']:.1f}x faster. It executes "
-                   f"{s['instructions'] / o['instructions']:.1f}x fewer instructions, at IPC "
-                   f"{o['ipc']:.2f} vs {s['ipc']:.2f}. Fewer instructions is the main gain; "
-                   f"MAQAO (below) tells whether they are vector instructions.")
-    how = ('Time is the mean of 5 repeated executions (perf stat -r 5). IPC above ~3 means the pipeline '
-           'is well fed; it says nothing about how much work each instruction does.')
-    return fig, 'perf - time, instructions and IPC', how, finding
+    how = 'Time is the mean of 5 repeated executions (perf stat -r 5). Fewer instructions means less work. IPC (instructions per cycle) shows how well the pipeline is fed, up to ~4-5 on this CPU; it says nothing about how much work each instruction does, so it does not show vectorisation.'
+    return fig, 'perf - time, instructions and IPC', how
 
 
 def fig_perf_rates(stat):
@@ -319,27 +293,16 @@ def fig_perf_rates(stat):
         ('LLC misses (go to RAM)', 'LLC-load-misses'),
     ]
     fig, axes = plt.subplots(1, 3, figsize=(11, 3.6))
-    mpki = {}
     for ax, (title, ev) in zip(axes, events):
         vals = [1000 * stat[p].get(ev, 0) / stat[p]['instructions'] for p in have]
-        mpki[ev] = dict(zip(have, vals))
         bars = ax.bar(have, vals, width=0.55, color=[PROFILE_COLOR[p] for p in have])
         _bar_labels(ax, bars, lambda v: f'{v:.2g}')
         ax.set_title(f'{title}\nper 1000 instructions', loc='left')
         ax.set_ylim(0, max(max(vals) * 1.25, 1e-4))
         ax.grid(axis='x', visible=False)
     fig.tight_layout()
-    worst = max(max(d.values()) for d in mpki.values())
-    finding = ('Every value is far below 1 miss per 1000 instructions: at this problem size the code is '
-               'not limited by caches, RAM or branch prediction - the data fits in L1. Data-layout work '
-               '(SoA) should therefore be measured at larger N, where it can matter.'
-               if worst < 1 else
-               'At least one counter exceeds 1 miss per 1000 instructions: LLC misses point to RAM '
-               'traffic and data layout, branch mispredictions to unpredictable collision tests.')
-    how = ('Misses per 1000 instructions (MPKI), from exact grouped counters. MPKI is preferred over a '
-           'miss *rate*: a high rate on a handful of accesses costs nothing. Rough guide: LLC MPKI > 1 '
-           'or branch MPKI > 5 deserve attention.')
-    return fig, 'perf - cache and branch misses', how, finding
+    how = 'Misses per 1000 instructions (MPKI), from exact grouped counters. MPKI is preferred over a miss rate: a high rate on a handful of accesses costs nothing. Rough guide: LLC MPKI above 1 (RAM traffic) or branch MPKI above 5 deserve attention.'
+    return fig, 'perf - cache and branch misses', how
 
 
 def fig_perf_topdown(td):
@@ -362,22 +325,10 @@ def fig_perf_topdown(td):
     ax.set_xlabel('% of pipeline slots')
     ax.grid(axis='y', visible=False)
     ax.invert_yaxis()
-    ax.legend(ncol=4, loc='upper center', bbox_to_anchor=(0.5, -0.45 if len(have) > 1 else -0.9),
-              frameon=False)
+    ax.legend(ncol=4, loc='lower left', bbox_to_anchor=(0, 1.02), frameon=False)
     fig.tight_layout()
-    o = td.get('optimised') or td[have[-1]]
-    main = max((k for k, _, _ in TOPDOWN if k != 'retiring'), key=lambda k: o.get(k, 0))
-    names = {k: lab for k, lab, _ in TOPDOWN}
-    finding = (f"{'Optimised' if 'optimised' in td else have[-1]}: {o.get('retiring', 0):.0f}% of slots do "
-               f"useful work; the main loss is {names[main]} ({o.get(main, 0):.0f}%). "
-               + ('Front-End Bound means instruction fetch/decode cannot keep up - typically many small '
-                  'calls or branchy code, not memory.' if main == 'frontend_bound' else
-                  'Back-End Bound means waiting on execution units or memory.' if main == 'backend_bound'
-                  else 'Bad Speculation means mispredicted branches waste work.'))
-    how = ('Top-Down sorts every pipeline slot into four buckets. Retiring is useful work; the other '
-           'three are losses and say where to look: Front-End (code), Back-End (memory/compute), '
-           'Bad Speculation (branches).')
-    return fig, 'perf - Top-Down bottleneck classification', how, finding
+    how = 'Every pipeline slot is sorted into four buckets. Retiring is useful work; the others are losses and say where to look: Front-End Bound (instruction fetch/decode: many small calls, code size), Back-End Bound (waiting for data or execution units), Bad Speculation (mispredicted branches).'
+    return fig, 'perf - Top-Down bottleneck classification', how
 
 
 def fig_perf_hotspots(reports):
@@ -397,23 +348,8 @@ def fig_perf_hotspots(reports):
         ax.tick_params(axis='y', labelsize=8)
         ax.grid(axis='y', visible=False)
     fig.tight_layout()
-    o = reports.get('optimised') or reports[have[-1]]
-    alloc = sum(v for n, v in o if re.match(r'(operator new|operator delete|malloc|cfree|free|_int_)', n))
-    finding = (f"Optimised build: the top functions are {short_symbol(o[0][0], 60)} ({o[0][1]:.0f}%), "
-               f"{short_symbol(o[1][0], 60)} ({o[1][1]:.0f}%) and {short_symbol(o[2][0], 60)} "
-               f"({o[2][1]:.0f}%)." if len(o) >= 3
-               else f"Hottest function: {short_symbol(o[0][0], 70)} ({o[0][1]:.0f}%).")
-    getters = [n for n, _ in o[:10] if re.search(r'::(get|is)\w*\(\)', n)]
-    if getters:
-        finding += (f" Trivial accessors such as {short_symbol(getters[0], 40)} appear as separate "
-                    f"functions: they are defined in .cpp files, so they cannot be inlined into other "
-                    f"files without link-time optimisation (-flto).")
-    if alloc >= 3:
-        finding += (f" Heap management (new/delete/malloc/free) takes {alloc:.0f}% of the time - "
-                    f"see the MALT figures for where these allocations come from.")
-    how = ('perf record samples the call stack ~1000 times per second; a function\'s share of samples '
-           'is its share of run time (self time, callees excluded). Statistical: small shares are noisy.')
-    return fig, 'perf - hottest functions', how, finding
+    how = "perf record samples the call stack ~1000 times per second; a function's share of samples is its share of run time (self time, callees excluded). Statistical: small shares are noisy. Trivial getters near the top are calls the compiler could not inline."
+    return fig, 'perf - hottest functions', how
 
 
 def fig_maqao_loops(cqa, lprof):
@@ -443,19 +379,11 @@ def fig_maqao_loops(cqa, lprof):
     a2.set_title('Speedup if fully vectorised (CQA estimate)', loc='left')
     a2.axvline(1, color=TEXT_2, lw=1)
     fig.tight_layout()
-    hot = [loops.get(r['id'], {}) for r in rows]
-    vectorised = sum(1 for c in hot if c.get('status') and not re.search(r'not', c['status']))
-    finding = (f"{vectorised} of the {len(rows)} hottest loops of the optimised build are vectorised. "
-               f"CQA estimates up to {max(speed):.1f}x per loop if fully vectorised. Its standard "
-               f"workarounds for such loops include switching from arrays of structures (AoS, the "
-               f"current Vector3D-per-object layout) to structures of arrays (SoA).")
-    how = ('Lprof (left) measures where time goes, per source loop. CQA (right) reads the assembly of '
-           'the same loop and estimates the gain if it used the full vector width. Prioritise loops '
-           'that are both hot and have a large potential speedup.')
-    return fig, 'MAQAO - hottest loops and vectorisation potential (optimised build)', how, finding
+    how = "Left: share of run time per source loop (Lprof, measured). Right: CQA's estimate of the speedup if the same loop used the full vector width (static analysis of the assembly). Loops that are both hot and have a large potential speedup are the first targets."
+    return fig, 'MAQAO - hottest loops and vectorisation potential (optimised build)', how
 
 
-def fig_malt(malt, alloc_caller=''):
+def fig_malt(malt):
     if not malt or not malt['sites']:
         return None
     fig, (a1, a2) = plt.subplots(1, 2, figsize=(11, 3.8), gridspec_kw={'width_ratios': [3, 2]})
@@ -477,20 +405,8 @@ def fig_malt(malt, alloc_caller=''):
     a2.tick_params(axis='x', labelsize=8, rotation=30)
     a2.grid(axis='x', visible=False)
     fig.tight_layout()
-
-    per_step = malt['total'] / malt['steps'] if malt['steps'] else 0
-    top_size, top_count = malt['sizes'][0]
-    finding = (f"{malt['total']:,} heap allocations for {malt['steps']:,} integration steps = "
-               f"{per_step:.1f} per step ({malt['n_objects']} objects). The dominant size is {top_size} B "
-               f"({100 * top_count / malt['total']:.0f}% of all allocations). "
-               + (f"Lprof attributes the operator new calls to {short_symbol(alloc_caller, 60)}. "
-                  if alloc_caller else '')
-               + f"A steady-state time step should allocate nothing: these temporaries are a direct "
-               f"optimisation target (reuse buffers across steps). Blocks still allocated at exit: "
-               f"{malt['leaks']} (typically static objects).")
-    how = ('MALT intercepts every malloc/new, so counts are exact. Repeated allocations of one size '
-           'inside the time loop are the pattern to remove (reuse buffers, or a pool allocator).')
-    return fig, 'MALT - where and how often the code allocates', how, finding
+    how = 'MALT intercepts every malloc/new, so counts are exact. Left: allocations per call site; right: allocations per size (log scale). Allocations repeated at every time step are the pattern to remove (reuse the buffer, or a pool allocator).'
+    return fig, 'MALT - where and how often the code allocates', how
 
 
 def fig_malt_timeline(malt):
@@ -503,58 +419,34 @@ def fig_malt_timeline(malt):
     ax.set_ylim(0, max(malt['requested']) / 1024 * 1.2)
     ax.set_title('Heap memory in use over the run', loc='left')
     fig.tight_layout()
-    first, last, peak = malt['requested'][0], malt['requested'][-1], max(malt['requested'])
-    flat = peak <= 1.2 * max(first, last, 1)
-    finding = (f"Peak heap in use: {peak / 1024:.0f} KiB. "
-               + ('The curve stays flat during the run: allocations are freed as fast as they are made '
-                  '(no growth) - the cost is the allocation churn, not the footprint.'
-                  if flat else 'Memory grows during the run: look for containers that keep growing.'))
-    how = 'Bytes requested from the heap and still allocated, sampled over the run.'
-    return fig, 'MALT - heap memory over time', how, finding
-
+    how = 'Bytes requested from the heap and still allocated, sampled over the run. A flat curve means no growth; a rising curve means something accumulates.'
+    return fig, 'MALT - heap memory over time', how
 
 # =============================================================================
 # Report
 # =============================================================================
-def text_page(pdf, title, paragraphs):
-    """Headed paragraphs, continued on as many pages as needed."""
-    def new_page(heading):
-        page = plt.figure(figsize=(11, 8.5))
-        page.text(0.06, 0.93, heading, fontsize=18, fontweight='bold', color=TEXT)
-        return page, 0.86
-
-    fig, y = new_page(title)
-    for heading, body in paragraphs:
-        lines = textwrap.wrap(body, 125)
-        if y - 0.035 - 0.028 * len(lines) < 0.05:
-            pdf.savefig(fig)
-            plt.close(fig)
-            fig, y = new_page(f'{title} (continued)')
-        fig.text(0.06, y, heading, fontsize=11.5, fontweight='bold', color=TEXT)
-        y -= 0.035
-        for line in lines:
-            fig.text(0.06, y, line, fontsize=10, color=TEXT_2)
-            y -= 0.028
-        y -= 0.02
-    pdf.savefig(fig)
-    plt.close(fig)
-
-
-def figure_page(pdf, fig, title, how, finding):
-    w, h = fig.get_size_inches()
-    extra = 1.9
-    fig.set_size_inches(w, h + extra)
-    fig.subplots_adjust(top=1 - 0.55 / (h + extra), bottom=extra / (h + extra) + 0.06 * h / (h + extra))
-    fig.suptitle(title, x=0.02, ha='left', fontsize=13, fontweight='bold', color=TEXT)
-    y = (extra - 0.35) / (h + extra)
-    for heading, body in (('How to read', how), ('What it shows', finding)):
-        fig.text(0.02, y, heading, fontsize=9.5, fontweight='bold', color=TEXT)
-        y -= 0.2 / (h + extra)
-        for line in textwrap.wrap(body, 140):
-            fig.text(0.02, y, line, fontsize=9, color=TEXT_2)
-            y -= 0.18 / (h + extra)
-        y -= 0.12 / (h + extra)
-    pdf.savefig(fig)
+def pdf_page(pdf, png: Path, title: str, how: str) -> None:
+    """One PDF page: title, the figure's PNG scaled to the page width (so it can never overflow
+    or overlap the text), and a generic "How to read" note below it."""
+    img = plt.imread(str(png))
+    page_w, margin = 11.0, 0.35
+    img_w = page_w - 2 * margin
+    img_h = img_w * img.shape[0] / img.shape[1]
+    lines = textwrap.wrap(how, 135)
+    title_h, note_h = 0.6, 0.35 + 0.2 * len(lines)
+    page_h = title_h + img_h + note_h + margin
+    page = plt.figure(figsize=(page_w, page_h))
+    page.text(margin / page_w, 1 - 0.4 / page_h, title, fontsize=13, fontweight='bold', color=TEXT)
+    ax = page.add_axes([margin / page_w, (note_h + margin) / page_h, img_w / page_w, img_h / page_h])
+    ax.imshow(img)
+    ax.axis('off')
+    y = note_h + margin - 0.25
+    page.text(margin / page_w, y / page_h, 'How to read', fontsize=9.5, fontweight='bold', color=TEXT)
+    for line in lines:
+        y -= 0.2
+        page.text(margin / page_w, y / page_h, line, fontsize=9, color=TEXT_2)
+    pdf.savefig(page)
+    plt.close(page)
 
 
 def main() -> None:
@@ -565,7 +457,6 @@ def main() -> None:
     cqa      = {p: parse_cqa(MAQAO / f'cqa_{p}' / 'cqa.txt') for p in PROFILES}
     lprof    = {p: parse_lprof_loops(MAQAO / f'lprof_{p}' / 'loops.txt') for p in PROFILES}
     malt     = parse_malt(MALT / 'malt_optimised') or parse_malt(MALT / 'malt_scalar')
-    alloc_caller = parse_lprof_alloc_caller(MAQAO / 'lprof_optimised' / 'functions.txt')
 
     builders = [
         ('fig_perf_overview',  lambda: fig_perf_overview(stat)),
@@ -573,40 +464,28 @@ def main() -> None:
         ('fig_perf_rates',     lambda: fig_perf_rates(stat)),
         ('fig_perf_hotspots',  lambda: fig_perf_hotspots(reports)),
         ('fig_maqao_loops',    lambda: fig_maqao_loops(cqa, lprof)),
-        ('fig_malt_sites',     lambda: fig_malt(malt, alloc_caller)),
+        ('fig_malt_sites',     lambda: fig_malt(malt)),
         ('fig_malt_timeline',  lambda: fig_malt_timeline(malt)),
     ]
-    pages = []
-    for name, build in builders:
-        result = build()
-        if result is None:
-            print(f'  [skip] {name} - input files not found (run the matching profile_*.sh first)')
-            continue
-        fig, title, how, finding = result
-        fig.savefig(OUT / f'{name}.png', dpi=150, bbox_inches='tight')
-        print(f'  -> {OUT / name}.png')
-        pages.append((fig, title, how, finding))
-
-    if not pages:
-        raise SystemExit('No profiling results found. Run ./scripts/profile.sh first.')
-
-    vec = {p: sum(1 for l in cqa[p].values() if l['status'] and 'not' not in l['status'])
-           for p in PROFILES if cqa[p]}
-    summary = [(title, finding) for _, title, _, finding in pages if finding]
-    if vec:
-        summary.append(('MAQAO - sanity check of the build profiles',
-                        ', '.join(f'{p}: {n} of {len(cqa[p])} analysed loops vectorised'
-                                  for p, n in vec.items())
-                        + '. The scalar build must show 0; otherwise its flags are not applied.'))
     pdf_path = OUT / 'profiling_report.pdf'
+    written = 0
     with PdfPages(pdf_path) as pdf:
-        text_page(pdf, 'Profiling report - key findings', summary)
-        for fig, title, how, finding in pages:
-            figure_page(pdf, fig, title, how, finding)
+        for name, build in builders:
+            result = build()
+            if result is None:
+                print(f'  [skip] {name} - input files not found (run the matching profile_*.sh first)')
+                continue
+            fig, title, how = result
+            fig.savefig(OUT / f'{name}.png', dpi=150, bbox_inches='tight')
             plt.close(fig)
+            pdf_page(pdf, OUT / f'{name}.png', title, how)
+            written += 1
+            print(f'  -> {OUT / name}.png')
+
+    if not written:
+        pdf_path.unlink(missing_ok=True)
+        raise SystemExit('No profiling results found. Run ./scripts/profile.sh first.')
     print(f'\nPDF report -> {pdf_path}')
-    for title, finding in summary:
-        print(f'\n{title}\n  ' + '\n  '.join(textwrap.wrap(finding, 100)))
 
 
 if __name__ == '__main__':

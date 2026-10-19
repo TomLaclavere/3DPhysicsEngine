@@ -274,9 +274,10 @@ benchmarks/performance/
 
 ## 6. The profiling report, figure by figure
 
-`profiling_report.pdf` opens with a page of key findings, computed from the numbers (they
-update with every run). Each following page shows one figure with a "How to read" and a "What
-it shows" paragraph.
+`profiling_report.pdf` has one figure per page, in the order of the table below, each with a
+short generic "How to read" note and no interpretation of the numbers (the figures are also
+saved alone as `profiling_report/<name>.png`). The interpretation of the current numbers is
+in §7.
 
 | Figure | Question | How to read it |
 |---|---|---|

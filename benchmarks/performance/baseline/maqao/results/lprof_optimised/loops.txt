@@ -1,0 +1,42 @@
+                            Categorization 
+########################################################################
+#  Cluster  |  Walltime (s)  |  Exe (%)  |  Memory (%)  |  Others (%)  #
+########################################################################
+#  Cluster  |  1.96          |  98.73    |  0.76        |  0.51        #
+########################################################################
+
+                                                                                                                 Cluster * 1.96s
+#################################################################################################################################################################################################################################################
+#  Loop ID  |    Module     |                          Source Info                           |              Function Name              |    Level    |  Coverage (%)  |  Time w.r.t Walltime (s)  |   Time Min (node)    |   Time Max (node)    #
+#################################################################################################################################################################################################################################################
+#  285      |  Performance  |  physicsWorld.cpp:293-298,vector.hpp:54,stl_function.h:193,21  |  PhysicsWorld::integrateVerlet(double)  |  Single     |  6.62          |  0.13                     |  0.13 (arch-laptop)  |  0.13 (arch-laptop)  #
+#     65.38% simulation(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, double, int, int, int, int, bool) (benchmark.cpp:137) <-- main (benchmark.cpp:275) <-- __libc_init_first (/usr/lib/libc.so.6:0  #
+#  x27781) <-- __libc_start_main (/usr/lib/libc.so.6:0x278b9) <-- _start (fstream:886)                                                                                                                                                          #
+#     34.62% simulation(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, double, int, int, int, int, bool) (benchmark.cpp:168) <-- main (benchmark.cpp:275) <-- __libc_init_first (/usr/lib/libc.so.6:0  #
+#  x27781) <-- __libc_start_main (/usr/lib/libc.so.6:0x278b9) <-- _start (fstream:886)                                                                                                                                                          #
+#  284      |  Performance  |  physicsWorld.cpp:200-219,vector.hpp:49                        |  PhysicsWorld::solveCollisions()        |  Innermost  |  5.85          |  0.12                     |  0.12 (arch-laptop)  |  0.12 (arch-laptop)  #
+#     56.52% PhysicsWorld::integrate() (physicsWorld.cpp:542) <-- simulation(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, double, int, int, int, int, bool) (benchmark.cpp:137) <-- main (benchmark  #
+#  .cpp:275) <-- __libc_init_first (/usr/lib/libc.so.6:0x27781) <-- __libc_start_main (/usr/lib/libc.so.6:0x278b9) <-- _start (fstream:886)                                                                                                     #
+#     43.48% PhysicsWorld::integrate() (physicsWorld.cpp:542) <-- simulation(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, double, int, int, int, int, bool) (benchmark.cpp:168) <-- main (benchmark  #
+#  .cpp:275) <-- __libc_init_first (/usr/lib/libc.so.6:0x27781) <-- __libc_start_main (/usr/lib/libc.so.6:0x278b9) <-- _start (fstream:886)                                                                                                     #
+#  286      |  Performance  |  physicsWorld.cpp:312-317,vector.hpp:54,stl_function.h:193,21  |  PhysicsWorld::integrateVerlet(double)  |  Single     |  4.33          |  0.09                     |  0.09 (arch-laptop)  |  0.09 (arch-laptop)  #
+#     64.71% simulation(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, double, int, int, int, int, bool) (benchmark.cpp:137) <-- main (benchmark.cpp:275) <-- __libc_init_first (/usr/lib/libc.so.6:0  #
+#  x27781) <-- __libc_start_main (/usr/lib/libc.so.6:0x278b9) <-- _start (fstream:886)                                                                                                                                                          #
+#     35.29% simulation(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, double, int, int, int, int, bool) (benchmark.cpp:168) <-- main (benchmark.cpp:275) <-- __libc_init_first (/usr/lib/libc.so.6:0  #
+#  x27781) <-- __libc_start_main (/usr/lib/libc.so.6:0x278b9) <-- _start (fstream:886)                                                                                                                                                          #
+#  315      |  Performance  |  physicsWorld.cpp:86,92,vector.hpp:227-229                     |  PhysicsWorld::integrate()              |  Single     |  0.51          |  0.01                     |  0.01 (arch-laptop)  |  0.01 (arch-laptop)  #
+#     100.00% simulation(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, double, int, int, int, int, bool) (benchmark.cpp:137) <-- main (benchmark.cpp:275) <-- __libc_init_first (/usr/lib/libc.so.6:  #
+#  0x27781) <-- __libc_start_main (/usr/lib/libc.so.6:0x278b9) <-- _start (fstream:886)                                                                                                                                                         #
+#  314      |  Performance  |  physicsWorld.cpp:533-537                                      |  PhysicsWorld::integrate()              |  Single     |  0.51          |  0.01                     |  0.01 (arch-laptop)  |  0.01 (arch-laptop)  #
+#     50.00% simulation(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, double, int, int, int, int, bool) (benchmark.cpp:137) <-- main (benchmark.cpp:275) <-- __libc_init_first (/usr/lib/libc.so.6:0  #
+#  x27781) <-- __libc_start_main (/usr/lib/libc.so.6:0x278b9) <-- _start (fstream:886)                                                                                                                                                          #
+#     50.00% simulation(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, double, int, int, int, int, bool) (benchmark.cpp:168) <-- main (benchmark.cpp:275) <-- __libc_init_first (/usr/lib/libc.so.6:0  #
+#  x27781) <-- __libc_start_main (/usr/lib/libc.so.6:0x278b9) <-- _start (fstream:886)                                                                                                                                                          #
+#  289      |  Performance  |  physicsWorld.cpp:220,231-234,284-289,stl_vector.h:1254        |  PhysicsWorld::integrateVerlet(double)  |  Single     |  0.25          |  0.00                     |  0.00 (arch-laptop)  |  0.00 (arch-laptop)  #
+#     100.00% simulation(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, double, int, int, int, int, bool) (benchmark.cpp:137) <-- main (benchmark.cpp:275) <-- __libc_init_first (/usr/lib/libc.so.6:  #
+#  0x27781) <-- __libc_start_main (/usr/lib/libc.so.6:0x278b9) <-- _start (fstream:886)                                                                                                                                                         #
+#  287      |  Performance  |  physicsWorld.cpp:220,231-234,303-308,stl_vector.h:1254        |  PhysicsWorld::integrateVerlet(double)  |  Single     |  0.25          |  0.00                     |  0.00 (arch-laptop)  |  0.00 (arch-laptop)  #
+#     100.00% simulation(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, double, int, int, int, int, bool) (benchmark.cpp:137) <-- main (benchmark.cpp:275) <-- __libc_init_first (/usr/lib/libc.so.6:  #
+#  0x27781) <-- __libc_start_main (/usr/lib/libc.so.6:0x278b9) <-- _start (fstream:886)                                                                                                                                                         #
+#################################################################################################################################################################################################################################################
+

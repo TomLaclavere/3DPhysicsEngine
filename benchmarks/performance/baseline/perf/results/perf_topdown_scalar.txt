@@ -1,0 +1,27 @@
+Solver: Verlet  n_objects=10  collisions=impulse
+  dt=5e-05  wall=3.24855 s  cpu_mean=3248550 µs  stddev=0 µs  CV=0%  step_mean=5.41413 µs  step_cv=6.43308%  steps/s=184698  GFLOP/s=0.41834  RSS=4540 kB
+
+CSV written to /home/laclavere/3DPhysicsEngine/benchmarks/performance/perf/results/csv/benchmark.csv
+
+ Performance counter stats for '/home/laclavere/3DPhysicsEngine/build/benchmark_scalar/benchmarks/Performance --solver Verlet --dt 5e-5 --dur 30 --n_warmup 1 --n_runs 1 --n_objects 10 --out /home/laclavere/3DPhysicsEngine/benchmarks/performance/perf/results/csv':
+
+   219 687 595 866      cpu_core/TOPDOWN.SLOTS/u         #      2,4 %  tma_bad_speculation    
+                                                         #     55,0 %  tma_frontend_bound     
+    92 182 638 265      cpu_core/topdown-retiring/u      #      0,8 %  tma_backend_bound      
+     5 169 119 902      cpu_core/topdown-bad-spec/u                                           
+    15 507 359 708      cpu_core/topdown-heavy-ops/u     #     41,8 %  tma_retiring           
+   121 474 317 714      cpu_core/topdown-fe-bound/u                                           
+     1 723 039 967      cpu_core/topdown-be-bound/u                                           
+     <not counted>      cpu_atom/TOPDOWN_RETIRING.ALL/u  #      nan %  tma_retiring           
+                                                         #      nan %  tma_bad_speculation      (0,00%)
+     <not counted>      cpu_atom/CPU_CLK_UNHALTED.CORE/u                                        (0,00%)
+     <not counted>      cpu_atom/TOPDOWN_FE_BOUND.ALL/u  #      nan %  tma_frontend_bound       (0,00%)
+        61 990 896      cpu_core/INT_MISC.UOP_DROPPING/u                                      
+     <not counted>      cpu_atom/TOPDOWN_BE_BOUND.ALL/u  #      nan %  tma_backend_bound        (0,00%)
+
+       9,736103275 seconds time elapsed
+
+       9,713085000 seconds user
+       0,003980000 seconds sys
+
+

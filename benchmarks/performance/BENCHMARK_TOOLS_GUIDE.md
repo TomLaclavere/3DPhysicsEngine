@@ -349,8 +349,9 @@ runs or one-off disturbances).
 
 ## 8. Workflow for an optimisation
 
-1. **Baseline.** Commit or note the current numbers (`profile.sh`, and `benchmark.sh` if the
-   change affects scaling).
+1. **Baseline.** The unoptimised engine's results are kept in [`baseline/`](baseline/README.md)
+   (tag `perf-baseline`). For later steps, commit or note the current numbers (`profile.sh`,
+   and `benchmark.sh` if the change affects scaling).
 2. **Pick the target from the report**: the largest Top-Down loss, the hottest function, the
    hottest loop with a high CQA speedup, or a per-step allocation.
 3. **Change one thing.**
@@ -392,6 +393,7 @@ benchmarks/performance/
   profiles.sh                      build profiles, CPU pinning, setup checks (shared)
   benchmark_analysis.py            figures + summary for the sweep
   profiling_analysis.py            figures + report for the profilers
+  baseline/                        reference results of the unoptimised engine (tag perf-baseline)
   perf/   profile_perf.sh,  perf.md
   maqao/  profile_maqao.sh, maqao.md
   malt/   profile_malt.sh,  malt.md

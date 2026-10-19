@@ -34,6 +34,9 @@ __pycache__/
 benchmarks/performance/maqao/results/
 benchmarks/performance/malt/results/
 
+# Reference results kept in git (see benchmarks/performance/baseline/README.md)
+!benchmarks/performance/baseline/**
+
 # Claude
 CLAUDE.md
 graphify*

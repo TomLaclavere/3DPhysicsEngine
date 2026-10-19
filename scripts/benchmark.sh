@@ -24,8 +24,9 @@ DT_MIN="1e-5"
 DT_MAX="1e-2"
 DT_N=5
 
-# Simulation parameters
-DUR="22.0"
+# Simulation parameters. The per-step cost does not depend on the simulated duration, so a
+# short one keeps the whole sweep around 40 minutes (the finest dt and N=100 dominate).
+DUR="2.0"
 N_WARMUP=1
 N_RUNS=5
 
@@ -49,18 +50,21 @@ Options:
   --dt-min VALUE     smallest timestep  (default: 1e-5)
   --dt-max VALUE     largest timestep   (default: 1e-2)
   --dt-n N           number of log-spaced dt values  (default: 5)
-  --dur VALUE        simulated duration in s  (default: 22.0)
+  --dur VALUE        simulated duration in s  (default: 2.0)
   --n-warmup N       discarded warmup runs  (default: 1)
   --n-runs N         timed runs  (default: 5)
-  --skip-build       reuse existing binaries
+  --skip-build       reuse existing binaries instead of an (incremental) rebuild
   --skip-analysis    skip the Python analysis step
   -h, --help         show this help
 
+Every run is pinned to one P-core (see benchmarks/performance/profiles.sh). With the default
+sweep, expect about 40 minutes, dominated by the scalar profile at N=100 (--dt-min 1e-4
+roughly divides that by 3).
+
 Output:
-  benchmarks/performance/results/
-    benchmark.csv              timing + FLOP/s for all (solver, dt, n_objects) combinations
-    energy_drift.csv
-    benchmark_report.pdf, plot_*.png   (from benchmark_analysis.py)
+  benchmarks/performance/results_scalar/benchmark.csv   scalar profile
+  benchmarks/performance/results/benchmark.csv          optimised profile
+  benchmarks/performance/results/plot_*.png, benchmark_report.pdf   (benchmark_analysis.py)
 
 Next steps (not run by this script):
   scripts/profile.sh                               all three below, in one command
@@ -106,9 +110,10 @@ for x in np.geomspace($DT_MIN, $DT_MAX, $DT_N):
 # Run benchmark - solver x n_objects x dt triple loop
 # =====================================================================
 run_benchmark() {
-    local profile="$1"
-    local bin
+    local profile="$1" out_dir="$2"
+    local bin cpu
     bin="$(performance_binary "$profile")"
+    cpu="$(bench_cpu)"
 
     echo ""
     echo "======================================================"
@@ -135,13 +140,14 @@ run_benchmark() {
                 $first || append_flag="--append"
                 first=false
 
-                "$bin" \
+                taskset -c "$cpu" "$bin" \
                     --solver     "$solver"   \
                     --dt         "$dt"       \
                     --dur        "$DUR"      \
                     --n_warmup   "$N_WARMUP" \
                     --n_runs     "$N_RUNS"   \
                     --n_objects  "$n_obj"    \
+                    --out        "$out_dir"  \
                     $append_flag
             done
         done
@@ -169,9 +175,7 @@ run_analysis() {
 # Orchestration
 # =====================================================================
 run_mode() {
-    local profile="$1"
-
-    mkdir -p "${RESULTS_DIR}"
+    local profile="$1" out_dir="$2"
 
     if [[ "$SKIP_BUILD" == false ]]; then
         echo ""
@@ -181,22 +185,16 @@ run_mode() {
         build_profile "$profile" "$(build_dir_for "$profile")"
     fi
 
-    run_benchmark "$profile"
-
-    # Archive scalar results before the optimised run overwrites results/
-    if [[ "$profile" == "scalar" ]]; then
-        rm -rf "${REPO}/results_scalar"
-        cp -r  "${RESULTS_DIR}" "${REPO}/results_scalar"
-        echo "Results archived -> ${REPO}/results_scalar/"
-    fi
+    run_benchmark "$profile" "$out_dir"
 }
 
 # =====================================================================
 # Main - always scalar then optimised, no --mode flag
 # =====================================================================
+check_cpu_setup
 build_dt_array
-run_mode scalar
-run_mode optimised
+run_mode scalar    "${REPO}/results_scalar"
+run_mode optimised "${RESULTS_DIR}"
 
 [[ "$SKIP_ANALYSIS" == false ]] && run_analysis
 

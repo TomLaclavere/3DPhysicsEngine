@@ -7,6 +7,7 @@
 #include "world/physicsWorld.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
@@ -65,15 +66,14 @@ long long estimateFlopsPerStep(const std::string& solver, int nObjects)
 }
 
 SimResult simulation(const std::string& solver, decimal timestep, int maxiter, int nObjects, int nWarmup,
-                     int nTimingRuns)
+                     int nTimingRuns, bool contactForces)
 {
     Config& config = Config::get();
     config.setSolver(solver);
     config.setTimeStep(timestep);
     config.setMaxIterations(maxiter);
-    config.setSimplifiedCollision(true);
+    config.setSimplifiedCollision(!contactForces);
 
-    const decimal timeStep = config.getTimeStep();
     const auto    maxIter  = static_cast<size_t>(config.getMaxIterations());
 
     SimResult              result {};
@@ -133,10 +133,7 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, i
 
         while (counter < maxIter && world.getIsRunning())
         {
-            const decimal time = static_cast<decimal>(counter) * timeStep;
-
             world.integrate();
-
             ++counter;
         }
 
@@ -152,38 +149,40 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, i
     // Separate from the timed runs: measures per-step cost distribution using
     // batch timing so that clock overhead (~50 ns/call) is negligible even at
     // fine dt (many steps). Batch size targets ~500 samples regardless of dt.
+    // Timed in nanoseconds: a step can take well under 1 µs, so whole-microsecond
+    // batch times divided by the batch size would round down to 0.
     {
-        const int              batchSize = std::max(1, maxiter / 500);
-        std::vector<long long> stepTimings;
+        using Clock                      = std::chrono::steady_clock;
+        const int            batchSize   = std::max(1, maxiter / 500);
+        std::vector<decimal> stepTimings;
         stepTimings.reserve(static_cast<size_t>((maxiter + batchSize - 1) / batchSize));
 
         PhysicsWorld world(config);
         auto [ground, spheres] = buildScene(world);
 
-        Timer  batchTimer;
         size_t counter = 0;
         while (counter < maxIter && world.getIsRunning())
         {
-            const int thisBatch = std::min(batchSize, static_cast<int>(maxIter - counter));
-            batchTimer.reset();
+            const int  thisBatch  = std::min(batchSize, static_cast<int>(maxIter - counter));
+            const auto batchStart = Clock::now();
             for (int b = 0; b < thisBatch; ++b, ++counter)
                 world.integrate();
-            const long long batchUs = batchTimer.elapsedMicroseconds();
-            stepTimings.push_back(batchUs / static_cast<long long>(thisBatch));
+            const auto batchNs = std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - batchStart);
+            stepTimings.push_back(static_cast<decimal>(batchNs.count()) * 1e-3_d / static_cast<decimal>(thisBatch));
         }
 
         world.clearObjects();
 
-        const long long ssum = std::accumulate(stepTimings.begin(), stepTimings.end(), 0LL);
-        const auto      sn   = static_cast<int>(stepTimings.size());
-        result.stepUs_mean   = static_cast<decimal>(ssum) / static_cast<decimal>(sn);
-        result.stepUs_min    = static_cast<decimal>(*std::ranges::min_element(stepTimings));
-        result.stepUs_max    = static_cast<decimal>(*std::ranges::max_element(stepTimings));
+        const decimal ssum = std::accumulate(stepTimings.begin(), stepTimings.end(), 0_d);
+        const auto    sn   = static_cast<int>(stepTimings.size());
+        result.stepUs_mean = ssum / static_cast<decimal>(sn);
+        result.stepUs_min  = *std::ranges::min_element(stepTimings);
+        result.stepUs_max  = *std::ranges::max_element(stepTimings);
 
         decimal ssq = 0_d;
-        for (const long long t : stepTimings)
+        for (const decimal t : stepTimings)
         {
-            const decimal d = static_cast<decimal>(t) - result.stepUs_mean;
+            const decimal d = t - result.stepUs_mean;
             ssq += d * d;
         }
         result.stepUs_stddev = (sn > 1) ? std::sqrt(ssq / static_cast<decimal>(sn - 1)) : 0_d;
@@ -239,6 +238,7 @@ int main(int argc, char** argv)
     int         N_WARMUP      = 1;
     int         N_RUN         = 5;
     int         nObjects      = 1;
+    std::string outputPath    = "benchmarks/performance/results";
 
     // Argument parsing
     for (int i = 1; i < argc; ++i)
@@ -259,18 +259,20 @@ int main(int argc, char** argv)
             N_RUN = std::atoi(argv[++i]);
         else if (std::strcmp(argv[i], "--n_objects") == 0 && i + 1 < argc)
             nObjects = std::atoi(argv[++i]);
+        else if (std::strcmp(argv[i], "--out") == 0 && i + 1 < argc)
+            outputPath = argv[++i];
     }
 
-    const int         maxIterations = static_cast<int>(duration / timestep);
-    const std::string outputPath    = "benchmarks/performance/results";
+    const int maxIterations = static_cast<int>(duration / timestep);
 
     // Results
     SimResult results;
 
     // Run benchmark
-    std::cout << "Solver: " << solver << "  n_objects=" << nObjects << "\n";
+    std::cout << "Solver: " << solver << "  n_objects=" << nObjects
+              << "  collisions=" << (contactForces ? "contact forces" : "impulse") << "\n";
 
-    results = simulation(solver, timestep, maxIterations, nObjects, N_WARMUP, N_RUN);
+    results = simulation(solver, timestep, maxIterations, nObjects, N_WARMUP, N_RUN, contactForces);
 
     std::cout << "  dt=" << timestep << "  wall=" << results.wallTime_s << " s"
               << "  cpu_mean=" << results.cpuUs_mean << " µs"
@@ -281,8 +283,7 @@ int main(int argc, char** argv)
               << "  steps/s=" << results.stepsPerSecond << "  GFLOP/s=" << results.gflops_per_second
               << "  RSS=" << results.peakRSS_kb << " kB\n";
 
-    // Created results directory
-    std::filesystem::create_directory(outputPath);
+    std::filesystem::create_directories(outputPath);
 
     // CSV 1: benchmark.csv
     // --append skips the header so the shell can accumulate rows across invocations.
@@ -313,21 +314,6 @@ int main(int argc, char** argv)
              << "," << r.stepUs_stddev << "," << r.stepUs_cv << "," << r.peakRSS_kb << "\n";
     }
 
-    // CSV 2: energy_drift.csv
-    // Columns: solver, dt, time, energy_drift
-
-    {
-        std::ofstream file(outputPath + "/energy_drift.csv");
-        if (!file)
-        {
-            std::cerr << "Cannot open energy_drift.csv\n";
-            return 1;
-        }
-
-        file << "solver,dt,time\n";
-        file << solver << "," << timestep << "\n";
-    }
-
-    std::cout << "\nCSV files written to " << outputPath << "\n";
+    std::cout << "\nCSV written to " << outputPath << "/benchmark.csv\n";
     return 0;
 }

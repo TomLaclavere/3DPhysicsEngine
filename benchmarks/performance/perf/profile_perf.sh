@@ -5,12 +5,9 @@ set -euo pipefail
 #
 # Runs perf stat (grouped events, repeated) + a Top-Down pass + perf record/flamegraph
 # against benchmarks/Performance at one fixed (solver, dt, n_objects), for one or both
-# build profiles (scalar/optimised). Deliberately NOT the full solver x N x dt sweep -
-# see benchmarks/performance/BENCHMARK_TOOLS_GUIDE.md Part 0.4 for why.
-#
-# Read benchmarks/performance/BENCHMARK_TOOLS_GUIDE.md Part 1 first if you haven't - this
-# script assumes you already understand what each flag/metric below is for. This directory's
-# perf.md is the quick tool-specific reference once you have.
+# build profiles (scalar/optimised). Deliberately NOT the full solver x N x dt sweep - that is
+# scripts/benchmark.sh's job. See benchmarks/performance/BENCHMARK_TOOLS_GUIDE.md for what each
+# metric means and perf/perf.md for the tool reference.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
@@ -18,21 +15,18 @@ ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 # shellcheck source=../profiles.sh
 source "$ROOT/benchmarks/performance/profiles.sh"
 
-# benchmark.cpp hardcodes its CSV output path as the *relative* string
-# "benchmarks/performance/results" — everything below must run with cwd == repo root or the
-# binary crashes trying to create that path (found while testing profile_maqao.sh/malt.sh).
 cd "$ROOT"
 
 RESULTS_DIR="$SCRIPT_DIR/results"
 
-# Representative, fixed workload (override via flags below). dt/dur are deliberately much
-# finer/longer than the CLI defaults' 1e-3/2.0 (2 000 steps, ~150us) - perf record needs
-# enough wall-clock time to collect a meaningful number of samples at 999 Hz; ~600 000 steps
-# gives tens of milliseconds even at n_objects=1.
+# Representative, fixed workload (override via flags below), shared with MAQAO and MALT.
+# 600 000 steps of 10 objects: long enough for the sampling tools (perf record, Lprof) to
+# collect ~1 000+ samples per run, and 10 objects exercise the object-object collision path
+# that a single sphere never reaches.
 SOLVER="Verlet"
 DT="5e-5"
 DUR="30"
-N_OBJECTS=1
+N_OBJECTS=10
 
 PROFILES=("scalar" "optimised")
 REPEAT=5           # perf stat -r: repeat N times, report mean +- stddev
@@ -53,23 +47,23 @@ Options:
   --solver NAME      solver for the representative run   (default: Verlet)
   --dt VALUE         timestep for the representative run  (default: 5e-5)
   --dur VALUE        simulated duration in s               (default: 30)
-  --n-objects N      object count for the representative run (default: 1)
+  --n-objects N      object count for the representative run (default: 10)
   --repeat N         perf stat repeat count (-r)          (default: 5)
   --freq N           perf record sampling frequency (Hz)  (default: 999)
   --fp               use frame-pointer call graph instead of dwarf (faster, shallower)
-  --skip-build       reuse existing binaries (fail if missing)
+  --skip-build       reuse existing binaries instead of an (incremental) rebuild
   --skip-record      skip perf record / flamegraph, only run perf stat
   -h, --help         show this help
 
 Output: benchmarks/performance/perf/results/
   perf_stat_<profile>.txt       grouped hardware counters, repeated (-r)
   perf_topdown_<profile>.txt    Top-Down microarchitecture breakdown
+  perf_report_<profile>.txt     hottest functions by self time (perf report)
   perf_<profile>.data/.script   raw perf record data + resolved call stacks
   flame_<profile>.svg           flamegraph (if stackcollapse-perf.pl/flamegraph.pl on PATH)
+  csv/                          the benchmark binary's own CSV for these runs
 
-Note: benchmarks/Performance always writes/appends to benchmarks/performance/results/
-benchmark.csv (hardcoded in benchmark.cpp) and truncates energy_drift.csv on every
-invocation - running this script adds a harmless extra row to the shared sweep CSV.
+Plot the results with: python3 benchmarks/performance/profiling_analysis.py
 EOF
 }
 
@@ -133,15 +127,16 @@ fi
 # process didn't run on reports <not counted>/<not supported> for every line, which is noise,
 # not a real problem - but on some CPU generations (this one included) it also means the
 # legacy stalled-cycles-frontend/backend aliases aren't supported on either PMU at all (see
-# the stall-event probe below; Top-Down supersedes them anyway). Pinning to one P-core and
-# qualifying every event with cpu_core/.../ keeps the report to one PMU's real numbers.
+# the stall-event probe below; Top-Down supersedes them anyway). Pinning to one P-core
+# (bench_cpu, profiles.sh) and qualifying every event with cpu_core/.../ keeps the report to
+# one PMU's real numbers.
 # =====================================================================
+check_cpu_setup
+PIN_CORE="$(bench_cpu)"
 PMU_PREFIX=""
-PIN_CORE=0
 if [[ -d /sys/devices/cpu_core ]]; then
     PMU_PREFIX="cpu_core/"
-    PIN_CORE="$(cut -d- -f1 /sys/devices/cpu_core/cpus)"
-    echo "[perf] Hybrid CPU detected (cpu_core + cpu_atom) - pinning to core ${PIN_CORE} (a P-core)"
+    echo "[perf] Hybrid CPU detected (cpu_core + cpu_atom) - events qualified as cpu_core/<event>/"
 fi
 
 qevt() {  # qualify a bare event name for the detected PMU, e.g. cycles -> cpu_core/cycles/
@@ -171,24 +166,24 @@ else
 fi
 
 mkdir -p "$RESULTS_DIR"
+CSV_DIR="$RESULTS_DIR/csv"
 
 # =====================================================================
-# Build (if needed)
+# Build (incremental, so the binary always matches the current code)
 # =====================================================================
 ensure_binary() {
     local profile="$1" bin
     bin="$(performance_binary "$profile")"
-    if [[ ! -x "$bin" ]]; then
-        if [[ "$SKIP_BUILD" == true ]]; then
-            echo "Error: binary not found: ${bin} (and --skip-build was given)" >&2
-            exit 1
-        fi
-        echo ""
-        echo "======================================================"
-        echo " Build - profile: ${profile}"
-        echo "======================================================"
-        build_profile "$profile" "$(build_dir_for "$profile")"
+    if [[ "$SKIP_BUILD" == true ]]; then
+        [[ -x "$bin" ]] || { echo "Error: binary not found: ${bin} (and --skip-build was given)" >&2; exit 1; }
+        return
     fi
+    echo ""
+    echo "======================================================"
+    echo " Build - profile: ${profile}"
+    echo "======================================================"
+    build_profile "$profile" "$(build_dir_for "$profile")" > "${RESULTS_DIR}/build_${profile}.log" 2>&1 \
+        || { echo "Build failed - see ${RESULTS_DIR}/build_${profile}.log" >&2; exit 1; }
 }
 
 # =====================================================================
@@ -213,7 +208,7 @@ run_perf_stat() {
 
     if ! pinned perf stat -r "$REPEAT" "${stat_args[@]}" -- \
             "$bin" --solver "$SOLVER" --dt "$DT" --dur "$DUR" \
-                   --n_warmup 1 --n_runs 1 --n_objects "$N_OBJECTS" --append \
+                   --n_warmup 1 --n_runs 1 --n_objects "$N_OBJECTS" --out "$CSV_DIR" \
             > "$out" 2>&1
     then
         echo "perf stat failed - see ${out}" >&2
@@ -223,10 +218,10 @@ run_perf_stat() {
     echo "  -> ${out}"
 
     # Top-Down uses its own internal counter grouping - run as a separate pass rather than
-    # mixed into the -e list above (see BENCHMARK_TOOLS_GUIDE.md §1.5).
+    # mixed into the -e list above (multiplexing would make the numbers estimates again).
     if ! pinned perf stat -M TopdownL1 -- \
             "$bin" --solver "$SOLVER" --dt "$DT" --dur "$DUR" \
-                   --n_warmup 1 --n_runs 1 --n_objects "$N_OBJECTS" --append \
+                   --n_warmup 1 --n_runs 1 --n_objects "$N_OBJECTS" --out "$CSV_DIR" \
             > "$topdown_out" 2>&1
     then
         echo "Top-Down pass failed - see ${topdown_out}" >&2
@@ -252,11 +247,14 @@ run_perf_record() {
 
     pinned perf record -F "$FREQ" -g --call-graph "$CALL_GRAPH" -o "$data" -- \
         "$bin" --solver "$SOLVER" --dt "$DT" --dur "$DUR" \
-               --n_warmup 1 --n_runs 1 --n_objects "$N_OBJECTS" --append
+               --n_warmup 1 --n_runs 1 --n_objects "$N_OBJECTS" --out "$CSV_DIR"
 
-    perf script -i "$data" > "$script_out"
+    perf script -i "$data" > "$script_out" 2>/dev/null
+    perf report -i "$data" --stdio --no-children -g none --sort symbol --percent-limit 0.5 \
+        > "${RESULTS_DIR}/perf_report_${profile}.txt" 2>/dev/null
     echo "  -> ${data}"
     echo "  -> ${script_out}"
+    echo "  -> ${RESULTS_DIR}/perf_report_${profile}.txt"
 
     local stackcollapse flamegraph_bin
     stackcollapse=$(command -v stackcollapse-perf.pl || true)
@@ -279,7 +277,4 @@ for profile in "${PROFILES[@]}"; do
 done
 
 echo ""
-echo "Done."
-if [[ "${#PROFILES[@]}" -eq 2 ]]; then
-    echo "Compare profiles: diff ${RESULTS_DIR}/perf_stat_scalar.txt ${RESULTS_DIR}/perf_stat_optimised.txt"
-fi
+echo "Done. Plot the results with: python3 benchmarks/performance/profiling_analysis.py"

@@ -10,14 +10,14 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
     - [x] add loop over timestep in script
     - [x] add MFLOP/s with perf
 
-- [ ] Benchmark :
-    - [ ] Correct benchmark process
-        - [ ] Lot of misses
-        - [ ] Inconsistent results / bad stability
-        - [ ] Analyse results
-    - [ ] Profiling
-        - [ ] Maqao
-        - [ ] Malt
+- [x] Benchmark :
+    - [x] Correct benchmark process
+        - [x] Lot of misses (high LLC miss *rate* on very few accesses; misses per 1000 instructions are negligible)
+        - [x] Inconsistent results / bad stability (runs pinned to a P-core; CMake cache reset that silently unoptimised both profiles fixed; step timing no longer rounded to 0)
+        - [x] Analyse results (baseline in `benchmarks/performance/BENCHMARK_TOOLS_GUIDE.md` §7)
+    - [x] Profiling
+        - [x] Maqao
+        - [x] Malt
 
 
 

@@ -416,8 +416,14 @@ scripts/
 ├─ run.sh          # build (if needed) and run the executable
 ├─ tests.sh        # build (if needed) and run tests via CTest
 ├─ coverage.sh     # build and generate coverage (HTML or console)
-└─ clean.sh        # remove the build directory
+├─ clean.sh        # remove the build directory
+├─ benchmark.sh    # performance sweep (solver × N × dt) + plots
+├─ profile.sh      # perf + MAQAO + MALT profiling + report
+└─ full_report.sh  # benchmark.sh then profile.sh
 ```
+
+Benchmarking and profiling are documented in
+[`benchmarks/performance/BENCHMARK_TOOLS_GUIDE.md`](benchmarks/performance/BENCHMARK_TOOLS_GUIDE.md).
 
 These scripts are CI-friendly and accept arguments and environment variables. See `scripts/USAGE.md` for the full option reference.
 

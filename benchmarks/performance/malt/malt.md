@@ -1,123 +1,72 @@
-# MALT - tool-specific reference
+# MALT - reference
 
-Quick reference for `benchmarks/performance/malt/profile_malt.sh`. Read
-[`BENCHMARK_TOOLS_GUIDE.md`](../BENCHMARK_TOOLS_GUIDE.md) Part 3 first if you haven't - it
-explains *why* MALT exists (exact allocation interception vs perf's sampling) and how to read
-its metrics; this page is the command/output reference once you already know that.
+Reference for [`profile_malt.sh`](profile_malt.sh) (verified with MALT 1.6.3). What MALT measures
+and why the pipeline uses it:
+[guide §5.3](../BENCHMARK_TOOLS_GUIDE.md#53-malt---does-the-code-allocate).
+Install: [`README.md`](../README.md#malt).
 
-**Status:** verified — run end to end on this machine (MALT 1.6.3, from-source install to
-`/usr/local`), real output in the worked example below.
-
-## Install (from source — no package on Ubuntu/Debian or AUR)
-
-Confirmed: no AUR package exists (`yay -Ss malt`/`memtt` turn up nothing relevant — the only
-AUR `malt` is an unrelated freelance-platform desktop app). Build dependencies for both
-distros verified against MALT's own docs / this machine's package repos:
-
-```bash
-# Arch (this machine) — everything below is in core/extra, no AUR needed:
-sudo pacman -S --needed base-devel cmake gcc make openssl libunwind elfutils \
-                         nodejs npm nlohmann-json graphviz python curl
-
-# Ubuntu/Debian:
-sudo apt install cmake g++ make libssl-dev libunwind-dev libelf-dev nodejs npm \
-                  nlohmann-json3-dev graphviz python3-dev curl
-
-git clone https://github.com/memtt/malt.git
-cd malt && mkdir build && cd build
-../configure --prefix=/usr/local
-make
-sudo make install
-```
-
-**macOS: not supported.** MALT's dependencies page only documents Debian/Ubuntu, Fedora/
-Rocky, Arch, and Gentoo — no macOS/Homebrew instructions exist. It relies on `libelf` and
-`libunwind` for symbol resolution, both built around the ELF binary format macOS doesn't use
-(Mach-O), so a from-source build wouldn't be a small config tweak even if attempted.
-
-This installs a `malt` command (and `malt-webview`) onto `PATH` — no manual `LD_PRELOAD`
-needed, `malt` sets that up internally. Confirm the install worked:
-
-```bash
-malt --version
-```
-
-**Gotcha hit on this machine:** `malt` itself worked immediately, but `malt-webview` failed
-with `error while loading shared libraries: libmalt-reader.so.1: cannot open shared object
-file` — installing to `/usr/local` doesn't automatically get picked up by the dynamic linker
-until its cache is refreshed:
-
-```bash
-sudo ldconfig
-# or, without root, just for one invocation:
-LD_LIBRARY_PATH=/usr/local/lib malt-webview ...
-```
-
-## Quick reference (once installed)
+## Commands
 
 | Goal | Command |
 |------|---------|
-| Run | `./benchmarks/performance/malt/profile_malt.sh` |
-| Reuse existing binary | `... --skip-build` |
-| Different representative workload | `... --solver RK4 --n-objects 20` |
+| Default run (optimised profile) | `./benchmarks/performance/malt/profile_malt.sh` |
+| Another workload | `./benchmarks/performance/malt/profile_malt.sh --n-objects 100` |
+| Interactive viewer | `malt-webview benchmarks/performance/malt/results/malt_optimised/malt-Performance-*.json` |
 
-Only the **optimised** profile is run by default — see the guide §3.5 for why (allocation
-behaviour doesn't change between build profiles, only the arithmetic around it does).
+## What the script does
 
-## What the script produces
+1. Builds the optimised profile incrementally and checks its configuration. One profile is
+   enough: compiler flags do not change which allocations the source code makes
+   (`--profile scalar` remains available).
+2. Runs `malt <binary> <workload>`. The `malt` wrapper preloads MALT's library, which
+   intercepts every `malloc`/`free`/`new`/`delete`, records size, call stack and time, then
+   forwards the call to the real allocator.
+3. Moves the report (`malt-Performance-<pid>.json`, written in the working directory) into
+   `malt/results/malt_<profile>/`, replacing the previous one.
 
-```text
-benchmarks/performance/malt/results/
-  malt_optimised/
-    malt-Performance-<pid>.json   MALT's report, default naming
-```
+## Outputs (`malt/results/`)
 
-```bash
-malt-webview benchmarks/performance/malt/results/malt_optimised/malt-Performance-*.json
-```
+| Path | Content |
+|---|---|
+| `malt_<profile>/malt-Performance-<pid>.json` | Full report |
+| `build_<profile>.log`, `csv/` | Build log; the benchmark binary's CSV for this run |
+
+`profiling_analysis.py` reads the JSON (`stacks.stats`, `memStats.sizeMap`,
+`timeline.memoryTimeline`, `sites` for symbol names) into `fig_malt_sites.png` and
+`fig_malt_timeline.png`.
 
 ## Reading the report
 
-Per the guide §3.4:
+| Look at | Healthy | Suspicious |
+|---|---|---|
+| Allocations per step (total allocations ÷ integration steps) | ~0 in a steady-state time loop | Any steady per-step count: temporaries rebuilt every step |
+| Size histogram | Spread, few counts | One size repeated millions of times: a buffer to reuse, or a pool |
+| Heap over time | Flat | Rising: a container that keeps growing |
+| Reallocations | Few | Many on one site: a `std::vector` growing without `reserve` |
+| Blocks left at exit | A handful (static objects) | Growing with the run length: a leak |
 
-| Field | What to check |
-|---|---|
-| Peak / live memory over time | Does the peak happen during one-time scene construction, or does memory keep climbing during the simulation loop itself (the latter would be a real problem)? |
-| Allocation count + call-stack | Which function allocates, how many times. Much more than the object count for a fixed-size scene is suspicious - something inside the per-step loop is allocating. |
-| Allocation size histogram | Repeated same-size allocations are a pool/arena-allocator candidate - relevant once the SoA/data-layout roadmap item touches object storage. |
-| Realloc count | A growing container (e.g. a contact list) reallocating every few steps shows up here independent of raw allocation count. |
-| Leak count | Free sanity check, not a performance metric. |
+Symbol names come from MALT's own resolution, which names a frame after the innermost
+*inlined* function; an inlined `std::vector` allocation can therefore appear under the wrong
+caller. Cross-check with Lprof's `functions.txt` (call chain of `operator new`) or the perf
+hotspots, as the report does.
 
-Cross-check the peak-memory number against `peak_rss_kb` in
-[`benchmarks/performance/README.md`](../README.md#memory) for the same configuration - they
-measure related but different things (RSS vs tracked heap allocations); a large mismatch
-would point at non-heap memory use MALT isn't the right tool to explain.
+## Current numbers
 
-## Worked example (this machine, default workload, optimised profile)
-
-Real numbers, computed from the report's `stacks.stats` array (`--solver Verlet --dt 5e-5
---dur 30 --n_objects 1`, 600 000 integration steps):
+Default workload (`--dt 5e-5 --dur 30 --n-objects 10`: 1.8 million integration steps over the
+binary's 3 passes), 2026-10-19:
 
 | Metric | Value |
 |---|---|
-| Total allocations | 3,600,076 |
-| Total frees | 3,600,068 |
-| Net (leaked) | 8 — matches the report's own `leaks` count exactly |
-| Unique call-stacks that allocate | 62 |
-| Top allocation sites | Two sites × 1,200,000 allocations of 48 bytes each; two more × 600,000 allocations of 48 bytes each |
+| Heap allocations | 3 600 068, i.e. **2 per step** |
+| Dominant size | 264 B (3 600 000 allocations) = 11 × `Vector3D` (24 B), one per object incl. the plane |
+| Origin | `std::vector<Vector3D>` buffers `prevAcc` / `nextAcc` in `PhysicsWorld::integrateVerlet` (`src/world/physicsWorld.cpp:283`, `:302`) |
+| Peak heap in use | 84 KiB, flat over the run |
+| Blocks left at exit | 8 |
 
-**This is a real, actionable finding**: with `--n_objects 1` you'd hope for zero *per-step*
-heap allocation in a steady-state simulation loop — instead there are sites firing exactly
-2x and 1x per step (1,200,000 / 600,000 steps = 2 and 1) at a fixed 48-byte size, all through
-600,000 steps. That fixed size and the exact per-step multiplier is the "candidate for a
-pool/arena allocator" pattern the guide's §3.4 describes, not a guess — next step is
-resolving which call site that is via `malt-webview` (this raw-JSON extraction doesn't
-resolve symbols; the webview's JS-side symbolication does) and checking whether it's fixable
-before or alongside the Phase 6 SoA work.
+Interpretation: [guide §7](../BENCHMARK_TOOLS_GUIDE.md#7-current-baseline).
 
-Cross-checked against `peak_rss_kb` from the same run in `benchmark.csv`: MALT's tracked
-peak physical memory was 16,065 kB, `peak_rss_kb` (via `getrusage`) was 15,692 kB — 2.4%
-apart, close enough to confirm both are measuring essentially the same thing at this scale.
-Worth re-running at `--n-objects 100`+ to see whether that gap grows (it would, if
-significant non-heap memory — stack, mapped files — started to dominate; MALT wouldn't be
-the right tool to explain that).
+## Pitfalls
+
+- MALT slows allocation-heavy programs down; keep the workload modest (counts scale linearly
+  with the number of steps, the per-step pattern is what matters).
+- `malt-webview` failing with `libmalt-reader.so.1`: run `sudo ldconfig` once after install.

@@ -6,15 +6,11 @@ set -euo pipefail
 # Unlike perf/MAQAO, this only needs to run once, against the optimised profile — allocation
 # *behaviour* doesn't change between build profiles (same new/push_back call sites either
 # way; only how the arithmetic around them is compiled changes). See
-# benchmarks/performance/BENCHMARK_TOOLS_GUIDE.md §3.5 for why.
-#
-# Read BENCHMARK_TOOLS_GUIDE.md Part 3 first — this script assumes you already understand
-# what MALT measures and why. malt/malt.md is the tool-specific quick reference once you do.
+# benchmarks/performance/BENCHMARK_TOOLS_GUIDE.md for what MALT measures and malt/malt.md for
+# the tool reference.
 #
 # Uses the `malt` command — a wrapper MALT installs that preloads its allocation-tracking
-# library internally, confirmed against MALT's official README (github.com/memtt/malt) —
-# rather than a raw manual LD_PRELOAD. Still not run for real in this repo (MALT isn't
-# installed here), so double-check `malt --help` on your build if anything below errors.
+# library internally — rather than a raw manual LD_PRELOAD.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
@@ -22,10 +18,6 @@ ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 # shellcheck source=../profiles.sh
 source "$ROOT/benchmarks/performance/profiles.sh"
 
-# benchmark.cpp hardcodes its CSV output path as the *relative* string
-# "benchmarks/performance/results" — everything below must run with cwd == repo root or the
-# binary crashes trying to create that path (confirmed while testing this script's earlier
-# `cd "$out"` approach against a real maqao run hitting the same issue).
 cd "$ROOT"
 
 RESULTS_DIR="$SCRIPT_DIR/results"
@@ -35,7 +27,7 @@ RESULTS_DIR="$SCRIPT_DIR/results"
 SOLVER="Verlet"
 DT="5e-5"
 DUR="30"
-N_OBJECTS=1
+N_OBJECTS=10
 PROFILE="optimised"   # see the header comment: MALT only needs one profile, not both
 
 SKIP_BUILD=false
@@ -52,8 +44,8 @@ Options:
   --solver NAME      solver for the representative run   (default: Verlet)
   --dt VALUE         timestep for the representative run  (default: 5e-5)
   --dur VALUE        simulated duration in s               (default: 30)
-  --n-objects N      object count for the representative run (default: 1)
-  --skip-build       reuse existing binary (fail if missing)
+  --n-objects N      object count for the representative run (default: 10)
+  --skip-build       reuse the existing binary instead of an (incremental) rebuild
   -h, --help         show this help
 
 Requires MALT installed (`malt` on PATH) — see malt/malt.md's Install section, no package
@@ -61,10 +53,9 @@ for most distros, needs a from-source build.
 
 Output: benchmarks/performance/malt/results/malt_<profile>/
   malt-Performance-<pid>.json   MALT's report, default naming
+  csv/                          the benchmark binary's own CSV for this run
 
-Note: benchmarks/Performance always writes/appends to benchmarks/performance/results/
-benchmark.csv (hardcoded in benchmark.cpp) and truncates energy_drift.csv on every
-invocation — running this script adds a harmless extra row to the shared sweep CSV.
+Plot the results with: python3 benchmarks/performance/profiling_analysis.py
 EOF
 }
 
@@ -114,6 +105,7 @@ EOF
 }
 
 mkdir -p "$RESULTS_DIR"
+CSV_DIR="$RESULTS_DIR/csv"
 
 # =====================================================================
 # Build (if needed)
@@ -121,17 +113,16 @@ mkdir -p "$RESULTS_DIR"
 ensure_binary() {
     local profile="$1" bin
     bin="$(performance_binary "$profile")"
-    if [[ ! -x "$bin" ]]; then
-        if [[ "$SKIP_BUILD" == true ]]; then
-            echo "Error: binary not found: ${bin} (and --skip-build was given)" >&2
-            exit 1
-        fi
-        echo ""
-        echo "======================================================"
-        echo " Build — profile: ${profile}"
-        echo "======================================================"
-        build_profile "$profile" "$(build_dir_for "$profile")"
+    if [[ "$SKIP_BUILD" == true ]]; then
+        [[ -x "$bin" ]] || { echo "Error: binary not found: ${bin} (and --skip-build was given)" >&2; exit 1; }
+        return
     fi
+    echo ""
+    echo "======================================================"
+    echo " Build — profile: ${profile}"
+    echo "======================================================"
+    build_profile "$profile" "$(build_dir_for "$profile")" > "${RESULTS_DIR}/build_${profile}.log" 2>&1 \
+        || { echo "Build failed — see ${RESULTS_DIR}/build_${profile}.log" >&2; exit 1; }
 }
 
 # =====================================================================
@@ -147,14 +138,15 @@ run_malt() {
     echo "[malt] profile=${profile} solver=${SOLVER} dt=${DT} n_objects=${N_OBJECTS}"
 
     # `malt <program> [args...]` — args after the binary path are forwarded straight through
-    # to it (matching MALT's documented `malt {YOUR_PROGRAM} [OPTIONS]`). Must run from $ROOT
-    # (see header note), so the report (malt-Performance-<pid>.json, dropped in cwd by
-    # default) lands in $ROOT too — relocate it into `out` afterward. `-newer "$marker"` scopes
-    # the move to files this run actually created, not stale reports from an earlier run.
+    # to it. MALT drops its report (malt-Performance-<pid>.json) in the current directory,
+    # $ROOT — relocate it into `out` afterward. `-newer "$marker"` scopes the move to files
+    # this run actually created, not stale reports from an earlier run. Older reports in `out`
+    # are removed first so the plotting script always reads this run's report.
+    rm -f "${out}"/malt-Performance-*.json
     marker="$(mktemp)"
     malt "$bin" \
         --solver "$SOLVER" --dt "$DT" --dur "$DUR" \
-        --n_warmup 1 --n_runs 1 --n_objects "$N_OBJECTS" --append
+        --n_warmup 1 --n_runs 1 --n_objects "$N_OBJECTS" --out "$CSV_DIR"
     find "$ROOT" -maxdepth 1 -name 'malt-Performance-*.json' -newer "$marker" -exec mv -t "$out" {} +
     rm -f "$marker"
     echo "  -> ${out}/"
@@ -164,7 +156,8 @@ ensure_binary "$PROFILE"
 run_malt "$PROFILE"
 
 echo ""
-echo "Done. View with:"
+echo "Done. Plot the results with: python3 benchmarks/performance/profiling_analysis.py"
+echo "Interactive view:"
 echo "  malt-webview ${RESULTS_DIR}/malt_${PROFILE}/malt-Performance-*.json"
 echo "(if that fails with 'cannot open shared object file: libmalt-reader.so.1', run"
 echo " 'sudo ldconfig' once after install, or prefix the command with LD_LIBRARY_PATH=/usr/local/lib)"

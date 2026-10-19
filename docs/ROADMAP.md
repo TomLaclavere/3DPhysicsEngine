@@ -134,21 +134,32 @@ See [`docs/benchmark.md`](benchmark.md) for more details.
 
 - [x] **Brainstorm on ROADMAP**
 - [x] **Brainstorm on To-Do-List**
-- [ ] **Tools implementation:**
+- [x] **Tools implementation:** (see `benchmarks/performance/BENCHMARK_TOOLS_GUIDE.md`)
   - [x] Reproducible benchmark simulation script
     - [x] Simulation code (similar than examples)
     - [x] Recompilation with proper flags (compiler optimisation, release build, precision, ...)
     - [x] Benchmark parameters (Number of Simulation, Number of objects, timestep, integrator, ...)
     - [x] Saving tools
-  - [ ] **Analysis tools wrappers :**
+  - [x] **Analysis tools wrappers :**
     - [x] perf
-    - [ ] malt
-    - [ ] maqao
-  - [ ] Plotting tools
-- [ ] **Reference bencharks:**
-  - [ ] Scalar reference case
-  - [ ] Compiler-optimised single-core
+    - [x] malt
+    - [x] maqao
+  - [x] Plotting tools
+- [x] **Reference bencharks:**
+  - [x] Scalar reference case
+  - [x] Compiler-optimised single-core
 - [ ] **Add GitHub flag to keep the current status of software as reference**
+- [ ] **Optimisation workflow:**
+  - [ ] Version comparison tool: build two git versions and run the same benchmark on both
+  - [ ] Physics fingerprint in the benchmark output (final state checksum), to check two versions simulate the same thing
+  - [ ] Performance log (`docs/performance_log.md`): one line per optimisation - before, after, gain, commit
+  - [ ] Rule: one optimisation per branch, physics tests green, re-measure with the same scripts
+- [ ] **Quick wins (from the baseline profile):**
+  - [ ] Remove the per-step heap allocations (`prevAcc` / `nextAcc` in `PhysicsWorld::integrateVerlet`; check Euler and RK4)
+  - [ ] Let small accessors inline (`Sphere::getRadius`, `getCenter`, `Object::getPosition`): move them to headers or enable LTO (`-flto`)
+- [ ] **Broad-phase acceleration** *(algorithmic: O(N²) → ~O(N), largest gain at large N)*:
+  - [ ] Uniform spatial grid or sweep-and-prune instead of testing every pair
+  - [ ] Extend the benchmark sweep to N = 10³ - 10⁴
 - [ ] **Data layout optimisation:**
   - [ ] Evaluate SoA vs AoS based on memory access patterns and SIMD efficiency
   - [ ] Optimise memory layout if SoA improves cache efficiency
@@ -158,6 +169,7 @@ See [`docs/benchmark.md`](benchmark.md) for more details.
   - [ ] Manual intrinsics if auto-vectorisation is insufficient (Eve ?)
 - [ ] **OpenMP Parallelisation:**
   - [ ] OpenMP / TBB
+  - [ ] Add a thread-count dimension to the benchmark (`--threads`, `OMP_NUM_THREADS`, `OMP_PLACES=cores`, `OMP_PROC_BIND=close`): P-cores first, then hyper-threading and E-cores measured separately
   - [ ] Parallelise force computation loop over objects
   - [ ] Parallelise broad-phase pair checks
   - [ ] Handle thread safety for shared state (contact list, Config)

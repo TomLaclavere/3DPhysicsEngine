@@ -4,23 +4,18 @@ set -euo pipefail
 # maqao/profile_maqao.sh — vectorisation (CQA) + dynamic hotspot (Lprof) + combined report
 # (ONE-View) for one representative workload, against one or both build profiles.
 #
-# Read benchmarks/performance/BENCHMARK_TOOLS_GUIDE.md Part 2 first — this script assumes you
-# already understand what CQA/Lprof measure and why. maqao/maqao.md is the tool-specific quick
-# reference once you do.
+# See benchmarks/performance/BENCHMARK_TOOLS_GUIDE.md for what CQA/Lprof measure and why, and
+# maqao/maqao.md for the tool reference.
 #
-# Verified against a real MAQAO 2025.1.0 install on this machine (all three commands run
-# successfully end to end) — see maqao/maqao.md's worked example for real output. Two things
-# that don't match what you'd guess from the module names:
+# Verified against MAQAO 2025.1.0 (all three commands run end to end). Two things that don't
+# match what you'd guess from the module names:
 #   - There is no standalone "roofline" module in this MAQAO version (`maqao --list-modules`
 #     only lists analyze/cqa/lprof/madras/oneview). The "% of peak FLOP/cycle" number CQA
 #     reports per loop, next to Lprof's dynamic throughput, is the roofline-relevant data —
 #     ONE-View (`oneview -R1`) is the closest thing to a combined dashboard, not a dedicated
 #     roofline chart.
-#   - Every maqao invocation below MUST run with the repo root as the working directory:
-#     benchmark.cpp hardcodes its CSV output path as the *relative* string
-#     "benchmarks/performance/results", so if MAQAO (or anything else) changes directory
-#     before running the binary, it crashes with a filesystem error. This bit both this
-#     script and profile_malt.sh during testing — fixed here with an explicit `cd "$ROOT"`.
+#   - The binary is always given an absolute --out directory, so its CSV lands in this
+#     script's results/ whatever directory MAQAO runs it from.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
@@ -31,11 +26,11 @@ source "$ROOT/benchmarks/performance/profiles.sh"
 RESULTS_DIR="$SCRIPT_DIR/results"
 
 # Same representative workload as perf/profile_perf.sh — keep these in sync so perf and MAQAO
-# reports describe the same run (see BENCHMARK_TOOLS_GUIDE.md §0.4).
+# reports describe the same run.
 SOLVER="Verlet"
 DT="5e-5"
 DUR="30"
-N_OBJECTS=1
+N_OBJECTS=10
 
 # Lua-pattern function filter for CQA (comma-separated = OR, not regex alternation — MAQAO's
 # own convention, see `maqao cqa --help`). Scoped to this project's own code so the report
@@ -61,11 +56,11 @@ Options:
   --solver NAME      solver for the representative run   (default: Verlet)
   --dt VALUE         timestep for the representative run  (default: 5e-5)
   --dur VALUE        simulated duration in s               (default: 30)
-  --n-objects N      object count for the representative run (default: 1)
+  --n-objects N      object count for the representative run (default: 10)
   --cqa-functions P  Lua-pattern function filter for CQA, comma-separated for OR
                      (default: "PhysicsWorld,NarrowCollision,BroadCollision,Sphere,Plane,
                      Vector3D,simulation"; use ".*" to analyse every function in the binary)
-  --skip-build       reuse existing binaries (fail if missing)
+  --skip-build       reuse existing binaries instead of an (incremental) rebuild
   --skip-cqa         skip the static CQA pass
   --skip-lprof       skip the dynamic Lprof pass
   --skip-oneview     skip the ONE-View combined-report pass
@@ -75,11 +70,9 @@ Output: benchmarks/performance/maqao/results/
   cqa_<profile>/cqa.txt     CQA static loop analysis (vectorisation ratio, VER, bottleneck)
   lprof_<profile>/          Lprof dynamic hotspot profile (functions.txt, loops.txt)
   oneview_<profile>/        ONE-View combined HTML report (RESULTS/Performance_one_html/index.html)
+  csv/                      the benchmark binary's own CSV for these runs
 
-Note: benchmarks/Performance always writes/appends to benchmarks/performance/results/
-benchmark.csv (hardcoded in benchmark.cpp) and truncates energy_drift.csv on every
-invocation — running this script (via Lprof/ONE-View, which execute the binary) adds a
-harmless extra row to the shared sweep CSV.
+Plot the results with: python3 benchmarks/performance/profiling_analysis.py
 EOF
 }
 
@@ -132,9 +125,10 @@ EOF
 }
 
 mkdir -p "$RESULTS_DIR"
-
-# All maqao invocations below need cwd == repo root — see the header note.
+CSV_DIR="$RESULTS_DIR/csv"
 cd "$ROOT"
+check_cpu_setup
+PIN_CORE="$(bench_cpu)"
 
 # =====================================================================
 # Build (if needed)
@@ -142,17 +136,16 @@ cd "$ROOT"
 ensure_binary() {
     local profile="$1" bin
     bin="$(performance_binary "$profile")"
-    if [[ ! -x "$bin" ]]; then
-        if [[ "$SKIP_BUILD" == true ]]; then
-            echo "Error: binary not found: ${bin} (and --skip-build was given)" >&2
-            exit 1
-        fi
-        echo ""
-        echo "======================================================"
-        echo " Build — profile: ${profile}"
-        echo "======================================================"
-        build_profile "$profile" "$(build_dir_for "$profile")"
+    if [[ "$SKIP_BUILD" == true ]]; then
+        [[ -x "$bin" ]] || { echo "Error: binary not found: ${bin} (and --skip-build was given)" >&2; exit 1; }
+        return
     fi
+    echo ""
+    echo "======================================================"
+    echo " Build — profile: ${profile}"
+    echo "======================================================"
+    build_profile "$profile" "$(build_dir_for "$profile")" > "${RESULTS_DIR}/build_${profile}.log" 2>&1 \
+        || { echo "Build failed — see ${RESULTS_DIR}/build_${profile}.log" >&2; exit 1; }
 }
 
 # =====================================================================
@@ -184,9 +177,9 @@ run_lprof() {
 
     echo ""
     echo "[maqao lprof] profile=${profile} solver=${SOLVER} dt=${DT} n_objects=${N_OBJECTS}"
-    maqao lprof "-xp=${xp}" -- \
+    taskset -c "$PIN_CORE" maqao lprof "-xp=${xp}" -- \
         "$bin" --solver "$SOLVER" --dt "$DT" --dur "$DUR" \
-               --n_warmup 1 --n_runs 1 --n_objects "$N_OBJECTS" --append \
+               --n_warmup 1 --n_runs 1 --n_objects "$N_OBJECTS" --out "$CSV_DIR" \
         > "${out}/collect.log" 2>&1 || { echo "lprof collect failed — see ${out}/collect.log" >&2; return 1; }
 
     maqao lprof -df "xp=${xp}" > "${out}/functions.txt" 2>&1
@@ -208,9 +201,9 @@ run_oneview() {
     # -R1 = --create-report=one. The binary must be the first token after `--` (not passed via
     # --executable=, which does something different — see the header note if this ever errors
     # with "binary <something odd> does not exist", that's the symptom of getting this wrong).
-    maqao oneview -R1 "-xp=${out}" --replace -- \
+    taskset -c "$PIN_CORE" maqao oneview -R1 "-xp=${out}" --replace -- \
         "$bin" --solver "$SOLVER" --dt "$DT" --dur "$DUR" \
-               --n_warmup 1 --n_runs 1 --n_objects "$N_OBJECTS" --append \
+               --n_warmup 1 --n_runs 1 --n_objects "$N_OBJECTS" --out "$CSV_DIR" \
         > "${out}.log" 2>&1 || { echo "oneview failed — see ${out}.log" >&2; return 1; }
     echo "  -> ${out}/RESULTS/Performance_one_html/index.html"
 }
@@ -226,5 +219,4 @@ for profile in "${PROFILES[@]}"; do
 done
 
 echo ""
-echo "Done. Compare the scalar and optimised CQA reports' vectorisation ratio/VER for the"
-echo "hottest loop — the optimised build's should be visibly higher (BENCHMARK_TOOLS_GUIDE.md §2.3)."
+echo "Done. Plot the results with: python3 benchmarks/performance/profiling_analysis.py"

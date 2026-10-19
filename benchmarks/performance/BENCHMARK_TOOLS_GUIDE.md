@@ -1,688 +1,398 @@
-# Benchmark Tools Guide - perf + MAQAO + MALT, from zero
+# Benchmarking & Profiling Guide
 
-A from-scratch tutorial for building the Phase 6 (CPU Performance Engineering,
-`docs/ROADMAP.md`) benchmarking pipeline yourself, and actually understanding what each
-number means while you do it.
+Everything needed to measure the engine's performance, understand where the time goes, and
+check that an optimisation actually helped. Two commands do all the work; this guide explains
+what they measure, how, and how to read the results.
 
-**How to use this document:** read Part 0 once - it's the shared vocabulary the rest of the
-guide leans on. Then work through Part 1 (perf), Part 2 (MAQAO), Part 3 (MALT) in order -
-each is self-contained, each ends with a working script and a "checkpoint" question to test
-whether you actually understood the output or just copied a command. Part 4 wires the three
-scripts together. This document contains no finished scripts - skeletons and checklists only.
-Writing the code is the point.
+- [1. Quick start](#1-quick-start)
+- [2. Two questions, two tools](#2-two-questions-two-tools)
+- [3. How measurements are kept reliable](#3-how-measurements-are-kept-reliable)
+- [4. The benchmark sweep (`scripts/benchmark.sh`)](#4-the-benchmark-sweep-scriptsbenchmarksh)
+- [5. The profiling pipeline (`scripts/profile.sh`)](#5-the-profiling-pipeline-scriptsprofilesh)
+- [6. The profiling report, figure by figure](#6-the-profiling-report-figure-by-figure)
+- [7. Current baseline](#7-current-baseline)
+- [8. Workflow for an optimisation](#8-workflow-for-an-optimisation)
+- [9. Troubleshooting](#9-troubleshooting)
+- [10. File map](#10-file-map)
 
 ---
 
-## Part 0 - Foundations (read this once, before anything else)
+## 1. Quick start
 
-### 0.1 Why wall-clock time isn't enough
+```bash
+# Optional, for the most stable timings (restore afterwards with: -g powersave)
+sudo cpupower frequency-set -g performance
 
-`time ./my_binary` tells you *that* something is slow. It tells you nothing about *why*. The
-three tools in this guide each attack "why" from a different angle:
+./scripts/benchmark.sh    # how fast, and how it scales                  (~40 min)
+./scripts/profile.sh      # why: counters, vectorisation, allocations   (~3 min)
+./scripts/full_report.sh  # both, one after the other
+```
 
-| Approach | Tool | How it works |
+Then open:
+
+| Report | Produced by |
+|---|---|
+| `benchmarks/performance/results/benchmark_report.pdf` | `benchmark.sh` |
+| `benchmarks/performance/profiling_report/profiling_report.pdf` | `profile.sh` |
+
+Both scripts rebuild what they need (incrementally), so they always measure the current code.
+Requirements: the project's normal build dependencies, Python 3 with `numpy`, `pandas` and
+`matplotlib`, and for profiling `perf`, MAQAO and MALT (install commands in
+[`README.md`](README.md#installation-profiling-tools)). A missing profiler only skips its own
+step.
+
+---
+
+## 2. Two questions, two tools
+
+| | `scripts/benchmark.sh` | `scripts/profile.sh` |
 |---|---|---|
-| Watch hardware counters while the program runs | **perf stat** | The CPU has a small set of physical registers (the PMU - Performance Monitoring Unit) that count events like "cycles elapsed" or "cache miss occurred" in hardware, for free, as the program executes. `perf stat` reads them before/after. |
-| Sample *where* the program is executing, many times a second | **perf record** | The kernel interrupts the program ~1000×/second, records the call stack at that instant, and stops. After thousands of samples, "which function appears most often" ≈ "which function costs the most time." This is *statistical*, not exact. |
-| Analyse the compiled machine code without running it | **MAQAO CQA** | Reads the binary's assembly for a specific loop and reasons about it structurally - e.g. "these instructions are 256-bit AVX2 vector instructions, therefore this loop is vectorised." No execution needed, so no sampling noise, but it can't tell you how often that loop actually runs. |
-| Intercept specific function calls precisely | **MALT** | Replaces `malloc`/`free` with wrapper versions (via `LD_PRELOAD`, see §0.3) that log every call before forwarding it to the real allocator. Exact counts, not samples - but only for the calls it intercepts. |
+| **Question** | How fast is the engine, and how does the cost scale with the solver, the number of objects N and the timestep dt? | *Why* does it take that long: is the CPU busy or stalled, where is the time spent, is the code vectorised, does it allocate? |
+| **Runs** | A sweep: 3 solvers × 7 values of N × 5 values of dt, for each build profile | One fixed, representative workload, observed in depth |
+| **Measures** | Wall time, time per step, run-to-run variance, estimated GFLOP/s, peak memory | Hardware counters, Top-Down bottleneck classification, hottest functions (perf); per-loop vectorisation and hotspots (MAQAO); every heap allocation (MALT) |
+| **Output** | `results/benchmark_report.pdf` + PNGs + CSV | `profiling_report/profiling_report.pdf` + PNGs + raw tool reports |
 
-None of these four is "the profiler." You need at least a sampling tool (perf) and a
-static/structural tool (MAQAO or a memory interceptor) because they answer different
-questions. A function can look fine to `perf stat` (good IPC) while still running fully
-scalar - IPC doesn't measure vectorisation, it measures pipeline utilisation.
+Use the sweep to *see* a problem (or a gain), and profiling to *explain* it.
 
-### 0.2 CPU vocabulary you need before any of this makes sense
+They are separate scripts on purpose. Profilers observe the program from the inside, and that
+slows it down (MALT makes this workload ~7× slower), so timings must be taken with no profiler
+attached. They also run at different rhythms: profiling (~3 min) after every change, the
+sweep (~40 min) to confirm a gain holds at every size. `scripts/full_report.sh` runs both
+sequentially, never in parallel, when both are wanted.
 
-You don't need a computer architecture course, but these terms show up constantly in every
-tool's output and you should be able to define each in one sentence:
+Both work on the same binary, `benchmarks/Performance` (source:
+[`benchmark.cpp`](benchmark.cpp), CLI and CSV columns in [`README.md`](README.md)). It builds
+a scene of N spheres falling on a plane, runs it for `dur / dt` steps, and reports timings.
 
-- **Cycle**: one tick of the CPU clock. Everything is measured relative to cycles because
-  clock speed varies (frequency scaling, turbo boost).
-- **Instruction**: one machine-code operation (add, load, compare, ...).
-- **IPC (Instructions Per Cycle)**: `instructions ÷ cycles`. The single most-used summary
-  number. Modern superscalar CPUs can retire 3-5+ instructions per cycle in theory. IPC well
-  below that (say < 1.0-1.5 depending on the CPU) usually means the pipeline is stalling -
-  waiting on something, not computing.
-- **Pipeline stall**: a cycle where the CPU *could* execute an instruction but can't, because
-  the instruction it needs isn't ready yet (data dependency, cache miss, branch
-  misprediction...).
-- **Cache hierarchy**: L1 (fastest, smallest, per-core, ~4 cycles latency) → L2 (per-core or
-  shared, ~12 cycles) → L3/LLC ("Last Level Cache", shared across cores, ~40 cycles) → main
-  memory / RAM (~200+ cycles). A "cache miss" means the requested data wasn't in that cache
-  level and the CPU had to go further out - the deeper it goes, the more cycles are wasted
-  waiting.
-- **Branch prediction / misprediction**: the CPU guesses which way an `if` will go *before*
-  evaluating the condition, so it can keep executing speculatively. A wrong guess
-  (misprediction) means it has to throw away the speculative work and restart - expensive
-  (~15-20 cycles typically). Unpredictable branches (e.g. data-dependent collision checks)
-  cause this.
-- **SIMD / vectorisation**: instead of one instruction operating on one number, a vector
-  instruction operates on several numbers packed into one wide register at once. E.g. AVX2
-  gives 256-bit registers = 4 `double`s (or 8 `float`s) processed by a single instruction. A
-  loop the compiler successfully vectorises can, in the best case, run ~4x faster than the
-  scalar version for the same operation - this is the entire premise of the Phase 6 SIMD
-  roadmap item.
-- **FLOP/s and peak FLOP/s**: floating-point operations per second, and the theoretical
-  maximum your specific CPU can sustain (a function of clock speed × cores × SIMD width ×
-  instructions-per-cycle for FP ops). "Achieving 5% of peak" is a meaningful, comparable
-  number; "1.2 GFLOP/s" alone is not, until you know what peak is.
-- **Arithmetic intensity**: FLOPs performed ÷ bytes moved from memory. Low intensity (e.g. a
-  simple vector add: 1 FLOP per 2 loads + 1 store) means performance is capped by memory
-  bandwidth, not compute speed, no matter how fast the CPU's ALUs are. This is the X-axis of
-  a **roofline plot** (§3.6 in Part 2) - the single most useful mental model for "should I
-  even bother optimising the arithmetic here."
+---
 
-### 0.3 What `LD_PRELOAD` is (needed to understand MALT)
+## 3. How measurements are kept reliable
 
-On Linux, `LD_PRELOAD=/path/to/lib.so ./program` tells the dynamic linker to load that
-library *before* any other, so if it defines a function with the same name as one the program
-calls (e.g. `malloc`), the preloaded version wins. MALT ships a shared library that defines
-`malloc`/`free`/`new`/`delete` etc., logs the call (size, call stack, timestamp), then calls
-the real allocator. No recompilation needed - that's why it's "drop-in." In practice you won't
-type `LD_PRELOAD=` yourself: MALT installs a `malt` wrapper command that sets this up
-internally (§3.2) - worth knowing the mechanism anyway, since it's the same trick a lot of
-allocator-swapping/interposition tooling uses.
+A benchmark is only useful if running it twice gives the same answer. Each point below removes
+a specific source of error; all of them are applied automatically.
 
-### 0.4 The project's benchmark setup you'll be driving
+### 3.1 Two build profiles
 
-You already have (don't rebuild these - they're the given foundation for everything below):
+Every measurement is made on two Release builds of the same code (defined in
+[`profiles.sh`](profiles.sh)):
 
-- `scripts/build.sh` - builds the project with arbitrary CMake flags into a chosen build dir.
-- `benchmarks/performance/benchmark.cpp` → compiled binary `benchmarks/Performance` - runs a
-  fixed scene (one bouncing sphere) for a chosen solver/dt/duration, with warmup + repeated
-  timed runs. See [`benchmarks/performance/README.md`](README.md) for its CLI flags and what
-  it already measures (timing, analytic FLOP/s, peak RSS).
-- Two build **profiles**, both `Release`:
-  - `scalar`: `-O2 -fno-tree-vectorize -fno-inline` - deliberately crippled, your control
-    group. If any tool reports this build as vectorised, something's wrong with your
-    measurement, not the compiler.
-  - `optimised`: `-O3 -march=native` - what you're actually trying to understand.
+| Profile | Compiler flags | Role |
+|---|---|---|
+| `scalar` | `-O2 -fno-tree-vectorize -fno-inline` | Reference: no vectorisation, no inlining |
+| `optimised` | `-O3 -march=native` | What the compiler achieves alone, using every instruction of this CPU |
 
-Every tool in this guide gets pointed at the *same* binary+arguments so results are
-comparable across tools and across profiles. Pick one fixed, cheap-to-run invocation now and
-reuse it everywhere below, e.g.:
+The gap between them is what the compiler gives for free. Every manual optimisation is then
+measured against `optimised`. The scalar profile also serves as a sanity check: MAQAO must
+find **zero** vectorised loops in it.
+
+Each profile has its own build directory (`build/benchmark_<profile>`). The build is
+incremental, so it always reflects the current sources and flags. After building, the scripts
+check in the CMake cache that the directory really is configured as Release with that
+profile's flags, and stop otherwise (a silent CMake cache reset once made both profiles
+identical, unoptimised builds).
+
+Debug information (`-g`) and frame pointers are always on: they do not change the generated
+code, and the profilers need them to name functions and source lines.
+
+### 3.2 One core, always a P-core
+
+This machine (i7-13850HX) has fast P-cores and slower E-cores. Measured on this engine, an
+E-core runs the same code **~40% slower**, and an unpinned process can migrate between core
+types in the middle of a run (observed: run-to-run variation jumping from <1% to 22%). Every
+measured run is therefore pinned with `taskset` to one P-core (the second one, CPU 2, since
+CPU 0 handles more interrupts). Override with `BENCH_CPU=<id>`.
+
+### 3.3 CPU frequency
+
+With the `powersave` governor the clock speed varies with load. The scripts print a warning
+with the command to switch to `performance` (it needs `sudo`, so they never do it themselves).
+Pinning already removes most of the noise; the governor removes the rest.
+
+### 3.4 Warm-up, repetitions, variance
+
+Each benchmark point runs 1 discarded warm-up run (caches and clock ramp up) then 5 timed runs,
+and reports mean, min, max, standard deviation and the coefficient of variation
+**CV = stddev / mean**. Rule of thumb: CV < 2% is clean; CV > 10% means the measurement is
+noisy and should not be trusted (it is flagged with ⚠ in the summary).
+
+### 3.5 Time per step
+
+The total run time divided by the number of steps gives the average cost of a step
+(`time_per_step_us`). A separate run measures the *distribution* of the step cost: steps are
+timed in batches (~500 batches per run, so the clock overhead is negligible) in nanoseconds,
+giving `step_us_mean/min/max/cv`. A high step CV means irregular steps, typically from
+collision handling.
+
+### 3.6 GFLOP/s is an estimate
+
+`gflops_per_second` uses an analytical operation count (gravity O(N), ~45 FLOP per pair for
+collision detection O(N²), integration O(N), ×4 force evaluations for RK4), not hardware
+counters. It is good for comparing configurations, not as an absolute fraction of the CPU's
+peak.
+
+### 3.7 The representative profiling workload
+
+Profiling uses one fixed configuration, shared by perf, MAQAO and MALT so their reports
+describe the same run:
 
 ```text
---solver Verlet --dt 1e-3 --dur 2.0 --n_warmup 1 --n_runs 1 --n_objects 1
+--solver Verlet --dt 5e-5 --dur 30 --n_objects 10      (600 000 steps)
 ```
 
-(A single object keeps early runs fast while you're learning the tools; you can scale
-`--n_objects` up later once the pipeline works, to see how conclusions change with problem
-size.)
+- **10 objects** exercise object-object collisions (45 pairs), which a single sphere never
+  reaches.
+- **600 000 steps** last long enough (~0.65 s per pass optimised, ~3 s scalar) for the
+  sampling tools to collect over a thousand samples.
 
-### 0.5 Reproducibility ground rules (apply to all three tools)
-
-- **Warm up first.** The first run after a cold start pays for cache/TLB warming and CPU
-  frequency ramp-up. The benchmark binary already discards warmup runs internally
-  (`--n_warmup`) - keep at least 1.
-- **Run more than once, look at variance, not just the mean.** A single measurement of
-  anything on a general-purpose OS (not a dedicated benchmarking node) can be noise. If a
-  tool supports repeated measurement (perf's `-r`), use it.
-- **Know what "noisy" looks like** before you start: background processes, thermal
-  throttling, and CPU frequency scaling all inflate variance. You don't need to eliminate
-  this yet (that's an optional hardening step in Part 1), just recognise it when e.g. two
-  supposedly-identical runs differ by 20%.
+Change it with `--n-objects`, `--dt`, `--dur`, `--solver` on each `profile_*.sh` script (keep
+the three in sync if you change the defaults).
 
 ---
 
-## Part 1 - perf
+## 4. The benchmark sweep (`scripts/benchmark.sh`)
 
-### 1.1 Concept: what perf actually is
+### What it does
 
-`perf` is the standard Linux profiler - a userspace CLI on top of the kernel's `perf_events`
-subsystem. It has two modes you'll use:
+1. Checks the CPU setup (§3.2-3.3).
+2. For each profile (scalar, then optimised): rebuilds, then runs every combination of
+   solver ∈ {Euler, Verlet, RK4} × N ∈ {1, 2, 5, 10, 20, 50, 100} × 5 dt values log-spaced
+   between 1e-5 and 1e-2 s, each simulating 2 s.
+3. Runs [`benchmark_analysis.py`](benchmark_analysis.py), which plots both profiles and prints a
+   summary table.
 
-- **`perf stat`**: read PMU hardware counters across the whole run of a program, print
-  totals/derived ratios at the end. Zero sampling - exact hardware-counted numbers (subject
-  to the multiplexing caveat in §1.4).
-- **`perf record`**: periodically interrupt the program (default ~1000 Hz, i.e. every ~1ms)
-  and record the call stack at that instant into a file. After the run, `perf report` /
-  `perf script` turn thousands of these samples into "which function was on-CPU most often."
-
-### 1.2 Hands-on: install & permission check
-
-```bash
-perf --version
-```
-
-If missing, install your distro's `perf`/`linux-tools` package. Then check you're allowed to
-read hardware counters:
+The simulated duration does not change the cost of a step, so 2 s is enough; the sweep takes
+about 40 minutes (38 min measured), almost all of it in the scalar profile at N = 100 and
+dt = 1e-5. `--dt-min 1e-4` drops the finest timestep and roughly divides that by 3.
 
 ```bash
-perf stat ls
+./scripts/benchmark.sh --solvers "Verlet" --n-objects "1 10 100"   # narrower sweep
+./scripts/benchmark.sh --skip-build --skip-analysis                 # reuse binaries, no plots
+./scripts/benchmark.sh --help
 ```
 
-If this fails with a permission error, the kernel's paranoia setting is too strict for a
-regular user:
-
-```bash
-sudo sysctl kernel.perf_event_paranoid=1
-```
-
-(This resets on reboot; make it permanent via `/etc/sysctl.d/` if you'll be doing this
-regularly - your call, not scripted here since it needs root.)
-
-**Checkpoint:** run `perf stat ls` again. You should see a summary block at the bottom with
-`task-clock`, `context-switches`, `cycles`, `instructions`, and an `insn per cycle` line.
-Can you say in one sentence why `ls` (a trivial program) still shows a non-zero cycle count?
-*(It has to be loaded, linked, and its process torn down - that's not free even for a no-op
-program.)*
-
-### 1.3 Hands-on: your first real measurement
-
-Build the optimised profile once if you haven't:
-
-```bash
-./scripts/build.sh --build-dir build/benchmark_optimised --build-type Release \
-    -D3DPE_BUILD_TESTS=OFF -DCMAKE_CXX_FLAGS_RELEASE="-O3 -march=native -DNDEBUG"
-```
-
-Then:
-
-```bash
-perf stat ./build/benchmark_optimised/benchmarks/Performance \
-    --solver Verlet --dt 1e-3 --dur 2.0 --n_warmup 1 --n_runs 1 --n_objects 1
-```
-
-Read the default output top to bottom. `perf stat` with no `-e` flags gives you a curated
-default set (task-clock, context-switches, cycles, instructions, branches, branch-misses).
-Note the `insn per cycle` line - that's IPC, from §0.2. Write down the number; you'll compare
-it against the scalar build in a moment.
-
-Now build the scalar profile and repeat:
-
-```bash
-./scripts/build.sh --build-dir build/benchmark_scalar --build-type Release \
-    -D3DPE_BUILD_TESTS=OFF \
-    -DCMAKE_CXX_FLAGS_RELEASE="-O2 -fno-tree-vectorize -fno-inline -DNDEBUG"
-
-perf stat ./build/benchmark_scalar/benchmarks/Performance \
-    --solver Verlet --dt 1e-3 --dur 2.0 --n_warmup 1 --n_runs 1 --n_objects 1
-```
-
-**Checkpoint:** compare cycles, instructions, and IPC between the two runs. The scalar build
-should take noticeably more cycles for the same work. Is IPC higher or lower on the scalar
-build, and can you explain why using only §0.2's definitions? *(Often scalar IPC looks
-similar or even higher - IPC measures pipeline efficiency, not work done per instruction; the
-optimised build does more work per instruction via SIMD, which IPC alone won't show you. This
-is exactly the blind spot MAQAO fixes in Part 2.)*
-
-### 1.4 Concept: choosing your own counters, and the multiplexing trap
-
-Beyond the default set, request specific hardware events with `-e`:
-
-```bash
-perf stat -e cycles,instructions,L1-dcache-loads,L1-dcache-load-misses \
-    ./build/benchmark_optimised/benchmarks/Performance --solver Verlet --dt 1e-3 \
-    --dur 2.0 --n_warmup 1 --n_runs 1 --n_objects 1
-```
-
-List all available events on your machine with `perf list`.
-
-**The trap:** most CPUs expose only 4-6 *general-purpose* PMU counter registers
-simultaneously (a few more are fixed-purpose, e.g. always-on cycles/instructions counters).
-If you request more distinct events than there are physical registers, `perf` **time-slices**
-between groups of them and *statistically scales up* the results to estimate what the full
-count would have been - you get an estimate, not an exact count, and `perf stat`'s text
-output marks this in the right-hand column when it happens. Two ways to avoid it:
-
-- **Group events that need to be exact together** with braces: `-e '{cycles,instructions}'`
-  forces that pair to be counted in the same time slice, so their *ratio* (IPC) stays exact
-  even if the absolute counts of other ungrouped events around them get scaled.
-- **Ask for fewer total events per run.** Run twice with 4 events each rather than once with
-  8, if you need all 8 to be exact.
-
-**Checkpoint:** run the same `perf stat -e ...` command twice - once with 8+ ungrouped
-events, once with the same events split into groups of 2-3 with braces. Do you see a
-percentage annotation (e.g. `(66.67%)`) next to counter values in the ungrouped run that
-disappears in the grouped one? That annotation is `perf` telling you "this event was only
-actually measured 66.67% of the time and I scaled it up" - grouping is how you make it go
-away for the events you actually care about.
-
-### 1.5 Concept: building up a useful metric set, one at a time
-
-Don't reach for 10 events immediately - add them one at a time and understand what each buys
-you over what you already had:
-
-1. **`cycles`, `instructions`** → IPC. Your first-order "is the pipeline busy" signal.
-2. **`branches`, `branch-misses`** → branch miss rate = `branch-misses ÷ branches × 100`. A
-   rate above roughly 1-3% on a numeric loop is worth investigating - for this project,
-   collision-detection conditionals are the natural suspect, not the integrator math.
-3. **`L1-dcache-loads`, `L1-dcache-load-misses`** and **`LLC-loads`, `LLC-load-misses`** →
-   cache miss rates at two levels. L1 miss rate above a few percent, or a high fraction of L1
-   misses that *also* miss LLC (i.e. going all the way to RAM), points at poor data layout -
-   directly relevant to the SoA-vs-AoS roadmap item.
-4. **`stalled-cycles-frontend`, `stalled-cycles-backend`** → `stalled ÷ cycles × 100` tells
-   you what fraction of cycles the CPU had nothing useful to issue. Frontend stalls = fetch/
-   decode couldn't keep up (code size, instruction cache); backend stalls = waiting on
-   execution units or memory (this is where cache misses and long dependency chains show up).
-5. **Top-Down Microarchitecture Analysis**: `perf stat --topdown` (or `-M TopdownL1` on
-   older `perf`/kernel combinations - check `perf stat --topdown --help` on your machine)
-   classifies every pipeline slot into one of four buckets automatically: *Retiring* (useful
-   work), *Front-End Bound*, *Back-End Bound*, *Bad Speculation* (mispredicted branches).
-   This is the fastest way to get a first-order "what category is the bottleneck" answer
-   without manually cross-referencing 8 separate counters yourself - run it as a *separate*
-   invocation (it uses its own internal counter grouping, don't mix it into a custom `-e`
-   list).
-
-**Checkpoint:** run the Top-Down pass on the optimised build. Which of the four buckets
-dominates? Does that match your guess from the individual counters in steps 1-4? If Top-Down
-says Back-End Bound and your L1/LLC miss rates from step 3 are low, what does that suggest
-instead? *(Likely a long dependency chain or execution-port pressure rather than memory -
-exactly the kind of thing MAQAO's CQA bottleneck classification in Part 2 will confirm at the
-loop level.)*
-
-Add `-r 5` to any `perf stat` command to run it 5 times and get mean ± stddev per counter
-instead of trusting one sample - cheap insurance against the noise described in §0.5.
-
-### 1.6 Concept: sampling with `perf record`
-
-`perf stat` gives you *aggregate* numbers for the whole run. It can't tell you *which line of
-code* is responsible. For that, sample:
-
-```bash
-perf record -F 999 -g --call-graph dwarf \
-    -o results/perf.data \
-    ./build/benchmark_optimised/benchmarks/Performance \
-    --solver Verlet --dt 1e-3 --dur 2.0 --n_warmup 1 --n_runs 1 --n_objects 1
-```
-
-- `-F 999` - sample at 999 Hz rather than exactly 1000 Hz, deliberately avoiding aliasing
-  with the kernel's own 1000 Hz timers (sampling at exactly the same frequency as a periodic
-  system event can bias which instant you happen to always catch).
-- `-g --call-graph dwarf` - capture the full call stack per sample using DWARF debug info to
-  unwind it. Needed here because heavily inlined C++ templates and STL internals confuse the
-  cheaper frame-pointer unwinder. `--call-graph fp` is faster/lower-overhead but shallower -
-  an option once `dwarf` overhead becomes annoying on longer runs.
-
-**Checkpoint, conceptual:** why is `perf record`'s output *statistical* rather than exact,
-while `perf stat`'s counters are exact (mod multiplexing)? *(Because `perf record` only knows
-what the program was doing at the ~1000 sampled instants, not continuously - a function that
-runs for a very short but frequent burst could be under- or over-represented by chance,
-especially with few total samples. `perf stat` counters increment continuously in hardware
-regardless of whether anyone's looking.)*
-
-### 1.7 Hands-on: reading the samples
-
-Text/interactive view:
-
-```bash
-perf report -i results/perf.data
-```
-
-Navigate with arrow keys, `Enter` to expand a call tree, `a` on a selected function to see
-**annotated source+assembly** - literally which line accumulated the most samples. `q` to
-quit. Look at `% Self` (time in that function alone) vs `% Children` (including everything it
-calls) - `% Self` is where you actually optimise; `% Children` just tells you where in the
-call tree that cost is nested.
-
-Flamegraph (visual, easier to scan for "what's wide"):
-
-```bash
-perf script -i results/perf.data > results/perf.script
-stackcollapse-perf.pl results/perf.script | flamegraph.pl > results/flame.svg
-```
-
-(Install `FlameGraph` from Brendan Gregg's repo if `stackcollapse-perf.pl`/`flamegraph.pl`
-aren't found - check with `command -v flamegraph.pl` first.) Open the SVG in a browser.
-X-axis = fraction of samples (width, **not** chronological time), Y-axis = call stack depth,
-`main` at the bottom. Wide flat plateaus at the top are your hotspots. Click any frame to
-zoom into that sub-tree.
-
-**Checkpoint:** find the widest plateau in the flamegraph. Open `perf report`, find the same
-function, press `a`, and identify the single source line with the highest sample count inside
-it. Does it match what you'd guess just from reading the source (e.g. the position-update
-line inside the integrator), or does it surprise you (e.g. time going into a
-constructor/destructor, or STL container overhead)?
-
-### 1.8 Build: your `perf` script
-
-You now understand every piece. Build a script (e.g. `benchmarks/performance/perf/profile_perf.sh`
-if starting fresh, or revise what's there) that, for a given build profile:
-
-1. Runs a grouped, repeated `perf stat` pass (§1.4, §1.5 steps 1-4) → save to a text file.
-2. Runs a separate Top-Down pass (§1.5 step 5) → append or save separately.
-3. Runs `perf record` (§1.6) → `perf script` → flamegraph (§1.7), guarding the flamegraph
-   step with a check for `stackcollapse-perf.pl`/`flamegraph.pl` on `PATH` so the script
-   doesn't hard-fail on a machine without them.
-4. Loops over both build profiles (scalar/optimised) so you always get a side-by-side.
-
-**Verify:** run your script against both profiles. You should end up with two `perf stat`
-reports, two Top-Down reports, and two flamegraphs, and be able to point at one number in
-each that differs meaningfully between scalar and optimised (IPC, a stall percentage, or
-which function dominates the flamegraph).
-
----
-
-## Part 2 - MAQAO
-
-### 2.1 Concept: static analysis, and why perf alone doesn't answer "is this vectorised"
-
-Recall §0.2: SIMD packs several numbers into one wide register so one instruction processes
-several at once. `perf` counters don't distinguish a scalar `add` from a 256-bit vector
-`add` - both just count as "one instruction." IPC can look identical whether a loop is
-vectorised or not. To know whether the compiler actually vectorised a loop, and how
-*efficiently* (using the full register width vs only part of it), you need to look at the
-actual assembly instructions the compiler generated - that's what MAQAO's CQA module does.
-
-MAQAO has three modules you'll use, each answering a different sub-question:
-
-- **CQA (Code Quality Analyzer)** - static: reads the compiled binary's assembly for a loop,
-  no execution needed. "Is this loop vectorised, how efficiently, what's the theoretical
-  bottleneck."
-- **Lprof** - dynamic: actually runs the binary, samples like `perf record` but aggregates by
-  *source loop* instead of by function, and estimates achieved FLOP/s. "Which loop actually
-  dominates runtime, and how close to peak is it."
-- **ONE-View** - combines CQA and Lprof (plus topology data) into one HTML dashboard. There's
-  no separate "Roofline" module in current MAQAO (confirmed: `maqao --list-modules` only
-  lists `analyze`/`cqa`/`lprof`/`madras`/`oneview`) - the roofline-relevant numbers (peak
-  FLOP/cycle, achieved FLOP/cycle) are printed directly in CQA's own output per loop; §2.5
-  shows how to read them as a roofline placement yourself.
-
-### 2.2 Hands-on: install
-
-Download the prebuilt release tarball for your OS/architecture from the MAQAO project site
-(no root needed - self-contained), extract it (e.g. to `~/opt/maqao/`), add its `bin/` to
-`PATH`.
-
-```bash
-maqao --version
-```
-
-Check the printed microarchitecture info recognises your CPU - CQA's "X% of peak" numbers
-(§2.5) depend on knowing your exact CPU model correctly.
-
-**Checkpoint:** `maqao cqa --help` and `maqao lprof --help` should both print usage without
-error. If either subcommand is missing, your download may be an incomplete/partial release -
-re-check what you downloaded before going further.
-
-### 2.3 Hands-on: your first CQA report
-
-CQA needs a binary built **with debug info** (already always-on in this project's
-`CMakeLists.txt`, so nothing to change) so it can map assembly back to source loops.
-
-```bash
-maqao cqa ./build/benchmark_optimised/benchmarks/Performance
-```
-
-(Check `maqao cqa --help` for how your installed version selects a specific loop/function -
-options differ slightly by MAQAO version; you likely want to point it at the function
-containing your hot loop, e.g. the integrator step, once you know which one that is from
-Part 1's flamegraph.)
-
-Read the report for that loop. You're looking for:
-
-- **Vectorisation ratio** - what fraction of instructions in the loop are vector (SIMD) forms
-  rather than scalar. 0% means the compiler didn't vectorise this loop at all.
-- **Vector Efficiency Ratio (VER)** - of the vector instructions present, what fraction of
-  the register width is actually used. A loop can report a decent vectorisation ratio while
-  VER is low (e.g. using 128-bit SSE-style width inside a CPU capable of 256-bit AVX2) - VER
-  is what catches that, a plain vectorisation ratio would not.
-- **Potential speedup** - CQA's estimate of the cycles-per-iteration improvement if VER were
-  100%. This is your prioritisation signal for *which* loop is worth hand-optimising first.
-- **Bottleneck classification** - CQA's static guess at what limits the loop: front-end
-  (instruction fetch/decode), a specific execution port, or a data dependency chain.
-
-Now run the exact same command against the **scalar** binary:
-
-```bash
-maqao cqa ./build/benchmark_scalar/benchmarks/Performance
-```
-
-**Checkpoint:** the scalar build's vectorisation ratio for the same loop should be ~0%
-(that's why it's the control group - `-fno-tree-vectorize` explicitly disabled this). If it
-isn't ~0%, something about the scalar build config is wrong and you should fix that before
-trusting any optimised-build numbers, since you'd have no valid baseline to compare against.
-
-### 2.4 Hands-on: Lprof - does the vectorised loop actually run the most?
-
-CQA told you what's *possible* for a given loop. Lprof tells you what actually *happens* when
-you run the program - which loop dominates wall time, and what fraction of peak FLOP/s it
-achieves:
-
-```bash
-maqao lprof ./build/benchmark_optimised/benchmarks/Performance \
-    --solver Verlet --dt 1e-3 --dur 2.0 --n_warmup 1 --n_runs 1 --n_objects 1
-```
-
-Check the generated report for per-loop time share and measured FLOP/s. Cross-reference: is
-the loop CQA said had the best vectorisation potential the *same* loop Lprof says dominates
-runtime? If not, your optimisation priority is whichever loop actually costs time in
-practice, not whichever looks most vectorisable in isolation.
-
-**Checkpoint:** compare Lprof's "% of peak FLOP/s achieved" for your hottest loop against the
-IPC you measured with `perf stat` in Part 1 for the same run. They're measuring related but
-different things - can you articulate the difference in one sentence? *(IPC counts
-instructions regardless of whether each one processes 1 or 4+ numbers; % of peak FLOP/s
-accounts for SIMD width, so it's a truer measure of "how much useful arithmetic work per
-cycle," which is exactly why IPC alone missed the scalar-vs-vectorised distinction back in
-§1.3's checkpoint.)*
-
-### 2.5 Concept: the Roofline model
-
-Two numbers place any loop on a 2D plot:
-
-- **X-axis - arithmetic intensity**: FLOPs performed ÷ bytes moved from memory, for that
-  loop. Low intensity = the loop is "thin" arithmetically relative to how much data it
-  touches (e.g. a vector add - 2 loads + 1 store per 1 FLOP).
-- **Y-axis - achieved GFLOP/s**: from Lprof's dynamic measurement.
-
-Two ceilings bound every possible point on that plot for your specific machine:
-
-- A flat **compute roof** at your CPU's peak GFLOP/s (independent of intensity).
-- A rising **memory-bandwidth roof**, `intensity × peak_bandwidth`, which is low at low
-  intensity and eventually crosses the compute roof.
-
-A loop plotted **under the memory roof, to its left** is **memory-bound** - no amount of
-arithmetic optimisation (intrinsics, unrolling) will help; you need fewer bytes moved
-(better data layout, e.g. the SoA-vs-AoS roadmap item) or better cache reuse. A loop plotted
-**near the compute roof, to the right** is **compute-bound** - arithmetic optimisation
-(vectorisation, reducing instruction count) is where the payoff is.
-
-There's no dedicated "maqao roofline" command (confirmed against a real install - see
-maqao/maqao.md) - build the Y-axis yourself from CQA's own per-loop output, which already
-prints exactly this: `"X% of peak computational performance is used (A out of B FLOP per
-cycle)"` is your achieved-vs-peak pair directly. Place your hottest loop on the plot for both
-profiles using that number.
-
-**Checkpoint:** is your hot loop compute-bound or memory-bound? Does that match your guess
-from Part 1's cache-miss rates and Top-Down classification (§1.5)? If the roofline placement
-suggests memory-bound but Part 1's L1/LLC miss rates looked low, what would you check next? *(Whether
-the loop is bandwidth-limited even with a high cache-hit rate - e.g. streaming through a
-large array once, where every access hits *some* cache level but the sheer volume of bytes
-moved still saturates bandwidth. This is a case low miss *rates* can hide but arithmetic
-intensity exposes directly.)*
-
-### 2.6 Build: your MAQAO script
-
-Build `benchmarks/performance/maqao/profile_maqao.sh`, mirroring the shape of the perf script
-from Part 1 (§1.8) - same representative binary+args so results are directly comparable
-tool-to-tool:
-
-1. Run CQA (static, no execution) against the built binary for the hot loop(s).
-2. Run Lprof (dynamic - actually executes) for the same invocation.
-3. Run ONE-View for a combined report (optional - CQA + Lprof already give you everything;
-   ONE-View is mainly useful as a single shareable HTML summary).
-4. Run the whole thing once per build profile (scalar/optimised) - the scalar-vs-optimised
-   *comparison* is the point, not either number alone.
-
-Save output under `benchmarks/performance/maqao/results/<profile>/`.
-
-**Verify:** for both profiles, you can state the vectorisation ratio and VER of the hottest
-loop, and place it on a roofline plot using CQA's own peak-FLOP/cycle numbers. The optimised
-profile's ratio/VER should be visibly higher than scalar's; if it isn't, that itself is a
-finding - the compiler isn't vectorising what you expected, worth investigating with
-`-fopt-info-vec` before writing any intrinsics.
-
----
-
-## Part 3 - MALT
-
-### 3.1 Concept: why perf's flamegraph isn't enough for memory
-
-A `perf record` flamegraph can show `malloc`/`operator new` as a wide-ish frame, telling you
-"allocation happens somewhere in this call path." It can't tell you: how many allocations,
-what sizes, whether they're growing/reallocating containers, or whether any are leaked. MALT
-(§0.3) intercepts every allocator call directly, so it reports exact counts and sizes, not
-samples.
-
-### 3.2 Hands-on: install
-
-No package for most distros — build from source (confirmed against MALT's own docs;
-Ubuntu/Debian package names shown, substitute your distro's equivalents):
-
-```bash
-sudo apt install cmake g++ make libssl-dev libunwind-dev libelf-dev nodejs npm \
-                  nlohmann-json3-dev graphviz python3-dev curl
-git clone https://github.com/memtt/malt.git
-cd malt && mkdir build && cd build
-../configure --prefix=/usr/local
-make
-sudo make install
-```
-
-This installs a `malt` command (and `malt-webview`) onto `PATH`. Unlike the raw `LD_PRELOAD`
-mechanic explained in §0.3, you don't set that up by hand — `malt` wraps a program and does it
-internally: `malt {YOUR_PROGRAM} [ARGS]`. No project-side build flag changes needed either -
-debug info and frame pointers are already always on (§1.6 already established this for
-`perf`; MALT benefits from the same settings for the same reason - accurate call-stack
-attribution).
-
-**Checkpoint:** `malt /bin/ls` should still just list files (proof the wrapper itself works)
-and drop a report file named something like `malt-ls-<pid>.json` in the working directory -
-find it before moving to the real binary.
-
-### 3.3 Hands-on: your first memory report
-
-```bash
-malt ./build/benchmark_optimised/benchmarks/Performance \
-    --solver Verlet --dt 1e-3 --dur 2.0 --n_warmup 1 --n_runs 1 --n_objects 1
-```
-
-Locate the report MALT drops (`malt-Performance-<pid>.json` by default, in the working
-directory - check `malt --help` for output-path/naming options on your installed version). If
-`malt-webview` is on `PATH` (it should be, installed alongside `malt`), open the report there
-for the visual timeline; otherwise the raw JSON is still readable.
-
-### 3.4 Interpreting the report
-
-- **Peak / live allocated memory over time** - a timeline, not just one endpoint number. Does
-  the peak happen during scene construction (expected, one-time cost) or does memory usage
-  keep climbing during the simulation loop itself (that would be a real problem - a
-  steady-state loop shouldn't grow memory over time)?
-- **Allocation count + call-stack attribution** - which function calls `new`/`malloc`, and
-  how many times across the run. For a fixed-size scene, an allocation count much larger than
-  the object count is suspicious - something inside the per-step loop is allocating.
-- **Allocation size histogram** - repeated allocations of the same size are a pool/arena
-  allocator candidate; this becomes directly relevant once you touch the SoA/data-layout
-  roadmap item, since that's exactly when object storage patterns change.
-- **Realloc count** - a growing `std::vector` (e.g. a contact list) that reallocates and
-  copies its contents every time it outgrows its capacity shows up here; a large realloc
-  count on something that should be roughly fixed-size per step is a red flag independent of
-  raw allocation count.
-- **Leak count** - allocations never freed by process exit. Not a performance metric, but
-  free with the same run - worth a glance.
-
-**Checkpoint:** cross-check MALT's peak memory number against the `peak_rss_kb` field the
-benchmark binary already writes to `benchmark.csv` (see
-[`benchmarks/performance/README.md`](README.md#memory)) for the same configuration. They
-measure slightly different things (RSS includes everything the OS mapped for the process;
-MALT's peak is heap allocations it specifically tracked) - are they in the same ballpark? A
-huge mismatch would suggest large non-heap memory use (e.g. stack, mapped files) dominating,
-which MALT wouldn't be the right tool to explain.
-
-### 3.5 Concept: why one run is enough here
-
-Unlike perf and MAQAO, you don't need a scalar-vs-optimised MALT comparison. Compiler flags
-like `-march=native` change *how* arithmetic is compiled, not *which* allocator calls the
-source code makes - the same `new`/`push_back` calls happen in both binaries. One run against
-the optimised profile is sufficient; running MALT against scalar too would just cost time for
-no new information.
-
-### 3.6 Build: your MALT script
-
-Build `benchmarks/performance/malt/profile_malt.sh`:
-
-1. Run the representative binary once (optimised profile only, per §3.5) via the `malt`
-   wrapper.
-2. Save the report to `benchmarks/performance/malt/results/`.
-3. If a viewer/render step is available, document the manual command to launch it - don't
-   script a GUI launch inside an automated pipeline.
-
-**Verify:** the report's top allocation call-stack resolves to a named function in this
-codebase, not `[unknown]` - that confirms symbols are being picked up correctly and the
-numbers are trustworthy.
-
----
-
-## Part 4 - Bringing it together
-
-### 4.1 What you should have on disk by this point
+### Outputs
 
 ```text
 benchmarks/performance/
-  perf/
-    profile_perf.sh      # Part 1: perf stat (grouped+repeated), Top-Down, perf record+flamegraph
-    results/
-  maqao/
-    profile_maqao.sh     # Part 2: CQA, Lprof, ONE-View
-    results/
-  malt/
-    profile_malt.sh       # Part 3: malt wrapper run + report
-    results/
+  results_scalar/benchmark.csv     one row per (solver, dt, N) - scalar profile
+  results/benchmark.csv            same, optimised profile
+  results/plot_*.png               figures
+  results/benchmark_report.pdf     all figures in one file
 ```
 
-Each script independently runnable, independently useful, each documented well enough (start
-each with a short header comment, like `perf/profile_perf.sh` likely already has) that you can
-come back in three months and remember what it does without re-reading this guide.
+### Reading the figures
 
-### 4.2 Reading all three together on one hot loop
+| Figure | What it shows | What to look for |
+|---|---|---|
+| `plot_wall_time_vs_dt` | Total time per run, one panel per N | A straight line of slope −1 in log-log: time ∝ number of steps = dur/dt. Anything else means the per-step cost changes with dt. |
+| `plot_wall_time_vs_nobjs` | Total time vs N (finest dt) | Growth close to N² once collisions dominate (every pair is tested). |
+| `plot_step_time_vs_dt` / `_vs_nobjs` | Cost of one step | The plateau at fine dt is the true per-step cost; compare solvers (RK4 evaluates forces 4×). |
+| `plot_step_cv_vs_dt` / `_vs_nobjs` | Regularity of the step cost | Below the 5% line = regular. Spikes = irregular steps (collisions) or noise. |
+| `plot_speedup_vs_dt` / `_vs_nobjs` | scalar time ÷ optimised time | Above 1 = optimised wins. This is the compiler's gain; manual optimisations should push it further. |
 
-Once all three scripts run against the same representative workload, you can build one
-sentence per loop that no single tool could give you alone, e.g.:
-
-> "The Verlet integration loop (perf flamegraph: 62% self-time) has IPC 2.1 and low cache-miss
-> rates (perf stat), is fully vectorised at VER 0.95, using 95% of peak FLOP/cycle - near the
-> compute roof (MAQAO CQA) - achieving 40% of peak FLOP/s (MAQAO Lprof), so it's compute-bound
-> and already well-optimised. Meanwhile MALT shows 200 allocations/step from the contact list
-> `std::vector` reallocating - that's the next thing worth fixing, and none of the other two
-> tools would have surfaced it."
-
-If you can't write a sentence like that - if two tools are telling you overlapping things and
-a third is telling you nothing new - that's a sign you haven't picked a workload where all
-three are actually exercised (e.g. too few objects means the contact/collision path barely
-runs), not that a tool is redundant.
-
-### 4.3 Optional: one command to run everything
-
-Only worth building once the three scripts individually work and you're tired of running them
-one at a time - a thin orchestrator that calls all three in sequence and reports which ones
-actually completed (a missing MAQAO/MALT install shouldn't stop perf from running). Not a
-prerequisite for the pipeline being "done" and useful; each script standing alone is already
-a complete, valuable tool. Already built: `scripts/profile.sh`.
-
-### 4.4 Closing the loop
-
-Once you've run all three tools for real and read their output (not just "the script exits 0"
-- you should be able to answer the checkpoint questions above using *your* project's actual
-numbers), check off the `malt`/`maqao` boxes in `docs/ROADMAP.md` Phase 6.
+The console summary repeats the key numbers at the finest dt and lists every noisy point
+(step CV > 10%).
 
 ---
 
-## Definition of done
+## 5. The profiling pipeline (`scripts/profile.sh`)
 
-- [ ] You can explain, from memory, what each of perf/MAQAO/MALT measures and *why the other
-      two can't measure the same thing* (§0.1/§2.6).
-- [ ] `perf stat` output on your machine shows no multiplexing-scaled counters for the events
-      you actually care about (§1.4).
-- [ ] You've run a Top-Down pass and can name which of the four buckets dominates your hot
-      loop, and why (§1.5).
-- [ ] MAQAO CQA reports ~0% vectorisation on the scalar build and a materially higher
-      vectorisation ratio + VER on the optimised build, for the same loop (§2.3).
-- [ ] You can place your hottest loop on a roofline plot and state whether it's compute- or
-      memory-bound (§2.5).
-- [ ] MALT attributes the majority of allocations to named call-stacks, and you know whether
-      any of them are inside the per-step simulation loop (§3.4).
-- [ ] All three scripts exist, run independently, and write to their own `results/`
-      subdirectory (§4.1).
+```bash
+./scripts/profile.sh                      # perf + MAQAO + MALT + figures
+./scripts/profile.sh --profile optimised  # only one profile for perf/MAQAO
+./scripts/profile.sh --skip-maqao         # also --skip-perf, --skip-malt, --skip-plots
+```
+
+It runs the three tool scripts in order, then
+[`profiling_analysis.py`](profiling_analysis.py). A failing or missing tool fails only its own
+step; a summary lists what ran. Each tool script can also be run alone (`--help` for options).
+
+### 5.1 perf - what the CPU is doing
+
+Script: [`perf/profile_perf.sh`](perf/profile_perf.sh) · reference: [`perf/perf.md`](perf/perf.md)
+
+`perf` reads the CPU's hardware counters and samples the program. For each profile it runs
+three passes:
+
+| Pass | Command | Gives |
+|---|---|---|
+| Counters | `perf stat -r 5` with grouped events | Cycles, instructions (→ IPC), branch misses, L1 and last-level cache misses. Mean ± variance over 5 runs. |
+| Top-Down | `perf stat -M TopdownL1` | The share of pipeline slots spent on useful work vs each kind of bottleneck. |
+| Sampling | `perf record -F 999 --call-graph dwarf` | Which functions the time is spent in (`perf_report_<profile>.txt`), and a flamegraph if the FlameGraph tools are installed. |
+
+Details that keep the numbers exact:
+
+- **Grouped events.** A CPU has only a handful of counter registers. Asking for more events
+  than registers makes perf time-share them and *extrapolate* the counts. Events that form a
+  ratio (cycles + instructions, loads + misses) are grouped `{...}` so they are always counted
+  together and the ratio stays exact.
+- **Top-Down in its own pass**, because it uses its own counter grouping.
+- **Hybrid CPU.** Events are qualified as `cpu_core/<event>/` so only the P-core's counters are
+  reported (the E-core lines would read `<not counted>`).
+- **999 Hz** rather than 1000 Hz, so sampling never locks in phase with the kernel's 1 kHz timer.
+
+### 5.2 MAQAO - is the code vectorised?
+
+Script: [`maqao/profile_maqao.sh`](maqao/profile_maqao.sh) · reference: [`maqao/maqao.md`](maqao/maqao.md)
+
+perf counts a scalar `add` and a 4-wide vector `add` the same way, so it cannot say whether
+the code uses SIMD. MAQAO reads the generated assembly loop by loop.
+
+| Module | How | Gives |
+|---|---|---|
+| **CQA** | Static: reads the binary, does not run it. Restricted to the engine's own functions. | Per loop: vectorised or not, share of the vector register width used, estimated speedup if fully vectorised, bottleneck hints. |
+| **Lprof** | Runs and samples the program, aggregated per source loop. | Which loops actually take the time. |
+| **ONE-View** | Runs CQA + Lprof together. | One HTML dashboard per profile (`oneview_<profile>/RESULTS/Performance_one_html/index.html`). |
+
+Loop IDs are shared between Lprof and CQA, which is how the report joins "this loop takes X%
+of the time" with "this loop could be Y× faster".
+
+### 5.3 MALT - does the code allocate?
+
+Script: [`malt/profile_malt.sh`](malt/profile_malt.sh) · reference: [`malt/malt.md`](malt/malt.md)
+
+MALT intercepts every `malloc`/`new`/`free`/`delete` (it preloads its own allocator wrapper)
+and records the size, the call stack and the time of each call. Counts are exact, not sampled.
+It runs on the optimised profile only: compiler flags change how arithmetic is compiled, not
+which allocations the source code makes.
+
+Interactive exploration (call trees, source annotations):
+`malt-webview benchmarks/performance/malt/results/malt_optimised/malt-Performance-*.json`.
+
+### Outputs
+
+```text
+benchmarks/performance/
+  perf/results/      perf_stat_*.txt, perf_topdown_*.txt, perf_report_*.txt, perf_*.data
+  maqao/results/     cqa_*/cqa.txt, lprof_*/{functions,loops}.txt, oneview_*/
+  malt/results/      malt_optimised/malt-Performance-<pid>.json
+  */results/csv/     the benchmark binary's own CSV for these runs (kept apart from the sweep)
+  profiling_report/  fig_*.png, profiling_report.pdf
+```
+
+---
+
+## 6. The profiling report, figure by figure
+
+`profiling_report.pdf` opens with a page of key findings, computed from the numbers (they
+update with every run). Each following page shows one figure with a "How to read" and a "What
+it shows" paragraph.
+
+| Figure | Question | How to read it |
+|---|---|---|
+| `fig_perf_overview` | How much faster is optimised, and why? | Time per execution, instruction count, IPC (instructions per cycle). Fewer instructions = less work; higher IPC = the pipeline is better fed. IPC alone says nothing about vectorisation. |
+| `fig_perf_topdown` | What limits the CPU? | 100% of pipeline slots split into **Retiring** (useful work), **Front-End Bound** (instruction fetch/decode can't keep up: many small calls, code size), **Back-End Bound** (waiting for data or execution units: memory, dependencies), **Bad Speculation** (mispredicted branches). The largest non-Retiring share is where to look. |
+| `fig_perf_rates` | Do caches or branches cost anything? | Misses per 1000 instructions (MPKI). Preferred over miss *rates*, which can look huge on a handful of accesses. LLC MPKI > 1 (RAM traffic) or branch MPKI > 5 deserve attention. |
+| `fig_perf_hotspots` | Which functions take the time? | Share of samples per function, self time only. Trivial getters near the top mean calls that are not inlined. |
+| `fig_maqao_loops` | Which hot loops could be vectorised, and for how much? | Left: share of run time per loop (Lprof). Right: CQA's estimated speedup if that loop were fully vectorised. Hot *and* high potential = first target. |
+| `fig_malt_sites` | Who allocates, how often, what size? | Allocations per call site and per size. Any allocation repeated every time step is a target: reuse the buffer. |
+| `fig_malt_timeline` | Does memory grow? | Heap in use over the run. Flat = no growth; a rising curve = something accumulates. |
+
+---
+
+## 7. Current baseline
+
+Measured on 2026-10-19 on an Intel Core i7-13850HX (pinned to a P-core, `powersave` governor),
+representative workload (§3.7). These are the numbers optimisations will be compared against;
+re-run `./scripts/profile.sh` to refresh them.
+
+| | scalar | optimised |
+|---|---:|---:|
+| Time per execution (3 passes of 600 000 steps) | 9.69 s | 1.97 s (**4.9×**) |
+| Instructions | 80.0 G | 26.3 G (3.0× fewer) |
+| IPC | 2.19 | 3.56 |
+| Top-Down: Retiring / Front-End / Back-End / Bad Spec. | 42 / 55 / 1 / 2 % | 62 / 20 / 11 / 7 % |
+| Branch / L1 / LLC misses per 1000 instructions | 0.39 / 0.002 / 0.00004 | 0.56 / 0.002 / 0.00009 |
+| Hot loops vectorised (MAQAO, top 6) | 0 | 0 |
+| Loops vectorised among all analysed (MAQAO CQA) | 0 of 50 | 12 of 81 |
+
+What this says:
+
+1. **The compiler's 4.9× comes from doing less work, not from SIMD.** Inlining and `-O3`
+   remove two thirds of the instructions; none of the hot loops is vectorised.
+2. **The CPU is not waiting for memory.** Cache and branch misses are negligible: at N = 10
+   all the data fits in L1. The remaining loss is mostly Front-End Bound: many small
+   function calls.
+3. **Small accessors are not inlined.** `Sphere::getRadius()` (12%), `Sphere::getCenter()`
+   (9%), `Object::getPosition()` (5%) appear as separate hot functions in the optimised build:
+   they are defined in `.cpp` files, so other files cannot inline them without link-time
+   optimisation (`-flto`) or moving them to the headers.
+4. **Two heap allocations every step.** `PhysicsWorld::integrateVerlet` creates two temporary
+   `std::vector<Vector3D>` (`prevAcc`, `nextAcc`, `src/world/physicsWorld.cpp:283` and `:302`)
+   at each step: 3.6 million allocations of 264 bytes over the run (MALT), and
+   `new`/`malloc`/`free` visible in the perf hotspots. Reusing the buffers across steps
+   removes them.
+5. **Vectorisation potential is real but gated by layout.** CQA estimates up to 4× on the
+   Verlet integration loops if fully vectorised. The current layout (one object = one
+   `Vector3D` of 3 doubles, array of structures) is what prevents it; a structure-of-arrays
+   layout is the Phase 6 data-layout item.
+
+Benchmark sweep (same date and machine, `results*/benchmark.csv`), at the finest dt:
+
+| N objects | 1 | 10 | 50 | 100 |
+|---|---:|---:|---:|---:|
+| Step time, Verlet scalar | 0.39 µs | 5.3 µs | 70 µs | 252 µs |
+| Step time, Verlet optimised | 0.06 µs | 1.1 µs | 16 µs | 59 µs |
+| Compiler speedup (Euler / Verlet / RK4) | 6.5 / 5.9 / 7.9× | 4.6 / 4.9 / 7.8× | 4.2 / 4.3 / 5.5× | 4.2 / 4.2 / 4.8× |
+
+6. **The step cost grows as N².** From N = 50 to 100 the step time is multiplied by ~3.6
+   (ideal N² scaling: 4): the pairwise collision tests dominate from a few tens of objects.
+   This is the broad-phase item of the roadmap, and the largest lever for large N.
+7. **The compiler's gain shrinks with N** (from 6-10× at small N to ~4.2× at N = 100): the
+   collision loop that dominates at large N benefits less from `-O3` than the per-object code.
+
+Run-to-run noise over the 210 points: median CV 0.7-0.9%, 4 points above 10% (very short
+runs or one-off disturbances).
+
+---
+
+## 8. Workflow for an optimisation
+
+1. **Baseline.** Commit or note the current numbers (`profile.sh`, and `benchmark.sh` if the
+   change affects scaling).
+2. **Pick the target from the report**: the largest Top-Down loss, the hottest function, the
+   hottest loop with a high CQA speedup, or a per-step allocation.
+3. **Change one thing.**
+4. **Check physics is unchanged**: `./scripts/tests.sh`.
+5. **Re-measure** with the same scripts, and compare: time and instructions
+   (`fig_perf_overview`), the targeted metric, and CV (a gain smaller than the noise is not a
+   gain).
+6. **Scale it**: `benchmark.sh --n-objects "10 100 1000"` (or larger) to see whether the gain
+   holds where it matters.
+
+---
+
+## 9. Troubleshooting
+
+| Symptom | Cause and fix |
+|---|---|
+| `build_profile: ... is not configured as Release` | The build directory's CMake cache does not match the profile. Delete `build/benchmark_<profile>` and run again. |
+| `[cpu] Warning: CPU governor is 'powersave'` | Informational. For the most stable numbers: `sudo cpupower frequency-set -g performance`, and `-g powersave` afterwards. |
+| Large CV (> 10%) on some points | Background activity, thermal throttling, or very short runs (few steps at coarse dt). Re-run on a quiet machine; short configurations are naturally noisier. |
+| `perf stat` permission error | `sudo sysctl kernel.perf_event_paranoid=1` (resets at reboot). |
+| No flamegraph produced | Optional: install the FlameGraph tools (`stackcollapse-perf.pl`, `flamegraph.pl`). `perf_report_<profile>.txt` and the hotspot figure work without them. |
+| A profiler step fails with "not found on PATH" | Install it ([`README.md`](README.md#installation-profiling-tools)); the other steps still run. |
+| `malt-webview` fails with `libmalt-reader.so.1` | `sudo ldconfig` once after installing MALT. |
+| A figure is missing from the report | Its input files are missing; the console says which script to run. |
+
+---
+
+## 10. File map
+
+```text
+scripts/
+  benchmark.sh                     the sweep (§4)
+  profile.sh                       the profiling pipeline (§5)
+  full_report.sh                   benchmark.sh then profile.sh
+benchmarks/performance/
+  BENCHMARK_TOOLS_GUIDE.md         this guide
+  README.md                        the benchmark binary: CLI, CSV columns, tool installation
+  benchmark.cpp                    the benchmark binary (benchmarks/Performance)
+  profiles.sh                      build profiles, CPU pinning, setup checks (shared)
+  benchmark_analysis.py            figures + summary for the sweep
+  profiling_analysis.py            figures + report for the profilers
+  perf/   profile_perf.sh,  perf.md
+  maqao/  profile_maqao.sh, maqao.md
+  malt/   profile_malt.sh,  malt.md
+docs/benchmark.md                  the Phase 6 optimisation plan
+```

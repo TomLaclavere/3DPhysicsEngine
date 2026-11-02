@@ -5,7 +5,7 @@
  *
  * Uses setSimplifiedCollision(false): collision response is a continuous
  * spring-damper force (Hooke + viscous damping + Coulomb friction).
- * Because the force is smooth, the integrator convergence order is visible —
+ * Because the force is smooth, the integrator convergence order is visible -
  * unlike the impulse benchmark where O(dt) contact-timing error hides it.
  *
  * Parameters: sphere z0=20 m, radius=2 m, mass=1 kg, k=10000 N/m, zeta=0.05
@@ -239,7 +239,7 @@ static ConvResult runConvergence(const std::string& solver, decimal dt, size_t m
                 E_flight_ref = E;
         }
 
-        // Apex — compare height against reference
+        // Apex - compare height against reference
         if (prevVz > 0_d && vz <= 0_d && bounced)
         {
             if (apexCount < int(refPeaks.size()) && refPeaks[apexCount] > 0_d)

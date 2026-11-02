@@ -1,0 +1,54 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 9K of event 'cpu_core/cycles/Pu'
+# Event count (approx.): 36825404134
+#
+# Overhead  Symbol                                                                                                                                    IPC   [IPC Coverage]
+# ........  ........................................................................................................................................  ....................
+#
+     9.08%  [.] Vector3D::operator[](unsigned long) const                                                                                             -      -            
+     7.30%  [.] Sphere::getRadius() const                                                                                                             -      -            
+     6.59%  [.] Vector3D applyVector<std::minus<double> >(Vector3D const&, Vector3D const&, std::minus<double>&&) [clone .isra.0]                     -      -            
+     6.57%  [.] std::array<double, 3ul>::operator[](unsigned long) const                                                                              -      -            
+     5.09%  [.] Vector3D applyVector<std::plus<double> >(Vector3D const&, Vector3D const&, std::plus<double>&&) [clone .isra.0]                       -      -            
+     4.77%  [.] PhysicsWorld::integrateVerlet(double)                                                                                                 -      -            
+     3.94%  [.] operator"" _d(long double)                                                                                                            -      -            
+     3.91%  [.] BroadCollision::isColliding(Sphere const&, Sphere const&)                                                                             -      -            
+     3.48%  [.] Sphere::getDiameter() const                                                                                                           -      -            
+     3.35%  [.] commonMaths::isFinite(double)                                                                                                         -      -            
+     3.05%  [.] Vector3D::getNormSquare() const                                                                                                       -      -            
+     2.90%  [.] Vector3D::dotProduct(Vector3D const&) const                                                                                           -      -            
+     2.52%  [.] Sphere::getCenter() const                                                                                                             -      -            
+     2.26%  [.] Vector3D applyVector<std::multiplies<double> >(Vector3D const&, double, std::multiplies<double>&&) [clone .isra.0]                    -      -            
+     1.84%  [.] commonMaths::approxSmallerOrEqualThan(double, double, double)                                                                         -      -            
+     1.83%  [.] PhysicsWorld::solveCollisions()                                                                                                       -      -            
+     1.81%  [.] operator-(Vector3D const&, Vector3D const&)                                                                                           -      -            
+     1.67%  [.] Object::getPosition() const                                                                                                           -      -            
+     1.66%  [.] Vector3D::getX() const                                                                                                                -      -            
+     1.64%  [.] operator+(Vector3D const&, Vector3D const&)                                                                                           -      -            
+     1.59%  [.] Sphere::checkCollision(Object const&)                                                                                                 -      -            
+     1.28%  [.] Object::getSize() const                                                                                                               -      -            
+     1.25%  [.] Vector3D::Vector3D(double, double, double)                                                                                            -      -            
+     1.23%  [.] BroadCollision::isColliding(Sphere const&, Plane const&)                                                                              -      -            
+     1.09%  [.] std::plus<double>::operator()(double const&, double const&) const [clone .isra.0]                                                     -      -            
+     1.00%  [.] std::multiplies<double>::operator()(double const&, double const&) const [clone .isra.0]                                               -      -            
+     0.96%  [.] std::minus<double>::operator()(double const&, double const&) const [clone .isra.0]                                                    -      -            
+     0.95%  [.] NarrowCollision::computeContact(Sphere const&, Plane const&, Contact&)                                                                -      -            
+     0.94%  [.] Vector3D applyVector<std::multiplies<double> >(double, Vector3D const&, std::multiplies<double>&&) [clone .isra.0]                    -      -            
+     0.89%  [.] operator*(Vector3D const&, double)                                                                                                    -      -            
+     0.81%  [.] PhysicsWorld::computeAcceleration(Object&)                                                                                            -      -            
+     0.81%  [.] Object::setAcceleration(Vector3D const&)                                                                                              -      -            
+     0.69%  [.] Vector3D::getNorm() const                                                                                                             -      -            
+     0.60%  [.] Vector3D::operator+=(Vector3D const&) [clone .isra.0]                                                                                 -      -            
+     0.53%  [.] Object::setVelocity(Vector3D const&)                                                                                                  -      -            
+     0.53%  [.] Vector3D::getMax() const                                                                                                              -      -            
+     0.53%  [.] commonMaths::approxEqual(double, double, double)                                                                                      -      -            
+     0.50%  [.] std::vector<Object*, std::allocator<Object*> >::operator[](unsigned long) [clone .isra.0]                                             -      -            
+
+
+#
+# (Tip: To analyze cache line scalability issues use perf c2c record ... ; perf c2c report)
+#

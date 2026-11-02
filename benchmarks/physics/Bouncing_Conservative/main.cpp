@@ -16,8 +16,8 @@
  *   Peak after bounce n (1-indexed) : z_peak(n) = radius + (z0 - radius) * e^(2n)
  *
  * Two CSV files are produced:
- *   benchmark.csv      — one row per (solver, dt), all aggregated metrics
- *   energy_drift.csv   — E(t) time series for a subset of dt values
+ *   benchmark.csv      - one row per (solver, dt), all aggregated metrics
+ *   energy_drift.csv   - E(t) time series for a subset of dt values
  */
 
 #include "mathematics/common.hpp"
@@ -53,7 +53,7 @@ struct SimResult
     // For constant-gravity free fall: Euler drifts O(dt), Verlet/RK4 are near-exact.
     decimal maxFlightEnergyDrift;
 
-    // Energy samples for E(t) plots — filled only if recordEnergy = true
+    // Energy samples for E(t) plots - filled only if recordEnergy = true
     std::vector<decimal> energyTimes;
     std::vector<decimal> energyDrifts;
 };

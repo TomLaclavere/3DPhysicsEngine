@@ -10,8 +10,8 @@
  *   - CPU time (ms)         : duration of the simulation loop
  *
  * Two CSV files are produced:
- *   benchmark.csv      — one row per (solver, dt), all aggregated metrics
- *   energy_drift.csv   — one row per (solver, dt, timestep) to plot E(t)
+ *   benchmark.csv      - one row per (solver, dt), all aggregated metrics
+ *   energy_drift.csv   - one row per (solver, dt, timestep) to plot E(t)
  *                        (only for a subset of dt values to limit file size)
  */
 
@@ -44,7 +44,7 @@ struct SimResult
     decimal finalEnergyDrift; // |E(T) - E0| / E0
     decimal cpuMs;            // simulation loop duration (ms)
 
-    // Energy samples for E(t) plots — filled only if recordEnergy = true
+    // Energy samples for E(t) plots - filled only if recordEnergy = true
     std::vector<decimal> energyTimes;
     std::vector<decimal> energyDrifts;
 };
@@ -124,7 +124,7 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, b
             result.contactTime     = time + alpha * timeStep;
         }
 
-        // Energy drift — only valid before first collision
+        // Energy drift - only valid before first collision
         if (std::isnan(result.contactTime))
         {
             const decimal E = computeEnergy(*sphere);
@@ -146,7 +146,7 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, b
 
     result.cpuMs = simulationTimer.elapsedMicroseconds();
 
-    // Final energy drift — only meaningful if collision never occurred
+    // Final energy drift - only meaningful if collision never occurred
     if (std::isnan(result.contactTime))
     {
         const decimal E = computeEnergy(*sphere);

@@ -141,6 +141,8 @@ public:
                          2 * (yz - wx), 2 * (xz - wy), 2 * (yz + wx), 1 - 2 * (xx + yy));
     }
     /// Compute quaternion from the three Euler angles. Used to implement constructors.
+    /// @note Relies on GCC's constexpr-math extension for std::sin/std::cos (standardized in C++26 via P1383);
+    /// not portable to other compilers/standards yet.
     constexpr std::array<decimal, 4> eulerAngles_to_Quaternion(decimal angleX, decimal angleY,
                                                                decimal angleZ) noexcept
     {

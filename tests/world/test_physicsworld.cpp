@@ -147,7 +147,7 @@ TEST(PhysicsWorldTest, IntegrateEuler)
     // Fixed object must not move when called via the loop
     Sphere fixed(Vector3D(0_d, 0_d, 5_d));
     fixed.setAcceleration(Vector3D(0_d, 0_d, -9.81_d));
-    // integrateEuler itself has no fixed check — the caller's loop skips fixed;
+    // integrateEuler itself has no fixed check - the caller's loop skips fixed;
     // here we just verify the math on a second call
     world.integrateEuler(fixed, dt);
     EXPECT_DECIMAL_EQ(fixed.getVelocity().getZ(), -0.981_d);
@@ -505,7 +505,7 @@ TEST(PhysicsWorldTest, Run)
 }
 
 // --------------------------------------------------------------------------
-//  integrate() with fixed objects — covers continue branches (536, 548, 571, 579)
+//  integrate() with fixed objects - covers continue branches (536, 548, 571, 579)
 // --------------------------------------------------------------------------
 
 TEST(PhysicsWorldTest, IntegrateWithFixedObjects)
@@ -585,7 +585,7 @@ TEST(PhysicsWorldTest, NonSimplifiedVerletRK4)
 }
 
 // --------------------------------------------------------------------------
-//  solveCollisions() — called from integrate() when two spheres collide
+//  solveCollisions() - called from integrate() when two spheres collide
 // --------------------------------------------------------------------------
 
 TEST(PhysicsWorldTest, SolveCollisions)

@@ -1,0 +1,34 @@
+Solver: Verlet  n_objects=10  collisions=impulse
+  dt=5e-05  wall=0.655773 s  cpu_mean=655773 µs  stddev=0 µs  CV=0%  step_mean=1.09087 µs  step_cv=1.31632%  steps/s=914951  GFLOP/s=2.07236  RSS=4684 kB
+
+CSV written to /home/laclavere/3DPhysicsEngine/benchmarks/performance/perf/results/csv/benchmark.csv
+Solver: Verlet  n_objects=10  collisions=impulse
+  dt=5e-05  wall=0.652105 s  cpu_mean=652105 µs  stddev=0 µs  CV=0%  step_mean=1.08371 µs  step_cv=1.40706%  steps/s=920097  GFLOP/s=2.08402  RSS=4728 kB
+
+CSV written to /home/laclavere/3DPhysicsEngine/benchmarks/performance/perf/results/csv/benchmark.csv
+Solver: Verlet  n_objects=10  collisions=impulse
+  dt=5e-05  wall=0.655582 s  cpu_mean=655582 µs  stddev=0 µs  CV=0%  step_mean=1.0928 µs  step_cv=3.69057%  steps/s=915217  GFLOP/s=2.07297  RSS=4704 kB
+
+CSV written to /home/laclavere/3DPhysicsEngine/benchmarks/performance/perf/results/csv/benchmark.csv
+Solver: Verlet  n_objects=10  collisions=impulse
+  dt=5e-05  wall=0.656136 s  cpu_mean=656136 µs  stddev=0 µs  CV=0%  step_mean=1.09129 µs  step_cv=3.79305%  steps/s=914445  GFLOP/s=2.07122  RSS=4624 kB
+
+CSV written to /home/laclavere/3DPhysicsEngine/benchmarks/performance/perf/results/csv/benchmark.csv
+Solver: Verlet  n_objects=10  collisions=impulse
+  dt=5e-05  wall=0.674069 s  cpu_mean=674069 µs  stddev=0 µs  CV=0%  step_mean=1.08151 µs  step_cv=1.22215%  steps/s=890117  GFLOP/s=2.01611  RSS=4656 kB
+
+CSV written to /home/laclavere/3DPhysicsEngine/benchmarks/performance/perf/results/csv/benchmark.csv
+
+ Performance counter stats for '/home/laclavere/3DPhysicsEngine/build/benchmark_optimised/benchmarks/Performance --solver Verlet --dt 5e-5 --dur 30 --n_warmup 1 --n_runs 1 --n_objects 10 --out /home/laclavere/3DPhysicsEngine/benchmarks/performance/perf/results/csv' (5 runs):
+
+     7 403 189 988      cpu_core/cycles/u                                                       ( +-  0,21% )
+    26 340 549 149      cpu_core/instructions/u                                                 ( +-  0,00% )
+     4 892 944 097      cpu_core/branches/u                                                     ( +-  0,00% )
+        14 862 955      cpu_core/branch-misses/u                                                ( +-  0,19% )
+     9 875 579 279      cpu_core/L1-dcache-loads/u                                              ( +-  0,00% )
+            47 312      cpu_core/L1-dcache-load-misses/u                                        ( +-  7,07% )
+             3 857      cpu_core/LLC-loads/u                                                    ( +-  7,19% )
+             2 443      cpu_core/LLC-load-misses/u                                              ( +-  6,77% )
+
+       1,973609556 +- 0,006938543 seconds time elapsed  ( +-  0,35% )
+

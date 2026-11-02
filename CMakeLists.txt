@@ -1,9 +1,28 @@
 cmake_minimum_required(VERSION 3.22.1)
 
 # =============================================
+# Compiler Selection
+# =============================================
+# Must happen before project(), and only on the first configure of a build directory:
+# changing CMAKE_<LANG>_COMPILER afterwards makes CMake delete the whole cache on the next
+# configure, silently dropping CMAKE_BUILD_TYPE and every -D option. Switching compiler
+# therefore needs a fresh build directory.
+option(3DPE_USE_CLANG "Compile with Clang instead of GCC" OFF)
+
+if(NOT DEFINED CACHE{CMAKE_CXX_COMPILER})
+    if(3DPE_USE_CLANG)
+        set(CMAKE_C_COMPILER clang)
+        set(CMAKE_CXX_COMPILER clang++)
+    else()
+        set(CMAKE_C_COMPILER gcc)
+        set(CMAKE_CXX_COMPILER g++)
+    endif()
+endif()
+
+# =============================================
 # Project Configuration
 # =============================================
-project(3DPhysicsEngine 
+project(3DPhysicsEngine
     VERSION 0.2.3 
     DESCRIPTION "A 3D Physics Engine for real-time simulations"
     HOMEPAGE_URL "https://github.com/TomLaclavere/3DPhysicsEngine"
@@ -17,20 +36,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Set policies to avoid warnings and ensure modern behavior
 cmake_policy(SET CMP0077 NEW)
 
-# =============================================
-# Compiler Selection
-# =============================================
-option(3DPE_USE_CLANG "Compile with Clang instead of GCC" OFF)
-
-if(3DPE_USE_CLANG)
-    message(STATUS "=> Using Clang/Clang++ as compiler")
-    set(CMAKE_C_COMPILER clang CACHE STRING "Clang compiler" FORCE)
-    set(CMAKE_CXX_COMPILER clang++ CACHE STRING "Clang++ compiler" FORCE)
-else()
-    message(STATUS "=> Using GCC/g++ as compiler")
-    set(CMAKE_C_COMPILER gcc CACHE STRING "C compiler" FORCE)
-    set(CMAKE_CXX_COMPILER g++ CACHE STRING "C++ compiler" FORCE)
-endif()
+message(STATUS "=> Using ${CMAKE_CXX_COMPILER_ID} (${CMAKE_CXX_COMPILER}) as compiler")
 
 # =============================================
 # Project Options
@@ -345,6 +351,9 @@ if(3DPE_BUILD_BENCHMARKS)
     add_executable(benchmark_Performance benchmarks/performance/benchmark.cpp)
     target_link_libraries(benchmark_Performance PRIVATE 3DPhysicsEngine)
     target_include_directories(benchmark_Performance PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+    # Debug info + frame pointers, like the library: profilers (perf, MAQAO, MALT) need them to
+    # name functions and source lines in the benchmark's own code (e.g. simulation()).
+    target_compile_options(benchmark_Performance PRIVATE -g -fno-omit-frame-pointer)
     set_target_properties(benchmark_Performance PROPERTIES
         OUTPUT_NAME "Performance"
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/benchmarks
@@ -432,19 +441,6 @@ if(3DPE_BUILD_BENCHMARKS)
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         DEPENDS benchmark_Contact_Forces
         COMMENT "Running benchmark: Contact_Forces"
-    )
-
-    # ---------------------------------------------
-    # Profiling target — minimal simulation loop, no I/O
-    # Designed to be profiled with perf via profiling/perf/profile.sh
-    # ---------------------------------------------
-    add_executable(perf_target benchmarks/performance/perf/perf_target.cpp)
-    target_link_libraries(perf_target PRIVATE 3DPhysicsEngine)
-    target_include_directories(perf_target PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
-    set_target_properties(perf_target PROPERTIES
-        OUTPUT_NAME "perf_target"
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/profiling
-        FOLDER "Profiling"
     )
 
 endif()

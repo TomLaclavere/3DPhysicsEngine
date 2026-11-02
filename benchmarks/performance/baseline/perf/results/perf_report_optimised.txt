@@ -1,0 +1,33 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cpu_core/cycles/Pu'
+# Event count (approx.): 7384323736
+#
+# Overhead  Symbol                                                                                                                                    IPC   [IPC Coverage]
+# ........  ........................................................................................................................................  ....................
+#
+    14.72%  [.] BroadCollision::isColliding(Sphere const&, Sphere const&)                                                                             -      -            
+    13.75%  [.] PhysicsWorld::integrateVerlet(double)                                                                                                 -      -            
+    10.65%  [.] Sphere::getRadius() const                                                                                                             -      -            
+     8.60%  [.] Sphere::getCenter() const                                                                                                             -      -            
+     7.94%  [.] PhysicsWorld::solveCollisions()                                                                                                       -      -            
+     6.32%  [.] BroadCollision::isColliding(Sphere const&, Plane const&)                                                                              -      -            
+     6.27%  [.] NarrowCollision::computeContact(Sphere const&, Plane const&, Contact&)                                                                -      -            
+     5.94%  [.] Object::getPosition() const                                                                                                           -      -            
+     5.68%  [.] Vector3D::getNormalised() const                                                                                                       -      -            
+     5.58%  [.] Object::getSize() const                                                                                                               -      -            
+     5.10%  [.] Sphere::checkCollision(Object const&)                                                                                                 -      -            
+     1.78%  [.] Sphere::computeCollision(Object const&, Contact&)                                                                                     -      -            
+     1.73%  [.] PhysicsWorld::integrate()                                                                                                             -      -            
+     1.38%  [.] Object::setPosition(Vector3D const&)                                                                                                  -      -            
+     0.87%  [.] Object::setVelocity(Vector3D const&)                                                                                                  -      -            
+     0.76%  [.] Object::getVelocity() const                                                                                                           -      -            
+     0.56%  [.] Config::getSimplifiedCollision() const                                                                                                -      -            
+
+
+#
+# (Tip: To show information about system the samples were collected on use perf report --header)
+#

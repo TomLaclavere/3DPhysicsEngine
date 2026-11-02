@@ -1,11 +1,11 @@
-# Developer scripts — USAGE
+# Developer scripts - USAGE
 
 This repository provides small, robust scripts in `scripts/` to simplify common tasks:
-- `build.sh` — configure & build with CMake (accepts raw `-D` arguments)
-- `run.sh` — build (if needed) and run the executable (forwards runtime arguments)
-- `tests.sh` — build & run tests (uses ctest or auto-discovered binaries)
-- `coverage.sh` — build and generate coverage (HTML or console)
-- `clean.sh` — remove the build directory
+- `build.sh` - configure & build with CMake (accepts raw `-D` arguments)
+- `run.sh` - build (if needed) and run the executable (forwards runtime arguments)
+- `tests.sh` - build & run tests (uses ctest or auto-discovered binaries)
+- `coverage.sh` - build and generate coverage (HTML or console)
+- `clean.sh` - remove the build directory
 
 All scripts are portable (POSIX-compliant), use `set -euo pipefail`, and support argument forwarding for flexible workflows.
 

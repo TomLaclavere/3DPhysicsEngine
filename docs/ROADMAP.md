@@ -5,7 +5,7 @@
 
 ---
 
-## Phase 1: Setup and General Architecture ✅
+## Phase 1: Setup and General Architecture
 
 - [x] Initialize GitHub repository
 - [x] Define project structure
@@ -14,7 +14,7 @@
 
 ---
 
-## Phase 2: Setup & Maths Foundations ✅
+## Phase 2: Setup & Maths Foundations
 
 - [x] **Maths Library:** Implement or integrate 3D maths types: `vec3` for 3D vectors, matrices, and quaternion for rotation.
   - [x] **Vector3D:** Implement basic vector operations (addition, subtraction, scalar multiplication, dot product, cross product).
@@ -42,7 +42,7 @@
 
 ---
 
-## Phase 3: Rigid Body Dynamics & Physics World ✅
+## Phase 3: Rigid Body Dynamics & Physics World
 
 - [x] **Core Setup:**
   - [x] **Physical constants**
@@ -150,13 +150,12 @@ See [`docs/benchmark.md`](benchmark.md) for more details.
   - [x] Compiler-optimised single-core
 - [ ] **Add GitHub flag to keep the current status of software as reference**
 - [ ] **Optimisation workflow:**
-  - [ ] Version comparison tool: build two git versions and run the same benchmark on both
-  - [ ] Physics fingerprint in the benchmark output (final state checksum), to check two versions simulate the same thing
-  - [ ] Performance log (`docs/performance_log.md`): one line per optimisation - before, after, gain, commit
+  - [x] Physics fingerprint in the benchmark output (final state checksum), to check two versions simulate the same thing
+  - [x] Performance log (`docs/performance_log.md`): one line per optimisation - before, after, gain, commit
 
 - [ ] **Quick wins (from the baseline profile):**
-  - [ ] Remove the per-step heap allocations (`prevAcc` / `nextAcc` in `PhysicsWorld::integrateVerlet`; check Euler and RK4)
-  - [ ] Let small accessors inline (`Sphere::getRadius`, `getCenter`, `Object::getPosition`): move them to headers or enable LTO (`-flto`)
+  - [x] Remove the per-step heap allocations (`prevAcc` / `nextAcc` in `PhysicsWorld::integrateVerlet`; check Euler and RK4)
+  - [x] Let small accessors inline (`Sphere::getRadius`, `getCenter`, `Object::getPosition`): move them to headers or enable LTO (`-flto`)
 - [ ] **Broad-phase acceleration** *(algorithmic: O(N²) → ~O(N), largest gain at large N)*:
   - [ ] Uniform spatial grid or sweep-and-prune instead of testing every pair
   - [ ] Extend the benchmark sweep to N = 10³ - 10⁴

@@ -6,7 +6,7 @@ directories and compare.
 
 | | |
 |---|---|
-| Code | tag `perf-baseline` (commit `088e992`) |
+| Code | tag `baseline` (commit `3492eb0`) |
 | Date | 2026-10-19 |
 | Machine | Intel Core i7-13850HX, runs pinned to P-core CPU 2, `powersave` governor |
 | Sweep | `./scripts/benchmark.sh` defaults: Euler/Verlet/RK4 × N ∈ {1, 2, 5, 10, 20, 50, 100} × 5 dt in [1e-5, 1e-2], 2 s simulated, 1 warm-up + 5 timed runs |
@@ -28,7 +28,7 @@ To regenerate everything, build the tagged code in a separate worktree and run t
 there:
 
 ```bash
-git worktree add ../3DPE-baseline perf-baseline
+git worktree add ../3DPE-baseline baseline
 cd ../3DPE-baseline && ./scripts/full_report.sh
 ```
 

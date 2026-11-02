@@ -40,6 +40,7 @@ private:
     decimal  timeStep   = config.getTimeStep();
     decimal  gravityCst = config.getGravity();
     Vector3D gravityAcc = Physics::computeGravityAcc(gravityCst);
+    std::vector<Vector3D> prevAcc, nextAcc;
 
     // Utilites
     unsigned int            nextObjectId = 0;

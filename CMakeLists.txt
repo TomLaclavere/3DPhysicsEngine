@@ -213,8 +213,10 @@ if(Qt6_FOUND)
         src/gui/main_qt.cpp
         src/gui/mainWindow.cpp
         src/gui/simulationThread.cpp
+        src/gui/flowLayout.cpp
         lib/gui/mainWindow.hpp
         lib/gui/simulationThread.hpp
+        lib/gui/flowLayout.hpp
     )
     set_target_properties(PhysicsEngineGui PROPERTIES
         AUTOMOC ON

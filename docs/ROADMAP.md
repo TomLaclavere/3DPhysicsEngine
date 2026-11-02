@@ -153,7 +153,7 @@ See [`docs/benchmark.md`](benchmark.md) for more details.
   - [ ] Version comparison tool: build two git versions and run the same benchmark on both
   - [ ] Physics fingerprint in the benchmark output (final state checksum), to check two versions simulate the same thing
   - [ ] Performance log (`docs/performance_log.md`): one line per optimisation - before, after, gain, commit
-  - [ ] Rule: one optimisation per branch, physics tests green, re-measure with the same scripts
+
 - [ ] **Quick wins (from the baseline profile):**
   - [ ] Remove the per-step heap allocations (`prevAcc` / `nextAcc` in `PhysicsWorld::integrateVerlet`; check Euler and RK4)
   - [ ] Let small accessors inline (`Sphere::getRadius`, `getCenter`, `Object::getPosition`): move them to headers or enable LTO (`-flto`)

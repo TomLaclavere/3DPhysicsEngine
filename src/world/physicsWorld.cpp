@@ -280,7 +280,7 @@ void PhysicsWorld::integrateVerlet(decimal dt)
     const size_t n = objects.size();
 
     // 1) Accelerations at (t) from computeAcceleration
-    std::vector<Vector3D> prevAcc(n, Vector3D(0_d));
+    prevAcc.assign(n, Vector3D(0_d));
     for (size_t i = 0; i < n; ++i)
     {
         auto* obj = objects[i];
@@ -299,7 +299,7 @@ void PhysicsWorld::integrateVerlet(decimal dt)
     }
 
     // 3) Accelerations at (t+dt), from new positions
-    std::vector<Vector3D> nextAcc(n, Vector3D(0_d));
+    nextAcc.assign(n, Vector3D(0_d));
     for (size_t i = 0; i < n; ++i)
     {
         auto* obj = objects[i];

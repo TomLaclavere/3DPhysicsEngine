@@ -61,9 +61,9 @@ public:
     /// @{
     decimal    getVolume() const override;
     ObjectType getType() const override;
-    Vector3D   getCenter() const;
-    decimal    getDiameter() const;
-    decimal    getRadius() const;
+    Vector3D   getCenter() const { return getPosition(); };
+    decimal    getDiameter() const { return getSize().getX(); };
+    decimal    getRadius() const { return getDiameter() * 0.5_d; };
     /// @}
 
     /// @name Setters

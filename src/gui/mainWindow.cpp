@@ -4,6 +4,7 @@
  */
 #include "gui/mainWindow.hpp"
 
+#include "gui/flowLayout.hpp"
 #include "mathematics/vector.hpp"
 #include "objects/object.hpp"
 #include "precision.hpp"
@@ -13,7 +14,6 @@
 #include <QComboBox>
 #include <QDoubleSpinBox>
 #include <QFormLayout>
-#include <QGridLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
 #include <QHeaderView>
@@ -21,6 +21,9 @@
 #include <QLineEdit>
 #include <QProcess>
 #include <QPushButton>
+#include <QScreen>
+#include <QScrollArea>
+#include <QSplitter>
 #include <QStatusBar>
 #include <QTableWidget>
 #include <QTextEdit>
@@ -46,21 +49,23 @@ MainWindow::MainWindow(QWidget* parent)
 void MainWindow::buildUi()
 {
     setWindowTitle("3D Physics Engine");
-    resize(1200, 750);
-
-    auto* central = new QWidget(this);
-    setCentralWidget(central);
+    // Scrollable central area: last resort when the window is narrower than a single widget
+    auto* scroll = new QScrollArea(this);
+    scroll->setWidgetResizable(true);
+    scroll->setFrameShape(QFrame::NoFrame);
+    setCentralWidget(scroll);
+    auto* central = new QWidget;
+    scroll->setWidget(central);
     auto* mainLayout = new QHBoxLayout(central);
 
     // ---- Left panel ----
     auto* leftPanel = new QWidget;
-    leftPanel->setFixedWidth(320);
     auto* leftLayout = new QVBoxLayout(leftPanel);
     leftLayout->setSpacing(6);
 
     // Simulation controls
     auto* ctrlBox    = new QGroupBox("Simulation");
-    auto* ctrlLayout = new QHBoxLayout(ctrlBox);
+    auto* ctrlLayout = new FlowLayout(ctrlBox);
     m_btnInit        = new QPushButton("Init");
     m_btnStart       = new QPushButton("Start");
     m_btnStop        = new QPushButton("Stop");
@@ -71,7 +76,7 @@ void MainWindow::buildUi()
 
     // Integrate
     auto* intBox    = new QGroupBox("Integrate");
-    auto* intLayout = new QHBoxLayout(intBox);
+    auto* intLayout = new FlowLayout(intBox);
     m_stepDt        = new QDoubleSpinBox;
     m_stepDt->setRange(1e-6, 10.0);
     m_stepDt->setDecimals(4);
@@ -84,6 +89,7 @@ void MainWindow::buildUi()
     // Config
     auto* configBox  = new QGroupBox("Config");
     auto* configForm = new QFormLayout(configBox);
+    configForm->setRowWrapPolicy(QFormLayout::WrapLongRows);
     m_gravityBox     = new QDoubleSpinBox;
     m_gravityBox->setRange(0.0, 100.0);
     m_gravityBox->setDecimals(4);
@@ -134,7 +140,7 @@ void MainWindow::buildUi()
 
     // Add object
     auto* addBox    = new QGroupBox("Add Object");
-    auto* addLayout = new QHBoxLayout(addBox);
+    auto* addLayout = new FlowLayout(addBox);
     m_typeBox       = new QComboBox;
     m_typeBox->addItems({ "sphere", "aabb", "plane" });
     m_nameEdit = new QLineEdit;
@@ -151,7 +157,7 @@ void MainWindow::buildUi()
     m_csvDir         = new QLineEdit("output/CSV");
     csvRow->addWidget(new QLabel("CSV dir:"));
     csvRow->addWidget(m_csvDir);
-    auto* btnRow  = new QHBoxLayout;
+    auto* btnRow  = new FlowLayout;
     auto* btnTraj = new QPushButton("Trajectories");
     auto* btnObjs = new QPushButton("3D Objects");
     auto* btnAnim = new QPushButton("Animation");
@@ -182,7 +188,8 @@ void MainWindow::buildUi()
 
     // Selected object properties
     auto* propBox    = new QGroupBox("Selected Object");
-    auto* propLayout = new QGridLayout(propBox);
+    auto* propLayout = new QFormLayout(propBox);
+    propLayout->setRowWrapPolicy(QFormLayout::WrapLongRows);
     m_selectedLabel  = new QLabel("No selection");
 
     auto makeSpin = [](double min, double max, int decimals = 4) -> QDoubleSpinBox*
@@ -213,60 +220,54 @@ void MainWindow::buildUi()
     m_btnSet         = new QPushButton("Set");
     m_btnDel         = new QPushButton("Del");
 
-    int r = 0;
-    propLayout->addWidget(m_selectedLabel, r++, 0, 1, 7);
-    propLayout->addWidget(new QLabel("Pos:"), r, 0);
-    propLayout->addWidget(m_posX, r, 1);
-    propLayout->addWidget(m_posY, r, 2);
-    propLayout->addWidget(m_posZ, r, 3);
-    ++r;
-    propLayout->addWidget(new QLabel("Vel:"), r, 0);
-    propLayout->addWidget(m_velX, r, 1);
-    propLayout->addWidget(m_velY, r, 2);
-    propLayout->addWidget(m_velZ, r, 3);
-    ++r;
-    propLayout->addWidget(new QLabel("Normal:"), r, 0);
-    propLayout->addWidget(m_normalX, r, 1);
-    propLayout->addWidget(m_normalY, r, 2);
-    propLayout->addWidget(m_normalZ, r, 3);
-    ++r;
-    propLayout->addWidget(new QLabel("Size:"), r, 0);
-    propLayout->addWidget(m_sizeX, r, 1);
-    propLayout->addWidget(m_sizeY, r, 2);
-    propLayout->addWidget(m_sizeZ, r, 3);
-    ++r;
-    propLayout->addWidget(new QLabel("Mass:"), r, 0);
-    propLayout->addWidget(m_massBox, r, 1);
-    propLayout->addWidget(new QLabel("Fixed:"), r, 2);
-    propLayout->addWidget(m_fixedBox, r, 3);
-    ++r;
-    propLayout->addWidget(new QLabel("Stiffness:"), r, 0);
-    propLayout->addWidget(m_stiffnessBox, r, 1);
-    propLayout->addWidget(new QLabel("Damping:"), r, 2);
-    propLayout->addWidget(m_dampingBox, r, 3);
-    ++r;
-    propLayout->addWidget(new QLabel("Friction:"), r, 0);
-    propLayout->addWidget(m_frictionBox, r, 1);
-    propLayout->addWidget(new QLabel("Restitution:"), r, 2);
-    propLayout->addWidget(m_restitutionBox, r, 3);
-    ++r;
-    propLayout->addWidget(m_btnSet, r, 0, 1, 2);
-    propLayout->addWidget(m_btnDel, r, 2, 1, 2);
+    // Each row's fields wrap onto several lines when the panel is narrow
+    auto flowRow = [](std::initializer_list<QWidget*> widgets) -> QWidget*
+    {
+        auto* row    = new QWidget;
+        auto* layout = new FlowLayout(row);
+        layout->setContentsMargins(0, 0, 0, 0);
+        for (auto* w : widgets)
+            layout->addWidget(w);
+        return row;
+    };
+    propLayout->addRow(m_selectedLabel);
+    propLayout->addRow("Pos:", flowRow({ m_posX, m_posY, m_posZ }));
+    propLayout->addRow("Vel:", flowRow({ m_velX, m_velY, m_velZ }));
+    propLayout->addRow("Normal:", flowRow({ m_normalX, m_normalY, m_normalZ }));
+    propLayout->addRow("Size:", flowRow({ m_sizeX, m_sizeY, m_sizeZ }));
+    propLayout->addRow("Mass:", flowRow({ m_massBox, new QLabel("Fixed:"), m_fixedBox }));
+    propLayout->addRow("Stiffness:", flowRow({ m_stiffnessBox, new QLabel("Damping:"), m_dampingBox }));
+    propLayout->addRow("Friction:", flowRow({ m_frictionBox, new QLabel("Restitution:"), m_restitutionBox }));
+    propLayout->addRow(flowRow({ m_btnSet, m_btnDel }));
 
     // Console
     m_console = new QTextEdit;
     m_console->setReadOnly(true);
-    m_console->setFixedHeight(140);
     m_console->setFontFamily("monospace");
 
     rightLayout->addWidget(m_objectTable, 2);
     rightLayout->addWidget(propBox);
-    rightLayout->addWidget(m_console);
+    rightLayout->addWidget(m_console, 1);
 
-    mainLayout->addWidget(leftPanel);
-    mainLayout->addWidget(rightPanel, 1);
+    // Left panel scrolls: it is taller than small screens
+    auto* leftScroll = new QScrollArea;
+    leftScroll->setWidget(leftPanel);
+    leftScroll->setWidgetResizable(true);
+    leftScroll->setFrameShape(QFrame::NoFrame);
+
+    // Splitter: the user drags the boundary between panels; extra width goes to the right panel
+    auto* splitter = new QSplitter(Qt::Horizontal);
+    splitter->addWidget(leftScroll);
+    splitter->addWidget(rightPanel);
+    splitter->setStretchFactor(1, 1);
+    splitter->setChildrenCollapsible(false);
+    mainLayout->addWidget(splitter);
 
     statusBar()->showMessage("Ready");
+
+    // Start at the content's preferred size, within the screen (the scroll area alone would open small)
+    const QSize preferred = central->sizeHint() + QSize(0, statusBar()->sizeHint().height());
+    resize(preferred.boundedTo(screen()->availableGeometry().size()));
 
     // Signals
     connect(m_btnInit, &QPushButton::clicked, this, &MainWindow::onInit);

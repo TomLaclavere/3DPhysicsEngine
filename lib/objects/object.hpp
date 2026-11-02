@@ -87,27 +87,27 @@ public:
 
     /// @name Getters
     /// @{
-    Vector3D           getPosition() const;
+    Vector3D                getPosition() const { return position; };
     virtual const Vector3D& getNormal() const;
-    Vector3D           getSize() const;
-    Vector3D           getVelocity() const;
-    Vector3D           getAcceleration() const;
-    Vector3D           getForce() const;
-    Vector3D           getTorque() const;
-    decimal            getMass() const;
-    decimal            getStiffnessCst() const;
-    decimal            getFrictionCst() const;
-    decimal            getDampingCst() const;
-    decimal            getRestitutionCst() const;
-    virtual decimal    getVolume() const;
-    decimal            getKineticEnergy() const;
-    decimal            getPotentielEnergy(decimal g) const;
-    decimal            getTotalEnergy(decimal g) const;
-    Material           getMaterial() const;
-    virtual ObjectType getType() const;
-    bool               getIsFixed() const;
-    unsigned int       getId() const { return id; }
-    std::string        getName() const { return name; }
+    Vector3D                getSize() const;
+    Vector3D                getVelocity() const;
+    Vector3D                getAcceleration() const;
+    Vector3D                getForce() const;
+    Vector3D                getTorque() const;
+    decimal                 getMass() const;
+    decimal                 getStiffnessCst() const;
+    decimal                 getFrictionCst() const;
+    decimal                 getDampingCst() const;
+    decimal                 getRestitutionCst() const;
+    virtual decimal         getVolume() const;
+    decimal                 getKineticEnergy() const;
+    decimal                 getPotentielEnergy(decimal g) const;
+    decimal                 getTotalEnergy(decimal g) const;
+    Material                getMaterial() const;
+    virtual ObjectType      getType() const;
+    bool                    getIsFixed() const;
+    unsigned int            getId() const { return id; }
+    std::string             getName() const { return name; }
     /// @}
 
     /// @name Setters

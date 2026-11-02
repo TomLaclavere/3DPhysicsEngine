@@ -60,20 +60,19 @@ Object::Object(const Vector3D& position, const Vector3D& normal, const Vector3D&
 }
 
 //  Getters
-Vector3D Object::getPosition() const { return position; }
 const Vector3D& Object::getNormal() const { return normal; }
-Vector3D Object::getSize() const { return size; }
-Vector3D Object::getVelocity() const { return velocity; }
-Vector3D Object::getAcceleration() const { return acceleration; }
-Vector3D Object::getForce() const { return force; }
-Vector3D Object::getTorque() const { return torque; }
-decimal  Object::getMass() const { return mass; }
-decimal  Object::getStiffnessCst() const { return material.getStiffness(); }
-decimal  Object::getDampingCst() const { return material.getDamping(); }
-decimal  Object::getFrictionCst() const { return material.getFriction(); }
-decimal  Object::getRestitutionCst() const { return material.getRestitution(); }
-decimal  Object::getVolume() const { return size.getNorm() * std::numbers::pi_v<decimal>; }
-decimal  Object::getKineticEnergy() const
+Vector3D        Object::getSize() const { return size; }
+Vector3D        Object::getVelocity() const { return velocity; }
+Vector3D        Object::getAcceleration() const { return acceleration; }
+Vector3D        Object::getForce() const { return force; }
+Vector3D        Object::getTorque() const { return torque; }
+decimal         Object::getMass() const { return mass; }
+decimal         Object::getStiffnessCst() const { return material.getStiffness(); }
+decimal         Object::getDampingCst() const { return material.getDamping(); }
+decimal         Object::getFrictionCst() const { return material.getFriction(); }
+decimal         Object::getRestitutionCst() const { return material.getRestitution(); }
+decimal         Object::getVolume() const { return size.getNorm() * std::numbers::pi_v<decimal>; }
+decimal         Object::getKineticEnergy() const
 {
     Vector3D vel = getVelocity();
     return 0.5_d * mass * dotProduct(vel, vel);

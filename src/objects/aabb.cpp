@@ -13,7 +13,7 @@
  */
 #include "objects/aabb.hpp"
 
-#include "collision/broad_collision.hpp"
+#include "collision/broad_collision_pairs.hpp"
 #include "collision/narrow_collision.hpp"
 #include "mathematics/vector.hpp"
 #include "objects/object.hpp"
@@ -63,20 +63,23 @@ void AABB::setMaterial(const Material& mat)
 /**
  * @brief Checks broad collision between two aabb.
  */
-bool AABB::checkAABBCollision(const AABB& aabb) { return BroadCollision::isColliding(*this, aabb); }
+bool AABB::checkAABBCollision(const AABB& aabb) { return BroadCollisionPairs::isColliding(*this, aabb); }
 
 /**
  * @brief Checks broad collision between an aabb and a sphere.
  */
 bool AABB::checkAABBSphereCollision(const Sphere& sphere)
 {
-    return BroadCollision::isColliding(*this, sphere);
+    return BroadCollisionPairs::isColliding(*this, sphere);
 }
 
 /**
  * @brief Checks broad collision between an aabb and a finite plane.
  */
-bool AABB::checkAABBPlaneCollision(const Plane& plane) { return BroadCollision::isColliding(*this, plane); }
+bool AABB::checkAABBPlaneCollision(const Plane& plane)
+{
+    return BroadCollisionPairs::isColliding(*this, plane);
+}
 
 /**
  * @brief Polymorphic broad collision detection against another Object.

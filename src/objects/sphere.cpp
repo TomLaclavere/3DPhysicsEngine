@@ -13,7 +13,7 @@
  */
 #include "objects/sphere.hpp"
 
-#include "collision/broad_collision.hpp"
+#include "collision/broad_collision_pairs.hpp"
 #include "collision/narrow_collision.hpp"
 #include "objects/object.hpp"
 
@@ -38,19 +38,25 @@ void Sphere::setMaterial(const Material& mat)
 /**
  * @brief Checks broad collision between two Sphere.s
  */
-bool Sphere::checkSphereCollision(const Sphere& Sphere) { return BroadCollision::isColliding(*this, Sphere); }
+bool Sphere::checkSphereCollision(const Sphere& Sphere)
+{
+    return BroadCollisionPairs::isColliding(*this, Sphere);
+}
 
 /**
  * @brief Checks broad collision between an Sphere and an AABB.
  */
-bool Sphere::checkSphereAABBCollision(const AABB& aabb) { return BroadCollision::isColliding(*this, aabb); }
+bool Sphere::checkSphereAABBCollision(const AABB& aabb)
+{
+    return BroadCollisionPairs::isColliding(*this, aabb);
+}
 
 /**
  * @brief Checks broad collision between an Sphere and a finite plane.
  */
 bool Sphere::checkSpherePlaneCollision(const Plane& plane)
 {
-    return BroadCollision::isColliding(*this, plane);
+    return BroadCollisionPairs::isColliding(*this, plane);
 }
 
 /**

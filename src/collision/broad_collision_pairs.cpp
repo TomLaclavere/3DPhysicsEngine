@@ -1,8 +1,8 @@
 /**
- * @file broad_collision.cpp
+ * @file broad_collision_pairs.cpp
  * @brief Implementation of broad-phase collision detection functions.
  */
-#include "collision/broad_collision.hpp"
+#include "collision/broad_collision_pairs.hpp"
 
 #include "mathematics/common.hpp"
 
@@ -18,7 +18,7 @@
  * @param sphere2
  * @return true if the spheres intersect, false otherwise.
  */
-bool BroadCollision::isColliding(const Sphere& sphere1, const Sphere& sphere2)
+bool BroadCollisionPairs::isColliding(const Sphere& sphere1, const Sphere& sphere2)
 {
     Vector3D d = sphere2.getCenter() - sphere1.getCenter();
     decimal  r = sphere1.getRadius() + sphere2.getRadius();
@@ -37,7 +37,7 @@ bool BroadCollision::isColliding(const Sphere& sphere1, const Sphere& sphere2)
  * @param aabb
  * @return true if the sphere and AABB intersect, false otherwise.
  */
-bool BroadCollision::isColliding(const Sphere& sphere, const AABB& aabb)
+bool BroadCollisionPairs::isColliding(const Sphere& sphere, const AABB& aabb)
 {
     decimal aabbRadius = aabb.getHalfExtents().getNorm(); // half-diagonal
     decimal dist       = (sphere.getCenter() - aabb.getPosition()).getNorm();
@@ -60,7 +60,7 @@ bool BroadCollision::isColliding(const Sphere& sphere, const AABB& aabb)
  * @param plane
  * @return true if the sphere and plane potentially intersect, false otherwise.
  */
-bool BroadCollision::isColliding(const Sphere& sphere, const Plane& plane)
+bool BroadCollisionPairs::isColliding(const Sphere& sphere, const Plane& plane)
 {
     Vector3D n    = plane.getNormal().getNormalised();
     decimal  dist = (sphere.getCenter() - plane.getPosition()).dotProduct(n);
@@ -83,7 +83,7 @@ bool BroadCollision::isColliding(const Sphere& sphere, const Plane& plane)
  * @param aabb2
  * @return true if the AABBs intersect, false otherwise.
  */
-bool BroadCollision::isColliding(const AABB& aabb1, const AABB& aabb2)
+bool BroadCollisionPairs::isColliding(const AABB& aabb1, const AABB& aabb2)
 {
     return !(aabb1.getMax().getX() < aabb2.getMin().getX() || aabb1.getMin().getX() > aabb2.getMax().getX() ||
              aabb1.getMax().getY() < aabb2.getMin().getY() || aabb1.getMin().getY() > aabb2.getMax().getY() ||
@@ -103,7 +103,7 @@ bool BroadCollision::isColliding(const AABB& aabb1, const AABB& aabb2)
  * @param plane The Plane to test.
  * @return true if the AABB and plane may intersect, false otherwise.
  */
-bool BroadCollision::isColliding(const AABB& aabb, const Plane& plane)
+bool BroadCollisionPairs::isColliding(const AABB& aabb, const Plane& plane)
 {
     Vector3D n    = plane.getNormal().getNormalised();
     Vector3D half = aabb.getHalfExtents();
@@ -133,7 +133,7 @@ bool BroadCollision::isColliding(const AABB& aabb, const Plane& plane)
  * @param plane2
  * @return true if the planes potentially intersect, false otherwise.
  */
-bool BroadCollision::isColliding(const Plane& plane1, const Plane& plane2)
+bool BroadCollisionPairs::isColliding(const Plane& plane1, const Plane& plane2)
 {
     decimal dist = (plane1.getPosition() - plane2.getPosition()).getNorm();
     return commonMaths::approxSmallerOrEqualThan(

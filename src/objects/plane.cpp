@@ -13,7 +13,7 @@
  */
 #include "objects/plane.hpp"
 
-#include "collision/broad_collision.hpp"
+#include "collision/broad_collision_pairs.hpp"
 #include "collision/narrow_collision.hpp"
 #include "mathematics/common.hpp"
 #include "mathematics/vector.hpp"
@@ -96,20 +96,23 @@ bool Plane::containsPoint(const Vector3D& point) const
 /**
  * @brief Checks broad collision between two Planes.
  */
-bool Plane::checkPlaneCollision(const Plane& Plane) { return BroadCollision::isColliding(*this, Plane); }
+bool Plane::checkPlaneCollision(const Plane& Plane) { return BroadCollisionPairs::isColliding(*this, Plane); }
 
 /**
  * @brief Checks broad collision between an Plane and a sphere.
  */
 bool Plane::checkPlaneSphereCollision(const Sphere& sphere)
 {
-    return BroadCollision::isColliding(*this, sphere);
+    return BroadCollisionPairs::isColliding(*this, sphere);
 }
 
 /**
  * @brief Checks broad collision between an Plane and an AABB.
  */
-bool Plane::checkPlaneAABBCollision(const AABB& aabb) { return BroadCollision::isColliding(*this, aabb); }
+bool Plane::checkPlaneAABBCollision(const AABB& aabb)
+{
+    return BroadCollisionPairs::isColliding(*this, aabb);
+}
 
 /**
  * @brief Polymorphic broad collision detection against another Object.

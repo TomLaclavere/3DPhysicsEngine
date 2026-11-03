@@ -148,11 +148,11 @@ See [`docs/benchmark.md`](benchmark.md) for more details.
 - [x] **Reference bencharks:**
   - [x] Scalar reference case
   - [x] Compiler-optimised single-core
-- [ ] **Add GitHub flag to keep the current status of software as reference**
-- [ ] **Optimisation workflow:**
+- [x] **Add GitHub flag to keep the current status of software as reference**
+- [x] **Optimisation workflow:**
   - [x] Physics fingerprint in the benchmark output (final state checksum), to check two versions simulate the same thing
   - [x] Performance log (`docs/performance_log.md`): one line per optimisation - before, after, gain, commit
-
+- [ ] **Bonus:** Create InfPlane object, to simplify creation of the ground
 - [ ] **Quick wins (from the baseline profile):**
   - [x] Remove the per-step heap allocations (`prevAcc` / `nextAcc` in `PhysicsWorld::integrateVerlet`; check Euler and RK4)
   - [x] Let small accessors inline (`Sphere::getRadius`, `getCenter`, `Object::getPosition`): move them to headers or enable LTO (`-flto`)

@@ -4,18 +4,25 @@
  *
  */
 #pragma once
+#include "collision/broad_collision_brut_force.hpp"
+#include "collision/broad_collision_grid.hpp"
+#include "collision/broad_collision_sweep_prune.hpp"
 #include "mathematics/vector.hpp"
 #include "objects/object.hpp"
 #include "utilities/csv.hpp"
+#include "world/broadCollision.hpp"
 #include "world/config.hpp"
-#include "world/integrateRK4.hpp"
 #include "world/physics.hpp"
 #include "world/solver.hpp"
 
 #include <algorithm>
 #include <fstream>
 #include <unordered_map>
+#include <variant>
 #include <vector>
+
+/// Broad-phase implementations; only the one selected in Config is constructed.
+using BroadPhase = std::variant<BroadCollisionBrut, BroadCollisionGrid, BroadCollisionSweepPrune>;
 
 /**
  * @class PhysicsWorld
@@ -35,18 +42,22 @@ private:
     std::unordered_map<Object*, std::ofstream> motionFiles;
 
     // Simulation
-    bool     isRunning = false;
-    Solver   solver;
-    decimal  timeStep   = config.getTimeStep();
-    decimal  gravityCst = config.getGravity();
-    Vector3D gravityAcc = Physics::computeGravityAcc(gravityCst);
+    bool                  isRunning      = false;
+    Solver                solver         = Solver::Euler;
+    BroadCollision        broadCollision = BroadCollision::Brut;
+    BroadPhase            broadPhase;
+    decimal               timeStep   = config.getTimeStep();
+    decimal               gravityCst = config.getGravity();
+    Vector3D              gravityAcc = Physics::computeGravityAcc(gravityCst);
     std::vector<Vector3D> prevAcc, nextAcc;
 
     // Utilites
-    unsigned int            nextObjectId = 0;
-    static constexpr size_t FLUSH_EVERY  = 500;
-    std::vector<MotionCSV>  motionBuffer;
-    void                    flushMotionBuffer();
+    unsigned int                                  nextObjectId = 0;
+    static constexpr size_t                       FLUSH_EVERY  = 500;
+    std::vector<MotionCSV>                        motionBuffer;
+    void                                          flushMotionBuffer();
+    void                                          resetBroadPhase();
+    const std::vector<std::pair<size_t, size_t>>& getBroadPairs() const;
 
 public:
     // ============================================================================
@@ -66,13 +77,14 @@ public:
     /// @name Getters
     // ============================================================================
     /// @{
-    Config&      getConfig();
-    bool         getIsRunning() const;
-    decimal      getTimeStep() const;
-    decimal      getGravityCst() const;
-    Vector3D     getGravityAcc() const;
-    Solver       getSolver() const;
-    unsigned int getNextObjectId() const { return nextObjectId; }
+    Config&        getConfig();
+    bool           getIsRunning() const;
+    decimal        getTimeStep() const;
+    decimal        getGravityCst() const;
+    Vector3D       getGravityAcc() const;
+    Solver         getSolver() const;
+    BroadCollision getBroadCollision() const;
+    unsigned int   getNextObjectId() const { return nextObjectId; }
     /// @}
 
     // ============================================================================
@@ -80,6 +92,7 @@ public:
     // ============================================================================
     /// @{
     void setSolver(const std::string& _solver);
+    void setBroadCollision(const std::string& _broad);
     void setTimeStep(decimal step);
     void setGravityCst(decimal g);
     void setGravityAcc(const Vector3D& acc);
@@ -94,6 +107,8 @@ public:
     void initialise();
     void start() { isRunning = true; }
     void stop() { isRunning = false; }
+    /// Recompute the broad-phase pairs from the current positions (called by integrate()).
+    void updateBroadPhase();
     /// Re-initialise PhysicsWorld
     void resetAcc()
     {

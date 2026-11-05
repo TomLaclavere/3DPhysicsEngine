@@ -40,7 +40,7 @@ void Sphere::setMaterial(const Material& mat)
  */
 bool Sphere::checkSphereCollision(const Sphere& Sphere)
 {
-    return BroadCollisionPairs::isColliding(*this, Sphere);
+    return BoundingSphereTest::isColliding(*this, Sphere);
 }
 
 /**
@@ -48,7 +48,7 @@ bool Sphere::checkSphereCollision(const Sphere& Sphere)
  */
 bool Sphere::checkSphereAABBCollision(const AABB& aabb)
 {
-    return BroadCollisionPairs::isColliding(*this, aabb);
+    return BoundingSphereTest::isColliding(*this, aabb);
 }
 
 /**
@@ -56,7 +56,7 @@ bool Sphere::checkSphereAABBCollision(const AABB& aabb)
  */
 bool Sphere::checkSpherePlaneCollision(const Plane& plane)
 {
-    return BroadCollisionPairs::isColliding(*this, plane);
+    return BoundingSphereTest::isColliding(*this, plane);
 }
 
 /**

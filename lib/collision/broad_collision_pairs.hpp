@@ -1,5 +1,5 @@
 /**
- * @file broad_collision_pairs.hpp
+ * @file broad_collision.hpp
  * @brief Declaration of broad collision phase functions between physics objects.
  *
  * Provides quick computations to test objects if objects can be colliding.
@@ -16,7 +16,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace BroadCollisionPairs {
+namespace BoundingSphereTest {
 // Test if objects are overlapping if we condider them as Sphere build fromt their largest size. O(N²), but
 // more accurate.
 
@@ -45,4 +45,4 @@ inline bool isColliding(const AABB& a, const Sphere& b) { return isColliding(b, 
 
 inline bool isColliding(const Plane& a, const AABB& b) { return isColliding(b, a); }
 
-} // namespace BroadCollisionPairs
+} // namespace BoundingSphereTest

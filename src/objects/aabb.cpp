@@ -63,14 +63,14 @@ void AABB::setMaterial(const Material& mat)
 /**
  * @brief Checks broad collision between two aabb.
  */
-bool AABB::checkAABBCollision(const AABB& aabb) { return BroadCollisionPairs::isColliding(*this, aabb); }
+bool AABB::checkAABBCollision(const AABB& aabb) { return BoundingSphereTest::isColliding(*this, aabb); }
 
 /**
  * @brief Checks broad collision between an aabb and a sphere.
  */
 bool AABB::checkAABBSphereCollision(const Sphere& sphere)
 {
-    return BroadCollisionPairs::isColliding(*this, sphere);
+    return BoundingSphereTest::isColliding(*this, sphere);
 }
 
 /**
@@ -78,7 +78,7 @@ bool AABB::checkAABBSphereCollision(const Sphere& sphere)
  */
 bool AABB::checkAABBPlaneCollision(const Plane& plane)
 {
-    return BroadCollisionPairs::isColliding(*this, plane);
+    return BoundingSphereTest::isColliding(*this, plane);
 }
 
 /**

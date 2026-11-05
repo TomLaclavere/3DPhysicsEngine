@@ -85,7 +85,10 @@ set(ENGINE_OBJECT_SOURCES
 )
 
 set(ENGINE_COLLISION_SOURCES
+    src/collision/broad_collision_brut_force.cpp
+    src/collision/broad_collision_grid.cpp
     src/collision/broad_collision_pairs.cpp
+    src/collision/broad_collision_sweep_prune.cpp
     src/collision/narrow_collision.cpp
     src/collision/collision_response.cpp
     )

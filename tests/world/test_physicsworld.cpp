@@ -421,6 +421,7 @@ TEST(PhysicsWorldTest, ApplyContactAndForces)
     s2->setAcceleration(Vector3D(0_d));
     world.addObject(s1);
     world.addObject(s2);
+    world.updateBroadPhase();
 
     // applyContact applies contact forces directly
     world.applyContact();

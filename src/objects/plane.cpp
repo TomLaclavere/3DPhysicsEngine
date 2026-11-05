@@ -96,23 +96,20 @@ bool Plane::containsPoint(const Vector3D& point) const
 /**
  * @brief Checks broad collision between two Planes.
  */
-bool Plane::checkPlaneCollision(const Plane& Plane) { return BroadCollisionPairs::isColliding(*this, Plane); }
+bool Plane::checkPlaneCollision(const Plane& Plane) { return BoundingSphereTest::isColliding(*this, Plane); }
 
 /**
  * @brief Checks broad collision between an Plane and a sphere.
  */
 bool Plane::checkPlaneSphereCollision(const Sphere& sphere)
 {
-    return BroadCollisionPairs::isColliding(*this, sphere);
+    return BoundingSphereTest::isColliding(*this, sphere);
 }
 
 /**
  * @brief Checks broad collision between an Plane and an AABB.
  */
-bool Plane::checkPlaneAABBCollision(const AABB& aabb)
-{
-    return BroadCollisionPairs::isColliding(*this, aabb);
-}
+bool Plane::checkPlaneAABBCollision(const AABB& aabb) { return BoundingSphereTest::isColliding(*this, aabb); }
 
 /**
  * @brief Polymorphic broad collision detection against another Object.

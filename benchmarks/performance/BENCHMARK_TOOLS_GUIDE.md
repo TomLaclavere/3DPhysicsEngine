@@ -23,7 +23,7 @@ what they measure, how, and how to read the results.
 # Optional, for the most stable timings (restore afterwards with: -g powersave)
 sudo cpupower frequency-set -g performance
 
-./scripts/benchmark.sh    # how fast, and how it scales                  (~40 min)
+./scripts/benchmark.sh    # how fast, and how it scales                  (~2 h)
 ./scripts/profile.sh      # why: counters, vectorisation, allocations   (~3 min)
 ./scripts/full_report.sh  # both, one after the other
 ```
@@ -47,8 +47,8 @@ step.
 
 | | `scripts/benchmark.sh` | `scripts/profile.sh` |
 |---|---|---|
-| **Question** | How fast is the engine, and how does the cost scale with the solver, the number of objects N and the timestep dt? | *Why* does it take that long: is the CPU busy or stalled, where is the time spent, is the code vectorised, does it allocate? |
-| **Runs** | A sweep: 3 solvers × 7 values of N × 5 values of dt, for each build profile | One fixed, representative workload, observed in depth |
+| **Question** | How fast is the engine, and how does the cost scale with the solver, the broad phase, the number of objects N and the timestep dt? | *Why* does it take that long: is the CPU busy or stalled, where is the time spent, is the code vectorised, does it allocate? |
+| **Runs** | A sweep: 3 solvers × 3 broad phases × 7 values of N × 5 values of dt, for each build profile | One fixed, representative workload, observed in depth |
 | **Measures** | Wall time, time per step, run-to-run variance, estimated GFLOP/s, peak memory | Hardware counters, Top-Down bottleneck classification, hottest functions (perf); per-loop vectorisation and hotspots (MAQAO); every heap allocation (MALT) |
 | **Output** | `results/benchmark_report.pdf` + PNGs + CSV | `profiling_report/profiling_report.pdf` + PNGs + raw tool reports |
 
@@ -57,7 +57,7 @@ Use the sweep to *see* a problem (or a gain), and profiling to *explain* it.
 They are separate scripts on purpose. Profilers observe the program from the inside, and that
 slows it down (MALT makes this workload ~7× slower), so timings must be taken with no profiler
 attached. They also run at different rhythms: profiling (~3 min) after every change, the
-sweep (~40 min) to confirm a gain holds at every size. `scripts/full_report.sh` runs both
+sweep (~2 h) to confirm a gain holds at every size. `scripts/full_report.sh` runs both
 sequentially, never in parallel, when both are wanted.
 
 Both work on the same binary, `benchmarks/Performance` (source:
@@ -155,17 +155,20 @@ the three in sync if you change the defaults).
 
 1. Checks the CPU setup (§3.2-3.3).
 2. For each profile (scalar, then optimised): rebuilds, then runs every combination of
-   solver ∈ {Euler, Verlet, RK4} × N ∈ {1, 2, 5, 10, 20, 50, 100} × 5 dt values log-spaced
+   solver ∈ {Euler, Verlet, RK4} × broad phase ∈ {Brut, Grid, SweepPrune} ×
+   N ∈ {1, 2, 5, 10, 20, 50, 100} × 5 dt values log-spaced
    between 1e-5 and 1e-2 s, each simulating 2 s.
 3. Runs [`benchmark_analysis.py`](benchmark_analysis.py), which plots both profiles and prints a
    summary table.
 
 The simulated duration does not change the cost of a step, so 2 s is enough; the sweep takes
-about 40 minutes (38 min measured), almost all of it in the scalar profile at N = 100 and
-dt = 1e-5. `--dt-min 1e-4` drops the finest timestep and roughly divides that by 3.
+about 2 hours (extrapolated from 38 min measured with one broad phase), almost all of it in the
+scalar profile at N = 100 and dt = 1e-5. `--dt-min 1e-4` drops the finest timestep and roughly
+divides that by 3; `--broads` restricts the broad phases.
 
 ```bash
 ./scripts/benchmark.sh --solvers "Verlet" --n-objects "1 10 100"   # narrower sweep
+./scripts/benchmark.sh --solvers "Verlet" --broads "Grid SweepPrune" # compare two broad phases
 ./scripts/benchmark.sh --skip-build --skip-analysis                 # reuse binaries, no plots
 ./scripts/benchmark.sh --help
 ```
@@ -174,7 +177,7 @@ dt = 1e-5. `--dt-min 1e-4` drops the finest timestep and roughly divides that by
 
 ```text
 benchmarks/performance/
-  results_scalar/benchmark.csv     one row per (solver, dt, N) - scalar profile
+  results_scalar/benchmark.csv     one row per (solver, broad, dt, N) - scalar profile
   results/benchmark.csv            same, optimised profile
   results/plot_*.png               figures
   results/benchmark_report.pdf     all figures in one file
@@ -184,11 +187,13 @@ benchmarks/performance/
 
 | Figure | What it shows | What to look for |
 |---|---|---|
-| `plot_wall_time_vs_dt` | Total time per run, one panel per N | A straight line of slope −1 in log-log: time ∝ number of steps = dur/dt. Anything else means the per-step cost changes with dt. |
-| `plot_wall_time_vs_nobjs` | Total time vs N (finest dt) | Growth close to N² once collisions dominate (every pair is tested). |
+| `plot_wall_time_vs_dt` | Total time per run, one panel per (broad phase, N) | A straight line of slope −1 in log-log: time ∝ number of steps = dur/dt. Anything else means the per-step cost changes with dt. |
+| `plot_wall_time_vs_nobjs` | Total time vs N (finest dt) | With `Brut`, growth close to N² once collisions dominate (every pair is tested). |
 | `plot_step_time_vs_dt` / `_vs_nobjs` | Cost of one step | The plateau at fine dt is the true per-step cost; compare solvers (RK4 evaluates forces 4×). |
 | `plot_step_cv_vs_dt` / `_vs_nobjs` | Regularity of the step cost | Below the 5% line = regular. Spikes = irregular steps (collisions) or noise. |
 | `plot_speedup_vs_dt` / `_vs_nobjs` | scalar time ÷ optimised time | Above 1 = optimised wins. This is the compiler's gain; manual optimisations should push it further. |
+| `plot_broad_step_time_vs_nobjs` | Cost of one step per broad phase, one panel per solver (log-log) | The slope shows how each broad phase scales; the lowest line wins at that N. |
+| `plot_broad_gain_vs_nobjs` | `Brut` step time ÷ other step time | Above 1 = faster than brute force. The N where it crosses 1 is where the broad phase starts paying off. |
 
 The console summary repeats the key numbers at the finest dt and lists every noisy point
 (step CV > 10%).

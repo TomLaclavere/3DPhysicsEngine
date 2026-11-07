@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Benchmark sweep : timing + analytic FLOP/s across solver x n_objects x dt.
+# Benchmark sweep : timing + analytic FLOP/s across solver x broad phase x n_objects x dt.
 #
 # This script's only job is: build the two reference profiles (scalar / optimised, see
 # benchmarks/performance/profiles.sh), run benchmarks/Performance across a parameter sweep for
@@ -17,15 +17,16 @@ REPO="${ROOT}/benchmarks/performance"
 RESULTS_DIR="${REPO}/results"
 ANALYSE_PY="${REPO}/benchmark_analysis.py"
 
-# Solvers, dt sweep, and object-count sweep
+# Solvers, broad phases, dt sweep, and object-count sweep
 SOLVERS=("Euler" "Verlet" "RK4")
+BROADS=("Brut" "Grid" "SweepPrune")
 N_OBJECTS=(1 2 5 10 20 50 100)
 DT_MIN="1e-5"
 DT_MAX="1e-2"
 DT_N=5
 
 # Simulation parameters. The per-step cost does not depend on the simulated duration, so a
-# short one keeps the whole sweep around 40 minutes (the finest dt and N=100 dominate).
+# short one keeps the whole sweep around 2 hours (the finest dt and N=100 dominate).
 DUR="2.0"
 N_WARMUP=1
 N_RUNS=5
@@ -41,11 +42,12 @@ usage() {
     cat <<'EOF'
 Usage: ./scripts/benchmark.sh [options]
 
-Builds the scalar and optimised reference profiles and runs the solver x n_objects x dt
-sweep for each, writing benchmarks/performance/results/benchmark.csv.
+Builds the scalar and optimised reference profiles and runs the solver x broad phase x
+n_objects x dt sweep for each, writing benchmarks/performance/results/benchmark.csv.
 
 Options:
   --solvers LIST     space-separated solver names  (default: "Euler Verlet RK4")
+  --broads LIST      space-separated broad phases  (default: "Brut Grid SweepPrune")
   --n-objects LIST   space-separated object counts  (default: "1 2 5 10 20 50 100")
   --dt-min VALUE     smallest timestep  (default: 1e-5)
   --dt-max VALUE     largest timestep   (default: 1e-2)
@@ -58,7 +60,7 @@ Options:
   -h, --help         show this help
 
 Every run is pinned to one P-core (see benchmarks/performance/profiles.sh). With the default
-sweep, expect about 40 minutes, dominated by the scalar profile at N=100 (--dt-min 1e-4
+sweep, expect about 2 hours, dominated by the scalar profile at N=100 (--dt-min 1e-4
 roughly divides that by 3).
 
 Output:
@@ -80,6 +82,7 @@ EOF
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --solvers)       read -ra SOLVERS    <<< "$2"; shift 2 ;;
+        --broads)        read -ra BROADS     <<< "$2"; shift 2 ;;
         --n-objects)     read -ra N_OBJECTS  <<< "$2"; shift 2 ;;
         --dt-min)        DT_MIN="$2";              shift 2 ;;
         --dt-max)        DT_MAX="$2";              shift 2 ;;
@@ -107,7 +110,7 @@ for x in np.geomspace($DT_MIN, $DT_MAX, $DT_N):
 }
 
 # =====================================================================
-# Run benchmark - solver x n_objects x dt triple loop
+# Run benchmark - solver x broad phase x n_objects x dt loop
 # =====================================================================
 run_benchmark() {
     local profile="$1" out_dir="$2"
@@ -119,6 +122,7 @@ run_benchmark() {
     echo "======================================================"
     echo " Run - profile: ${profile}"
     echo "   solvers: ${SOLVERS[*]}"
+    echo "   broad phases: ${BROADS[*]}"
     echo "   dt: ${DT_VALUES[0]} ... ${DT_VALUES[-1]}  (${#DT_VALUES[@]} values)"
     echo "======================================================"
 
@@ -132,23 +136,26 @@ run_benchmark() {
 
     local first=true
     for solver in "${SOLVERS[@]}"; do
-        for n_obj in "${N_OBJECTS[@]}"; do
-            echo ""
-            echo "  Solver: ${solver}  n_objects: ${n_obj}"
-            for dt in "${DT_VALUES[@]}"; do
-                local append_flag=""
-                $first || append_flag="--append"
-                first=false
+        for broad in "${BROADS[@]}"; do
+            for n_obj in "${N_OBJECTS[@]}"; do
+                echo ""
+                echo "  Solver: ${solver}  broad: ${broad}  n_objects: ${n_obj}"
+                for dt in "${DT_VALUES[@]}"; do
+                    local append_flag=""
+                    $first || append_flag="--append"
+                    first=false
 
-                taskset -c "$cpu" "$bin" \
-                    --solver     "$solver"   \
-                    --dt         "$dt"       \
-                    --dur        "$DUR"      \
-                    --n_warmup   "$N_WARMUP" \
-                    --n_runs     "$N_RUNS"   \
-                    --n_objects  "$n_obj"    \
-                    --out        "$out_dir"  \
-                    $append_flag
+                    taskset -c "$cpu" "$bin" \
+                        --solver     "$solver"   \
+                        --broad      "$broad"    \
+                        --dt         "$dt"       \
+                        --dur        "$DUR"      \
+                        --n_warmup   "$N_WARMUP" \
+                        --n_runs     "$N_RUNS"   \
+                        --n_objects  "$n_obj"    \
+                        --out        "$out_dir"  \
+                        $append_flag
+                done
             done
         done
     done
@@ -199,7 +206,7 @@ run_mode optimised "${RESULTS_DIR}"
 [[ "$SKIP_ANALYSIS" == false ]] && run_analysis
 
 echo ""
-echo "solvers=${SOLVERS[*]}  n_objects=${N_OBJECTS[*]}  dt_n=${DT_N}  dt=${DT_MIN}..${DT_MAX}  dur=${DUR}"
+echo "solvers=${SOLVERS[*]}  broads=${BROADS[*]}  n_objects=${N_OBJECTS[*]}  dt_n=${DT_N}  dt=${DT_MIN}..${DT_MAX}  dur=${DUR}"
 echo ""
 echo "Sweep done. For hardware-counter/vectorisation/memory analysis on a representative"
 echo "workload, run scripts/profile.sh (all three tools) or the individual scripts under"

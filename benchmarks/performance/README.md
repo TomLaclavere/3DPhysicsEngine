@@ -35,6 +35,7 @@ The scene is rebuilt from scratch before every run so no state leaks between rep
 | `--solver` | `Verlet` | Integrator: `Euler`, `Verlet` or `RK4` |
 | `--dt` | `1e-3` | Timestep (s) |
 | `--dur` | `22.0` | Simulated duration (s); the run executes `dur / dt` steps |
+| `--broad` | `Brut` | Broad phase: `Brut`, `Grid` or `SweepPrune` (any other name is rejected) |
 | `--n_objects` | `1` | Number of spheres |
 | `--n_warmup` | `1` | Discarded warm-up runs |
 | `--n_runs` | `5` | Timed runs |
@@ -55,12 +56,12 @@ One row per invocation.
 
 | Column | Description |
 |---|---|
-| `solver`, `dt`, `n_objects` | Configuration |
+| `solver`, `broad`, `dt`, `n_objects` | Configuration |
 | `cpu_us_mean`, `cpu_us_min`, `cpu_us_max` | Duration of a timed run (µs): mean, best, worst |
 | `cpu_us_stddev`, `cv_percent` | Standard deviation (Bessel-corrected) and coefficient of variation = stddev / mean × 100. CV > 10% means a noisy measurement |
 | `wall_time_s` | Mean run duration (s) |
 | `time_per_step_us`, `steps_per_second` | Mean cost of one step and the corresponding throughput |
-| `flops_per_step`, `gflops_per_second` | Analytical FLOP estimate (below) and the resulting rate |
+| `flops_per_step`, `gflops_per_second` | Analytical FLOP estimate (below) and the resulting rate; 0 for `Grid` and `SweepPrune` |
 | `step_us_mean`, `step_us_min`, `step_us_max`, `step_us_stddev`, `step_us_cv` | Distribution of the per-step cost over the step-timing run's batches |
 | `peak_rss_kb` | Peak resident memory of the process (`getrusage`) |
 
@@ -76,7 +77,8 @@ per step  = force + integrate          (Euler, Verlet)
 GFLOP/s   = flops_per_step × steps / (wall_time_s × 10⁹)
 ```
 
-Use it to compare configurations, not as a fraction of the CPU's peak.
+Use it to compare configurations, not as a fraction of the CPU's peak. The collision term assumes
+every pair is tested, so it only holds for `Brut`: the other broad phases are not estimated.
 
 ## Installation (profiling tools)
 

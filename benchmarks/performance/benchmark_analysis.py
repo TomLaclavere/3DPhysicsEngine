@@ -1,12 +1,14 @@
 # Performance Benchmark Analysis
 #
 # Data sources:
-#   results_scalar/benchmark.csv, results/benchmark.csv - one row per (solver, dt, n_objects),
+#   results_scalar/benchmark.csv, results/benchmark.csv - one row per (solver, broad, dt, n_objects),
 #   from scripts/benchmark.sh. Hardware counters and profiling reports are plotted separately
 #   by profiling_analysis.py.
 #
 # Plots produced (each metric gets a vs-dt view & a vs-n_objects view):
-#   wall_time, step_time, step_cv, speedup - × 2 views
+#   wall_time, step_time, step_cv, speedup - × 2 views, one row or panel per broad phase
+# Broad-phase comparison (vs n_objects, at finest dt):
+#   broad_step_time, broad_gain
 
 from pathlib import Path
 
@@ -33,6 +35,12 @@ SOLVER_STYLE = {
     'Verlet': {'color': '#378ADD', 'marker': 's'},
     'RK4':    {'color': '#1D9E75', 'marker': '^'},
 }
+BROAD_ORDER = ['Brut', 'Grid', 'SweepPrune']
+BROAD_STYLE = {
+    'Brut':       {'color': '#6B6B6B', 'marker': 'o'},
+    'Grid':       {'color': '#D97706', 'marker': 's'},
+    'SweepPrune': {'color': '#7C3AED', 'marker': '^'},
+}
 PROFILE_LS    = {'scalar': '--', 'optimised': '-'}
 PROFILE_ALPHA = {'scalar': 0.6,  'optimised': 1.0}
 
@@ -50,6 +58,9 @@ def load_profile(directory: Path, label: str) -> pd.DataFrame | None:
         return None
     d = pd.read_csv(path)
     d.insert(0, 'profile', label)
+    # Backward compatibility: CSV files from before the broad-phase sweep used brute force
+    if 'broad' not in d.columns:
+        d['broad'] = 'Brut'
     d['wall_time_ms'] = d['wall_time_s'] * 1000
     d['cv_noisy']     = d['cv_percent'] > 10
     return d
@@ -70,6 +81,7 @@ if 'n_objects' not in df.columns:
     df['n_objects'] = 1
 
 solvers       = sorted(df['solver'].unique(),   key=lambda s: ['Euler', 'Verlet', 'RK4'].index(s)   if s in ['Euler', 'Verlet', 'RK4']   else 99)
+broads        = sorted(df['broad'].unique(),    key=lambda b: BROAD_ORDER.index(b)                   if b in BROAD_ORDER                   else 99)
 profiles      = sorted(df['profile'].unique(),  key=lambda p: ['scalar', 'optimised'].index(p)       if p in ['scalar', 'optimised']       else 99)
 n_objs_list   = sorted(df['n_objects'].unique())
 have_both     = {'scalar', 'optimised'}.issubset(set(profiles))
@@ -78,7 +90,7 @@ HAS_STEP      = 'step_us_mean' in df.columns
 STEP_COL  = 'step_us_mean'    if HAS_STEP else 'time_per_step_us'
 STEP_UNIT = 'µs  (profiling)' if HAS_STEP else 'µs  (derived)'
 
-print(f'Loaded {len(df)} rows: {len(profiles)} profile(s) × {len(solvers)} solver(s) '
+print(f'Loaded {len(df)} rows: {len(profiles)} profile(s) × {len(solvers)} solver(s) × {len(broads)} broad phase(s) '
       f'× {df["dt"].nunique()} dt × {len(n_objs_list)} n_objects')
 print(f'  n_objects: {n_objs_list}')
 print(f'  step-level columns: {HAS_STEP}')
@@ -91,6 +103,10 @@ def solver_legend_handles(present=None):
     sols = present or list(SOLVER_STYLE)
     return [Line2D([0],[0], color=SOLVER_STYLE[s]['color'], marker=SOLVER_STYLE[s]['marker'],
                    ls='-', label=s, markersize=6) for s in sols if s in SOLVER_STYLE]
+
+def broad_legend_handles():
+    return [Line2D([0],[0], color=BROAD_STYLE[b]['color'], marker=BROAD_STYLE[b]['marker'],
+                   ls='-', label=b, markersize=6) for b in broads if b in BROAD_STYLE]
 
 def profile_legend_handles():
     return [Line2D([0],[0], color='#555', ls=PROFILE_LS[p], alpha=PROFILE_ALPHA[p],
@@ -117,18 +133,18 @@ def _lines_vs_dt(ax, col: str, sub: pd.DataFrame, log_y: bool = False) -> None:
 
 def _plot_vs_dt(col: str, ylabel: str, title: str, out_name: str, log_y: bool = False,
                 extra_handles: list | None = None) -> Path:
-    """One subplot per n_objects, lines per (solver, profile), x-axis = dt."""
+    """One row per broad phase, one column per n_objects, lines per (solver, profile), x-axis = dt."""
     n     = len(n_objs_list)
-    fig, axes = plt.subplots(1, n, figsize=(max(8, 5 * n), 5), sharey=True)
-    if n == 1:
-        axes = [axes]
-    for ax, nobj in zip(axes, n_objs_list):
-        _lines_vs_dt(ax, col, df[df['n_objects'] == nobj], log_y=log_y)
-        ax.set_xlabel('dt  (s)')
-        ax.set_title(f'N = {nobj} objects', fontsize=10)
-    axes[0].set_ylabel(ylabel)
+    fig, axes = plt.subplots(len(broads), n, figsize=(max(8, 5 * n), 5 * len(broads)),
+                             sharey=True, squeeze=False)
+    for row, broad in zip(axes, broads):
+        for ax, nobj in zip(row, n_objs_list):
+            _lines_vs_dt(ax, col, df[(df['broad'] == broad) & (df['n_objects'] == nobj)], log_y=log_y)
+            ax.set_xlabel('dt  (s)')
+            ax.set_title(f'{broad}  ·  N = {nobj} objects', fontsize=10)
+        row[0].set_ylabel(ylabel)
     handles = solver_legend_handles(solvers) + profile_legend_handles() + (extra_handles or [])
-    axes[-1].legend(handles=handles, fontsize=8, framealpha=0.5, ncol=2)
+    axes[0][-1].legend(handles=handles, fontsize=8, framealpha=0.5, ncol=2)
     fig.suptitle(title, y=1.02)
     plt.tight_layout()
     out = RESULTS / out_name
@@ -139,30 +155,34 @@ def _plot_vs_dt(col: str, ylabel: str, title: str, out_name: str, log_y: bool = 
 
 def _plot_vs_nobjs(col: str, ylabel: str, title: str, out_name: str,
                    extra_handles: list | None = None, thresholds: list | None = None) -> Path:
-    """Lines per (solver, profile), x-axis = n_objects, fixed at finest dt."""
+    """One panel per broad phase, lines per (solver, profile), x-axis = n_objects, fixed at finest dt."""
     rep_dt = float(df['dt'].min())
     sub    = df[np.isclose(df['dt'], rep_dt)]
-    _, ax  = plt.subplots(figsize=(9, 6))
-    for profile in profiles:
-        for solver in solvers:
-            grp = sub[(sub['profile'] == profile) & (sub['solver'] == solver)].sort_values('n_objects')
-            if grp.empty or col not in grp.columns:
-                continue
-            s = SOLVER_STYLE.get(solver, {'color': '#888', 'marker': 'o'})
-            ax.plot(grp['n_objects'], grp[col],
-                    color=s['color'], marker=s['marker'],
-                    ls=PROFILE_LS.get(profile, '-'),
-                    alpha=PROFILE_ALPHA.get(profile, 1.0),
-                    markersize=5, lw=1.6)
-    for val, color, lbl in (thresholds or []):
-        ax.axhline(val, color=color, ls='--', lw=1.2, label=lbl)
-    ax.set_xlabel('Number of objects')
-    ax.set_ylabel(ylabel)
-    ax.set_title(f'{title}\n(dt = {rep_dt:.2e} s)')
+    fig, axes = plt.subplots(1, len(broads), figsize=(max(9, 6 * len(broads)), 6),
+                             sharey=True, squeeze=False)
+    for ax, broad in zip(axes[0], broads):
+        for profile in profiles:
+            for solver in solvers:
+                grp = sub[(sub['broad'] == broad) & (sub['profile'] == profile)
+                          & (sub['solver'] == solver)].sort_values('n_objects')
+                if grp.empty or col not in grp.columns:
+                    continue
+                s = SOLVER_STYLE.get(solver, {'color': '#888', 'marker': 'o'})
+                ax.plot(grp['n_objects'], grp[col],
+                        color=s['color'], marker=s['marker'],
+                        ls=PROFILE_LS.get(profile, '-'),
+                        alpha=PROFILE_ALPHA.get(profile, 1.0),
+                        markersize=5, lw=1.6)
+        for val, color, lbl in (thresholds or []):
+            ax.axhline(val, color=color, ls='--', lw=1.2, label=lbl)
+        ax.set_xlabel('Number of objects')
+        ax.set_title(broad, fontsize=10)
+    axes[0][0].set_ylabel(ylabel)
+    fig.suptitle(f'{title}\n(dt = {rep_dt:.2e} s)', y=1.02)
     handles = solver_legend_handles(solvers) + profile_legend_handles() + (extra_handles or [])
     if thresholds:
         handles += [Line2D([0],[0], color=c, ls='--', lw=1.2, label=lbl) for _, c, lbl in thresholds]
-    ax.legend(handles=handles, fontsize=9, framealpha=0.5, ncol=2)
+    axes[0][-1].legend(handles=handles, fontsize=9, framealpha=0.5, ncol=2)
     plt.tight_layout()
     out = RESULTS / out_name
     plt.savefig(out, dpi=150, bbox_inches='tight')
@@ -180,7 +200,7 @@ def plot_wall_time_vs_dt() -> Path:
 
 def plot_wall_time_vs_nobjs() -> Path:
     return _plot_vs_nobjs('wall_time_s', 'Wall time  (s)',
-                          'Wall-time scaling with object count  -  O(N²) collision expected',
+                          'Wall-time scaling with object count',
                           'plot_wall_time_vs_nobjs.png')
 
 
@@ -227,7 +247,7 @@ def _speedup_df() -> pd.DataFrame | None:
         return None
     scl = df[df['profile'] == 'scalar']
     opt = df[df['profile'] == 'optimised']
-    m   = scl.merge(opt, on=['solver', 'dt', 'n_objects'], suffixes=('_scl', '_opt'))
+    m   = scl.merge(opt, on=['solver', 'broad', 'dt', 'n_objects'], suffixes=('_scl', '_opt'))
     m['speedup_wall'] = m['wall_time_s_scl'] / m['wall_time_s_opt']
     if f'{STEP_COL}_opt' in m.columns:
         m['speedup_step'] = m[f'{STEP_COL}_scl'] / m[f'{STEP_COL}_opt'].replace(0, np.nan)
@@ -240,23 +260,23 @@ def plot_speedup_vs_dt() -> Path | None:
         print('[skip] Speedup vs dt requires both profiles.')
         return None
     n     = len(n_objs_list)
-    fig, axes = plt.subplots(1, n, figsize=(max(8, 5 * n), 5), sharey=True)
-    if n == 1:
-        axes = [axes]
-    for ax, nobj in zip(axes, n_objs_list):
-        sub = spd[spd['n_objects'] == nobj]
-        for solver in solvers:
-            grp = sub[sub['solver'] == solver].sort_values('dt')
-            if grp.empty:
-                continue
-            s = SOLVER_STYLE.get(solver, {'color': '#888', 'marker': 'o'})
-            ax.semilogx(grp['dt'], grp['speedup_wall'],
-                        color=s['color'], marker=s['marker'], ls='-', markersize=4, lw=1.6)
-        ax.axhline(1.0, color='#555', ls='--', lw=1.2)
-        ax.set_xlabel('dt  (s)')
-        ax.set_title(f'N = {nobj}', fontsize=10)
-    axes[0].set_ylabel('Wall-time speedup  (scalar / optimised)')
-    axes[-1].legend(handles=solver_legend_handles(solvers), fontsize=8, framealpha=0.5)
+    fig, axes = plt.subplots(len(broads), n, figsize=(max(8, 5 * n), 5 * len(broads)),
+                             sharey=True, squeeze=False)
+    for row, broad in zip(axes, broads):
+        for ax, nobj in zip(row, n_objs_list):
+            sub = spd[(spd['broad'] == broad) & (spd['n_objects'] == nobj)]
+            for solver in solvers:
+                grp = sub[sub['solver'] == solver].sort_values('dt')
+                if grp.empty:
+                    continue
+                s = SOLVER_STYLE.get(solver, {'color': '#888', 'marker': 'o'})
+                ax.semilogx(grp['dt'], grp['speedup_wall'],
+                            color=s['color'], marker=s['marker'], ls='-', markersize=4, lw=1.6)
+            ax.axhline(1.0, color='#555', ls='--', lw=1.2)
+            ax.set_xlabel('dt  (s)')
+            ax.set_title(f'{broad}  ·  N = {nobj}', fontsize=10)
+        row[0].set_ylabel('Wall-time speedup  (scalar / optimised)')
+    axes[0][-1].legend(handles=solver_legend_handles(solvers), fontsize=8, framealpha=0.5)
     fig.suptitle('Scalar → Optimised wall-time speedup vs dt  (> 1 = optimised wins)', y=1.02)
     plt.tight_layout()
     out = RESULTS / 'plot_speedup_vs_dt.png'
@@ -272,25 +292,98 @@ def plot_speedup_vs_nobjs() -> Path | None:
         return None
     rep_dt = float(df['dt'].min())
     sub    = spd[np.isclose(spd['dt'], rep_dt)]
-    _, ax  = plt.subplots(figsize=(9, 6))
-    for solver in solvers:
-        grp = sub[sub['solver'] == solver].sort_values('n_objects')
-        if grp.empty:
-            continue
-        s = SOLVER_STYLE.get(solver, {'color': '#888', 'marker': 'o'})
-        ax.plot(grp['n_objects'], grp['speedup_wall'],
-                color=s['color'], marker=s['marker'], ls='-', markersize=5, lw=1.6)
-        if 'speedup_step' in grp.columns:
-            ax.plot(grp['n_objects'], grp['speedup_step'].fillna(0),
-                    color=s['color'], marker=s['marker'], ls='--', markersize=4, lw=1.2, alpha=0.7)
-    ax.axhline(1.0, color='#555', ls='--', lw=1.2)
-    ax.set_xlabel('Number of objects')
-    ax.set_ylabel('Speedup  (scalar / optimised)')
-    ax.set_title(f'Speedup vs object count  (dt = {rep_dt:.2e} s)\n'
-                 'solid = wall-time  ·  dashed = step-time')
-    ax.legend(handles=solver_legend_handles(solvers), fontsize=9, framealpha=0.5)
+    fig, axes = plt.subplots(1, len(broads), figsize=(max(9, 6 * len(broads)), 6),
+                             sharey=True, squeeze=False)
+    for ax, broad in zip(axes[0], broads):
+        for solver in solvers:
+            grp = sub[(sub['broad'] == broad) & (sub['solver'] == solver)].sort_values('n_objects')
+            if grp.empty:
+                continue
+            s = SOLVER_STYLE.get(solver, {'color': '#888', 'marker': 'o'})
+            ax.plot(grp['n_objects'], grp['speedup_wall'],
+                    color=s['color'], marker=s['marker'], ls='-', markersize=5, lw=1.6)
+            if 'speedup_step' in grp.columns:
+                ax.plot(grp['n_objects'], grp['speedup_step'].fillna(0),
+                        color=s['color'], marker=s['marker'], ls='--', markersize=4, lw=1.2, alpha=0.7)
+        ax.axhline(1.0, color='#555', ls='--', lw=1.2)
+        ax.set_xlabel('Number of objects')
+        ax.set_title(broad, fontsize=10)
+    axes[0][0].set_ylabel('Speedup  (scalar / optimised)')
+    fig.suptitle(f'Speedup vs object count  (dt = {rep_dt:.2e} s)\n'
+                 'solid = wall-time  ·  dashed = step-time', y=1.02)
+    axes[0][-1].legend(handles=solver_legend_handles(solvers), fontsize=9, framealpha=0.5)
     plt.tight_layout()
     out = RESULTS / 'plot_speedup_vs_nobjs.png'
+    plt.savefig(out, dpi=150, bbox_inches='tight')
+    plt.close()
+    return out
+
+
+# -----------------------------------------------------------------------------
+# Plot 5 - Broad-phase comparison
+# -----------------------------------------------------------------------------
+def _finest_dt_reference() -> tuple[pd.DataFrame, float, str]:
+    """Rows at the finest dt for the optimised profile (or the only profile available)."""
+    profile = 'optimised' if 'optimised' in profiles else profiles[0]
+    rep_dt  = float(df['dt'].min())
+    return df[(df['profile'] == profile) & np.isclose(df['dt'], rep_dt)], rep_dt, profile
+
+
+def plot_broad_step_time_vs_nobjs() -> Path | None:
+    if len(broads) < 2:
+        print('[skip] Broad-phase comparison requires at least two broad phases.')
+        return None
+    sub, rep_dt, profile = _finest_dt_reference()
+    fig, axes = plt.subplots(1, len(solvers), figsize=(max(9, 6 * len(solvers)), 6),
+                             sharey=True, squeeze=False)
+    for ax, solver in zip(axes[0], solvers):
+        for broad in broads:
+            grp = sub[(sub['solver'] == solver) & (sub['broad'] == broad)].sort_values('n_objects')
+            if grp.empty:
+                continue
+            s = BROAD_STYLE.get(broad, {'color': '#888', 'marker': 'o'})
+            ax.loglog(grp['n_objects'], grp[STEP_COL],
+                      color=s['color'], marker=s['marker'], markersize=5, lw=1.6)
+        ax.set_xlabel('Number of objects')
+        ax.set_title(solver, fontsize=10)
+    axes[0][0].set_ylabel(f'Step time  ({STEP_UNIT})')
+    axes[0][-1].legend(handles=broad_legend_handles(), fontsize=9, framealpha=0.5)
+    fig.suptitle(f'Step time by broad phase  ({profile}, dt = {rep_dt:.2e} s)', y=1.02)
+    plt.tight_layout()
+    out = RESULTS / 'plot_broad_step_time_vs_nobjs.png'
+    plt.savefig(out, dpi=150, bbox_inches='tight')
+    plt.close()
+    return out
+
+
+def plot_broad_gain_vs_nobjs() -> Path | None:
+    if 'Brut' not in broads or len(broads) < 2:
+        print('[skip] Broad-phase gain requires Brut and at least one other broad phase.')
+        return None
+    sub, rep_dt, profile = _finest_dt_reference()
+    fig, axes = plt.subplots(1, len(solvers), figsize=(max(9, 6 * len(solvers)), 6),
+                             sharey=True, squeeze=False)
+    for ax, solver in zip(axes[0], solvers):
+        brut = sub[(sub['solver'] == solver) & (sub['broad'] == 'Brut')]
+        for broad in broads:
+            if broad == 'Brut':
+                continue
+            grp = sub[(sub['solver'] == solver) & (sub['broad'] == broad)]
+            m   = brut.merge(grp, on='n_objects', suffixes=('_brut', '_other')).sort_values('n_objects')
+            if m.empty:
+                continue
+            s = BROAD_STYLE.get(broad, {'color': '#888', 'marker': 'o'})
+            ax.semilogx(m['n_objects'], m[f'{STEP_COL}_brut'] / m[f'{STEP_COL}_other'].replace(0, np.nan),
+                        color=s['color'], marker=s['marker'], markersize=5, lw=1.6)
+        ax.axhline(1.0, color='#555', ls='--', lw=1.2)
+        ax.set_xlabel('Number of objects')
+        ax.set_title(solver, fontsize=10)
+    axes[0][0].set_ylabel('Gain over brute force  (Brut / broad phase)')
+    axes[0][-1].legend(handles=[h for h in broad_legend_handles() if h.get_label() != 'Brut'],
+                       fontsize=9, framealpha=0.5)
+    fig.suptitle(f'Step-time gain over brute force  ({profile}, dt = {rep_dt:.2e} s, > 1 = faster)', y=1.02)
+    plt.tight_layout()
+    out = RESULTS / 'plot_broad_gain_vs_nobjs.png'
     plt.savefig(out, dpi=150, bbox_inches='tight')
     plt.close()
     return out
@@ -300,45 +393,53 @@ def plot_speedup_vs_nobjs() -> Path | None:
 # Summary
 # -----------------------------------------------------------------------------
 def print_summary() -> None:
-    finest = df.loc[df.groupby(['profile', 'solver', 'n_objects'])['dt'].idxmin()]
+    finest = df.loc[df.groupby(['profile', 'solver', 'broad', 'n_objects'])['dt'].idxmin()]
     rows = []
-    for _, row in finest.sort_values(['profile', 'solver', 'n_objects']).iterrows():
-        p, s, nobj = row['profile'], row['solver'], int(row['n_objects'])
+    for _, row in finest.sort_values(['profile', 'solver', 'broad', 'n_objects']).iterrows():
+        p, s, b, nobj = row['profile'], row['solver'], row['broad'], int(row['n_objects'])
         r = {
             'Profile':        p,
             'Solver':         s,
+            'Broad':          b,
             'N objects':      nobj,
             'dt':             f"{row['dt']:.2e}",
             'Wall (ms)':      f"{row['wall_time_ms']:.2f}",
             STEP_COL:         f"{row[STEP_COL]:.4f}" if STEP_COL in row.index else 'n/a',
             'Steps/s':        f"{row['steps_per_second']:.0f}",
-            'GFLOP/s':        f"{row['gflops_per_second']:.4f}",
+            # Only estimated for the brute-force broad phase (0 otherwise)
+            'GFLOP/s':        f"{row['gflops_per_second']:.4f}" if row['flops_per_step'] > 0 else 'n/a',
             'Run CV%':        f"{row['cv_percent']:.1f}" + (' ⚠' if row['cv_noisy'] else ''),
         }
         if HAS_STEP:
             r['Step CV%'] = f"{row['step_us_cv']:.1f}" + (' ⚠' if row['step_us_cv'] > 10 else '')
         rows.append(r)
 
-    print('\n── Summary (finest dt per solver × n_objects) ──────────────────────')
-    print(pd.DataFrame(rows).set_index(['Profile', 'Solver', 'N objects']).to_string())
+    print('\n── Summary (finest dt per solver × broad × n_objects) ──────────────')
+    print(pd.DataFrame(rows).set_index(['Profile', 'Solver', 'Broad', 'N objects']).to_string())
+
+    if len(broads) > 1:
+        sub, rep_dt, profile = _finest_dt_reference()
+        table = sub.pivot_table(index=['solver', 'n_objects'], columns='broad', values=STEP_COL)
+        print(f'\n── Step time by broad phase, µs ({profile}, dt = {rep_dt:.2e} s) ──────────')
+        print(table.reindex(columns=broads).to_string(float_format='{:.3f}'.format))
 
     if have_both:
         spd = _speedup_df()
         if spd is not None:
-            finest_spd = spd.loc[spd.groupby(['solver', 'n_objects'])['dt'].idxmin()]
-            print('\n── Speedup at finest dt per (solver, n_objects) ────────────────────')
-            for _, row in finest_spd.sort_values(['solver', 'n_objects']).iterrows():
+            finest_spd = spd.loc[spd.groupby(['solver', 'broad', 'n_objects'])['dt'].idxmin()]
+            print('\n── Speedup at finest dt per (solver, broad, n_objects) ─────────────')
+            for _, row in finest_spd.sort_values(['solver', 'broad', 'n_objects']).iterrows():
                 wall = row['wall_time_s_scl'] / row['wall_time_s_opt']
                 denom = row.get(f'{STEP_COL}_opt', 0)
                 step  = f"{row[f'{STEP_COL}_scl'] / denom:.2f}×" if denom > 0 else 'n/a'
-                print(f"  {row['solver']:<8} N={int(row['n_objects']):<3}  wall={wall:.2f}×  step={step}")
+                print(f"  {row['solver']:<8} {row['broad']:<10} N={int(row['n_objects']):<3}  wall={wall:.2f}×  step={step}")
 
     if HAS_STEP:
         jittery = df[df['step_us_cv'] > 10]
         if not jittery.empty:
             print('\n── High step jitter (step CV > 10%) ───────────────────────────────')
             for _, row in jittery.iterrows():
-                print(f"  {row['solver']:<8} {row['profile']:<12} N={int(row['n_objects']):<3} "
+                print(f"  {row['solver']:<8} {row['broad']:<10} {row['profile']:<12} N={int(row['n_objects']):<3} "
                       f"dt={row['dt']:.2e}  step_cv={row['step_us_cv']:.1f}%")
 
 
@@ -378,6 +479,9 @@ plot_paths: list[Path | None] = [
     # Speedup
     plot_speedup_vs_dt(),
     plot_speedup_vs_nobjs(),
+    # Broad-phase comparison
+    plot_broad_step_time_vs_nobjs(),
+    plot_broad_gain_vs_nobjs(),
 ]
 
 print_summary()

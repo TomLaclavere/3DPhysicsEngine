@@ -13,7 +13,7 @@ usage() {
     cat <<'EOF'
 Usage: ./scripts/full_report.sh
 
-Runs scripts/benchmark.sh (~40 min), then scripts/profile.sh (~3 min), with their default
+Runs scripts/benchmark.sh (~2 h), then scripts/profile.sh (~3 min), with their default
 settings, and prints where the two reports are. The profiling step runs even if the sweep
 failed. For other settings, run the two scripts directly.
 

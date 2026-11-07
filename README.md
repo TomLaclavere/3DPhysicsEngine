@@ -417,7 +417,7 @@ scripts/
 ├─ tests.sh        # build (if needed) and run tests via CTest
 ├─ coverage.sh     # build and generate coverage (HTML or console)
 ├─ clean.sh        # remove the build directory
-├─ benchmark.sh    # performance sweep (solver × N × dt) + plots
+├─ benchmark.sh    # performance sweep (solver × broad phase × N × dt) + plots
 ├─ profile.sh      # perf + MAQAO + MALT profiling + report
 └─ full_report.sh  # benchmark.sh then profile.sh
 ```

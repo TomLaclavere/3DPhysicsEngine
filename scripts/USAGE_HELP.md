@@ -4,11 +4,12 @@
 
 Usage: ./scripts/benchmark.sh [options]
 
-Builds the scalar and optimised reference profiles and runs the solver x n_objects x dt
-sweep for each, writing benchmarks/performance/results/benchmark.csv.
+Builds the scalar and optimised reference profiles and runs the solver x broad phase x
+n_objects x dt sweep for each, writing benchmarks/performance/results/benchmark.csv.
 
 Options:
   --solvers LIST     space-separated solver names  (default: "Euler Verlet RK4")
+  --broads LIST      space-separated broad phases  (default: "Brut Grid SweepPrune")
   --n-objects LIST   space-separated object counts  (default: "1 2 5 10 20 50 100")
   --dt-min VALUE     smallest timestep  (default: 1e-5)
   --dt-max VALUE     largest timestep   (default: 1e-2)
@@ -21,7 +22,7 @@ Options:
   -h, --help         show this help
 
 Every run is pinned to one P-core (see benchmarks/performance/profiles.sh). With the default
-sweep, expect about 40 minutes, dominated by the scalar profile at N=100 (--dt-min 1e-4
+sweep, expect about 2 hours, dominated by the scalar profile at N=100 (--dt-min 1e-4
 roughly divides that by 3).
 
 Output:
@@ -139,7 +140,7 @@ Examples:
 
 Usage: ./scripts/full_report.sh
 
-Runs scripts/benchmark.sh (~40 min), then scripts/profile.sh (~3 min), with their default
+Runs scripts/benchmark.sh (~2 h), then scripts/profile.sh (~3 min), with their default
 settings, and prints where the two reports are. The profiling step runs even if the sweep
 failed. For other settings, run the two scripts directly.
 

@@ -53,8 +53,11 @@ struct SimResult
 // Analytical FLOP estimate.
 // Force phases scale as: gravity O(N), collision detection O(N²) with ~45 FLOPs/pair.
 // Integration scales as O(N). RK4 re-evaluates forces 4× per step.
-long long estimateFlopsPerStep(const std::string& solver, int nObjects)
+// Only the brute-force broad phase tests every pair: other broad phases are not estimated (returns 0).
+long long estimateFlopsPerStep(const std::string& solver, const std::string& broad, int nObjects)
 {
+    if (broad != "Brut")
+        return 0;
     const auto      n               = static_cast<long long>(nObjects);
     const long long gravity_flops   = 6LL * n;
     const long long collision_flops = 45LL * n * (n - 1) / 2;
@@ -65,11 +68,12 @@ long long estimateFlopsPerStep(const std::string& solver, int nObjects)
     return force_flops + integrate_flops * n;
 }
 
-SimResult simulation(const std::string& solver, decimal timestep, int maxiter, int nObjects, int nWarmup,
-                     int nTimingRuns, bool contactForces)
+SimResult simulation(const std::string& solver, const std::string& broad, decimal timestep, int maxiter,
+                     int nObjects, int nWarmup, int nTimingRuns, bool contactForces)
 {
     Config& config = Config::get();
     config.setSolver(solver);
+    config.setBroadCollision(broad);
     config.setTimeStep(timestep);
     config.setMaxIterations(maxiter);
     config.setSimplifiedCollision(!contactForces);
@@ -213,7 +217,7 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, i
     result.stepsPerSecond = (result.timePerStep_us > 0_d) ? 1'000'000.0_d / result.timePerStep_us : 0_d;
 
     // FLOP/s
-    result.flopsPerStep       = estimateFlopsPerStep(solver, nObjects);
+    result.flopsPerStep       = estimateFlopsPerStep(solver, broad, nObjects);
     const decimal total_flops = static_cast<decimal>(result.flopsPerStep) * static_cast<decimal>(maxiter);
     result.gflops_per_second  = (result.wallTime_s > 0_d) ? total_flops / (result.wallTime_s * 1e9_d) : 0_d;
 
@@ -231,6 +235,7 @@ int main(int argc, char** argv)
 {
     // Defaults
     const char* solver        = "Verlet";
+    std::string broad         = "Brut";
     double      timestep      = 1e-3;
     double      duration      = 22.0;
     bool        contactForces = false;
@@ -245,6 +250,8 @@ int main(int argc, char** argv)
     {
         if (std::strcmp(argv[i], "--solver") == 0 && i + 1 < argc)
             solver = argv[++i];
+        else if (std::strcmp(argv[i], "--broad") == 0 && i + 1 < argc)
+            broad = argv[++i];
         else if (std::strcmp(argv[i], "--dt") == 0 && i + 1 < argc)
             timestep = std::atof(argv[++i]);
         else if (std::strcmp(argv[i], "--dur") == 0 && i + 1 < argc)
@@ -263,16 +270,23 @@ int main(int argc, char** argv)
             outputPath = argv[++i];
     }
 
+    // The engine silently falls back to brute force on an unknown name, which would mislabel the results
+    if (broad != "Brut" && broad != "Grid" && broad != "SweepPrune")
+    {
+        std::cerr << "Unknown broad phase: " << broad << " (expected Brut, Grid or SweepPrune)\n";
+        return 1;
+    }
+
     const int maxIterations = static_cast<int>(duration / timestep);
 
     // Results
     SimResult results;
 
     // Run benchmark
-    std::cout << "Solver: " << solver << "  n_objects=" << nObjects
+    std::cout << "Solver: " << solver << "  broad=" << broad << "  n_objects=" << nObjects
               << "  collisions=" << (contactForces ? "contact forces" : "impulse") << "\n";
 
-    results = simulation(solver, timestep, maxIterations, nObjects, N_WARMUP, N_RUN, contactForces);
+    results = simulation(solver, broad, timestep, maxIterations, nObjects, N_WARMUP, N_RUN, contactForces);
 
     std::cout << "  dt=" << timestep << "  wall=" << results.wallTime_s << " s"
               << "  cpu_mean=" << results.cpuUs_mean << " µs"
@@ -298,7 +312,7 @@ int main(int argc, char** argv)
         }
 
         if (!appendMode)
-            file << "solver,dt,n_objects,"
+            file << "solver,broad,dt,n_objects,"
                     "cpu_us_mean,cpu_us_min,cpu_us_max,cpu_us_stddev,cv_percent,"
                     "wall_time_s,time_per_step_us,steps_per_second,"
                     "flops_per_step,gflops_per_second,"
@@ -307,7 +321,7 @@ int main(int argc, char** argv)
 
         const SimResult& r = results;
 
-        file << solver << "," << timestep << "," << nObjects << "," << r.cpuUs_mean << "," << r.cpuUs_min
+        file << solver << "," << broad << "," << timestep << "," << nObjects << "," << r.cpuUs_mean << "," << r.cpuUs_min
              << "," << r.cpuUs_max << "," << r.cpuUs_stddev << "," << r.cv_percent << "," << r.wallTime_s
              << "," << r.timePerStep_us << "," << r.stepsPerSecond << "," << r.flopsPerStep << ","
              << r.gflops_per_second << "," << r.stepUs_mean << "," << r.stepUs_min << "," << r.stepUs_max

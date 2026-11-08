@@ -7,7 +7,7 @@
 #
 # Plots produced (each metric gets a vs-dt view & a vs-n_objects view):
 #   wall_time, step_time, step_cv, speedup - × 2 views, one row or panel per broad phase
-# Broad-phase comparison (vs n_objects, at finest dt):
+# Broad-phase comparison (vs n_objects, at the finest dt common to every n_objects):
 #   broad_step_time, broad_gain
 
 from pathlib import Path
@@ -116,6 +116,11 @@ def profile_legend_handles():
 # -----------------------------------------------------------------------------
 # Generic plot primitives
 # -----------------------------------------------------------------------------
+def _common_finest_dt() -> float:
+    """Finest dt available for every n_objects (large counts skip the finest dt values)."""
+    return float(df.groupby('n_objects')['dt'].min().max())
+
+
 def _lines_vs_dt(ax, col: str, sub: pd.DataFrame, log_y: bool = False) -> None:
     for profile in profiles:
         for solver in solvers:
@@ -155,8 +160,8 @@ def _plot_vs_dt(col: str, ylabel: str, title: str, out_name: str, log_y: bool = 
 
 def _plot_vs_nobjs(col: str, ylabel: str, title: str, out_name: str,
                    extra_handles: list | None = None, thresholds: list | None = None) -> Path:
-    """One panel per broad phase, lines per (solver, profile), x-axis = n_objects, fixed at finest dt."""
-    rep_dt = float(df['dt'].min())
+    """One panel per broad phase, lines per (solver, profile), x-axis = n_objects, fixed at the finest common dt."""
+    rep_dt = _common_finest_dt()
     sub    = df[np.isclose(df['dt'], rep_dt)]
     fig, axes = plt.subplots(1, len(broads), figsize=(max(9, 6 * len(broads)), 6),
                              sharey=True, squeeze=False)
@@ -290,7 +295,7 @@ def plot_speedup_vs_nobjs() -> Path | None:
     if spd is None:
         print('[skip] Speedup vs n_objects requires both profiles.')
         return None
-    rep_dt = float(df['dt'].min())
+    rep_dt = _common_finest_dt()
     sub    = spd[np.isclose(spd['dt'], rep_dt)]
     fig, axes = plt.subplots(1, len(broads), figsize=(max(9, 6 * len(broads)), 6),
                              sharey=True, squeeze=False)
@@ -323,9 +328,9 @@ def plot_speedup_vs_nobjs() -> Path | None:
 # Plot 5 - Broad-phase comparison
 # -----------------------------------------------------------------------------
 def _finest_dt_reference() -> tuple[pd.DataFrame, float, str]:
-    """Rows at the finest dt for the optimised profile (or the only profile available)."""
+    """Rows at the finest common dt for the optimised profile (or the only profile available)."""
     profile = 'optimised' if 'optimised' in profiles else profiles[0]
-    rep_dt  = float(df['dt'].min())
+    rep_dt  = _common_finest_dt()
     return df[(df['profile'] == profile) & np.isclose(df['dt'], rep_dt)], rep_dt, profile
 
 

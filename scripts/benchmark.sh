@@ -20,7 +20,10 @@ ANALYSE_PY="${REPO}/benchmark_analysis.py"
 # Solvers, broad phases, dt sweep, and object-count sweep
 SOLVERS=("Euler" "Verlet" "RK4")
 BROADS=("Brut" "Grid" "SweepPrune")
-N_OBJECTS=(1 2 5 10 20 50 100)
+N_OBJECTS=(1 2 5 10 20 50 100 500 1000)
+# Above LARGE_N, only dt >= LARGE_N_DT_MIN is run: a fine dt would take hours per point
+LARGE_N=100
+LARGE_N_DT_MIN="1e-3"
 DT_MIN="1e-5"
 DT_MAX="1e-2"
 DT_N=5
@@ -48,7 +51,8 @@ n_objects x dt sweep for each, writing benchmarks/performance/results/benchmark.
 Options:
   --solvers LIST     space-separated solver names  (default: "Euler Verlet RK4")
   --broads LIST      space-separated broad phases  (default: "Brut Grid SweepPrune")
-  --n-objects LIST   space-separated object counts  (default: "1 2 5 10 20 50 100")
+  --n-objects LIST   space-separated object counts  (default: "1 2 5 10 20 50 100 500 1000")
+                     counts above 100 only run for dt >= 1e-3
   --dt-min VALUE     smallest timestep  (default: 1e-5)
   --dt-max VALUE     largest timestep   (default: 1e-2)
   --dt-n N           number of log-spaced dt values  (default: 5)
@@ -141,6 +145,10 @@ run_benchmark() {
                 echo ""
                 echo "  Solver: ${solver}  broad: ${broad}  n_objects: ${n_obj}"
                 for dt in "${DT_VALUES[@]}"; do
+                    if (( n_obj > LARGE_N )) && awk "BEGIN { exit !($dt < $LARGE_N_DT_MIN) }"; then
+                        continue
+                    fi
+
                     local append_flag=""
                     $first || append_flag="--append"
                     first=false

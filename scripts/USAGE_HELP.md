@@ -10,7 +10,8 @@ n_objects x dt sweep for each, writing benchmarks/performance/results/benchmark.
 Options:
   --solvers LIST     space-separated solver names  (default: "Euler Verlet RK4")
   --broads LIST      space-separated broad phases  (default: "Brut Grid SweepPrune")
-  --n-objects LIST   space-separated object counts  (default: "1 2 5 10 20 50 100")
+  --n-objects LIST   space-separated object counts  (default: "1 2 5 10 20 50 100 500 1000")
+                     counts above 100 only run for dt >= 1e-3
   --dt-min VALUE     smallest timestep  (default: 1e-5)
   --dt-max VALUE     largest timestep   (default: 1e-2)
   --dt-n N           number of log-spaced dt values  (default: 5)

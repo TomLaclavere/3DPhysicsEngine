@@ -62,7 +62,7 @@ sequentially, never in parallel, when both are wanted.
 
 Both work on the same binary, `benchmarks/Performance` (source:
 [`benchmark.cpp`](benchmark.cpp), CLI and CSV columns in [`README.md`](README.md)). It builds
-a scene of N spheres falling on a plane, runs it for `dur / dt` steps, and reports timings.
+a scene of N falling spheres (no ground plane), runs it for `dur / dt` steps, and reports timings.
 
 ---
 
@@ -156,8 +156,8 @@ the three in sync if you change the defaults).
 1. Checks the CPU setup (§3.2-3.3).
 2. For each profile (scalar, then optimised): rebuilds, then runs every combination of
    solver ∈ {Euler, Verlet, RK4} × broad phase ∈ {Brut, Grid, SweepPrune} ×
-   N ∈ {1, 2, 5, 10, 20, 50, 100} × 5 dt values log-spaced
-   between 1e-5 and 1e-2 s, each simulating 2 s.
+   N ∈ {1, 2, 5, 10, 20, 50, 100, 500, 1000} × 5 dt values log-spaced
+   between 1e-5 and 1e-2 s, each simulating 2 s. N above 100 only runs for dt ≥ 1e-3.
 3. Runs [`benchmark_analysis.py`](benchmark_analysis.py), which plots both profiles and prints a
    summary table.
 

@@ -1,6 +1,5 @@
 #include "mathematics/vector.hpp"
 #include "objects/aabb.hpp"
-#include "objects/plane.hpp"
 #include "objects/sphere.hpp"
 #include "utilities/timer.hpp"
 #include "world/config.hpp"
@@ -91,16 +90,11 @@ SimResult simulation(const std::string& solver, const std::string& broad, decima
     const decimal spacing   = sphRadius * 3_d;
     const int     ncols = std::max(1, static_cast<int>(std::ceil(std::sqrt(static_cast<double>(nObjects)))));
     const int     nrows = (nObjects + ncols - 1) / ncols;
-    const decimal halfSize = std::max(50_d, static_cast<decimal>(ncols + 1) * spacing);
 
-    // Lambda that builds a fresh scene into `world` and returns the sphere handles.
+    // Lambda that builds a fresh scene into `world`. Spheres only, with no ground: this scene
+    // measures the broad phase, and a large plane would dictate the grid cell size.
     auto buildScene = [&](PhysicsWorld& world)
     {
-        auto ground = std::make_unique<Plane>(Vector3D(0_d), Vector3D(halfSize, halfSize, 0_d),
-                                              Vector3D(0_d, 0_d, 1_d));
-
-        std::vector<std::unique_ptr<Sphere>> spheres;
-        spheres.reserve(static_cast<size_t>(nObjects));
         for (int obj = 0; obj < nObjects; ++obj)
         {
             const int     col = obj % ncols;
@@ -114,13 +108,8 @@ SimResult simulation(const std::string& solver, const std::string& broad, decima
             // so release() rather than get() - passing get() here left both the world and
             // this unique_ptr owning the same pointer, double-freeing it once the run ends.
             world.addObject(sph.release());
-            spheres.push_back(std::move(sph));
         }
-        world.addObject(ground.release());
         world.start();
-        // ground/spheres are now empty (released to world); returned only so the caller's
-        // structured binding keeps compiling unchanged.
-        return std::make_pair(std::move(ground), std::move(spheres));
     };
 
     const int totalRuns = nWarmup + nTimingRuns;
@@ -130,7 +119,7 @@ SimResult simulation(const std::string& solver, const std::string& broad, decima
         const bool isWarmup = (run < nWarmup);
 
         PhysicsWorld world(config);
-        auto [ground, spheres] = buildScene(world);
+        buildScene(world);
 
         size_t counter = 0;
         Timer  runTimer;
@@ -162,7 +151,7 @@ SimResult simulation(const std::string& solver, const std::string& broad, decima
         stepTimings.reserve(static_cast<size_t>((maxiter + batchSize - 1) / batchSize));
 
         PhysicsWorld world(config);
-        auto [ground, spheres] = buildScene(world);
+        buildScene(world);
 
         size_t counter = 0;
         while (counter < maxIter && world.getIsRunning())

@@ -10,7 +10,7 @@ install the profiling tools. For how to run the benchmarks and read the results,
 | Parameter | Value |
 |---|---|
 | Dynamic objects | N spheres (`--n_objects`, radius 2, mass 1, restitution 1), on a grid 3 radii apart, starting at z = 20 |
-| Static objects | 1 ground plane at z = 0, sized to the grid |
+| Static objects | None: the scene measures the broad phase, and a large plane would dictate the grid cell size |
 | Collisions | Impulse model by default; spring-damper contact forces with `--contact-forces` |
 | Gravity | Default engine gravity |
 

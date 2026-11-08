@@ -48,6 +48,7 @@ option(3DPE_BUILD_TESTS "Build unit tests" ON)
 option(3DPE_ENABLE_COVERAGE "Enable coverage reporting" ON)
 option(3DPE_ENABLE_CLANG_TIDY "Enable clang-tidy static analysis" OFF)
 option(3DPE_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" ON)
+option(3DPE_BUILD_VIEWER "Build the raylib replay viewer (downloads raylib)" ON)
 
 # Advanced options
 set(3DPE_GCC_EXTRA_FLAGS "" CACHE STRING "Extra flags for GCC")
@@ -235,6 +236,32 @@ else()
     message(STATUS "Qt6 not found — skipping PhysicsEngineGui")
 endif()
 
+# =============================================
+# Real-time 3D replay viewer
+# =============================================
+if(3DPE_BUILD_VIEWER)
+    include(FetchContent)
+    set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    FetchContent_Declare(
+        raylib
+        GIT_REPOSITORY https://github.com/raysan5/raylib.git
+        GIT_TAG 5.5
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(raylib)
+
+    add_executable(3DPhysicsViewer src/viewer/main_viewer.cpp)
+    target_link_libraries(3DPhysicsViewer PRIVATE raylib)
+
+    set(3DPE_VIEWER_CSV_DIR "${CMAKE_CURRENT_SOURCE_DIR}/output/CSV"
+        CACHE PATH "CSV directory opened by the Viewer target")
+    add_custom_target(Viewer
+        COMMAND $<TARGET_FILE:3DPhysicsViewer> ${3DPE_VIEWER_CSV_DIR}
+        DEPENDS 3DPhysicsViewer
+        COMMENT "Opening the 3D viewer on ${3DPE_VIEWER_CSV_DIR}"
+    )
+endif()
+
 add_custom_target(run
     COMMAND $<TARGET_FILE:PhysicsEngine>
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
@@ -341,6 +368,25 @@ if(3DPE_BUILD_EXAMPLES)
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         DEPENDS example_Rolling
         COMMENT "Running example: Rolling"
+    )
+
+    # ---------------------------------------------
+    # Example: Random Balls 2D Simulation
+    # ---------------------------------------------
+    add_executable(example_Random2D examples/Random_Balls_2D/main.cpp)
+    target_link_libraries(example_Random2D PRIVATE 3DPhysicsEngine)
+    target_include_directories(example_Random2D PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+    set_target_properties(example_Random2D PROPERTIES
+        OUTPUT_NAME "Random2D"
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/examples
+        FOLDER "Examples"
+    )
+
+    add_custom_target(Random2D
+        COMMAND $<TARGET_FILE:example_Random2D>
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        DEPENDS example_Random2D
+        COMMENT "Running example: Random2D"
     )
 endif()
 

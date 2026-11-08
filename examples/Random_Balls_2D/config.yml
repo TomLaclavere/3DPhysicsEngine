@@ -1,0 +1,16 @@
+# config.yaml
+gravity: 0
+timestep: 0.001
+duration: 10
+solver: "Euler" # Euler, Verlet or RK4
+broad: "Brut"   # Brut, Grid or SweepPrune
+verbose: false
+save: true
+simplifiedCollision: true
+
+# Default material constants applied to newly created objects
+material:
+  stiffness: 5e6       # N/m   
+  damping: 0.15         # ratio ζ 
+  friction: 1          # μ 
+  restitution: 1     # e 

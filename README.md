@@ -381,6 +381,36 @@ A Qt6 GUI (`PhysicsEngineGui`) wraps all interactive CLI commands in a window an
 
 > **Note:** Plot buttons require CSV data. Enable saving in `src/config.yaml` (`save: true`) before running the simulation.
 
+For a lighter animation in the x-z plane, run `python3 python/generate_plots.py <csv_dir> animation2d`.
+
+---
+
+## 3D Viewer
+
+`3DPhysicsViewer` replays the CSV files of a simulation in real time, with objects drawn to scale.
+
+**Requirements:** the viewer is built by default. The first CMake configuration downloads [raylib](https://www.raylib.com/) 5.5, and raylib needs the system windowing and OpenGL development packages (on Debian/Ubuntu: `libgl1-mesa-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev`). Use `-D3DPE_BUILD_VIEWER=OFF` to skip it.
+
+**Launch**:
+
+```bash
+./build/3DPhysicsViewer examples/Random_Balls_2D/CSV
+
+# or open output/CSV (change it with -D3DPE_VIEWER_CSV_DIR=<dir>)
+cmake --build build --target Viewer
+```
+
+| Control | Action |
+| --- | --- |
+| Space | Play / Pause |
+| Up / Down | Double / halve the speed |
+| Left / Right (hold) | Seek backward / forward |
+| R | Restart |
+| Left drag | Orbit |
+| Right drag | Pan |
+| Wheel | Zoom |
+| Bottom bar | Jump to a time |
+
 ---
 
 ## Build and Run

@@ -33,7 +33,8 @@ jobs:
             -G Ninja \
             -DCMAKE_BUILD_TYPE=Debug \
             -DTESTS=ON \
-            -DCOVERAGE=ON
+            -DCOVERAGE=ON \
+            -D3DPE_BUILD_VIEWER=OFF
 
       - name: Build
         run: cmake --build build -- -j$(nproc)

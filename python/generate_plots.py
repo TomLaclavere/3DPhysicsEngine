@@ -7,6 +7,7 @@ Modes:
     trajectories  -- z-position of all objects vs time
     objects       -- 3D scene at initial and final states
     animation     -- full animated 3D scene
+    animation2d   -- lightweight animated view in the x-z plane
 
 Run from the project root. csv_dir defaults to "output/CSV".
 """
@@ -25,7 +26,10 @@ csv_dir = sys.argv[1] if len(sys.argv) > 1 else "output/CSV"
 mode = sys.argv[2] if len(sys.argv) > 2 else "trajectories"
 
 objectpath = f"{csv_dir}/objects.csv"
-motionpaths = sorted(glob.glob(f"{csv_dir}/motion_*.csv"))
+motionpaths = sorted(
+    glob.glob(f"{csv_dir}/motion_*.csv"),
+    key=lambda p: int(p.split("_")[-1].removesuffix(".csv")),
+)
 
 if not pathlib.Path(objectpath).exists():
     print(f"No objects.csv found in {csv_dir}. Run the simulation with save=true first.")
@@ -45,6 +49,8 @@ elif mode == "objects":
     op.plot_objects_final()
 elif mode == "animation":
     op.animate_objects()
+elif mode == "animation2d":
+    op.animate_objects_2d()
 else:
-    print(f"Unknown mode '{mode}'. Expected: trajectories, objects, animation.")
+    print(f"Unknown mode '{mode}'. Expected: trajectories, objects, animation, animation2d.")
     sys.exit(1)

@@ -44,6 +44,7 @@ Notes:
 - Any unrecognised argument starting with `-D` is forwarded directly to CMake.
 - Build directory defaults to `build/`.
 - Supported build types: `Debug`, `Release`.
+- The 3D viewer is built by default and downloads raylib on the first configuration. Skip it with `./scripts/build.sh -D3DPE_BUILD_VIEWER=OFF`.
 
 ### Run
 

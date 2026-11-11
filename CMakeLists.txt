@@ -264,7 +264,7 @@ endif()
 
 add_custom_target(run
     COMMAND $<TARGET_FILE:PhysicsEngine>
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     DEPENDS PhysicsEngine
     COMMENT "Running PhysicsEngine..."
 )
@@ -289,7 +289,7 @@ if(3DPE_BUILD_EXAMPLES)
 
     add_custom_target(Free_Fall
         COMMAND $<TARGET_FILE:example_Free_Fall>
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         DEPENDS example_Free_Fall
         COMMENT "Running example: Free_Fall"
     )
@@ -308,7 +308,7 @@ if(3DPE_BUILD_EXAMPLES)
 
     add_custom_target(Projectiles
         COMMAND $<TARGET_FILE:example_Projectiles>
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         DEPENDS example_Projectiles
         COMMENT "Running example: Projectiles"
     )
@@ -327,7 +327,7 @@ if(3DPE_BUILD_EXAMPLES)
 
     add_custom_target(Bouncing
         COMMAND $<TARGET_FILE:example_Bouncing>
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         DEPENDS example_Bouncing
         COMMENT "Running example: Bouncing"
     )
@@ -346,7 +346,7 @@ if(3DPE_BUILD_EXAMPLES)
 
     add_custom_target(Bouncing_2
         COMMAND $<TARGET_FILE:example_Bouncing_2>
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         DEPENDS example_Bouncing_2
         COMMENT "Running example: Bouncing_2"
     )
@@ -365,7 +365,7 @@ if(3DPE_BUILD_EXAMPLES)
 
     add_custom_target(Rolling
         COMMAND $<TARGET_FILE:example_Rolling>
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         DEPENDS example_Rolling
         COMMENT "Running example: Rolling"
     )
@@ -384,7 +384,7 @@ if(3DPE_BUILD_EXAMPLES)
 
     add_custom_target(Random2D
         COMMAND $<TARGET_FILE:example_Random2D>
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         DEPENDS example_Random2D
         COMMENT "Running example: Random2D"
     )
@@ -413,7 +413,7 @@ if(3DPE_BUILD_BENCHMARKS)
 
     add_custom_target(Performance_Benchmark
         COMMAND $<TARGET_FILE:benchmark_Performance>
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         DEPENDS benchmark_Performance
         COMMENT "Running benchmark: Performance"
     )
@@ -432,7 +432,7 @@ if(3DPE_BUILD_BENCHMARKS)
 
     add_custom_target(Free_Fall_Benchmark
         COMMAND $<TARGET_FILE:benchmark_Free_Fall>
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         DEPENDS benchmark_Free_Fall
         COMMENT "Running benchmark: Free_Fall"
     )
@@ -451,7 +451,7 @@ if(3DPE_BUILD_BENCHMARKS)
 
     add_custom_target(Bouncing_Benchmark
         COMMAND $<TARGET_FILE:benchmark_Bouncing>
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         DEPENDS benchmark_Bouncing
         COMMENT "Running benchmark: Bouncing"
     )
@@ -470,7 +470,7 @@ if(3DPE_BUILD_BENCHMARKS)
 
     add_custom_target(Bouncing_Conservative_Benchmark
         COMMAND $<TARGET_FILE:benchmark_Bouncing_Conservative>
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         DEPENDS benchmark_Bouncing_Conservative
         COMMENT "Running benchmark: Bouncing_Conservative"
     )
@@ -489,7 +489,7 @@ if(3DPE_BUILD_BENCHMARKS)
 
     add_custom_target(Contact_Forces_Benchmark
         COMMAND $<TARGET_FILE:benchmark_Contact_Forces>
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         DEPENDS benchmark_Contact_Forces
         COMMENT "Running benchmark: Contact_Forces"
     )

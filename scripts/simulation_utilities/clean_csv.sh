@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Deletes the CSV written by simulations: examples/*/CSV and output/CSV. Run from the repository root.
+
 shopt -s nullglob
 
 EXAMPLE_DIR="examples"

@@ -3,11 +3,18 @@
 This repository provides small, robust scripts in `scripts/` to simplify common tasks:
 - `build.sh` - configure & build with CMake (accepts raw `-D` arguments)
 - `run.sh` - build (if needed) and run the executable (forwards runtime arguments)
-- `tests.sh` - build & run tests (uses ctest or auto-discovered binaries)
+- `tests.sh` - build & run tests with ctest
 - `coverage.sh` - build and generate coverage (HTML or console)
 - `clean.sh` - remove the build directory
+- `physics_benchmark.sh` - run the physics validation benchmarks and their notebooks
 
-All scripts are portable (POSIX-compliant), use `set -euo pipefail`, and support argument forwarding for flexible workflows.
+`benchmark.sh`, `profile.sh` and `benchmark_and_profile.sh` are documented in
+[`benchmarks/performance/BENCHMARK_TOOLS_GUIDE.md`](../benchmarks/performance/BENCHMARK_TOOLS_GUIDE.md).
+Every script's `--help` output is collected in [`USAGE_HELP.md`](USAGE_HELP.md)
+(regenerate it with `./scripts/generate_usage_md.sh`).
+
+The scripts are Bash, use `set -euo pipefail`, forward `-D...` arguments to CMake, and must be run
+from the repository root.
 
 ## Quick setup
 Make scripts executable:
@@ -62,18 +69,18 @@ The script will automatically build the binary if it does not exist or if `--reb
 ./scripts/run.sh --rebuild -D3DPE_USE_CLANG=ON
 
 # pass compile-time options and forward runtime arguments (after --)
-./scripts/run.sh -D3DPE_USE_DOUBLE_PRECISION=ON -- --config config.yaml --iters 100
+./scripts/run.sh -D3DPE_USE_DOUBLE_PRECISION=OFF -- --solver RK4 --iters 100
 ```
 
 Notes:
 - Use `--` to separate build/CMake options from executable runtime arguments.
-- Example: everything before `--` goes to CMake; everything after goes to your program.
+- Example: everything before `--` goes to CMake; everything after goes to the program.
 - Executable defaults to `build/PhysicsEngine`.
 
 ### Test
 
 Build (if needed) and run tests.
-The script uses `ctest` if available, otherwise it automatically finds and executes test binaries in the build tree.
+The tests are run with `ctest`. Passing `-D...` arguments reconfigures the build first.
 
 ```bash
 # show help
@@ -88,7 +95,7 @@ The script uses `ctest` if available, otherwise it automatically finds and execu
 # rebuild with a specific compiler
 ./scripts/tests.sh --rebuild -D3DPE_USE_CLANG=ON
 
-# filter specific GoogleTest suite
+# run only the tests whose name (Suite.Test) matches a regex (ctest -R)
 ./scripts/tests.sh --gtest-filter MySuite.*
 ```
 
@@ -138,6 +145,9 @@ Uses the same default build directory as other scripts.
 
 # remove a custom build directory
 ./scripts/clean.sh --build-dir out
+
+# also remove the CMake cache and generated files
+./scripts/clean.sh --all
 ```
 
 Notes: 
@@ -146,10 +156,9 @@ Notes:
 
 ### Environment Variables
 
-All scripts support the following environment variables for consistency:
-- `BUILD_DIR`: Build directory. Default: `build`.
-- `BUILD_TYPE`: CMake build type. Default: `Debug`.
-- `APP_NAME`: Main executable name. Default: `PhysicsEngine`.
+- `BUILD_DIR`: build directory, default `build` (all scripts).
+- `BUILD_TYPE`: CMake build type, default `Debug` (build, run, tests, coverage).
+- `APP_NAME`: executable started by `run.sh`, default `PhysicsEngine`.
 
 These can be overridden globally, for example
 

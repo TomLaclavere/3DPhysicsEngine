@@ -18,20 +18,21 @@ CLEAN_SCRIPT="./scripts/clean.sh"
 usage() {
     cat <<'EOF'
 Usage:
-  $0 [options] [cmake-args...]
+  ./scripts/build.sh [options] [cmake-args...]
+
+Configures and builds the project with CMake (Ninja if installed). Run from the repository root.
 
 Options:
-  --build-dir DIR          Build directory (default: `${BUILD_DIR}`)
-  --build-type TYPE        CMake build type: Debug or Release (default: `${BUILD_TYPE}`)
-  --jobs N                 Number of parallel build jobs (default: `${NUM_JOBS}`)
+  --build-dir DIR          Build directory (default: build, or $BUILD_DIR)
+  --build-type TYPE        CMake build type: Debug or Release (default: Debug, or $BUILD_TYPE)
+  --jobs N                 Number of parallel build jobs (default: all cores, or $NUM_JOBS)
   --cmake-arg "ARG"        Add one CMake argument (can be repeated)
-  --clean                  Clean the project before building (uses `${CLEAN_SCRIPT}` if available)
+  --clean                  Delete the build directory first (scripts/clean.sh)
   -h, --help               Show this help message and exit
 
 Behavior:
-  Use the double dash (--) to separate build/CMake options from runtime arguments.
-  Everything before "--" is passed to CMake.
-  Everything after "--" is passed to the executable.
+  Any other argument starting with "-" (e.g. -D3DPE_USE_CLANG=ON) is passed to CMake, and so
+  is everything after "--".
 
 Examples:
   Show help
@@ -89,7 +90,7 @@ done
 if [[ "$CLEAN_FIRST" == true ]]; then
     echo "[CLEAN] Cleaning project..."
     if [[ -x "$CLEAN_SCRIPT" ]]; then
-        "$CLEAN_SCRIPT"
+        "$CLEAN_SCRIPT" --build-dir "$BUILD_DIR"
     else
         echo "Warning: Clean script not found or not executable: $CLEAN_SCRIPT"
         echo "Falling back to: rm -rf $BUILD_DIR"

@@ -2,12 +2,13 @@
 #
 # Data sources:
 #   results_scalar/benchmark.csv, results/benchmark.csv - one row per (solver, broad, dt, n_objects),
-#   from scripts/benchmark.sh. Hardware counters and profiling reports are plotted separately
+#   from scripts/benchmark.sh: an n_objects sweep (every broad phase, one solver, fixed dt) plus a
+#   dt sweep (every solver, one broad phase, fixed n_objects). Hardware counters and profiling reports are plotted separately
 #   by profiling_analysis.py.
 #
-# Plots produced (each metric gets a vs-dt view & a vs-n_objects view):
+# Plots produced (each metric gets a vs-dt view, from the dt sweep, & a vs-n_objects view, from the n_objects sweep):
 #   wall_time, step_time, step_cv, speedup - × 2 views, one row or panel per broad phase
-# Broad-phase comparison (vs n_objects, at the finest dt common to every n_objects):
+# Broad-phase comparison (vs n_objects, at the dt of the n_objects sweep):
 #   broad_step_time, broad_gain
 
 from pathlib import Path
@@ -84,6 +85,13 @@ solvers       = sorted(df['solver'].unique(),   key=lambda s: ['Euler', 'Verlet'
 broads        = sorted(df['broad'].unique(),    key=lambda b: BROAD_ORDER.index(b)                   if b in BROAD_ORDER                   else 99)
 profiles      = sorted(df['profile'].unique(),  key=lambda p: ['scalar', 'optimised'].index(p)       if p in ['scalar', 'optimised']       else 99)
 n_objs_list   = sorted(df['n_objects'].unique())
+# Rows of each sweep: several n_objects for the same (solver, broad, dt), or several dt for the same
+# (solver, broad, n_objects). The point shared by both sweeps belongs to both.
+n_df          = df[df.groupby(['profile', 'solver', 'broad', 'dt'])['n_objects'].transform('nunique') > 1]
+dt_df         = df[df.groupby(['profile', 'solver', 'broad', 'n_objects'])['dt'].transform('nunique') > 1]
+n_solvers     = [s for s in solvers if s in set(n_df['solver'])]
+dt_broads     = [b for b in broads if b in set(dt_df['broad'])]
+dt_n_objs     = sorted(dt_df['n_objects'].unique())
 have_both     = {'scalar', 'optimised'}.issubset(set(profiles))
 HAS_STEP      = 'step_us_mean' in df.columns
 
@@ -116,9 +124,9 @@ def profile_legend_handles():
 # -----------------------------------------------------------------------------
 # Generic plot primitives
 # -----------------------------------------------------------------------------
-def _common_finest_dt() -> float:
-    """Finest dt available for every n_objects (large counts skip the finest dt values)."""
-    return float(df.groupby('n_objects')['dt'].min().max())
+def _n_sweep_dt() -> float:
+    """dt of the n_objects sweep."""
+    return float(n_df['dt'].mode()[0])
 
 
 def _lines_vs_dt(ax, col: str, sub: pd.DataFrame, log_y: bool = False) -> None:
@@ -139,12 +147,12 @@ def _lines_vs_dt(ax, col: str, sub: pd.DataFrame, log_y: bool = False) -> None:
 def _plot_vs_dt(col: str, ylabel: str, title: str, out_name: str, log_y: bool = False,
                 extra_handles: list | None = None) -> Path:
     """One row per broad phase, one column per n_objects, lines per (solver, profile), x-axis = dt."""
-    n     = len(n_objs_list)
-    fig, axes = plt.subplots(len(broads), n, figsize=(max(8, 5 * n), 5 * len(broads)),
+    n     = len(dt_n_objs)
+    fig, axes = plt.subplots(len(dt_broads), n, figsize=(max(8, 5 * n), 5 * len(dt_broads)),
                              sharey=True, squeeze=False)
-    for row, broad in zip(axes, broads):
-        for ax, nobj in zip(row, n_objs_list):
-            _lines_vs_dt(ax, col, df[(df['broad'] == broad) & (df['n_objects'] == nobj)], log_y=log_y)
+    for row, broad in zip(axes, dt_broads):
+        for ax, nobj in zip(row, dt_n_objs):
+            _lines_vs_dt(ax, col, dt_df[(dt_df['broad'] == broad) & (dt_df['n_objects'] == nobj)], log_y=log_y)
             ax.set_xlabel('dt  (s)')
             ax.set_title(f'{broad}  ·  N = {nobj} objects', fontsize=10)
         row[0].set_ylabel(ylabel)
@@ -158,11 +166,11 @@ def _plot_vs_dt(col: str, ylabel: str, title: str, out_name: str, log_y: bool = 
     return out
 
 
-def _plot_vs_nobjs(col: str, ylabel: str, title: str, out_name: str,
+def _plot_vs_nobjs(col: str, ylabel: str, title: str, out_name: str, log_y: bool = False,
                    extra_handles: list | None = None, thresholds: list | None = None) -> Path:
-    """One panel per broad phase, lines per (solver, profile), x-axis = n_objects, fixed at the finest common dt."""
-    rep_dt = _common_finest_dt()
-    sub    = df[np.isclose(df['dt'], rep_dt)]
+    """One panel per broad phase, lines per (solver, profile), x-axis = n_objects, at the dt of the n_objects sweep."""
+    rep_dt = _n_sweep_dt()
+    sub    = n_df
     fig, axes = plt.subplots(1, len(broads), figsize=(max(9, 6 * len(broads)), 6),
                              sharey=True, squeeze=False)
     for ax, broad in zip(axes[0], broads):
@@ -180,11 +188,14 @@ def _plot_vs_nobjs(col: str, ylabel: str, title: str, out_name: str,
                         markersize=5, lw=1.6)
         for val, color, lbl in (thresholds or []):
             ax.axhline(val, color=color, ls='--', lw=1.2, label=lbl)
+        ax.set_xscale('log')
+        if log_y:
+            ax.set_yscale('log')
         ax.set_xlabel('Number of objects')
         ax.set_title(broad, fontsize=10)
     axes[0][0].set_ylabel(ylabel)
     fig.suptitle(f'{title}\n(dt = {rep_dt:.2e} s)', y=1.02)
-    handles = solver_legend_handles(solvers) + profile_legend_handles() + (extra_handles or [])
+    handles = solver_legend_handles(n_solvers) + profile_legend_handles() + (extra_handles or [])
     if thresholds:
         handles += [Line2D([0],[0], color=c, ls='--', lw=1.2, label=lbl) for _, c, lbl in thresholds]
     axes[0][-1].legend(handles=handles, fontsize=9, framealpha=0.5, ncol=2)
@@ -206,7 +217,7 @@ def plot_wall_time_vs_dt() -> Path:
 def plot_wall_time_vs_nobjs() -> Path:
     return _plot_vs_nobjs('wall_time_s', 'Wall time  (s)',
                           'Wall-time scaling with object count',
-                          'plot_wall_time_vs_nobjs.png')
+                          'plot_wall_time_vs_nobjs.png', log_y=True)
 
 
 # -----------------------------------------------------------------------------
@@ -220,7 +231,7 @@ def plot_step_time_vs_dt() -> Path:
 def plot_step_time_vs_nobjs() -> Path:
     return _plot_vs_nobjs(STEP_COL, f'Step time  ({STEP_UNIT})',
                           'Step-time scaling with object count',
-                          'plot_step_time_vs_nobjs.png')
+                          'plot_step_time_vs_nobjs.png', log_y=True)
 
 
 # -----------------------------------------------------------------------------
@@ -264,11 +275,11 @@ def plot_speedup_vs_dt() -> Path | None:
     if spd is None:
         print('[skip] Speedup vs dt requires both profiles.')
         return None
-    n     = len(n_objs_list)
-    fig, axes = plt.subplots(len(broads), n, figsize=(max(8, 5 * n), 5 * len(broads)),
+    n     = len(dt_n_objs)
+    fig, axes = plt.subplots(len(dt_broads), n, figsize=(max(8, 5 * n), 5 * len(dt_broads)),
                              sharey=True, squeeze=False)
-    for row, broad in zip(axes, broads):
-        for ax, nobj in zip(row, n_objs_list):
+    for row, broad in zip(axes, dt_broads):
+        for ax, nobj in zip(row, dt_n_objs):
             sub = spd[(spd['broad'] == broad) & (spd['n_objects'] == nobj)]
             for solver in solvers:
                 grp = sub[sub['solver'] == solver].sort_values('dt')
@@ -295,8 +306,8 @@ def plot_speedup_vs_nobjs() -> Path | None:
     if spd is None:
         print('[skip] Speedup vs n_objects requires both profiles.')
         return None
-    rep_dt = _common_finest_dt()
-    sub    = spd[np.isclose(spd['dt'], rep_dt)]
+    rep_dt = _n_sweep_dt()
+    sub    = spd[np.isclose(spd['dt'], rep_dt) & spd['solver'].isin(n_solvers)]
     fig, axes = plt.subplots(1, len(broads), figsize=(max(9, 6 * len(broads)), 6),
                              sharey=True, squeeze=False)
     for ax, broad in zip(axes[0], broads):
@@ -311,12 +322,13 @@ def plot_speedup_vs_nobjs() -> Path | None:
                 ax.plot(grp['n_objects'], grp['speedup_step'].fillna(0),
                         color=s['color'], marker=s['marker'], ls='--', markersize=4, lw=1.2, alpha=0.7)
         ax.axhline(1.0, color='#555', ls='--', lw=1.2)
+        ax.set_xscale('log')
         ax.set_xlabel('Number of objects')
         ax.set_title(broad, fontsize=10)
     axes[0][0].set_ylabel('Speedup  (scalar / optimised)')
     fig.suptitle(f'Speedup vs object count  (dt = {rep_dt:.2e} s)\n'
                  'solid = wall-time  ·  dashed = step-time', y=1.02)
-    axes[0][-1].legend(handles=solver_legend_handles(solvers), fontsize=9, framealpha=0.5)
+    axes[0][-1].legend(handles=solver_legend_handles(n_solvers), fontsize=9, framealpha=0.5)
     plt.tight_layout()
     out = RESULTS / 'plot_speedup_vs_nobjs.png'
     plt.savefig(out, dpi=150, bbox_inches='tight')
@@ -327,21 +339,21 @@ def plot_speedup_vs_nobjs() -> Path | None:
 # -----------------------------------------------------------------------------
 # Plot 5 - Broad-phase comparison
 # -----------------------------------------------------------------------------
-def _finest_dt_reference() -> tuple[pd.DataFrame, float, str]:
-    """Rows at the finest common dt for the optimised profile (or the only profile available)."""
+def _n_sweep_reference() -> tuple[pd.DataFrame, float, str]:
+    """Rows of the n_objects sweep for the optimised profile (or the only profile available)."""
     profile = 'optimised' if 'optimised' in profiles else profiles[0]
-    rep_dt  = _common_finest_dt()
-    return df[(df['profile'] == profile) & np.isclose(df['dt'], rep_dt)], rep_dt, profile
+    rep_dt  = _n_sweep_dt()
+    return n_df[n_df['profile'] == profile], rep_dt, profile
 
 
 def plot_broad_step_time_vs_nobjs() -> Path | None:
     if len(broads) < 2:
         print('[skip] Broad-phase comparison requires at least two broad phases.')
         return None
-    sub, rep_dt, profile = _finest_dt_reference()
-    fig, axes = plt.subplots(1, len(solvers), figsize=(max(9, 6 * len(solvers)), 6),
+    sub, rep_dt, profile = _n_sweep_reference()
+    fig, axes = plt.subplots(1, len(n_solvers), figsize=(max(9, 6 * len(n_solvers)), 6),
                              sharey=True, squeeze=False)
-    for ax, solver in zip(axes[0], solvers):
+    for ax, solver in zip(axes[0], n_solvers):
         for broad in broads:
             grp = sub[(sub['solver'] == solver) & (sub['broad'] == broad)].sort_values('n_objects')
             if grp.empty:
@@ -365,10 +377,10 @@ def plot_broad_gain_vs_nobjs() -> Path | None:
     if 'Brut' not in broads or len(broads) < 2:
         print('[skip] Broad-phase gain requires Brut and at least one other broad phase.')
         return None
-    sub, rep_dt, profile = _finest_dt_reference()
-    fig, axes = plt.subplots(1, len(solvers), figsize=(max(9, 6 * len(solvers)), 6),
+    sub, rep_dt, profile = _n_sweep_reference()
+    fig, axes = plt.subplots(1, len(n_solvers), figsize=(max(9, 6 * len(n_solvers)), 6),
                              sharey=True, squeeze=False)
-    for ax, solver in zip(axes[0], solvers):
+    for ax, solver in zip(axes[0], n_solvers):
         brut = sub[(sub['solver'] == solver) & (sub['broad'] == 'Brut')]
         for broad in broads:
             if broad == 'Brut':
@@ -398,9 +410,10 @@ def plot_broad_gain_vs_nobjs() -> Path | None:
 # Summary
 # -----------------------------------------------------------------------------
 def print_summary() -> None:
-    finest = df.loc[df.groupby(['profile', 'solver', 'broad', 'n_objects'])['dt'].idxmin()]
+    rep_dt  = _n_sweep_dt()
+    n_sweep = n_df
     rows = []
-    for _, row in finest.sort_values(['profile', 'solver', 'broad', 'n_objects']).iterrows():
+    for _, row in n_sweep.sort_values(['profile', 'solver', 'broad', 'n_objects']).iterrows():
         p, s, b, nobj = row['profile'], row['solver'], row['broad'], int(row['n_objects'])
         r = {
             'Profile':        p,
@@ -419,11 +432,11 @@ def print_summary() -> None:
             r['Step CV%'] = f"{row['step_us_cv']:.1f}" + (' ⚠' if row['step_us_cv'] > 10 else '')
         rows.append(r)
 
-    print('\n── Summary (finest dt per solver × broad × n_objects) ──────────────')
+    print(f'\n── Summary (n_objects sweep, dt = {rep_dt:.2e} s) ──────────────')
     print(pd.DataFrame(rows).set_index(['Profile', 'Solver', 'Broad', 'N objects']).to_string())
 
     if len(broads) > 1:
-        sub, rep_dt, profile = _finest_dt_reference()
+        sub, rep_dt, profile = _n_sweep_reference()
         table = sub.pivot_table(index=['solver', 'n_objects'], columns='broad', values=STEP_COL)
         print(f'\n── Step time by broad phase, µs ({profile}, dt = {rep_dt:.2e} s) ──────────')
         print(table.reindex(columns=broads).to_string(float_format='{:.3f}'.format))
@@ -431,9 +444,9 @@ def print_summary() -> None:
     if have_both:
         spd = _speedup_df()
         if spd is not None:
-            finest_spd = spd.loc[spd.groupby(['solver', 'broad', 'n_objects'])['dt'].idxmin()]
-            print('\n── Speedup at finest dt per (solver, broad, n_objects) ─────────────')
-            for _, row in finest_spd.sort_values(['solver', 'broad', 'n_objects']).iterrows():
+            n_sweep_spd = spd[np.isclose(spd['dt'], rep_dt) & spd['solver'].isin(n_solvers)]
+            print(f'\n── Speedup (n_objects sweep, dt = {rep_dt:.2e} s) ─────────────')
+            for _, row in n_sweep_spd.sort_values(['solver', 'broad', 'n_objects']).iterrows():
                 wall = row['wall_time_s_scl'] / row['wall_time_s_opt']
                 denom = row.get(f'{STEP_COL}_opt', 0)
                 step  = f"{row[f'{STEP_COL}_scl'] / denom:.2f}×" if denom > 0 else 'n/a'
@@ -472,7 +485,7 @@ def export_pdf(plot_paths: list[Path | None]) -> Path:
 RESULTS.mkdir(parents=True, exist_ok=True)
 
 plot_paths: list[Path | None] = [
-    # Wall time: vs dt (faceted by N) and vs N (at finest dt)
+    # Wall time: vs dt (dt sweep) and vs N (n_objects sweep)
     plot_wall_time_vs_dt(),
     plot_wall_time_vs_nobjs(),
     # Step time

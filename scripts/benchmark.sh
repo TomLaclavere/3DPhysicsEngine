@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Benchmark sweep : timing + analytic FLOP/s across solver x broad phase x n_objects x dt.
+# Benchmark sweeps : timing + analytic FLOP/s, in two independent sweeps:
+#   - n_objects sweep: every broad phase, one solver, fixed dt (how each broad phase scales with N),
+#   - dt sweep: every solver, one broad phase, fixed n_objects (how each solver's step cost behaves with dt).
 #
 # This script's only job is: build the two reference profiles (scalar / optimised, see
 # benchmarks/performance/profiles.sh), run benchmarks/Performance across a parameter sweep for
@@ -17,20 +19,25 @@ REPO="${ROOT}/benchmarks/performance"
 RESULTS_DIR="${REPO}/results"
 ANALYSE_PY="${REPO}/benchmark_analysis.py"
 
-# Solvers, broad phases, dt sweep, and object-count sweep
-SOLVERS=("Euler" "Verlet" "RK4")
+# n_objects sweep: BROADS compared with solver N_SOLVER, at DT_FIXED
 BROADS=("Brut" "Grid" "SweepPrune")
-N_OBJECTS=(1 2 5 10 20 50 100 500 1000)
-# Above LARGE_N, only dt >= LARGE_N_DT_MIN is run: a fine dt would take hours per point
-LARGE_N=100
-LARGE_N_DT_MIN="1e-3"
+N_SOLVER="Verlet"
+N_OBJECTS=(1 2 5 10 20 50 100 200 500 1000 2000 5000 10000)
+DT_FIXED="1e-3"
+# Brut is O(N²) (~70 ms per step at N=5000): above BRUT_N_MAX it would take hours, so it is skipped
+BRUT_N_MAX=2000
+# dt sweep: SOLVERS compared with broad phase DT_BROAD, at N_FIXED. Brut is the reference: its
+# cost does not depend on where the objects are
+SOLVERS=("Euler" "Verlet" "RK4")
+DT_BROAD="Brut"
+N_FIXED=100
 DT_MIN="1e-5"
 DT_MAX="1e-2"
 DT_N=5
 
 # Simulation parameters. The per-step cost does not depend on the simulated duration, so a
-# short one keeps the whole sweep around 2 hours (the finest dt and N=100 dominate).
-DUR="2.0"
+# short one keeps the whole run around 1 hour (estimated: N=5000-10000 and the finest dt dominate).
+DUR="1.0"
 N_WARMUP=1
 N_RUNS=5
 
@@ -45,27 +52,35 @@ usage() {
     cat <<'EOF'
 Usage: ./scripts/benchmark.sh [options]
 
-Builds the scalar and optimised reference profiles and runs the solver x broad phase x
-n_objects x dt sweep for each, writing benchmarks/performance/results/benchmark.csv.
+Builds the scalar and optimised reference profiles and, for each, runs two sweeps,
+writing benchmarks/performance/results/benchmark.csv:
+  - n_objects sweep: every broad phase, one solver, fixed dt,
+  - dt sweep: every solver, one broad phase, fixed n_objects.
 
 Options:
-  --solvers LIST     space-separated solver names  (default: "Euler Verlet RK4")
-  --broads LIST      space-separated broad phases  (default: "Brut Grid SweepPrune")
-  --n-objects LIST   space-separated object counts  (default: "1 2 5 10 20 50 100 500 1000")
-                     counts above 100 only run for dt >= 1e-3
-  --dt-min VALUE     smallest timestep  (default: 1e-5)
-  --dt-max VALUE     largest timestep   (default: 1e-2)
+  --broads LIST      broad phases of the n_objects sweep  (default: "Brut Grid SweepPrune")
+  --n-solver NAME    solver of the n_objects sweep  (default: Verlet)
+  --n-objects LIST   object counts of the n_objects sweep  (default: "1 2 5 ... 5000 10000")
+  --brut-n-max N     largest object count run with Brut  (default: 2000)
+  --dt VALUE         timestep of the n_objects sweep  (default: 1e-3)
+  --solvers LIST     solvers of the dt sweep  (default: "Euler Verlet RK4")
+  --dt-broad NAME    broad phase of the dt sweep  (default: Brut)
+  --n-fixed N        object count of the dt sweep  (default: 100)
+  --dt-min VALUE     smallest timestep of the dt sweep  (default: 1e-5)
+  --dt-max VALUE     largest timestep of the dt sweep   (default: 1e-2)
   --dt-n N           number of log-spaced dt values  (default: 5)
-  --dur VALUE        simulated duration in s  (default: 2.0)
+  --dur VALUE        simulated duration in s  (default: 1.0)
   --n-warmup N       discarded warmup runs  (default: 1)
   --n-runs N         timed runs  (default: 5)
   --skip-build       reuse existing binaries instead of an (incremental) rebuild
   --skip-analysis    skip the Python analysis step
   -h, --help         show this help
 
-Every run is pinned to one P-core (see benchmarks/performance/profiles.sh). With the default
-sweep, expect about 2 hours, dominated by the scalar profile at N=100 (--dt-min 1e-4
-roughly divides that by 3).
+Every run is pinned to one P-core, and the CPU governor is set to 'performance' for the whole
+run (sudo password asked once, previous governor restored at exit; see
+benchmarks/performance/profiles.sh). With the default
+sweeps, expect about 1 hour (estimate), dominated by N=5000-10000 and by the dt sweep at
+dt=1e-5 (drop them with --n-objects or --dt-min 1e-4).
 
 Output:
   benchmarks/performance/results_scalar/benchmark.csv   scalar profile
@@ -75,7 +90,7 @@ Output:
 Next steps (not run by this script):
   scripts/profile.sh                               all three below, in one command
   benchmarks/performance/perf/profile_perf.sh      hardware counters + flamegraph
-  benchmarks/performance/maqao/profile_maqao.sh    vectorisation + roofline
+  benchmarks/performance/maqao/profile_maqao.sh    vectorisation per loop
   benchmarks/performance/malt/profile_malt.sh      allocation profiling
 EOF
 }
@@ -87,7 +102,12 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --solvers)       read -ra SOLVERS    <<< "$2"; shift 2 ;;
         --broads)        read -ra BROADS     <<< "$2"; shift 2 ;;
+        --n-solver)      N_SOLVER="$2";            shift 2 ;;
+        --dt-broad)      DT_BROAD="$2";            shift 2 ;;
         --n-objects)     read -ra N_OBJECTS  <<< "$2"; shift 2 ;;
+        --dt)            DT_FIXED="$2";            shift 2 ;;
+        --brut-n-max)    BRUT_N_MAX="$2";          shift 2 ;;
+        --n-fixed)       N_FIXED="$2";             shift 2 ;;
         --dt-min)        DT_MIN="$2";              shift 2 ;;
         --dt-max)        DT_MAX="$2";              shift 2 ;;
         --dt-n)          DT_N="$2";                shift 2 ;;
@@ -125,9 +145,8 @@ run_benchmark() {
     echo ""
     echo "======================================================"
     echo " Run - profile: ${profile}"
-    echo "   solvers: ${SOLVERS[*]}"
-    echo "   broad phases: ${BROADS[*]}"
-    echo "   dt: ${DT_VALUES[0]} ... ${DT_VALUES[-1]}  (${#DT_VALUES[@]} values)"
+    echo "   n_objects sweep: ${N_OBJECTS[*]}  (broad phases: ${BROADS[*]}, solver = ${N_SOLVER}, dt = ${DT_FIXED})"
+    echo "   dt sweep: ${DT_VALUES[0]} ... ${DT_VALUES[-1]}  (${#DT_VALUES[@]} values, solvers: ${SOLVERS[*]}, broad = ${DT_BROAD}, n_objects = ${N_FIXED})"
     echo "======================================================"
 
     if [[ ! -x "$bin" ]]; then
@@ -139,32 +158,47 @@ run_benchmark() {
     cd "$ROOT"
 
     local first=true
+    run_point() {
+        local solver="$1" broad="$2" n_obj="$3" dt="$4"
+        local append_flag=""
+        $first || append_flag="--append"
+        first=false
+
+        taskset -c "$cpu" "$bin" \
+            --solver     "$solver"   \
+            --broad      "$broad"    \
+            --dt         "$dt"       \
+            --dur        "$DUR"      \
+            --n_warmup   "$N_WARMUP" \
+            --n_runs     "$N_RUNS"   \
+            --n_objects  "$n_obj"    \
+            --out        "$out_dir"  \
+            $append_flag
+    }
+
+    for broad in "${BROADS[@]}"; do
+        echo ""
+        echo "  n_objects sweep - broad: ${broad}  (solver = ${N_SOLVER}, dt = ${DT_FIXED})"
+        for n_obj in "${N_OBJECTS[@]}"; do
+            if [[ "$broad" == "Brut" ]] && (( n_obj > BRUT_N_MAX )); then
+                echo "  skip Brut at n_objects=${n_obj} (> --brut-n-max ${BRUT_N_MAX})"
+                continue
+            fi
+            run_point "$N_SOLVER" "$broad" "$n_obj" "$DT_FIXED"
+        done
+    done
+
     for solver in "${SOLVERS[@]}"; do
-        for broad in "${BROADS[@]}"; do
-            for n_obj in "${N_OBJECTS[@]}"; do
-                echo ""
-                echo "  Solver: ${solver}  broad: ${broad}  n_objects: ${n_obj}"
-                for dt in "${DT_VALUES[@]}"; do
-                    if (( n_obj > LARGE_N )) && awk "BEGIN { exit !($dt < $LARGE_N_DT_MIN) }"; then
-                        continue
-                    fi
-
-                    local append_flag=""
-                    $first || append_flag="--append"
-                    first=false
-
-                    taskset -c "$cpu" "$bin" \
-                        --solver     "$solver"   \
-                        --broad      "$broad"    \
-                        --dt         "$dt"       \
-                        --dur        "$DUR"      \
-                        --n_warmup   "$N_WARMUP" \
-                        --n_runs     "$N_RUNS"   \
-                        --n_objects  "$n_obj"    \
-                        --out        "$out_dir"  \
-                        $append_flag
-                done
-            done
+        echo ""
+        echo "  dt sweep - solver: ${solver}  (broad = ${DT_BROAD}, n_objects = ${N_FIXED})"
+        for dt in "${DT_VALUES[@]}"; do
+            # Already measured by the n_objects sweep
+            if [[ "$solver" == "$N_SOLVER" && " ${BROADS[*]} " == *" ${DT_BROAD} "* \
+                  && " ${N_OBJECTS[*]} " == *" ${N_FIXED} "* ]] \
+                && awk "BEGIN { exit !($dt == $DT_FIXED) }"; then
+                continue
+            fi
+            run_point "$solver" "$DT_BROAD" "$N_FIXED" "$dt"
         done
     done
 }
@@ -214,7 +248,9 @@ run_mode optimised "${RESULTS_DIR}"
 [[ "$SKIP_ANALYSIS" == false ]] && run_analysis
 
 echo ""
-echo "solvers=${SOLVERS[*]}  broads=${BROADS[*]}  n_objects=${N_OBJECTS[*]}  dt_n=${DT_N}  dt=${DT_MIN}..${DT_MAX}  dur=${DUR}"
+echo "n_objects sweep: broads=${BROADS[*]} solver=${N_SOLVER} n_objects=${N_OBJECTS[*]} dt=${DT_FIXED}"
+echo "dt sweep: solvers=${SOLVERS[*]} broad=${DT_BROAD} n_objects=${N_FIXED} dt=${DT_MIN}..${DT_MAX} x${DT_N}"
+echo "dur=${DUR}"
 echo ""
 echo "Sweep done. For hardware-counter/vectorisation/memory analysis on a representative"
 echo "workload, run scripts/profile.sh (all three tools) or the individual scripts under"

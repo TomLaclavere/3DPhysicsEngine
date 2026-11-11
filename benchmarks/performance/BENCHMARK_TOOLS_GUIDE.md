@@ -10,7 +10,7 @@ what they measure, how, and how to read the results.
 - [4. The benchmark sweep (`scripts/benchmark.sh`)](#4-the-benchmark-sweep-scriptsbenchmarksh)
 - [5. The profiling pipeline (`scripts/profile.sh`)](#5-the-profiling-pipeline-scriptsprofilesh)
 - [6. The profiling report, figure by figure](#6-the-profiling-report-figure-by-figure)
-- [7. Current baseline](#7-current-baseline)
+- [7. Baseline results](#7-baseline-results)
 - [8. Workflow for an optimisation](#8-workflow-for-an-optimisation)
 - [9. Troubleshooting](#9-troubleshooting)
 - [10. File map](#10-file-map)
@@ -20,12 +20,9 @@ what they measure, how, and how to read the results.
 ## 1. Quick start
 
 ```bash
-# Optional, for the most stable timings (restore afterwards with: -g powersave)
-sudo cpupower frequency-set -g performance
-
-./scripts/benchmark.sh    # how fast, and how it scales                  (~2 h)
-./scripts/profile.sh      # why: counters, vectorisation, allocations   (~3 min)
-./scripts/full_report.sh  # both, one after the other
+./scripts/benchmark.sh               # how fast, and how it scales                 (~1 h)
+./scripts/profile.sh                 # why: counters, vectorisation, allocations  (~3 min)
+./scripts/benchmark_and_profile.sh   # both, one after the other
 ```
 
 Then open:
@@ -35,7 +32,8 @@ Then open:
 | `benchmarks/performance/results/benchmark_report.pdf` | `benchmark.sh` |
 | `benchmarks/performance/profiling_report/profiling_report.pdf` | `profile.sh` |
 
-Both scripts rebuild what they need (incrementally), so they always measure the current code.
+Both scripts rebuild what they need (incrementally), so they always measure the current code,
+and ask for the sudo password once to switch the CPU governor (§3.3).
 Requirements: the project's normal build dependencies, Python 3 with `numpy`, `pandas` and
 `matplotlib`, and for profiling `perf`, MAQAO and MALT (install commands in
 [`README.md`](README.md#installation-profiling-tools)). A missing profiler only skips its own
@@ -47,8 +45,8 @@ step.
 
 | | `scripts/benchmark.sh` | `scripts/profile.sh` |
 |---|---|---|
-| **Question** | How fast is the engine, and how does the cost scale with the solver, the broad phase, the number of objects N and the timestep dt? | *Why* does it take that long: is the CPU busy or stalled, where is the time spent, is the code vectorised, does it allocate? |
-| **Runs** | A sweep: 3 solvers × 3 broad phases × 7 values of N × 5 values of dt, for each build profile | One fixed, representative workload, observed in depth |
+| **Question** | How fast is the engine: how does each broad phase scale with the number of objects N, and each solver with the timestep dt? | *Why* does it take that long: is the CPU busy or stalled, where is the time spent, is the code vectorised, does it allocate? |
+| **Runs** | Two sweeps per build profile: 3 broad phases × 13 values of N, and 3 solvers × 5 values of dt (§4) | One fixed, representative workload, observed in depth |
 | **Measures** | Wall time, time per step, run-to-run variance, estimated GFLOP/s, peak memory | Hardware counters, Top-Down bottleneck classification, hottest functions (perf); per-loop vectorisation and hotspots (MAQAO); every heap allocation (MALT) |
 | **Output** | `results/benchmark_report.pdf` + PNGs + CSV | `profiling_report/profiling_report.pdf` + PNGs + raw tool reports |
 
@@ -57,12 +55,13 @@ Use the sweep to *see* a problem (or a gain), and profiling to *explain* it.
 They are separate scripts on purpose. Profilers observe the program from the inside, and that
 slows it down (MALT makes this workload ~7× slower), so timings must be taken with no profiler
 attached. They also run at different rhythms: profiling (~3 min) after every change, the
-sweep (~2 h) to confirm a gain holds at every size. `scripts/full_report.sh` runs both
+sweeps (~1 h) to confirm a gain holds at every size. `scripts/benchmark_and_profile.sh` runs both
 sequentially, never in parallel, when both are wanted.
 
 Both work on the same binary, `benchmarks/Performance` (source:
 [`benchmark.cpp`](benchmark.cpp), CLI and CSV columns in [`README.md`](README.md)). It builds
-a scene of N falling spheres (no ground plane), runs it for `dur / dt` steps, and reports timings.
+a random 3D cloud of N colliding spheres of mixed sizes (no ground plane), runs it for `dur / dt`
+steps, and reports timings.
 
 ---
 
@@ -104,9 +103,10 @@ CPU 0 handles more interrupts). Override with `BENCH_CPU=<id>`.
 
 ### 3.3 CPU frequency
 
-With the `powersave` governor the clock speed varies with load. The scripts print a warning
-with the command to switch to `performance` (it needs `sudo`, so they never do it themselves).
-Pinning already removes most of the noise; the governor removes the rest.
+With the default `powersave` governor the clock speed follows the load and the temperature,
+which adds noise between runs. The measuring scripts therefore switch every CPU to the
+`performance` governor (`sudo cpupower`, password asked once) and restore the previous governor
+when they exit, even if interrupted. If it is already `performance`, nothing is changed.
 
 ### 3.4 Warm-up, repetitions, variance
 
@@ -141,8 +141,8 @@ describe the same run:
 
 - **10 objects** exercise object-object collisions (45 pairs), which a single sphere never
   reaches.
-- **600 000 steps** last long enough (~0.65 s per pass optimised, ~3 s scalar) for the
-  sampling tools to collect over a thousand samples.
+- **600 000 steps** last long enough for the sampling tools to collect over a thousand
+  samples.
 
 Change it with `--n-objects`, `--dt`, `--dur`, `--solver` on each `profile_*.sh` script (keep
 the three in sync if you change the defaults).
@@ -154,22 +154,28 @@ the three in sync if you change the defaults).
 ### What it does
 
 1. Checks the CPU setup (§3.2-3.3).
-2. For each profile (scalar, then optimised): rebuilds, then runs every combination of
-   solver ∈ {Euler, Verlet, RK4} × broad phase ∈ {Brut, Grid, SweepPrune} ×
-   N ∈ {1, 2, 5, 10, 20, 50, 100, 500, 1000} × 5 dt values log-spaced
-   between 1e-5 and 1e-2 s, each simulating 2 s. N above 100 only runs for dt ≥ 1e-3.
+2. For each profile (scalar, then optimised): rebuilds, then runs two sweeps, each point
+   simulating 1 s (diagram in [`README.md`](README.md#sweeps-run-by-scriptsbenchmarksh)):
+   - **n_objects sweep**, comparing the broad phases {Brut, Grid, SweepPrune} (`--broads`) with
+     the Verlet solver (`--n-solver`) at dt = 1e-3 s (`--dt`), for
+     N ∈ {1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000} (`--n-objects`). Brut
+     stops at N = 2000 (`--brut-n-max`): being O(N²), it costs ~70 ms per step at N = 5000 and
+     would take hours beyond;
+   - **dt sweep**, comparing the solvers {Euler, Verlet, RK4} (`--solvers`) with the Brut broad
+     phase (`--dt-broad`) at N = 100 (`--n-fixed`), for 5 dt values log-spaced between 1e-5 and
+     1e-2 s (`--dt-min`, `--dt-max`, `--dt-n`).
 3. Runs [`benchmark_analysis.py`](benchmark_analysis.py), which plots both profiles and prints a
    summary table.
 
-The simulated duration does not change the cost of a step, so 2 s is enough; the sweep takes
-about 2 hours (extrapolated from 38 min measured with one broad phase), almost all of it in the
-scalar profile at N = 100 and dt = 1e-5. `--dt-min 1e-4` drops the finest timestep and roughly
-divides that by 3; `--broads` restricts the broad phases.
+The simulated duration does not change the cost of a step, so 1 s is enough. Running the two
+sweeps separately avoids measuring large N at fine dt, which would take hours. The whole run
+takes about 1 hour (estimate, not measured), mostly N = 5000-10000 and the dt sweep at
+dt = 1e-5; `--n-objects`, `--broads` and `--solvers` restrict the sweeps.
 
 ```bash
-./scripts/benchmark.sh --solvers "Verlet" --n-objects "1 10 100"   # narrower sweep
-./scripts/benchmark.sh --solvers "Verlet" --broads "Grid SweepPrune" # compare two broad phases
-./scripts/benchmark.sh --skip-build --skip-analysis                 # reuse binaries, no plots
+./scripts/benchmark.sh --n-objects "1 10 100" --solvers "Verlet"   # shorter sweeps
+./scripts/benchmark.sh --broads "Grid SweepPrune"                  # compare two broad phases
+./scripts/benchmark.sh --skip-build --skip-analysis                # reuse binaries, no plots
 ./scripts/benchmark.sh --help
 ```
 
@@ -187,15 +193,15 @@ benchmarks/performance/
 
 | Figure | What it shows | What to look for |
 |---|---|---|
-| `plot_wall_time_vs_dt` | Total time per run, one panel per (broad phase, N) | A straight line of slope −1 in log-log: time ∝ number of steps = dur/dt. Anything else means the per-step cost changes with dt. |
-| `plot_wall_time_vs_nobjs` | Total time vs N (finest dt) | With `Brut`, growth close to N² once collisions dominate (every pair is tested). |
-| `plot_step_time_vs_dt` / `_vs_nobjs` | Cost of one step | The plateau at fine dt is the true per-step cost; compare solvers (RK4 evaluates forces 4×). |
+| `plot_wall_time_vs_dt` | Total time per run vs dt, one line per solver (dt sweep) | A straight line of slope −1 in log-log: time ∝ number of steps = dur/dt. Anything else means the per-step cost changes with dt. |
+| `plot_wall_time_vs_nobjs` | Total time vs N (n_objects sweep) | With `Brut`, growth close to N² once collisions dominate (every pair is tested). |
+| `plot_step_time_vs_dt` / `_vs_nobjs` | Cost of one step | Flat vs dt = the true per-step cost; compare solvers (RK4 evaluates forces 4×) and broad phases. |
 | `plot_step_cv_vs_dt` / `_vs_nobjs` | Regularity of the step cost | Below the 5% line = regular. Spikes = irregular steps (collisions) or noise. |
 | `plot_speedup_vs_dt` / `_vs_nobjs` | scalar time ÷ optimised time | Above 1 = optimised wins. This is the compiler's gain; manual optimisations should push it further. |
-| `plot_broad_step_time_vs_nobjs` | Cost of one step per broad phase, one panel per solver (log-log) | The slope shows how each broad phase scales; the lowest line wins at that N. |
+| `plot_broad_step_time_vs_nobjs` | Cost of one step per broad phase, for the n_objects sweep solver (log-log) | The slope shows how each broad phase scales; the lowest line wins at that N. |
 | `plot_broad_gain_vs_nobjs` | `Brut` step time ÷ other step time | Above 1 = faster than brute force. The N where it crosses 1 is where the broad phase starts paying off. |
 
-The console summary repeats the key numbers at the finest dt and lists every noisy point
+The console summary repeats the key numbers of the n_objects sweep and lists every noisy point
 (step CV > 10%).
 
 ---
@@ -281,8 +287,7 @@ benchmarks/performance/
 
 `profiling_report.pdf` has one figure per page, in the order of the table below, each with a
 short generic "How to read" note and no interpretation of the numbers (the figures are also
-saved alone as `profiling_report/<name>.png`). The interpretation of the current numbers is
-in §7.
+saved alone as `profiling_report/<name>.png`). §7 interprets the baseline numbers.
 
 | Figure | Question | How to read it |
 |---|---|---|
@@ -296,11 +301,14 @@ in §7.
 
 ---
 
-## 7. Current baseline
+## 7. Baseline results
 
-Measured on 2026-10-19 on an Intel Core i7-13850HX (pinned to a P-core, `powersave` governor),
-representative workload (§3.7). These are the numbers optimisations will be compared against;
-re-run `./scripts/profile.sh` to refresh them.
+Snapshot of the unoptimised engine (tag `baseline`, kept in [`baseline/`](baseline/README.md)),
+measured on 2026-10-19 on an Intel Core i7-13850HX (pinned to a P-core, `powersave` governor),
+representative workload (§3.7). The engine has changed since: findings 3, 4 and 6 below are
+fixed (accessors inlined, per-step allocations removed, broad phases added), and the benchmark
+scene is no longer the same. Later measurements go in
+[`docs/performance_logs.md`](../../docs/performance_logs.md).
 
 | | scalar | optimised |
 |---|---:|---:|
@@ -333,7 +341,8 @@ What this says:
    `Vector3D` of 3 doubles, array of structures) is what prevents it; a structure-of-arrays
    layout is the Phase 6 data-layout item.
 
-Benchmark sweep (same date and machine, `results*/benchmark.csv`), at the finest dt:
+Benchmark sweep (same date and machine, old scene: spheres on a 2D grid above a ground plane),
+at the finest dt:
 
 | N objects | 1 | 10 | 50 | 100 |
 |---|---:|---:|---:|---:|
@@ -354,9 +363,8 @@ runs or one-off disturbances).
 
 ## 8. Workflow for an optimisation
 
-1. **Baseline.** The unoptimised engine's results are kept in [`baseline/`](baseline/README.md)
-   (tag `baseline`). For later steps, commit or note the current numbers (`profile.sh`,
-   and `benchmark.sh` if the change affects scaling).
+1. **Baseline.** Note the current numbers (`profile.sh`, and `benchmark.sh` if the change
+   affects scaling) in [`docs/performance_logs.md`](../../docs/performance_logs.md).
 2. **Pick the target from the report**: the largest Top-Down loss, the hottest function, the
    hottest loop with a high CQA speedup, or a per-step allocation.
 3. **Change one thing.**
@@ -374,7 +382,7 @@ runs or one-off disturbances).
 | Symptom | Cause and fix |
 |---|---|
 | `build_profile: ... is not configured as Release` | The build directory's CMake cache does not match the profile. Delete `build/benchmark_<profile>` and run again. |
-| `[cpu] Warning: CPU governor is 'powersave'` | Informational. For the most stable numbers: `sudo cpupower frequency-set -g performance`, and `-g powersave` afterwards. |
+| `Error: could not set the 'performance' governor` | `cpupower` is missing or sudo was refused. Install `cpupower`, or set the governor yourself (`sudo cpupower frequency-set -g performance`) and run again. |
 | Large CV (> 10%) on some points | Background activity, thermal throttling, or very short runs (few steps at coarse dt). Re-run on a quiet machine; short configurations are naturally noisier. |
 | `perf stat` permission error | `sudo sysctl kernel.perf_event_paranoid=1` (resets at reboot). |
 | No flamegraph produced | Optional: install the FlameGraph tools (`stackcollapse-perf.pl`, `flamegraph.pl`). `perf_report_<profile>.txt` and the hotspot figure work without them. |
@@ -390,7 +398,7 @@ runs or one-off disturbances).
 scripts/
   benchmark.sh                     the sweep (§4)
   profile.sh                       the profiling pipeline (§5)
-  full_report.sh                   benchmark.sh then profile.sh
+  benchmark_and_profile.sh         benchmark.sh then profile.sh
 benchmarks/performance/
   BENCHMARK_TOOLS_GUIDE.md         this guide
   README.md                        the benchmark binary: CLI, CSV columns, tool installation
@@ -403,4 +411,5 @@ benchmarks/performance/
   maqao/  profile_maqao.sh, maqao.md
   malt/   profile_malt.sh,  malt.md
 docs/benchmark.md                  the Phase 6 optimisation plan
+docs/performance_logs.md           one line of results per optimisation
 ```

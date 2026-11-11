@@ -6,6 +6,9 @@ set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+# shellcheck source=../benchmarks/performance/profiles.sh
+source "$ROOT/benchmarks/performance/profiles.sh"
+
 RUN_PERF=true
 RUN_MAQAO=true
 RUN_MALT=true
@@ -23,6 +26,8 @@ Runs, in order: perf/profile_perf.sh, maqao/profile_maqao.sh, malt/profile_malt.
 profiling_analysis.py, which turns whatever results exist into figures and a PDF report
 (benchmarks/performance/profiling_report/). A tool that isn't installed fails that one step
 (with install instructions) without stopping the others - see the summary printed at the end.
+The CPU governor is set to 'performance' for the whole run (sudo password asked once, previous
+governor restored at exit).
 
 Options:
   --profile NAME   scalar | optimised | both  - forwarded to perf/MAQAO (default: both)
@@ -60,6 +65,10 @@ done
 # Orchestration
 # =====================================================================
 STEPS=()   # each entry: "<name>: OK" or "<name>: FAILED (exit N)" or "<name>: skipped"
+
+# Once for all the steps: each step would otherwise restore the governor when it ends, possibly
+# after the next step has already started
+set_performance_governor || exit 1
 
 run_step() {
     local name="$1" script="$2"; shift 2

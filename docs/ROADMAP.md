@@ -91,11 +91,11 @@
   - [x] **Contact forces mode:** Hooke restoring force + viscous damping + Coulomb friction
   - [x] **Position correction** to prevent interpenetration drift
   - [x] **Runtime switch** between impulse and contact forces modes
-- [ ] **Validation & Release:**
+- [x] **Validation & Release:**
   - [x] **Standard testing:** reference scenes, physical validity
   - [x] **Check energy conservation**
-  - [ ] **Documentation:**
-    - [ ] *Doxygen & GitHub Pages*
+  - [x] **Documentation:**
+    - [x] *Doxygen & GitHub Pages*
     - [x] *Installation & Usage guides*
     - [x] *GitHub notes*
 
@@ -150,18 +150,29 @@ See [`docs/benchmark.md`](benchmark.md) for more details.
   - [x] Compiler-optimised single-core
 - [x] **Add GitHub flag to keep the current status of software as reference**
 - [x] **Optimisation workflow:**
-  - [x] Physics fingerprint in the benchmark output (final state checksum), to check two versions simulate the same thing
-  - [x] Performance log (`docs/performance_log.md`): one line per optimisation - before, after, gain, commit
+  - [ ] Physics fingerprint in the benchmark output (final state checksum), to check two versions simulate the same thing
+  - [x] Performance log (`docs/performance_logs.md`): one line per optimisation - before, after, gain, commit
 - [ ] **Bonus:** Create InfPlane object, to simplify creation of the ground
-- [ ] **Quick wins (from the baseline profile):**
+- [x] **Quick wins (from the baseline profile):**
   - [x] Remove the per-step heap allocations (`prevAcc` / `nextAcc` in `PhysicsWorld::integrateVerlet`; check Euler and RK4)
   - [x] Let small accessors inline (`Sphere::getRadius`, `getCenter`, `Object::getPosition`): move them to headers or enable LTO (`-flto`)
-- [ ] **Broad-phase acceleration** *(algorithmic: O(N²) → ~O(N), largest gain at large N)*:
-  - [ ] Uniform spatial grid or sweep-and-prune instead of testing every pair
-  - [ ] Extend the benchmark sweep to N = 10³ - 10⁴
-- [ ] **Data layout optimisation:**
-  - [ ] Evaluate SoA vs AoS based on memory access patterns and SIMD efficiency
-  - [ ] Optimise memory layout if SoA improves cache efficiency
+- [x] **Broad-phase acceleration** *(algorithmic: O(N²) → ~O(N), largest gain at large N)*:
+  - [x] Uniform spatial grid or sweep-and-prune instead of testing every pair
+  - [x] Extend the benchmark sweep to N = 10³ - 10⁴
+- [ ] **Data layout optimisation** *(own branch; compare current pointers → contiguous AoS → SoA)*:
+  - [ ] **Decide the scope:** spheres + static planes first, or every shape; impulse mode only, or contact forces too
+  - [ ] **Safety net before refactoring:**
+    - [ ] Benchmark of the current layout (random 3D cloud, N up to 10⁴)
+    - [ ] Profile at N = 1000 (`profile.sh --n-objects 1000`) to know the share of integration vs collisions
+    - [ ] Test: Grid and SweepPrune return the same pairs as brute force
+    - [ ] Physics regression test: fixed scene, K steps, final positions compared to a reference file
+  - [ ] **Contiguous hot data (AoS):** `std::vector<Body>` (position, velocity, acceleration, inverse mass, radius, flags) in `PhysicsWorld`, behind accessors `pos(i)`, `vel(i)`...
+    - [ ] `Object` becomes a handle (world + index) with the same getters/setters; `id → index` map for `removeObject`
+    - [ ] Integrators (Euler, Verlet, RK4) loop over indices
+  - [ ] **Broad phases** read arrays (positions, radii) instead of `std::vector<Object*>`
+  - [ ] **Narrow phase and response** on indices: free functions per shape pair instead of virtual calls
+  - [ ] **SoA:** same accessors, storage split into one array per field; benchmark AoS vs SoA
+  - [ ] **Split x / y / z** into aligned arrays, then check vectorisation (MAQAO, `-fopt-info-vec`)
 - [ ] **SIMD Vectorisation:**
   - [ ] Vectorise `Vector3D` inner operations (AVX2 / SSE)
   - [ ] Evaluate auto-vectorisation via compiler reports (`-fopt-info-vec`)

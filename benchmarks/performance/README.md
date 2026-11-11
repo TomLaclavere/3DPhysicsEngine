@@ -9,12 +9,14 @@ install the profiling tools. For how to run the benchmarks and read the results,
 
 | Parameter | Value |
 |---|---|
-| Dynamic objects | N spheres (`--n_objects`, radius 2, mass 1, restitution 1), on a grid 3 radii apart, starting at z = 20 |
+| Dynamic objects | N spheres (`--n_objects`, mass 1, restitution 1), diameters uniform in [1, 8], placed at random without overlap in a cube sized for a 10% volume fraction, velocities uniform in [-5, 5] m/s per axis |
+| Randomness | Fixed seed: every run, solver and broad phase sees the same scene for a given N |
 | Static objects | None: the scene measures the broad phase, and a large plane would dictate the grid cell size |
 | Collisions | Impulse model by default; spring-damper contact forces with `--contact-forces` |
 | Gravity | Default engine gravity |
 
-The scene is rebuilt from scratch before every run so no state leaks between repetitions.
+The cube grows with N, so the collision rate stays constant. The spread of diameters exposes the
+grid's weakness (cells sized on the largest object). The scene is rebuilt before every run.
 
 ## Run structure
 
@@ -27,6 +29,38 @@ The scene is rebuilt from scratch before every run so no state leaks between rep
   come from these.
 - **Step-timing run**: one more run, timed in ~500 batches of steps (nanosecond clock), to
   measure how regular the cost of a step is.
+
+## Sweeps run by `scripts/benchmark.sh`
+
+The script calls this binary over two independent sweeps, for each build profile. Each sweep
+compares one thing and fixes everything else: the n_objects sweep compares the broad phases
+(one solver), the dt sweep compares the solvers (one broad phase).
+
+```mermaid
+flowchart LR
+    S["scripts/benchmark.sh"] --> P["for each profile<br/>scalar, optimised"]
+    P --> N["<b>n_objects sweep</b><br/>compared: Brut, Grid, SweepPrune<br/>N varies: 1 → 10000<br/>fixed: solver Verlet, dt = 1e-3 s<br/>(Brut stops at N = 2000)"]
+    P --> D["<b>dt sweep</b><br/>compared: Euler, Verlet, RK4<br/>dt varies: 1e-5 → 1e-2 s (5 values)<br/>fixed: broad phase Brut, N = 100"]
+    N --> C["benchmark.csv<br/>(one file per profile)"]
+    D --> C
+    C --> A["benchmark_analysis.py"]
+    A --> PN["plot_*_vs_nobjs<br/>plot_broad_*"]
+    A --> PD["plot_*_vs_dt"]
+```
+
+| | n_objects sweep | dt sweep |
+|---|---|---|
+| Compared | Broad phases: Brut, Grid, SweepPrune | Solvers: Euler, Verlet, RK4 |
+| Varies | N ∈ {1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000} | dt: 5 values log-spaced in [1e-5, 1e-2] s |
+| Fixed | Solver Verlet, dt = 1e-3 s | Broad phase Brut, N = 100 |
+| Question answered | How does each broad phase scale with N? | How does each solver's step cost behave with dt? |
+| Options | `--broads`, `--n-solver`, `--n-objects`, `--dt`, `--brut-n-max` | `--solvers`, `--dt-broad`, `--n-fixed`, `--dt-min`, `--dt-max`, `--dt-n` |
+| Figures | `plot_*_vs_nobjs`, `plot_broad_*` | `plot_*_vs_dt` |
+
+Both sweeps simulate `--dur` = 1 s per point. The point they share (Verlet, Brut, N = 100,
+dt = 1e-3) is measured only once. Brut is the dt sweep's broad phase because its cost does not
+depend on where the objects are. In the n_objects sweep, Brut is skipped above `--brut-n-max`
+(default 2000) because its O(N²) cost makes N = 5000 and above take hours.
 
 ## Command-line options
 
@@ -82,73 +116,31 @@ every pair is tested, so it only holds for `Brut`: the other broad phases are no
 
 ## Installation (profiling tools)
 
-`benchmark.cpp` itself needs nothing beyond the project's normal build (see the root
-`README.md`/`scripts/build.sh`). The three tools below are only needed for the deeper
-analysis scripts under `perf/`, `maqao/`, and `malt/` — hardware counters, vectorisation
-analysis, and memory allocation profiling respectively.
-
-### perf
+Only the profiling scripts under `perf/`, `maqao/` and `malt/` need these; the benchmark binary
+builds with the rest of the project. All three are Linux-only (no macOS support).
 
 ```bash
-# Arch:
-sudo pacman -S perf
+# perf
+sudo pacman -S perf                                        # Arch
+sudo apt install linux-tools-common linux-tools-generic    # Ubuntu/Debian
 
-# Ubuntu/Debian:
-sudo apt install linux-tools-common linux-tools-generic
-```
-
-**macOS: not supported, no equivalent.** `perf` wraps the Linux kernel's `perf_events`
-subsystem directly — it doesn't exist there. Closest built-in tools are Instruments (GUI,
-ships with Xcode) or `dtrace` (blocked by System Integrity Protection for much of what this
-pipeline would need); neither is a drop-in replacement for these scripts.
-
-Optional, referenced by `perf/perf.md`: `flamegraph` (provides `stackcollapse-perf.pl` /
-`flamegraph.pl` — AUR/chaotic-aur on Arch, cloned from
-[Brendan Gregg's FlameGraph repo](https://github.com/brendangregg/FlameGraph) on Ubuntu/Debian)
-and `hotspot` (GUI viewer — `chaotic-aur/hotspot` on Arch, `hotspot` via apt on recent
-Ubuntu). Neither is required; `profile_perf.sh` skips the flamegraph step gracefully if
-they're missing.
-
-### MAQAO
-
-```bash
-# Arch — AUR package:
-yay -S maqao-bin
-
-# Any distro (incl. Ubuntu/Debian) — generic binary release, no package needed
-# (check maqao.org/download.html for the current version):
+# MAQAO: AUR package on Arch (yay -S maqao-bin), or the generic binary release anywhere
+# (check maqao.org/download.html for the current version)
 curl -LO http://www.maqao.org/maqao_archive/maqao.x86_64.2025.1.0.tar.xz
 tar xf maqao.x86_64.2025.1.0.tar.xz
-export PATH="$PWD/maqao.x86_64.2025.1.0:$PATH"   # add to your shell rc to persist
-```
+export PATH="$PWD/maqao.x86_64.2025.1.0:$PATH"             # add to your shell rc
 
-**macOS: not supported.** MAQAO ships binaries for "64-bit Linux based operating systems"
-only, per its [download page](https://www.maqao.org/download.html) — no macOS build exists.
-
-### MALT
-
-No package on any of Arch/AUR or Ubuntu/Debian — build from source:
-
-```bash
-# Arch:
+# MALT: build from source, after installing its dependencies
 sudo pacman -S --needed base-devel cmake gcc make openssl libunwind elfutils \
-                         nodejs npm nlohmann-json graphviz python curl
-
-# Ubuntu/Debian:
+                        nodejs npm nlohmann-json graphviz python curl              # Arch
 sudo apt install cmake g++ make libssl-dev libunwind-dev libelf-dev nodejs npm \
-                  nlohmann-json3-dev graphviz python3-dev curl
-
+                 nlohmann-json3-dev graphviz python3-dev curl                     # Ubuntu/Debian
 git clone https://github.com/memtt/malt.git
 cd malt && mkdir build && cd build
-../configure --prefix=/usr/local
-make
-sudo make install
+../configure --prefix=/usr/local && make && sudo make install
 ```
 
-This installs a `malt` command (and `malt-webview`) onto `PATH`. If `malt-webview` then fails
-with `cannot open shared object file: libmalt-reader.so.1`, refresh the linker cache:
-`sudo ldconfig` (or run once with `LD_LIBRARY_PATH=/usr/local/lib` prefixed).
-
-**macOS: not supported.** MALT's own dependencies page only documents Debian/Ubuntu,
-Fedora/Rocky, Arch, and Gentoo. It relies on `libelf`/`libunwind` for symbol resolution, both
-built around the ELF binary format macOS doesn't use (Mach-O).
+- If `malt-webview` fails with `libmalt-reader.so.1: cannot open shared object file`, run
+  `sudo ldconfig`.
+- Optional for perf: the [FlameGraph](https://github.com/brendangregg/FlameGraph) scripts
+  (`profile_perf.sh` skips the flamegraph without them) and the `hotspot` GUI.

@@ -79,21 +79,32 @@ bench_cpu() {
     fi
 }
 
-# check_cpu_setup - warns (never changes anything) when the CPU frequency policy is likely to
-# add noise to the measurements.
-check_cpu_setup() {
+# set_performance_governor - switches every CPU to the 'performance' governor until the calling
+# script exits, then restores the previous one. With the default 'powersave' governor the clock
+# speed follows the load and the temperature, which adds noise between runs. Needs sudo; if the
+# governor is already 'performance', nothing is changed.
+set_performance_governor() {
     local gov_file=/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
-    if [[ -r "$gov_file" ]]; then
-        local gov
-        gov="$(cat "$gov_file")"
-        if [[ "$gov" != "performance" ]]; then
-            echo "[cpu] Warning: CPU governor is '${gov}', not 'performance' - the clock speed can"
-            echo "      vary between runs. For the most stable numbers, before benchmarking run:"
-            echo "        sudo cpupower frequency-set -g performance"
-            echo "      and afterwards restore it with:"
-            echo "        sudo cpupower frequency-set -g ${gov}"
-        fi
+    [[ -r "$gov_file" ]] || return 0
+    local gov
+    gov="$(cat "$gov_file")"
+    [[ "$gov" == "performance" ]] && return 0
+
+    echo "[cpu] Switching the CPU governor from '${gov}' to 'performance' (sudo), restored on exit"
+    if ! command -v cpupower >/dev/null 2>&1 \
+        || ! sudo cpupower frequency-set -g performance >/dev/null; then
+        echo "Error: could not set the 'performance' governor. Set it yourself, then run again:" >&2
+        echo "         sudo cpupower frequency-set -g performance" >&2
+        return 1
     fi
+    # The restore runs as root in the background, waiting for this script to end: the sudo
+    # password cache would have expired by the end of a long run, and it also covers a kill.
+    sudo -b sh -c "while kill -0 $$ 2>/dev/null; do sleep 2; done; cpupower frequency-set -g ${gov} >/dev/null"
+}
+
+# check_cpu_setup - sets the 'performance' governor and checks that runs can be pinned to a core.
+check_cpu_setup() {
+    set_performance_governor || return 1
     if ! command -v taskset >/dev/null 2>&1; then
         echo "Error: taskset not found (package util-linux) - needed to pin runs to one core." >&2
         return 1

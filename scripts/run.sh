@@ -19,25 +19,23 @@ APP_ARGS=()
 # =====================================================================
 usage() {
     cat <<'EOF'
-Usage: $0 [options] [cmake-args...] -- [app-args...]
+Usage: ./scripts/run.sh [options] [cmake-args...] -- [app-args...]
+
+Builds the project if the executable is missing, then runs it. Run from the repository root
+(PhysicsEngine reads src/config.yaml from there).
 
 Options:
-  --build-dir DIR     Build directory (default: ${BUILD_DIR})
-  --build-type TYPE   CMake build type (Debug|Release) (default: ${BUILD_TYPE})
-  --app-name NAME     Executable name (default: ${APP_NAME})
+  --build-dir DIR     Build directory (default: build, or $BUILD_DIR)
+  --build-type TYPE   CMake build type (Debug|Release) (default: Debug, or $BUILD_TYPE)
+  --app-name NAME     Executable in the build directory (default: PhysicsEngine, or $APP_NAME)
   --rebuild           Force rebuild before running
   --no-build          Skip build step even if executable is missing
   -v, --verbose       Enable verbose output
   -h, --help          Show this help message
 
 Arguments:
-  You may pass additional CMake arguments before '--'.
-  All arguments after '--' are passed to the application.
-
-Behaviour:
-    - Use `--` to separate build/CMake options from executable runtime arguments.
-    - Example: everything before `--` goes to CMake; everything after goes to your program.
-    - Executable defaults to `build/PhysicsEngine`.
+  Arguments starting with "-" before "--" are passed to CMake (only used when building).
+  All arguments after "--" are passed to the application.
 
 Examples:
     # show help
@@ -50,7 +48,7 @@ Examples:
     ./scripts/run.sh --rebuild -D3DPE_USE_CLANG=ON
 
     # pass compile-time options and forward runtime arguments (after --)
-    ./scripts/run.sh -D3DPE_USE_DOUBLE_PRECISION=ON -- --config config.yaml --iters 100
+    ./scripts/run.sh -D3DPE_USE_DOUBLE_PRECISION=OFF -- --solver RK4 --iters 100
 EOF
 }
 

@@ -14,7 +14,9 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <numbers>
 #include <numeric>
+#include <random>
 #include <string>
 #include <sys/resource.h>
 #include <vector>
@@ -83,25 +85,54 @@ SimResult simulation(const std::string& solver, const std::string& broad, decima
     std::vector<long long> timings;
     timings.reserve(static_cast<size_t>(nTimingRuns));
 
-    // Grid layout for N spheres.
-    // Spheres are arranged in a ceil(sqrt(N)) × ceil(N/cols) grid, spaced 3 radii apart
-    // so they do not overlap at t=0 and have room to fall independently.
-    const decimal sphRadius = 2_d;
-    const decimal spacing   = sphRadius * 3_d;
-    const int     ncols = std::max(1, static_cast<int>(std::ceil(std::sqrt(static_cast<double>(nObjects)))));
-    const int     nrows = (nObjects + ncols - 1) / ncols;
+    // Random 3D cloud of N spheres, generated once with a fixed seed so every run and every broad
+    // phase sees the same scene. Diameters span a factor 8: the grid sizes its cells on the
+    // largest object, so this exposes its known weakness. The box grows with N to keep the volume
+    // fraction, hence the collision rate, constant. Random velocities make spheres collide.
+    const decimal minDiameter    = 1_d;
+    const decimal maxDiameter    = 8_d;
+    const decimal volumeFraction = 0.1_d;
+    const decimal maxSpeed       = 5_d;
+
+    std::mt19937                            rng(42);
+    std::uniform_real_distribution<decimal> diameterDist(minDiameter, maxDiameter);
+    std::uniform_real_distribution<decimal> speedDist(-maxSpeed, maxSpeed);
+
+    std::vector<decimal> diameters(static_cast<size_t>(nObjects));
+    decimal              spheresVolume = 0_d;
+    for (decimal& d : diameters)
+    {
+        d = diameterDist(rng);
+        spheresVolume += std::numbers::pi_v<decimal> * d * d * d / 6_d;
+    }
+    const decimal                           boxSide = std::cbrt(spheresVolume / volumeFraction);
+    std::uniform_real_distribution<decimal> positionDist(0_d, boxSide);
+
+    std::vector<Vector3D> positions;
+    std::vector<Vector3D> velocities;
+    for (const decimal d : diameters)
+    {
+        // Rejection sampling: no overlap at t=0
+        Vector3D p;
+        bool     overlaps = true;
+        while (overlaps)
+        {
+            p        = Vector3D(positionDist(rng), positionDist(rng), positionDist(rng));
+            overlaps = false;
+            for (size_t k = 0; k < positions.size() && !overlaps; ++k)
+                overlaps = (p - positions[k]).getNorm() < 0.5_d * (d + diameters[k]);
+        }
+        positions.push_back(p);
+        velocities.emplace_back(speedDist(rng), speedDist(rng), speedDist(rng));
+    }
 
     // Lambda that builds a fresh scene into `world`. Spheres only, with no ground: this scene
     // measures the broad phase, and a large plane would dictate the grid cell size.
     auto buildScene = [&](PhysicsWorld& world)
     {
-        for (int obj = 0; obj < nObjects; ++obj)
+        for (size_t obj = 0; obj < diameters.size(); ++obj)
         {
-            const int     col = obj % ncols;
-            const int     row = obj / ncols;
-            const decimal x   = (static_cast<decimal>(col) - static_cast<decimal>(ncols - 1) / 2_d) * spacing;
-            const decimal y   = (static_cast<decimal>(row) - static_cast<decimal>(nrows - 1) / 2_d) * spacing;
-            auto          sph = std::make_unique<Sphere>(Vector3D(x, y, 20_d), sphRadius, 1_d);
+            auto sph = std::make_unique<Sphere>(positions[obj], diameters[obj], velocities[obj], 1_d);
             sph->setIsFixed(false);
             sph->setRestitutionCst(1_d);
             // PhysicsWorld::addObject() takes ownership (deletes on clearObjects()/dtor),

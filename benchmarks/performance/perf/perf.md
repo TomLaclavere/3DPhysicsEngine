@@ -2,7 +2,7 @@
 
 Reference for [`profile_perf.sh`](profile_perf.sh). What perf measures and why the pipeline
 uses it: [guide §5.1](../BENCHMARK_TOOLS_GUIDE.md#51-perf---what-the-cpu-is-doing).
-Install: [`README.md`](../README.md#perf).
+Install: [`README.md`](../README.md#installation-profiling-tools).
 
 ## Commands
 
@@ -63,7 +63,7 @@ so only the P-core counters are reported.
 width = share of samples (not time order), height = call depth; wide plateaus at the top are
 the hotspots. In `perf report`, pressing `a` on a function shows annotated source and assembly.
 
-## Current numbers
+## Baseline numbers (tag `baseline`)
 
 Default workload (`--solver Verlet --dt 5e-5 --dur 30 --n-objects 10`), 2026-10-19,
 i7-13850HX:
@@ -77,7 +77,7 @@ i7-13850HX:
 | Branch MPKI | 0.39 | 0.56 |
 | Top function (self) | `Vector3D::operator[]` 9.6% | `BroadCollision::isColliding(Sphere, Sphere)` 15.6% |
 
-Interpretation: [guide §7](../BENCHMARK_TOOLS_GUIDE.md#7-current-baseline).
+Interpretation: [guide §7](../BENCHMARK_TOOLS_GUIDE.md#7-baseline-results).
 
 ## Pitfalls
 

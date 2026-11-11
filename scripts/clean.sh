@@ -13,18 +13,19 @@ CLEAN_ALL=false
 # =====================================================================
 usage() {
     cat <<'EOF'
-Usage: $0 [options]
+Usage: ./scripts/clean.sh [options]
+
+Removes the build directory. Run from the repository root.
 
 Options:
-  --build-dir DIR   Specify the build directory to remove (default: ${BUILD_DIR})
-  --all             Remove additional CMake cache and generated files
+  --build-dir DIR   Build directory to remove (default: build, or $BUILD_DIR)
+  --all             Also remove CMake files generated in the current directory by an in-source
+                    configure (CMakeCache.txt, CMakeFiles/, Makefile, compile_commands.json...)
   -v, --verbose     Show detailed actions
   -h, --help        Show this help message
 
 Behaviour:
-    - Safer than a raw `rm -rf`, validates target paths.
-    - Defaults to "$BUILD_DIR" or "build/".
-    - Prevents accidental deletion of critical system directories.
+    - Refuses to remove /, /home, /root or $HOME, and asks for confirmation outside the project.
 
 Examples:
     # show help

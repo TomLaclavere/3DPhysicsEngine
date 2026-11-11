@@ -75,12 +75,12 @@ int main(int argc, char** argv)
 
     // Contact times with the ground, computed in README.md
     decimal  analyticalContactTimeSphere   = 0.5342499768054424_d;
-    decimal  analyticalContactTimePlane    = 20.39535670016235_d;
-    decimal  analyticalContactTimeCube     = 10.212231941071188_d;
+    decimal  analyticalContactTimePlane    = 20.39635586735506_d;
+    decimal  analyticalContactTimeCube     = 10.212644635755272_d;
     Vector3D analyticalFinalPositionSphere = Vector3D(534.249977_d, 0_d, sphereBulletMotion->getRadius());
-    Vector3D analyticalFinalPositionPlane  = Vector3D(10_d, 0_d, 0_d);
+    Vector3D analyticalFinalPositionPlane  = Vector3D(10_d, 0_d, planeVerticalMotion->getHalfHeight());
     Vector3D analyticalFinalPositionCube =
-        Vector3D(0_d, 520.611597_d, cubeParabolicMotion->getSize()[2] / decimal(std::numbers::sqrt2));
+        Vector3D(0_d, 520.632232_d, cubeParabolicMotion->getHalfExtents()[2]);
 
     decimal simulationContactTimeSphere = 0_d;
     decimal simulationContactTimePlane  = 0_d;
@@ -163,8 +163,9 @@ int main(int argc, char** argv)
                      "Analytical contact time = "
                   << analyticalContactTimeSphere
                   << " (s), and Simulation contact time = " << simulationContactTimeSphere << " (s).\n";
-    // Verify Sphere final position
-    if (analyticalFinalPositionSphere.approxEqual(sphereBulletMotion->getPosition(), 0.2_d))
+    // Verify Sphere final position: the bullet travels 1000 m/s × dt per step, so allow the same 2 steps as the
+    // contact time
+    if (analyticalFinalPositionSphere.approxEqual(sphereBulletMotion->getPosition(), 1000_d * 2 * timeStep))
         std::cout << "Bullet  motion (sphere) : analytical and simulation final position are compatible. "
                      "Final position = "
                   << analyticalFinalPositionSphere << " (m).\n";

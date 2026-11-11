@@ -1,91 +1,36 @@
-# HPC optimisation preparation plan
+# HPC optimisation plan
 
-I will first implement a reproducible benchmarking pipeline to evaluate performance across different optimisation stages.
+Strategy behind Phase 6 of the [roadmap](ROADMAP.md) (which holds the detailed checklist).
+How to run and read the measurements: [`BENCHMARK_TOOLS_GUIDE.md`](../benchmarks/performance/BENCHMARK_TOOLS_GUIDE.md).
 
-## Metric to collect
+## Measurement
 
-- Wall-clock simulation time
-- FLOP/s
-- Time per step
-- Scaling behaviour (vs dt, vs N ?)
-- CPU metrics :
-  - Instructions per cycle (IPC)
-  - Cache miss rates (L1, LLC)
-- Memory :
-  - Bandwidth usage
-  - Allocation overhead
-- Numerical
-  - Energy drift
-  - Stability vs dt
+Every optimisation is measured with the same reproducible pipeline: fixed scene and seed,
+Release builds, runs pinned to one P-core, warm-up then repeated runs, results stored as CSV.
 
-## Benchmarking methodology
+| Metric | Status |
+|---|---|
+| Wall time, time per step, scaling vs N and vs dt | `scripts/benchmark.sh` |
+| Estimated FLOP/s | `scripts/benchmark.sh` (brute force only) |
+| IPC, cache and branch misses, Top-Down | `perf` |
+| Vectorisation per loop | MAQAO, `-fopt-info-vec` |
+| Allocations | MALT |
+| Memory bandwidth | Not measured yet (roofline, Phase 6 documentation) |
+| Energy drift, stability vs dt | Physics benchmarks ([`benchmarks/physics/`](../benchmarks/physics/)) |
 
-- Fixed input configuration
-- Multiple runs for statistical averaging
-- Warm-up phase
-- Consistent compiler flags : ```-O3 -march=native```
-- Release build
-- Store results in CSV
+Two reference builds bound every result: `scalar` (`-O2 -fno-tree-vectorize -fno-inline`) and
+`optimised` (`-O3 -march=native`). The unoptimised engine is kept as tag `baseline`.
 
-## Reference baseline
+## Optimisation order
 
-Before optimisation, I will establish two performance baselines: a scalar reference case and a compiler-optimised single-core case.
+| Step | Status |
+|---|---|
+| Benchmark and profiling tools, reference builds | Done |
+| Quick wins from the baseline profile (allocations, inlining) | Done |
+| Broad phase (grid, sweep & prune) | Done |
+| Data layout: AoS vs SoA | Next |
+| SIMD: auto-vectorisation, then intrinsics if needed | Planned |
+| Multithreading: OpenMP / TBB, scaling across cores | Planned |
+| GPU: CUDA/SYCL, Kokkos, nvc++ (Phase 7) | Planned |
 
-The first one will use low compiler optimisation with auto-vectorisation disabled and no multithreading:
-
-```bash
--O2 -fno-tree-vectorize -fno-inline
-```
-
-The second one will use full compiler optimisations enabled with auto-vectorisation and single-thread execution:
-
-```bash
--O3 -march=native
-```
-
-These baselines will serve as reference points for all future performance comparisons.
-
-## Compiler analysis
-
-I will analyse auto-vectorisation using:
-
-- ```-fopt-info-vec```
-- ```perf```
-- profiling tools : Malt (memory allocation) & Maqao (Vectorisation)
-
-The goal is to identify:
-
-- Vectorised loops
-- Non-vectorised bottlenecks
-- Memory-bound
-
-## Optimisation roadmap
-
-0. Tools implementation
-    - Reproducible benchmark simulation script : recompilation, fixed parameters, multiple realisations
-    - Analysis tools wrappers
-    - Plotting tools to save results
-
-0.5 Reference benchmarks
-    - Scalar reference
-    - Compiler-optimised single-core
-
-1. Data layout optimisation
-    - Evaluate SoA vs AoS based on memory access patterns and SIMD efficiency
-
-2. SIMD optimisation
-    - Auto-vectorisation first
-    - Intrinsics if necessary (Eve ?)
-
-3. Multithreading
-    - OpenMP / TBB
-    - Evaluate scaling efficiency across cores
-
-4. GPU
-    - CUDA/SYCL (low-level)
-    - Kokkos (abstraction)
-    - nvc++ (compiler)
-
-## External
-
-I may use MKL as a performance reference for linear algebra operations, but not in the core simulation logic.
+MKL may serve as a performance reference for linear algebra, not in the simulation core.

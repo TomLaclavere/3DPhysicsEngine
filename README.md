@@ -17,491 +17,150 @@
   High-performance 3D physics simulation engine
 </p>
 
-## Project Overview
+A rigid-body physics engine written from scratch in C++23, focused on numerical accuracy and HPC
+scalability: custom 3D math, three integrators, a two-phase collision pipeline, two collision
+response models, and benchmarks of both accuracy and performance. Roadmap toward OpenMP,
+CUDA/SYCL and MPI: [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
-A modular rigid-body physics engine written in modern C++23, built from scratch with a focus on numerical accuracy and HPC scalability.
-
-The project covers the full simulation stack: custom 3D math library, configurable numerical integrators, a two-phase collision pipeline, two collision response models, and a systematic benchmark suite comparing solvers across accuracy and performance metrics. It is designed as a technical showcase for numerical simulation and high-performance computing, with a roadmap toward parallelisation (OpenMP, CUDA/SYCL, MPI).
-
-Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) and [CLA.md](CLA.md) before submitting a pull request.
-
----
-
-## Table of Contents
-
-- [Features](#features)
-- [Architecture](#architecture)
-- [Benchmark Results](#benchmark-results)
-- [Quick Start](#quick-start)
-- [Installation](#installation)
-- [Graphical Interface](#graphical-interface)
-- [Build and Run](#build-and-run)
-- [Developer Scripts](#developer-scripts)
-- [Doxygen Documentation](#doxygen-documentation)
-- [Tech Stack](#tech-stack)
-- [License](#license)
-
----
+Contributions are welcome: read [CONTRIBUTING.md](CONTRIBUTING.md) and [CLA.md](CLA.md) first.
 
 ## Features
 
-**Numerical Integrators**
-- Semi-implicit Euler - O(dt), symplectic, fast
-- Störmer-Verlet - O(dt²), near-perfect energy conservation in free dynamics
-- Runge-Kutta 4 - O(dt⁴), highest accuracy, 4th-order convergence verified
+- **Integrators:** semi-implicit Euler (order 1), Velocity Verlet (order 2), RK4 (order 4).
+- **Collision pipeline:**
+  - broad phase: brute force, uniform grid or sweep & prune;
+  - narrow phase: analytical contacts between spheres, AABBs and planes.
+- **Collision response,** selectable at runtime:
+  - **impulses:** velocity change from the restitution coefficient, plus position correction;
+  - **contact forces:** spring-damper (Hooke + viscous damping) with Coulomb friction.
+- **Materials:** per-object stiffness, damping, friction, restitution; presets in
+  [`data/materials/`](data/materials/) (steel, aluminium, rubber, wood).
+- **Configuration:** YAML file, overridden by command-line flags or the interactive CLI.
+- **Precision:** `double` by default, `float` with `-D3DPE_USE_DOUBLE_PRECISION=OFF`.
+- **Output:** per-object CSV (position, velocity, acceleration over time), replayable in the 3D viewer.
 
-**Physics & Forces**
-- Gravity with configurable constant
-- Two collision response modes, selectable at runtime:
-  - **Impulse-based**: instantaneous velocity correction via restitution coefficient + Coulomb friction
-  - **Contact forces**: continuous spring-damper model (Hooke restoring force + viscous damping + Coulomb friction)
-- Position correction to prevent interpenetration drift
+## Layout
 
-**Collision Pipeline**
-- Broad phase: AABB-based early rejection
-- Narrow phase: analytical contact computation for Sphere–Sphere, Sphere–Plane, AABB–AABB
-- Contact struct: normal, penetration depth, contact point
-
-**Material System**
-- Per-object material properties: density, stiffness, damping ratio, restitution, friction
-- YAML-defined materials (steel, aluminium, rubber, wood) loaded at runtime
-
-**Precision & Configuration**
-- Compile-time precision switch: `float` (default) or `double` via `-D3DPE_USE_DOUBLE_PRECISION`
-- YAML config file + command-line overrides + runtime interactive CLI
-- Solver and collision mode selectable at runtime
-
-**Validation & Testing**
-- 5 GoogleTest targets - ~3,700 lines across mathematics, collision, world, objects, utilities
-- Energy monitoring (kinetic + potential) at every timestep
-- CSV output for post-processing and comparison with analytical solutions
-- 5 example simulations: free fall, projectile motion, bouncing ball (3 materials), rolling
-
-**Benchmarks**
-- Systematic solver comparison: 150+ (solver × timestep) configurations per scenario
-- Metrics: contact time error, max energy drift, final energy drift, CPU time
-- Scenarios: free fall (no collision) and bouncing ball (contact forces mode)
-- Jupyter notebooks + PDF reports in [`benchmarks/`](benchmarks/)
-
----
-
-## Architecture
-
-```
-3DPhysicsEngine/
-│
-├── lib/                        # Public API (headers)
-│   ├── mathematics/            # Vector3D, Matrix3D, Quaternion, precision types
-│   ├── objects/                # Object (base), Sphere, AABB, Plane, Material
-│   ├── collision/              # BroadCollision, NarrowCollision, CollisionResponse, Contact
-│   ├── world/                  # PhysicsWorld, Config (singleton), Physics (forces), integrators
-│   └── utilities/              # Timer, CSV I/O, command parser
-│
-├── src/                        # Implementations (mirrors lib/)
-├── examples/                   # 5 standalone simulation programs
-├── benchmarks/                 # Solver accuracy & performance benchmarks
-├── tests/                      # GoogleTest suites (5 targets)
-└── data/materials/             # YAML material files
+```text
+lib/, src/       engine headers and sources: mathematics, objects, collision, world, utilities, gui, viewer
+examples/        6 standalone simulations (free fall, projectiles, bouncing ×2, rolling, random balls)
+benchmarks/      physics/ (solver accuracy) and performance/ (timing, profiling)
+tests/           GoogleTest suites (5 targets)
+data/materials/  YAML material presets
+scripts/         build, test, coverage, benchmark and profiling scripts
 ```
 
-**Module dependencies:**
+## Quick start
 
-```
-PhysicsWorld
-  ├── Config          (YAML + CLI + runtime, singleton)
-  ├── Object          (Sphere / AABB / Plane + Material)
-  ├── Physics         (gravity, contact forces, impulse response)
-  ├── Collision       (BroadPhase → NarrowPhase → Response)
-  └── Integrators     (Euler / Verlet / RK4)
-```
-
-The math layer (`Vector3D`, `Matrix3D`, `Quaternion`) has no external dependencies - all types are implemented from scratch using `std::array` with constexpr helpers and a user-defined `decimal` literal for compile-time precision control.
-
----
-
-## Benchmark Results
-
-Four scenarios benchmark solver accuracy, energy conservation, and performance across a range of timesteps and collision models. Full data, convergence plots, and Jupyter analysis: [`benchmarks/`](benchmarks/)
-
-### Free Fall (no collision, dt = 1e-3 s)
-
-Path: [`benchmarks/Free_Fall/`](benchmarks/Free_Fall/benchmark_analysis.ipynb)
-
-Sphere falls under gravity. Measures contact-time accuracy and energy conservation with no collision model noise.
-
-| Solver | Contact time error | Max energy drift    | CPU (relative) |
-|--------|--------------------|---------------------|----------------|
-| Euler  | ~1e-3 s            | ~0.1% (O(dt))       | 1×             |
-| Verlet | ~1e-4 s            | ~1e-12 (negligible) | 1.5×           |
-| RK4    | ~1e-5 s            | ~1e-15 (negligible) | 3×             |
-
-**Key insight:** Verlet and RK4 conserve energy at machine precision for this polynomial trajectory. Euler injects energy linearly with dt.
-
-### Bouncing - impulse model, e = 0.9 (dissipative, dt = 1e-3 s)
-
-Path: [`benchmarks/Bouncing/`](benchmarks/Bouncing/benchmark_analysis.ipynb)
-
-Ball bounces 6–7 times with energy loss at each contact. Tests solver behaviour under repeated discrete impulses.
-
-| Solver | Max height error | Total energy drift | CPU (relative) |
-|--------|------------------|--------------------|----------------|
-| Euler  | ~0.009 m         | ~68%               | 1×             |
-| Verlet | ~0.001 m         | ~68%               | 1.8×           |
-| RK4    | ~0.001 m         | ~68%               | 3.9×           |
-
-**Key insight:** The ~68% energy drift is physical - cumulative loss from 6–7 bounces at e = 0.9, not a numerical artefact. All solvers converge at the same O(dt) rate: discrete impulse contact detection imposes a timing-error floor that dominates integrator order.
-
-### Bouncing Conservative - impulse model, e = 1.0 (elastic, dt = 1e-4 s)
-
-Path: [`benchmarks/Bouncing_Conservative/`](benchmarks/Bouncing_Conservative/benchmaark_analysis.ipynb)
-
-Perfect elasticity removes the physical energy sink, isolating integrator differences cleanly.
-
-| Solver | Convergence order | Peak height error |
-|--------|-------------------|-------------------|
-| Euler  | O(dt¹)            | ~4.8e-5 m         |
-| Verlet | O(dt²)            | ~4.7e-5 m         |
-| RK4    | O(dt²)            | ~3.8e-7 m         |
-
-**Key insight:** With e = 1.0, Verlet and RK4 recover O(dt²) convergence - they integrate the quadratic free-flight trajectory exactly, so the contact-timing error cancels algebraically in the peak-height formula. Euler's O(dt) position error prevents this cancellation.
-
-### Contact Forces - spring-damper model (dt = 5e-4 s, k = 1e4 N/m)
-
-Path: [`benchmarks/Contact_Forces/`](benchmarks/Contact_Forces/benchmaark_analysis.ipynb)
-
-Continuous Hooke + viscous-damping contact force instead of discrete impulse. Tests accuracy and stability under stiff contact.
-
-| Solver | Convergence order | Peak height error | Max stable k |
-|--------|-------------------|-------------------|--------------|
-| Euler  | O(dt^1.2)         | ~4.5e-3 m         | 5e3 N/m      |
-| Verlet | O(dt^1.1)         | ~4.8e-3 m         | 1e4 N/m      |
-| RK4    | O(dt^2.4)         | ~2.3e-4 m         | 1e5 N/m      |
-
-**Key insight:** Convergence orders fall below theory due to the C⁰ discontinuity at contact onset/offset. Despite this, RK4 is 10–100× more accurate than Euler at the same dt and tolerates 41% larger timesteps at a given stiffness - making it the right choice for stiff contact problems.
-
----
-
-## Quick Start
-
-### Run an example
+Dependencies (Ubuntu / Arch):
 
 ```bash
-# Clone and build
-git clone git@github.com:TomLaclavere/3DPhysicsEngine.git
-cd 3DPhysicsEngine
-mkdir build && cd build
-cmake .. -D3DPE_BUILD_EXAMPLES=ON -D3DPE_USE_DOUBLE_PRECISION=ON
-make -j$(nproc)
-
-# Run the bouncing ball example
-./bin/Bouncing
+sudo apt install -y build-essential cmake git libyaml-cpp-dev   # Ubuntu
+sudo pacman -S --needed base-devel cmake git yaml-cpp            # Arch
 ```
 
-### Configure a simulation
+Optional: `qt6-base-dev` / `qt6-base` for the GUI, `gcovr` for coverage, `doxygen graphviz`
+for the documentation, `clang ninja` as an alternative toolchain. The 3D viewer downloads
+raylib at configure time and needs the OpenGL/X11 development packages (on Ubuntu:
+`libgl1-mesa-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev`).
 
-Each simulation reads a YAML config file at startup. Parameters can also be overridden from the command line:
-
-```bash
-./bin/Bouncing --solver=rk4 --dt=0.001 --duration=5.0 --save=true
-```
-
-Available solvers: `euler`, `verlet`, `rk4`.
-
-### Run the benchmarks
-
-```bash
-cmake .. -D3DPE_BUILD_BENCHMARKS=ON
-make -j$(nproc)
-./benchmarks/Free_Fall
-./benchmarks/Bouncing
-# Results written to CSV - open benchmarks/*/benchmark_analysis.ipynb to analyse
-```
-
-### Run the tests
-
-```bash
-cmake .. -D3DPE_BUILD_TESTS=ON
-make -j$(nproc)
-ctest -j$(nproc) --output-on-failure
-```
-
----
-
-## Installation
-
-### Get the project
+Build, test, run an example:
 
 ```bash
 git clone git@github.com:TomLaclavere/3DPhysicsEngine.git
 cd 3DPhysicsEngine
+cmake -S . -B build
+cmake --build build -j
+ctest --test-dir build -j --output-on-failure
+
+# Run from the repository root: examples read their config.yml from there
+./build/examples/Bouncing
+./build/examples/Bouncing --solver RK4 --timestep 0.001 --duration 5 --save true
 ```
 
-### Install dependencies
-
-#### Build system
-
-- CMake >= 3.22
-- GCC (included in `build-essential`) or Clang
-- (optional) Ninja
-
-#### External libraries
-
-- yaml-cpp
-- **Qt6 Widgets** *(optional)* - required to build the graphical interface (auto-detected by CMake)
-
-#### Tests
-
-- git (for `FetchContent`, used to install GoogleTest automatically)
-
-#### Coverage tools
-
-- gcovr (for GCC)
-- llvm-cov + llvm-profdata (for Clang)
-
-#### Documentation
-
-- Doxygen + Graphviz
-
-#### Benchmarking & profiling tools *(optional)*
-
-- `perf`, [MAQAO](https://www.maqao.org/), [MALT](https://github.com/memtt/malt) - only needed for the deep-dive analysis scripts under [`benchmarks/performance/`](benchmarks/performance/) (hardware counters, vectorisation analysis, memory allocation profiling). Not required to build or run the project itself.
-
-#### Installation commands
-
-```bash
-# Ubuntu
-sudo apt update
-sudo apt install -y build-essential cmake git libyaml-cpp-dev gcovr
-
-# Arch Linux
-sudo pacman -Syu --needed base-devel cmake git yaml-cpp gcovr
-```
-
-For the optional Qt6 graphical interface:
-
-```bash
-# Ubuntu
-sudo apt install -y qt6-base-dev
-
-# Arch Linux
-sudo pacman -S --needed qt6-base
-```
-
-For Clang and optional Ninja:
-
-```bash
-# Ubuntu
-sudo apt install -y clang ninja-build
-
-# Arch Linux
-sudo pacman -S --needed clang ninja llvm
-```
-
-For documentation:
-
-```bash
-# Ubuntu
-sudo apt-get install -y doxygen graphviz
-
-# Arch Linux
-sudo pacman -S --needed doxygen graphviz
-```
-
-For the benchmarking & profiling tools:
-
-```bash
-# perf
-# Ubuntu
-sudo apt install -y linux-tools-common linux-tools-generic
-# Arch Linux
-sudo pacman -S perf
-```
-
-```bash
-# MAQAO - no package on Ubuntu; on any distro (incl. Arch as an AUR alternative: yay -S maqao-bin)
-# the generic binary release works (check maqao.org/download.html for the current version):
-curl -LO http://www.maqao.org/maqao_archive/maqao.x86_64.2025.1.0.tar.xz
-tar xf maqao.x86_64.2025.1.0.tar.xz
-export PATH="$PWD/maqao.x86_64.2025.1.0:$PATH"   # add to your shell rc to persist
-```
-
-```bash
-# MALT - no package on Ubuntu or Arch/AUR, build from source
-# Ubuntu
-sudo apt install cmake g++ make libssl-dev libunwind-dev libelf-dev nodejs npm \
-                  nlohmann-json3-dev graphviz python3-dev curl
-# Arch Linux
-sudo pacman -S --needed base-devel cmake gcc make openssl libunwind elfutils \
-                         nodejs npm nlohmann-json graphviz python curl
-
-git clone https://github.com/memtt/malt.git
-cd malt && mkdir build && cd build
-../configure --prefix=/usr/local
-make && sudo make install
-```
-
-**macOS:** none of the three are supported - `perf` wraps the Linux kernel's `perf_events`
-subsystem (no macOS equivalent), MAQAO ships Linux-only binaries, and MALT depends on
-`libelf`/`libunwind` (built around the ELF format macOS doesn't use). Full details, including
-the `flamegraph`/`hotspot` optional extras and a `malt-webview` linker gotcha, are in
-[`benchmarks/performance/README.md`](benchmarks/performance/README.md#installation-profiling-tools).
-
----
-
-## Graphical Interface
-
-A Qt6 GUI (`PhysicsEngineGui`) wraps all interactive CLI commands in a window and adds plot generation buttons backed by the existing Python/Plotly utilities.
-
-**Requirements:** Qt6 Widgets installed on the system (see [Installation](#installation)). CMake detects Qt6 automatically - no extra option needed.
-
-**Launch**:
-
-```bash
-./build/PhysicsEngineGui
-```
-
-**Feature overview:**
-
-| Panel | Features |
-| --- | --- |
-| Simulation | Init, Start, Stop, Run *(background thread - UI stays responsive)*, Print, Step |
-| Config | Set gravity, dt, solver (Euler / Verlet / RK4), Apply |
-| Add Object | Choose type (sphere / aabb / plane), optional name |
-| Objects table | Live list - id, type, position, fixed status |
-| Selected Object | Edit pos, vel, size, mass, fixed; Set / Del buttons |
-| Plots | Three buttons - each opens an interactive Plotly HTML in the browser |
-
-**Plot buttons:**
-
-| Button | Opens |
-| --- | --- |
-| Trajectories | Z-position of all objects vs time |
-| 3D Objects | 3D scene at initial and final simulation states |
-| Animation | Full animated 3D scene with Play/Pause and time slider |
-
-> **Note:** Plot buttons require CSV data. Enable saving in `src/config.yaml` (`save: true`) before running the simulation.
-
-For a lighter animation in the x-z plane, run `python3 python/generate_plots.py <csv_dir> animation2d`.
-
----
-
-## 3D Viewer
-
-`3DPhysicsViewer` replays the CSV files of a simulation in real time, with objects drawn to scale.
-
-**Requirements:** the viewer is built by default. The first CMake configuration downloads [raylib](https://www.raylib.com/) 5.5, and raylib needs the system windowing and OpenGL development packages (on Debian/Ubuntu: `libgl1-mesa-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev`). Use `-D3DPE_BUILD_VIEWER=OFF` to skip it.
-
-**Launch**:
-
-```bash
-./build/3DPhysicsViewer examples/Random_Balls_2D/CSV
-
-# or open output/CSV (change it with -D3DPE_VIEWER_CSV_DIR=<dir>)
-cmake --build build --target Viewer
-```
-
-| Control | Action |
-| --- | --- |
-| Space | Play / Pause |
-| Up / Down | Double / halve the speed |
-| Left / Right (hold) | Seek backward / forward |
-| R | Restart |
-| Left drag | Orbit |
-| Right drag | Pan |
-| Wheel | Zoom |
-| Bottom bar | Jump to a time |
-
----
-
-## Build and Run
-
-```bash
-mkdir build && cd build
-cmake .. [OPTIONS]
-make -j$(nproc)
-```
+Command-line flags: `--gravity`, `--timestep`, `--duration`, `--iters`, `--solver`
+(`Euler`, `Verlet`, `RK4`), `--broad` (`Brut`, `Grid`, `SweepPrune`), `--verbose`, `--save`.
 
 ### CMake options
 
 | Option | Description | Default |
 |---|---|---|
-| `-D3DPE_USE_CLANG` | Use Clang instead of GCC | OFF |
-| `-D3DPE_USE_DOUBLE_PRECISION` | Use `double` instead of `float` | OFF |
-| `-D3DPE_BUILD_EXAMPLES` | Build the 5 example simulations | OFF |
-| `-D3DPE_BUILD_TESTS` | Build GoogleTest suite, run with `ctest` | OFF |
-| `-D3DPE_BUILD_BENCHMARKS` | Build solver benchmark executables | OFF |
-| `-D3DPE_ENABLE_COVERAGE` | Generate coverage report (`make coverage` or `make coverage-console`) | OFF |
-| `-D3DPE_ENABLE_CLANG_TIDY` | Enable static analysis during build | OFF |
-| `-D3DPE_WARNINGS_AS_ERRORS` | Treat all warnings as errors | ON |
+| `3DPE_USE_DOUBLE_PRECISION` | `double` instead of `float` | ON |
+| `3DPE_BUILD_EXAMPLES` | Example simulations (`build/examples/`) | ON |
+| `3DPE_BUILD_BENCHMARKS` | Benchmark executables (`build/benchmarks/`) | ON |
+| `3DPE_BUILD_TESTS` | GoogleTest suites, run with `ctest` | ON |
+| `3DPE_BUILD_VIEWER` | raylib 3D viewer (downloads raylib) | ON |
+| `3DPE_ENABLE_COVERAGE` | `coverage` and `coverage-console` targets | ON |
+| `3DPE_USE_CLANG` | Clang instead of GCC | OFF |
+| `3DPE_ENABLE_CLANG_TIDY` | Static analysis during the build | OFF |
+| `3DPE_WARNINGS_AS_ERRORS` | Treat warnings as errors | ON |
 
----
+### Scripts
 
-## Developer Scripts
+[`scripts/`](scripts/) wraps the common tasks (`--help` on each, full reference in
+[`scripts/USAGE.md`](scripts/USAGE.md)):
 
-Bash scripts for common tasks are provided in `scripts/`:
-
-```
-scripts/
-├─ build.sh        # configure & build with CMake
-├─ run.sh          # build (if needed) and run the executable
-├─ tests.sh        # build (if needed) and run tests via CTest
-├─ coverage.sh     # build and generate coverage (HTML or console)
-├─ clean.sh        # remove the build directory
-├─ benchmark.sh    # performance sweep (solver × broad phase × N × dt) + plots
-├─ profile.sh      # perf + MAQAO + MALT profiling + report
-└─ full_report.sh  # benchmark.sh then profile.sh
-```
-
-Benchmarking and profiling are documented in
-[`benchmarks/performance/BENCHMARK_TOOLS_GUIDE.md`](benchmarks/performance/BENCHMARK_TOOLS_GUIDE.md).
-
-These scripts are CI-friendly and accept arguments and environment variables. See `scripts/USAGE.md` for the full option reference.
-
-Make sure they are executable:
-
-```bash
-chmod +x scripts/*.sh
-```
-
----
-
-## Doxygen Documentation
-
-Generate locally:
-
-```bash
-doxygen Doxyfile
-xdg-open docs/html/index.html   # Linux
-```
-
-The documentation is automatically generated on each commit to `main` and published at:
-
-[![Documentation](https://img.shields.io/badge/docs-online-brightgreen)](https://tomlaclavere.github.io/3DPhysicsEngine/)
-
----
-
-## Tech Stack
-
-| | |
+| Script | Does |
 |---|---|
-| Language | C++23 |
-| Build | CMake 3.22+ |
-| Math | Custom (`Vector3D`, `Matrix3D`, `Quaternion`) - no external dependency |
-| Configuration | yaml-cpp |
-| Testing | GoogleTest (fetched via CMake FetchContent) |
-| CI | GitHub Actions |
-| Documentation | Doxygen + GitHub Pages |
-| Analysis | Python, Jupyter, Matplotlib (benchmarks) |
-| Planned | OpenMP, CUDA/SYCL, MPI |
+| `build.sh`, `run.sh`, `tests.sh`, `clean.sh` | Configure/build, run, test, clean |
+| `coverage.sh` | Coverage report (HTML or console) |
+| `benchmark.sh` | Performance sweeps and plots |
+| `profile.sh` | perf + MAQAO + MALT profiling |
+| `benchmark_and_profile.sh` | `benchmark.sh` then `profile.sh` |
+| `physics_benchmark.sh` | Physics validation benchmarks and their notebook reports |
 
----
+## Tools
+
+### Graphical interface
+
+`./build/PhysicsEngineGui` (built when Qt6 is found, run from the repository root) exposes the
+interactive commands in a window: simulation control, configuration, adding and editing objects,
+and three Plotly plots (trajectories, 3D scene, animation) built from the CSV output.
+
+### 3D viewer
+
+`./build/3DPhysicsViewer <csv_dir>` replays a simulation's CSV files to scale.
+`cmake --build build --target Viewer` opens `output/CSV` (change it with
+`-D3DPE_VIEWER_CSV_DIR=<dir>`).
+
+| Control | Action |
+|---|---|
+| Space / R | Play-pause / restart |
+| Up / Down | Double / halve the speed |
+| Left / Right (hold), bottom bar | Seek |
+| Left drag / right drag / wheel | Orbit / pan / zoom |
+
+### Documentation
+
+`doxygen Doxyfile` generates `docs/html/`. It is also published on every push to `main`:
+[tomlaclavere.github.io/3DPhysicsEngine](https://tomlaclavere.github.io/3DPhysicsEngine/).
+
+## Benchmarks
+
+### Solver accuracy ([`benchmarks/physics/`](benchmarks/physics/))
+
+`./scripts/physics_benchmark.sh` runs each scenario, then executes its Jupyter notebook, which
+writes the figures and `results/benchmark_report.pdf` next to it.
+
+| Scenario | What it tests | Report |
+|---|---|---|
+| [Free fall](benchmarks/physics/Free_Fall/benchmark_analysis.ipynb) | Integrator accuracy without collisions: contact time and energy drift vs dt | [PDF](benchmarks/physics/Free_Fall/results/benchmark_report.pdf) |
+| [Bouncing](benchmarks/physics/Bouncing/benchmark_analysis.ipynb) | Impulse contacts with energy loss (e < 1): peak heights, bounce count, free-flight drift | [PDF](benchmarks/physics/Bouncing/results/benchmark_report.pdf) |
+| [Bouncing conservative](benchmarks/physics/Bouncing_Conservative/benchmark_analysis.ipynb) | Same with e = 1: any energy change is numerical | [PDF](benchmarks/physics/Bouncing_Conservative/results/benchmark_report.pdf) |
+| [Contact forces](benchmarks/physics/Contact_Forces/benchmark_analysis.ipynb) | Spring-damper contacts: convergence order, stability in the (k, dt) plane | [PDF](benchmarks/physics/Contact_Forces/results/benchmark_report.pdf) |
+
+Each notebook explains how its figures are made and what theory predicts for them.
+
+### Performance ([`benchmarks/performance/`](benchmarks/performance/))
+
+`./scripts/benchmark.sh` measures the cost of a step against the number of objects (comparing
+broad phases) and against dt (comparing solvers), in a scalar and an optimised build.
+`./scripts/profile.sh` explains the results with perf, MAQAO and MALT. Guide:
+[`BENCHMARK_TOOLS_GUIDE.md`](benchmarks/performance/BENCHMARK_TOOLS_GUIDE.md); binary reference
+and profiling tools installation: [`README.md`](benchmarks/performance/README.md).
 
 ## License
 
-Copyright (C) 2025 Tom Laclavère
-
-This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0).
-
-You are free to use, modify, and redistribute this software under the terms of the AGPL-3.0. Any modified version that is distributed or made available over a network must also make its source code available under the same license.
-
-**Commercial licensing:** Commercial licenses are available for proprietary or closed-source use. Please contact the author to discuss terms.
+Copyright (C) 2025 Tom Laclavère. Licensed under the [GNU AGPL v3.0](LICENSE): any modified
+version distributed or offered over a network must publish its source under the same license.
+Commercial licenses for closed-source use are available on request.

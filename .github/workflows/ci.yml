@@ -32,8 +32,8 @@ jobs:
           cmake -S . -B build \
             -G Ninja \
             -DCMAKE_BUILD_TYPE=Debug \
-            -DTESTS=ON \
-            -DCOVERAGE=ON \
+            -D3DPE_BUILD_TESTS=ON \
+            -D3DPE_ENABLE_COVERAGE=ON \
             -D3DPE_BUILD_VIEWER=OFF
 
       - name: Build

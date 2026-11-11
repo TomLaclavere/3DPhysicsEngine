@@ -1,19 +1,24 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-# scripts/full_report.sh : run the benchmark sweep, then the profiling pipeline, one after the
-# other (never in parallel: profilers slow the program down, which would corrupt the timings).
+# scripts/benchmark_and_profile.sh : run the benchmark sweep, then the profiling pipeline, one
+# after the other (never in parallel: profilers slow the program down, which would corrupt the
+# timings).
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# shellcheck source=../benchmarks/performance/profiles.sh
+source "$ROOT/benchmarks/performance/profiles.sh"
 
 # =====================================================================
 # Help
 # =====================================================================
 usage() {
     cat <<'EOF'
-Usage: ./scripts/full_report.sh
+Usage: ./scripts/benchmark_and_profile.sh
 
-Runs scripts/benchmark.sh (~2 h), then scripts/profile.sh (~3 min), with their default
+Runs scripts/benchmark.sh (~1 h), then scripts/profile.sh (~3 min), with their default
 settings, and prints where the two reports are. The profiling step runs even if the sweep
 failed. For other settings, run the two scripts directly.
 
@@ -35,6 +40,9 @@ esac
 # =====================================================================
 # Orchestration
 # =====================================================================
+# Once for both scripts, so the governor is not restored between them
+set_performance_governor || exit 1
+
 "$SCRIPT_DIR/benchmark.sh"
 bench_status=$?
 

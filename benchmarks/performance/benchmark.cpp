@@ -51,22 +51,21 @@ struct SimResult
     long long peakRSS_kb; // peak resident set size at benchmark end (kilobytes)
 };
 
-// Analytical FLOP estimate.
-// Force phases scale as: gravity O(N), collision detection O(N²) with ~45 FLOPs/pair.
-// Integration scales as O(N). RK4 re-evaluates forces 4× per step.
-// Only the brute-force broad phase tests every pair: other broad phases are not estimated (returns 0).
-long long estimateFlopsPerStep(const std::string& solver, const std::string& broad, int nObjects)
+// Analytical FLOP estimate, impulse mode only.
+// Gravity O(N), collision detection O(N²) with ~45 FLOPs/pair, integration O(N).
+// Collisions are solved once per step whatever the solver; RK4 re-evaluates gravity 4× per step.
+// Not estimated (returns 0) for the other broad phases (they don't test every pair) or with contact
+// forces (the number of pair loops per step then depends on the solver).
+long long estimateFlopsPerStep(const std::string& solver, const std::string& broad, int nObjects,
+                               bool contactForces)
 {
-    if (broad != "Brut")
+    if (broad != "Brut" || contactForces)
         return 0;
     const auto      n               = static_cast<long long>(nObjects);
-    const long long gravity_flops   = 6LL * n;
+    const long long gravity_flops   = 6LL * n * ((solver == "RK4") ? 4LL : 1LL);
     const long long collision_flops = 45LL * n * (n - 1) / 2;
-    const long long force_flops     = gravity_flops + collision_flops;
     const long long integrate_flops = (solver == "Verlet") ? 18LL : 12LL;
-    if (solver == "RK4")
-        return force_flops * 4LL + integrate_flops * n;
-    return force_flops + integrate_flops * n;
+    return gravity_flops + collision_flops + integrate_flops * n;
 }
 
 SimResult simulation(const std::string& solver, const std::string& broad, decimal timestep, int maxiter,
@@ -237,7 +236,7 @@ SimResult simulation(const std::string& solver, const std::string& broad, decima
     result.stepsPerSecond = (result.timePerStep_us > 0_d) ? 1'000'000.0_d / result.timePerStep_us : 0_d;
 
     // FLOP/s
-    result.flopsPerStep       = estimateFlopsPerStep(solver, broad, nObjects);
+    result.flopsPerStep       = estimateFlopsPerStep(solver, broad, nObjects, contactForces);
     const decimal total_flops = static_cast<decimal>(result.flopsPerStep) * static_cast<decimal>(maxiter);
     result.gflops_per_second  = (result.wallTime_s > 0_d) ? total_flops / (result.wallTime_s * 1e9_d) : 0_d;
 

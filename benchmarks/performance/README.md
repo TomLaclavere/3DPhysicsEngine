@@ -95,7 +95,7 @@ One row per invocation.
 | `cpu_us_stddev`, `cv_percent` | Standard deviation (Bessel-corrected) and coefficient of variation = stddev / mean × 100. CV > 10% means a noisy measurement |
 | `wall_time_s` | Mean run duration (s) |
 | `time_per_step_us`, `steps_per_second` | Mean cost of one step and the corresponding throughput |
-| `flops_per_step`, `gflops_per_second` | Analytical FLOP estimate (below) and the resulting rate; 0 for `Grid` and `SweepPrune` |
+| `flops_per_step`, `gflops_per_second` | Analytical FLOP estimate (below) and the resulting rate; 0 for `Grid`, `SweepPrune` and `--contact-forces` |
 | `step_us_mean`, `step_us_min`, `step_us_max`, `step_us_stddev`, `step_us_cv` | Distribution of the per-step cost over the step-timing run's batches |
 | `peak_rss_kb` | Peak resident memory of the process (`getrusage`) |
 
@@ -104,15 +104,16 @@ One row per invocation.
 Counted analytically from the algorithm, not from hardware counters:
 
 ```
-force     = 6·N (gravity) + 45·N(N−1)/2 (pairwise collision detection)
+gravity   = 6·N per force evaluation  (1 for Euler/Verlet, 4 for RK4)
+collision = 45·N(N−1)/2                 (pairwise detection, once per step)
 integrate = 18·N for Verlet, 12·N otherwise
-per step  = force + integrate          (Euler, Verlet)
-          = 4·force + integrate        (RK4: forces evaluated at 4 stages)
+per step  = gravity + collision + integrate
 GFLOP/s   = flops_per_step × steps / (wall_time_s × 10⁹)
 ```
 
 Use it to compare configurations, not as a fraction of the CPU's peak. The collision term assumes
-every pair is tested, so it only holds for `Brut`: the other broad phases are not estimated.
+every pair is tested, so it only holds for `Brut` in impulse mode: the other broad phases and `--contact-forces` (where the
+number of pair loops per step depends on the solver) are not estimated.
 
 ## Installation (profiling tools)
 

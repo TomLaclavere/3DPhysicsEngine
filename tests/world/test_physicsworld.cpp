@@ -401,7 +401,7 @@ TEST(PhysicsWorldTest, IntegrateWithoutCollisions)
 }
 
 // --------------------------------------------------------------------------
-//  Contact forces (applyContactForces, applyContact, applyForces, computeAcceleration non-simplified)
+//  Contact forces (applyContactForces, applyContact, applyForces, computeAccelerations non-simplified)
 // --------------------------------------------------------------------------
 
 TEST(PhysicsWorldTest, ApplyContactAndForces)
@@ -428,10 +428,10 @@ TEST(PhysicsWorldTest, ApplyContactAndForces)
     EXPECT_NE(s1->getAcceleration().getNorm(), 0_d);
     EXPECT_NE(s2->getAcceleration().getNorm(), 0_d);
 
-    // computeAcceleration in non-simplified mode includes contact
-    s1->setAcceleration(Vector3D(0_d));
-    Vector3D acc = world.computeAcceleration(*s1);
-    EXPECT_NE(acc.getNorm(), 0_d);
+    // computeAccelerations in non-simplified mode includes contact, opposite on the two equal masses
+    world.computeAccelerations();
+    EXPECT_NE(s1->getAcceleration().getNorm(), 0_d);
+    EXPECT_NEAR((s1->getAcceleration() + s2->getAcceleration()).getNorm(), 0_d, 1e-12);
 
     // applyForces runs both gravity and contact
     s1->setAcceleration(Vector3D(0_d));

@@ -18,4 +18,4 @@ spheres (n_objects sweep, dt = 1e-3 s).
 | Date | Commit | Change | Time / exec | Instructions | IPC | Step N = 10 | Step N = 100 | Step N = 1000 | Step N = 10000 |
 |---|---|---|---:|---:|---:|---:|---:|---:|---:|
 | 2026-10-19 | `3492eb0` (tag `baseline`) | Reference, unoptimised engine | 1.97 s | 26.3 G | 3.56 | 1.1 µs (Brut) | 59 µs (Brut) | - | - |
-| 2026-11-11 | `broad-phase` (uncommitted) | Grid and SweepPrune broad phases, random 3D cloud scene | 0.58 s | 12.4 G | 4.55 | 0.26 µs (SweepPrune) | 11 µs (SweepPrune) | 0.46 ms (SweepPrune) | 7.8 ms (Grid) |
+| 2026-11-11 | `cf6f0a0` | Grid and SweepPrune broad phases, random 3D cloud scene | 0.58 s | 12.4 G | 4.55 | 0.26 µs (SweepPrune) | 11 µs (SweepPrune) | 0.46 ms (SweepPrune) | 7.8 ms (Grid) |

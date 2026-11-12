@@ -137,10 +137,9 @@ public:
     void applyForces();
     /// Solve collisions between objects.
     void solveCollisions();
-    /// Compute gravitational force only.
-    Vector3D computeAccelerationGravityOnly();
-    /// Compute acceleration from forces.
-    Vector3D computeAcceleration(Object& obj);
+    /// Reset the accelerations of movable objects, then add gravity and, in force-based mode, the contact
+    /// forces of the current broad-phase pairs (updateBroadPhase() must have run this step).
+    void computeAccelerations();
     /// @}
 
     // ============================================================================

@@ -126,7 +126,7 @@ collision handling.
 ### 3.6 GFLOP/s is an estimate
 
 `gflops_per_second` uses an analytical operation count (gravity O(N), ~45 FLOP per pair for
-collision detection O(N²), integration O(N), ×4 force evaluations for RK4), not hardware
+collision detection O(N²), integration O(N), gravity evaluated 4× for RK4; `Brut` in impulse mode only), not hardware
 counters. It is good for comparing configurations, not as an absolute fraction of the CPU's
 peak.
 

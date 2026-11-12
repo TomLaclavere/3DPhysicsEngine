@@ -96,7 +96,7 @@ have_both     = {'scalar', 'optimised'}.issubset(set(profiles))
 HAS_STEP      = 'step_us_mean' in df.columns
 
 STEP_COL  = 'step_us_mean'    if HAS_STEP else 'time_per_step_us'
-STEP_UNIT = 'µs  (profiling)' if HAS_STEP else 'µs  (derived)'
+STEP_UNIT = 'µs' if HAS_STEP else 'µs, wall time / steps'
 
 print(f'Loaded {len(df)} rows: {len(profiles)} profile(s) × {len(solvers)} solver(s) × {len(broads)} broad phase(s) '
       f'× {df["dt"].nunique()} dt × {len(n_objs_list)} n_objects')
@@ -225,7 +225,7 @@ def plot_wall_time_vs_nobjs() -> Path:
 # -----------------------------------------------------------------------------
 def plot_step_time_vs_dt() -> Path:
     return _plot_vs_dt(STEP_COL, f'Step time  ({STEP_UNIT})',
-                       'Step time vs dt\n(plateau at fine dt = true per-step cost)',
+                       'Step time vs dt',
                        'plot_step_time_vs_dt.png')
 
 def plot_step_time_vs_nobjs() -> Path:

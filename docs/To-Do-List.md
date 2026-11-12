@@ -33,6 +33,7 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
     - [ ] Open the pull request: CI only runs on `main` and pull requests to it
     - [ ] Grid cells sized on 2 × the largest diameter (`getMaxValue() * 2` on a size that is already a diameter): try 1 diameter
     - [ ] Sweep & prune intervals use the bounding sphere of the size (`getNorm() * 0.5`), √3 too wide for spheres
+    - [x] Contact-force mode ignores the broad phase: `PhysicsWorld::computeAcceleration` tested every pair (O(N²)) at each stage; replaced by `computeAccelerations()` over the broad-phase pairs
 
 - [x] Documentation and examples review
     - [x] READMEs, benchmark guide, scripts usage: checked against the code

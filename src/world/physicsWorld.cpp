@@ -219,33 +219,25 @@ void PhysicsWorld::solveCollisions()
             reboundCollision(*A, *B, contact);
     }
 }
-Vector3D PhysicsWorld::computeAccelerationGravityOnly() { return gravityAcc; }
 /**
- * @brief Compute total acceleration for an object.
+ * @brief Compute the acceleration of every movable object, stored in the objects.
  *
- * In simplified mode (impulse-based), returns gravity only.
- * In force-based mode, adds contact forces from every colliding neighbour.
+ * In simplified mode (impulse-based), gravity only: collisions are solved with velocities.
+ * In force-based mode, gravity + contact forces, over the broad-phase pairs of the current step
+ * (each pair once, +F on one object and -F on the other).
  */
-Vector3D PhysicsWorld::computeAcceleration(Object& obj)
+void PhysicsWorld::computeAccelerations()
 {
-    // Impulse-based collisions pipeline : collision are solved with velocities, contact forces don't enter in
-    // integration
-    if (config.getSimplifiedCollision())
-        return computeAccelerationGravityOnly();
-
-    Vector3D acc = gravityAcc;
-    for (auto& other : objects)
+    for (auto* obj : objects)
     {
-        if (!other || &obj == other)
+        if (!obj || obj->isFixed())
             continue;
-        if (obj.checkCollision(*other))
-        {
-            Contact contact;
-            if (obj.computeCollision(*other, contact))
-                acc += Physics::computeContactForce(obj, *other, contact) / obj.getMass();
-        }
+        obj->setAcceleration(Vector3D(0_d));
     }
-    return acc;
+    if (config.getSimplifiedCollision())
+        applyGravityForces();
+    else
+        applyForces();
 }
 
 // ============================================================================
@@ -281,14 +273,15 @@ void PhysicsWorld::integrateVerlet(decimal dt)
 {
     const size_t n = objects.size();
 
-    // 1) Accelerations at (t) from computeAcceleration
+    // 1) Accelerations at (t)
+    computeAccelerations();
     prevAcc.assign(n, Vector3D(0_d));
     for (size_t i = 0; i < n; ++i)
     {
         auto* obj = objects[i];
         if (!obj || obj->isFixed())
             continue;
-        prevAcc[i] = computeAcceleration(*obj);
+        prevAcc[i] = obj->getAcceleration();
     }
 
     // 2) Positions at (t+dt)
@@ -301,13 +294,14 @@ void PhysicsWorld::integrateVerlet(decimal dt)
     }
 
     // 3) Accelerations at (t+dt), from new positions
+    computeAccelerations();
     nextAcc.assign(n, Vector3D(0_d));
     for (size_t i = 0; i < n; ++i)
     {
         auto* obj = objects[i];
         if (!obj || obj->isFixed())
             continue;
-        nextAcc[i] = computeAcceleration(*obj);
+        nextAcc[i] = obj->getAcceleration();
     }
 
     // 4) Velocities at (t+dt)
@@ -348,13 +342,14 @@ void PhysicsWorld::integrateRK4(decimal dt)
     }
 
     // k1
+    computeAccelerations();
     for (size_t i = 0; i < n; ++i)
     {
         auto* obj = objects[i];
         if (!obj || obj->isFixed())
             continue;
         k1[i].derivativeX = s0[i].vel;
-        k1[i].derivativeV = computeAcceleration(*obj);
+        k1[i].derivativeV = obj->getAcceleration();
     }
 
     // k2
@@ -366,13 +361,14 @@ void PhysicsWorld::integrateRK4(decimal dt)
         obj->setPosition(s0[i].pos + k1[i].derivativeX * (0.5_d * dt));
         obj->setVelocity(s0[i].vel + k1[i].derivativeV * (0.5_d * dt));
     }
+    computeAccelerations();
     for (size_t i = 0; i < n; ++i)
     {
         auto* obj = objects[i];
         if (!obj || obj->isFixed())
             continue;
         k2[i].derivativeX = obj->getVelocity();
-        k2[i].derivativeV = computeAcceleration(*obj);
+        k2[i].derivativeV = obj->getAcceleration();
     }
 
     // k3
@@ -384,13 +380,14 @@ void PhysicsWorld::integrateRK4(decimal dt)
         obj->setPosition(s0[i].pos + k2[i].derivativeX * (0.5_d * dt));
         obj->setVelocity(s0[i].vel + k2[i].derivativeV * (0.5_d * dt));
     }
+    computeAccelerations();
     for (size_t i = 0; i < n; ++i)
     {
         auto* obj = objects[i];
         if (!obj || obj->isFixed())
             continue;
         k3[i].derivativeX = obj->getVelocity();
-        k3[i].derivativeV = computeAcceleration(*obj);
+        k3[i].derivativeV = obj->getAcceleration();
     }
 
     // k4
@@ -402,13 +399,14 @@ void PhysicsWorld::integrateRK4(decimal dt)
         obj->setPosition(s0[i].pos + k3[i].derivativeX * dt);
         obj->setVelocity(s0[i].vel + k3[i].derivativeV * dt);
     }
+    computeAccelerations();
     for (size_t i = 0; i < n; ++i)
     {
         auto* obj = objects[i];
         if (!obj || obj->isFixed())
             continue;
         k4[i].derivativeX = obj->getVelocity();
-        k4[i].derivativeV = computeAcceleration(*obj);
+        k4[i].derivativeV = obj->getAcceleration();
     }
 
     // Update
@@ -517,7 +515,7 @@ void PhysicsWorld::integrateWithoutCollisions()
  *
  * Two pipelines depending on Config::getSimplifiedCollision():
  *  - Simplified (impulse-based): reset acc -> gravity -> solveCollisions -> integrate.
- *  - Force-based: reset acc -> gravity + contact forces -> integrate (computeAcceleration called internally).
+ *  - Force-based: reset acc -> gravity + contact forces -> integrate (computeAccelerations called internally).
  *
  * Does nothing if the simulation is not running.
  */
@@ -566,7 +564,7 @@ void PhysicsWorld::integrate()
     }
     else
     {
-        // Force-based collisions pipeline : computeAcceleration() compute everything internaly.
+        // Force-based collisions pipeline : computeAccelerations() compute everything internaly.
         switch (solver)
         {
         case Solver::Euler: {

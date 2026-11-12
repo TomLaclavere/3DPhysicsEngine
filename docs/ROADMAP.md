@@ -162,7 +162,7 @@ See [`docs/benchmark.md`](benchmark.md) for more details.
 - [ ] **Data layout optimisation** *(own branch; compare current pointers → contiguous AoS → SoA)*:
   - [ ] **Decide the scope:** spheres + static planes first, or every shape; impulse mode only, or contact forces too
   - [ ] **Safety net before refactoring:**
-    - [ ] Benchmark of the current layout (random 3D cloud, N up to 10⁴)
+    - [x] Benchmark of the current layout (random 3D cloud, N up to 10⁴)
     - [ ] Profile at N = 1000 (`profile.sh --n-objects 1000`) to know the share of integration vs collisions
     - [ ] Test: Grid and SweepPrune return the same pairs as brute force
     - [ ] Physics regression test: fixed scene, K steps, final positions compared to a reference file

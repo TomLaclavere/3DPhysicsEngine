@@ -29,7 +29,7 @@ While the roadmap outlines the major phases and tasks, this To-Do list captures 
 
 - [ ] Broad phase (branch `broad-phase`)
     - [x] Benchmark scene: random 3D cloud, mixed sizes, collisions; separate N and dt sweeps
-    - [ ] Fill the `docs/performance_logs.md` row once the sweep and `profile.sh` have run
+    - [x] Fill the `docs/performance_logs.md` row once the sweep and `profile.sh` have run
     - [ ] Open the pull request: CI only runs on `main` and pull requests to it
     - [ ] Grid cells sized on 2 × the largest diameter (`getMaxValue() * 2` on a size that is already a diameter): try 1 diameter
     - [ ] Sweep & prune intervals use the bounding sphere of the size (`getNorm() * 0.5`), √3 too wide for spheres

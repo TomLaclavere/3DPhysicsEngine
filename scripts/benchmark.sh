@@ -44,6 +44,8 @@ N_RUNS=5
 # Pipeline control
 SKIP_BUILD=false
 SKIP_ANALYSIS=false
+SKIP_GBENCH=false
+GBENCH_ONLY=false
 
 # =====================================================================
 # Help
@@ -56,6 +58,8 @@ Builds the scalar and optimised reference profiles and, for each, runs two sweep
 writing benchmarks/performance/results/benchmark.csv:
   - n_objects sweep: every broad phase, one solver, fixed dt,
   - dt sweep: every solver, one broad phase, fixed n_objects.
+In the optimised profile, each point of the n_objects sweep is also timed by Google Benchmark
+(same scenario code, benchmarks/performance/scenario.hpp), to compare the two measurements.
 
 Options:
   --broads LIST      broad phases of the n_objects sweep  (default: "Brut Grid SweepPrune")
@@ -74,6 +78,9 @@ Options:
   --n-runs N         timed runs  (default: 5)
   --skip-build       reuse existing binaries instead of an (incremental) rebuild
   --skip-analysis    skip the Python analysis step
+  --skip-gbench      don't time the n_objects sweep with Google Benchmark
+  --gbench           run only Google Benchmark: optimised profile, n_objects sweep (the
+                     comparison figures then use the existing results/benchmark.csv)
   -h, --help         show this help
 
 Every run is pinned to one P-core, and the CPU governor is set to 'performance' for the whole
@@ -85,6 +92,8 @@ dt=1e-5 (drop them with --n-objects or --dt-min 1e-4).
 Output:
   benchmarks/performance/results_scalar/benchmark.csv   scalar profile
   benchmarks/performance/results/benchmark.csv          optimised profile
+  benchmarks/performance/results_gbench/*.json          Google Benchmark, n_objects sweep
+  benchmarks/performance/results_gbench/plot_gbench_*.png   comparison with the in-house benchmark
   benchmarks/performance/results/plot_*.png, benchmark_report.pdf   (benchmark_analysis.py)
 
 Next steps (not run by this script):
@@ -116,10 +125,17 @@ while [[ $# -gt 0 ]]; do
         --n-runs)        N_RUNS="$2";              shift 2 ;;
         --skip-build)    SKIP_BUILD=true;          shift ;;
         --skip-analysis) SKIP_ANALYSIS=true;       shift ;;
+        --skip-gbench)   SKIP_GBENCH=true;         shift ;;
+        --gbench)        GBENCH_ONLY=true;         shift ;;
         -h|--help) usage; exit 0 ;;
         *) echo "Unknown argument: $1" >&2; usage; exit 1 ;;
     esac
 done
+
+if [[ "$GBENCH_ONLY" == true && "$SKIP_GBENCH" == true ]]; then
+    echo "Error: --gbench and --skip-gbench are exclusive" >&2
+    exit 1
+fi
 
 # =====================================================================
 # Generate dt array (log-spaced via python3)
@@ -146,10 +162,14 @@ run_benchmark() {
     echo "======================================================"
     echo " Run - profile: ${profile}"
     echo "   n_objects sweep: ${N_OBJECTS[*]}  (broad phases: ${BROADS[*]}, solver = ${N_SOLVER}, dt = ${DT_FIXED})"
-    echo "   dt sweep: ${DT_VALUES[0]} ... ${DT_VALUES[-1]}  (${#DT_VALUES[@]} values, solvers: ${SOLVERS[*]}, broad = ${DT_BROAD}, n_objects = ${N_FIXED})"
+    if [[ "$GBENCH_ONLY" == true ]]; then
+        echo "   Google Benchmark only (--gbench): no in-house runs, no dt sweep"
+    else
+        echo "   dt sweep: ${DT_VALUES[0]} ... ${DT_VALUES[-1]}  (${#DT_VALUES[@]} values, solvers: ${SOLVERS[*]}, broad = ${DT_BROAD}, n_objects = ${N_FIXED})"
+    fi
     echo "======================================================"
 
-    if [[ ! -x "$bin" ]]; then
+    if [[ "$GBENCH_ONLY" == false && ! -x "$bin" ]]; then
         echo "Error: binary not found or not executable: ${bin}" >&2
         echo "       (build it first, or drop --skip-build)" >&2
         exit 1
@@ -176,6 +196,19 @@ run_benchmark() {
             $append_flag
     }
 
+    # Google Benchmark times the same points as the n_objects sweep, optimised profile only
+    local gbench=false gbench_bin gbench_dir="${REPO}/results_gbench"
+    gbench_bin="$(gbench_binary "$profile")"
+    if [[ "$profile" == "optimised" && "$SKIP_GBENCH" == false ]]; then
+        gbench=true
+        if [[ ! -x "$gbench_bin" ]]; then
+            echo "Error: binary not found or not executable: ${gbench_bin} (or use --skip-gbench)" >&2
+            exit 1
+        fi
+        mkdir -p "$gbench_dir"
+        rm -f "$gbench_dir"/*.json
+    fi
+
     for broad in "${BROADS[@]}"; do
         echo ""
         echo "  n_objects sweep - broad: ${broad}  (solver = ${N_SOLVER}, dt = ${DT_FIXED})"
@@ -184,9 +217,22 @@ run_benchmark() {
                 echo "  skip Brut at n_objects=${n_obj} (> --brut-n-max ${BRUT_N_MAX})"
                 continue
             fi
-            run_point "$N_SOLVER" "$broad" "$n_obj" "$DT_FIXED"
+            [[ "$GBENCH_ONLY" == false ]] && run_point "$N_SOLVER" "$broad" "$n_obj" "$DT_FIXED"
+            if $gbench; then
+                taskset -c "$cpu" "$gbench_bin" \
+                    --solver     "$N_SOLVER" \
+                    --broad      "$broad"    \
+                    --dt         "$DT_FIXED" \
+                    --dur        "$DUR"      \
+                    --n_objects  "$n_obj"    \
+                    --n_runs     "$N_RUNS"   \
+                    --benchmark_out="${gbench_dir}/${broad}_${n_obj}.json" \
+                    --benchmark_out_format=json
+            fi
         done
     done
+
+    [[ "$GBENCH_ONLY" == true ]] && return 0
 
     for solver in "${SOLVERS[@]}"; do
         echo ""
@@ -231,7 +277,9 @@ run_mode() {
         echo "======================================================"
         echo " Build - profile: ${profile}"
         echo "======================================================"
-        build_profile "$profile" "$(build_dir_for "$profile")"
+        local extra=()
+        [[ "$profile" == "optimised" && "$SKIP_GBENCH" == false ]] && extra=(-D3DPE_BUILD_GBENCH=ON)
+        build_profile "$profile" "$(build_dir_for "$profile")" "${extra[@]}"
     fi
 
     run_benchmark "$profile" "$out_dir"
@@ -242,14 +290,16 @@ run_mode() {
 # =====================================================================
 check_cpu_setup
 build_dt_array
-run_mode scalar    "${REPO}/results_scalar"
+if [[ "$GBENCH_ONLY" == false ]]; then
+    run_mode scalar "${REPO}/results_scalar"
+fi
 run_mode optimised "${RESULTS_DIR}"
 
 [[ "$SKIP_ANALYSIS" == false ]] && run_analysis
 
 echo ""
 echo "n_objects sweep: broads=${BROADS[*]} solver=${N_SOLVER} n_objects=${N_OBJECTS[*]} dt=${DT_FIXED}"
-echo "dt sweep: solvers=${SOLVERS[*]} broad=${DT_BROAD} n_objects=${N_FIXED} dt=${DT_MIN}..${DT_MAX} x${DT_N}"
+[[ "$GBENCH_ONLY" == false ]] && echo "dt sweep: solvers=${SOLVERS[*]} broad=${DT_BROAD} n_objects=${N_FIXED} dt=${DT_MIN}..${DT_MAX} x${DT_N}"
 echo "dur=${DUR}"
 echo ""
 echo "Sweep done. For hardware-counter/vectorisation/memory analysis on a representative"

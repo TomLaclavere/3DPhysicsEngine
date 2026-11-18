@@ -13,6 +13,7 @@ coverage.sh delete or rebuild build/, which removes the binaries being measured)
 
 Output:
   benchmarks/performance/results/benchmark_report.pdf               benchmark sweep
+  benchmarks/performance/results_gbench/                            Google Benchmark comparison (figures + JSON)
   benchmarks/performance/profiling_report/profiling_report.pdf      profiling
 
 ---
@@ -25,6 +26,8 @@ Builds the scalar and optimised reference profiles and, for each, runs two sweep
 writing benchmarks/performance/results/benchmark.csv:
   - n_objects sweep: every broad phase, one solver, fixed dt,
   - dt sweep: every solver, one broad phase, fixed n_objects.
+In the optimised profile, each point of the n_objects sweep is also timed by Google Benchmark
+(same scenario code, benchmarks/performance/scenario.hpp), to compare the two measurements.
 
 Options:
   --broads LIST      broad phases of the n_objects sweep  (default: "Brut Grid SweepPrune")
@@ -43,6 +46,9 @@ Options:
   --n-runs N         timed runs  (default: 5)
   --skip-build       reuse existing binaries instead of an (incremental) rebuild
   --skip-analysis    skip the Python analysis step
+  --skip-gbench      don't time the n_objects sweep with Google Benchmark
+  --gbench           run only Google Benchmark: optimised profile, n_objects sweep (the
+                     comparison figures then use the existing results/benchmark.csv)
   -h, --help         show this help
 
 Every run is pinned to one P-core, and the CPU governor is set to 'performance' for the whole
@@ -54,6 +60,8 @@ dt=1e-5 (drop them with --n-objects or --dt-min 1e-4).
 Output:
   benchmarks/performance/results_scalar/benchmark.csv   scalar profile
   benchmarks/performance/results/benchmark.csv          optimised profile
+  benchmarks/performance/results_gbench/*.json          Google Benchmark, n_objects sweep
+  benchmarks/performance/results_gbench/plot_gbench_*.png   comparison with the in-house benchmark
   benchmarks/performance/results/plot_*.png, benchmark_report.pdf   (benchmark_analysis.py)
 
 Next steps (not run by this script):

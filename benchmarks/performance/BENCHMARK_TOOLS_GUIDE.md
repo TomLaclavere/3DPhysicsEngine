@@ -164,6 +164,9 @@ the three in sync if you change the defaults).
    - **dt sweep**, comparing the solvers {Euler, Verlet, RK4} (`--solvers`) with the Brut broad
      phase (`--dt-broad`) at N = 100 (`--n-fixed`), for 5 dt values log-spaced between 1e-5 and
      1e-2 s (`--dt-min`, `--dt-max`, `--dt-n`).
+   In the optimised profile, each point of the n_objects sweep is also timed by Google Benchmark
+   (`GBench`, same functions: [`scenario.hpp`](scenario.hpp); `--skip-gbench` to disable, `--gbench` to run it alone,
+   details in [`README.md`](README.md#google-benchmark-comparison)).
 3. Runs [`benchmark_analysis.py`](benchmark_analysis.py), which plots both profiles and prints a
    summary table.
 
@@ -185,6 +188,8 @@ dt = 1e-5; `--n-objects`, `--broads` and `--solvers` restrict the sweeps.
 benchmarks/performance/
   results_scalar/benchmark.csv     one row per (solver, broad, dt, N) - scalar profile
   results/benchmark.csv            same, optimised profile
+  results_gbench/<broad>_<N>.json  Google Benchmark, n_objects sweep, optimised profile
+  results_gbench/plot_gbench_*.png comparison figures (not in benchmark_report.pdf)
   results/plot_*.png               figures
   results/benchmark_report.pdf     all figures in one file
 ```
@@ -200,6 +205,8 @@ benchmarks/performance/
 | `plot_speedup_vs_dt` / `_vs_nobjs` | scalar time ÷ optimised time | Above 1 = optimised wins. This is the compiler's gain; manual optimisations should push it further. |
 | `plot_broad_step_time_vs_nobjs` | Cost of one step per broad phase, for the n_objects sweep solver (log-log) | The slope shows how each broad phase scales; the lowest line wins at that N. |
 | `plot_broad_gain_vs_nobjs` | `Brut` step time ÷ other step time | Above 1 = faster than brute force. The N where it crosses 1 is where the broad phase starts paying off. |
+| `plot_gbench_step_time` | Time per step of the same points, measured by each tool (mean over runs, error bars = standard deviation between runs), and their ratio | Same code, scene and steps, so the ratio should stay close to 1 wherever the run-to-run variation is small. A gap larger than the error bars comes from the measurement itself, mainly the missing warm-up run in Google Benchmark (cold caches in its first repetition), most visible when a run is short. |
+| `plot_gbench_cv` | Run-to-run variation (CV) of each tool | Both tools repeat the same runs, so they should see similar noise; a tool with a much larger CV at the same point is the less reliable measurement there. |
 
 The console summary repeats the key numbers of the n_objects sweep and lists every noisy point
 (step CV > 10%).
@@ -403,6 +410,8 @@ benchmarks/performance/
   BENCHMARK_TOOLS_GUIDE.md         this guide
   README.md                        the benchmark binary: CLI, CSV columns, tool installation
   benchmark.cpp                    the benchmark binary (benchmarks/Performance)
+  gbench.cpp                       the same benchmark timed by Google Benchmark (benchmarks/GBench)
+  scenario.hpp                     options, scene and timed function shared by both binaries
   profiles.sh                      build profiles, CPU pinning, setup checks (shared)
   benchmark_analysis.py            figures + summary for the sweep
   profiling_analysis.py            figures + report for the profilers

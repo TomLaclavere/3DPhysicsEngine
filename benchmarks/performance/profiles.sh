@@ -8,7 +8,7 @@
 SCALAR_PROFILE_FLAGS="-O2 -fno-tree-vectorize -fno-inline -DNDEBUG"
 OPTIMISED_PROFILE_FLAGS="-O3 -march=native -DNDEBUG"
 
-# build_profile <scalar|optimised> <build_dir>
+# build_profile <scalar|optimised> <build_dir> [extra CMake options...]
 #
 # Configures and builds the project (Release, tests/coverage/examples off) with the compiler
 # flags for the given profile. The build is incremental: CMake picks up both source changes
@@ -16,6 +16,7 @@ OPTIMISED_PROFILE_FLAGS="-O3 -march=native -DNDEBUG"
 # docs/benchmark.md for why these two flag sets are the reference baselines.
 build_profile() {
     local profile="$1" build_dir="$2" flags
+    shift 2
 
     case "$profile" in
         scalar)    flags="$SCALAR_PROFILE_FLAGS" ;;
@@ -32,7 +33,7 @@ build_profile() {
         -D3DPE_BUILD_TESTS=OFF \
         -D3DPE_BUILD_EXAMPLES=OFF \
         -D3DPE_ENABLE_COVERAGE=OFF \
-        "-DCMAKE_CXX_FLAGS_RELEASE=${flags}") || return 1
+        "-DCMAKE_CXX_FLAGS_RELEASE=${flags}" "$@") || return 1
 
     # Guard: a CMake cache reset silently drops these settings, and every number measured
     # afterwards would come from an unoptimised build. Refuse to continue if that happened.
@@ -54,6 +55,12 @@ build_dir_for() {
 # (built from benchmarks/performance/benchmark.cpp - see benchmarks/performance/README.md)
 performance_binary() {
     echo "$(build_dir_for "$1")/benchmarks/Performance"
+}
+
+# gbench_binary <scalar|optimised> -> path to the Google Benchmark version (gbench.cpp, built
+# with -D3DPE_BUILD_GBENCH=ON)
+gbench_binary() {
+    echo "$(build_dir_for "$1")/benchmarks/GBench"
 }
 
 # bench_cpu -> logical CPU id every measured run is pinned to (with taskset)

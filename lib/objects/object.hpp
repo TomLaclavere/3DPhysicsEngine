@@ -88,13 +88,13 @@ public:
     /// @name Getters
     /// @{
     Vector3D                getPosition() const { return position; };
-    virtual const Vector3D& getNormal() const;
-    Vector3D                getSize() const;
-    Vector3D                getVelocity() const;
-    Vector3D                getAcceleration() const;
-    Vector3D                getForce() const;
-    Vector3D                getTorque() const;
-    decimal                 getMass() const;
+    virtual const Vector3D& getNormal() const { return normal; }
+    Vector3D                getSize() const { return size; }
+    Vector3D                getVelocity() const { return velocity; }
+    Vector3D                getAcceleration() const { return acceleration; }
+    Vector3D                getForce() const { return force; }
+    Vector3D                getTorque() const { return torque; }
+    decimal                 getMass() const { return mass; }
     decimal                 getStiffnessCst() const;
     decimal                 getFrictionCst() const;
     decimal                 getDampingCst() const;
@@ -103,9 +103,9 @@ public:
     decimal                 getKineticEnergy() const;
     decimal                 getPotentielEnergy(decimal g) const;
     decimal                 getTotalEnergy(decimal g) const;
-    Material                getMaterial() const;
-    virtual ObjectType      getType() const;
-    bool                    getIsFixed() const;
+    Material                getMaterial() const { return material; }
+    virtual ObjectType      getType() const { return ObjectType::Generic; }
+    bool                    getIsFixed() const { return fixed; }
     unsigned int            getId() const { return id; }
     std::string             getName() const { return name; }
     /// @}

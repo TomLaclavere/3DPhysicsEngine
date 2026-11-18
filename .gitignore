@@ -33,6 +33,8 @@ __pycache__/
 # report is .json. perf's own output is already covered by the extension patterns above.
 benchmarks/performance/maqao/results/
 benchmarks/performance/malt/results/
+# Google Benchmark output of scripts/benchmark.sh (one .json per point, figures)
+benchmarks/performance/results_gbench/
 
 # Reference results kept in git (see benchmarks/performance/baseline/README.md)
 !benchmarks/performance/baseline/**

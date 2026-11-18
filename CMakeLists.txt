@@ -44,6 +44,7 @@ message(STATUS "=> Using ${CMAKE_CXX_COMPILER_ID} (${CMAKE_CXX_COMPILER}) as com
 option(3DPE_USE_DOUBLE_PRECISION "Compile using double precision floating values" ON)
 option(3DPE_BUILD_EXAMPLES "Build example applications" ON)
 option(3DPE_BUILD_BENCHMARKS "Build benchmark applications" ON)
+option(3DPE_BUILD_GBENCH "Build the Google Benchmark version of the performance benchmark (downloads it)" OFF)
 option(3DPE_BUILD_TESTS "Build unit tests" ON)
 option(3DPE_ENABLE_COVERAGE "Enable coverage reporting" ON)
 option(3DPE_ENABLE_CLANG_TIDY "Enable clang-tidy static analysis" OFF)
@@ -417,6 +418,32 @@ if(3DPE_BUILD_BENCHMARKS)
         DEPENDS benchmark_Performance
         COMMENT "Running benchmark: Performance"
     )
+
+    # ---------------------------------------------
+    # Benchmark: Performance, timed by Google Benchmark (same scenario code: scenario.hpp)
+    # ---------------------------------------------
+    if(3DPE_BUILD_GBENCH)
+        include(FetchContent)
+        set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+        set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
+        set(BENCHMARK_ENABLE_WERROR OFF CACHE BOOL "" FORCE)
+        FetchContent_Declare(
+            googlebenchmark
+            GIT_REPOSITORY https://github.com/google/benchmark.git
+            GIT_TAG        v1.9.1
+            GIT_SHALLOW    TRUE
+        )
+        FetchContent_MakeAvailable(googlebenchmark)
+
+        add_executable(benchmark_GBench benchmarks/performance/gbench.cpp)
+        target_link_libraries(benchmark_GBench PRIVATE 3DPhysicsEngine benchmark::benchmark)
+        target_include_directories(benchmark_GBench PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+        set_target_properties(benchmark_GBench PROPERTIES
+            OUTPUT_NAME "GBench"
+            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/benchmarks
+            FOLDER "Benchmarks"
+        )
+    endif()
 
     # ---------------------------------------------
     # Benchmark: Free Fall

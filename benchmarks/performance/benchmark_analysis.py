@@ -10,7 +10,11 @@
 #   wall_time, step_time, step_cv, speedup - × 2 views, one row or panel per broad phase
 # Broad-phase comparison (vs n_objects, at the dt of the n_objects sweep):
 #   broad_step_time, broad_gain
+# Google Benchmark comparison (results_gbench/*.json, same points as the n_objects sweep), saved in
+# results_gbench/ and not in the PDF report:
+#   gbench_step_time, gbench_cv
 
+import json
 from pathlib import Path
 
 import matplotlib
@@ -48,6 +52,7 @@ PROFILE_ALPHA = {'scalar': 0.6,  'optimised': 1.0}
 REPO      = Path(__file__).resolve().parent
 RESULTS   = REPO / 'results'
 RESULTS_S = REPO / 'results_scalar'
+RESULTS_G = REPO / 'results_gbench'
 
 # -----------------------------------------------------------------------------
 # Data loading
@@ -407,6 +412,101 @@ def plot_broad_gain_vs_nobjs() -> Path | None:
 
 
 # -----------------------------------------------------------------------------
+# Plot 6 - Google Benchmark vs in-house benchmark
+# -----------------------------------------------------------------------------
+def load_gbench() -> pd.DataFrame | None:
+    """One row per point timed by Google Benchmark: mean, std and CV of the time per step over its
+    repetitions, merged with the in-house result of the same point (optimised profile)."""
+    files = sorted(RESULTS_G.glob('*.json'))
+    if not files or 'optimised' not in profiles:
+        return None
+    rows = []
+    for f in files:
+        reps = [b for b in json.load(open(f))['benchmarks'] if b.get('run_type') == 'iteration']
+        if not reps:
+            continue
+        solver, broad, _ = reps[0]['run_name'].split('/')[:3]
+        times = np.array([b['real_time'] / b['steps'] for b in reps])  # one iteration = one run → µs per step
+        rows.append({'solver': solver, 'broad': broad, 'n_objects': int(reps[0]['n_objects']),
+                     'dt': float(reps[0]['dt']), 'gb_step_us': times.mean(),
+                     'gb_step_std': times.std(ddof=1) if len(times) > 1 else 0.0,
+                     'gb_cv': 100 * times.std(ddof=1) / times.mean() if len(times) > 1 else 0.0})
+    if not rows:
+        return None
+    gb  = pd.DataFrame(rows)
+    own = n_df[n_df['profile'] == 'optimised'].copy()
+    # In-house equivalent of one Google Benchmark repetition: one timed run, divided by its steps
+    own['own_step_std'] = own['cpu_us_stddev'] * own['time_per_step_us'] / own['cpu_us_mean']
+    m = gb.merge(own, on=['solver', 'broad', 'n_objects'], suffixes=('', '_own'))
+    m = m[np.isclose(m['dt'], m['dt_own'])]
+    m['ratio'] = m['gb_step_us'] / m['time_per_step_us']
+    return m.sort_values(['broad', 'n_objects'])
+
+
+def plot_gbench_step_time(gb: pd.DataFrame | None) -> Path | None:
+    if gb is None:
+        print('[skip] Google Benchmark comparison: no results_gbench/*.json')
+        return None
+    gb_broads = [b for b in broads if b in set(gb['broad'])]
+    fig, axes = plt.subplots(2, len(gb_broads), figsize=(max(9, 6 * len(gb_broads)), 8),
+                             sharex=True, sharey='row', squeeze=False,
+                             gridspec_kw={'height_ratios': [2, 1]})
+    for col, broad in enumerate(gb_broads):
+        sub = gb[gb['broad'] == broad]
+        s   = BROAD_STYLE.get(broad, {'color': '#888', 'marker': 'o'})
+        ax  = axes[0][col]
+        ax.errorbar(sub['n_objects'], sub['time_per_step_us'], yerr=sub['own_step_std'],
+                    color=s['color'], marker=s['marker'], ls='-', markersize=5, lw=1.6, capsize=2,
+                    label='in-house (benchmark.cpp)')
+        ax.errorbar(sub['n_objects'], sub['gb_step_us'], yerr=sub['gb_step_std'],
+                    color='#222', marker='x', ls='--', markersize=6, lw=1.2, capsize=2,
+                    label='Google Benchmark (gbench.cpp)')
+        ax.set_xscale('log')
+        ax.set_yscale('log')
+        ax.set_title(broad, fontsize=10)
+        axes[1][col].semilogx(sub['n_objects'], sub['ratio'], color=s['color'], marker=s['marker'],
+                              markersize=5, lw=1.6)
+        axes[1][col].axhline(1.0, color='#555', ls='--', lw=1.2)
+        axes[1][col].set_xlabel('Number of objects')
+    axes[0][0].set_ylabel('Time per step  (µs, mean over runs)')
+    axes[1][0].set_ylabel('Google Benchmark / in-house')
+    axes[0][-1].legend(fontsize=9, framealpha=0.5)
+    solver, dt = gb['solver'].iloc[0], gb['dt'].iloc[0]
+    fig.suptitle(f'Same points timed by both tools  (optimised, {solver}, dt = {dt:.2e} s)\n'
+                 'error bars = standard deviation between runs', y=1.02)
+    plt.tight_layout()
+    out = RESULTS_G / 'plot_gbench_step_time.png'
+    plt.savefig(out, dpi=150, bbox_inches='tight')
+    plt.close()
+    return out
+
+
+def plot_gbench_cv(gb: pd.DataFrame | None) -> Path | None:
+    if gb is None:
+        return None
+    gb_broads = [b for b in broads if b in set(gb['broad'])]
+    fig, axes = plt.subplots(1, len(gb_broads), figsize=(max(9, 6 * len(gb_broads)), 5),
+                             sharey=True, squeeze=False)
+    for ax, broad in zip(axes[0], gb_broads):
+        sub = gb[gb['broad'] == broad]
+        s   = BROAD_STYLE.get(broad, {'color': '#888', 'marker': 'o'})
+        ax.semilogx(sub['n_objects'], sub['cv_percent'], color=s['color'], marker=s['marker'],
+                    ls='-', markersize=5, lw=1.6, label='in-house')
+        ax.semilogx(sub['n_objects'], sub['gb_cv'], color='#222', marker='x', ls='--',
+                    markersize=6, lw=1.2, label='Google Benchmark')
+        ax.set_xlabel('Number of objects')
+        ax.set_title(broad, fontsize=10)
+    axes[0][0].set_ylabel('Run-to-run CV  (%)')
+    axes[0][-1].legend(fontsize=9, framealpha=0.5)
+    fig.suptitle('Run-to-run variation of each tool  (same runs, steps and scene)', y=1.02)
+    plt.tight_layout()
+    out = RESULTS_G / 'plot_gbench_cv.png'
+    plt.savefig(out, dpi=150, bbox_inches='tight')
+    plt.close()
+    return out
+
+
+# -----------------------------------------------------------------------------
 # Summary
 # -----------------------------------------------------------------------------
 def print_summary() -> None:
@@ -451,6 +551,14 @@ def print_summary() -> None:
                 denom = row.get(f'{STEP_COL}_opt', 0)
                 step  = f"{row[f'{STEP_COL}_scl'] / denom:.2f}×" if denom > 0 else 'n/a'
                 print(f"  {row['solver']:<8} {row['broad']:<10} N={int(row['n_objects']):<3}  wall={wall:.2f}×  step={step}")
+
+    gb = load_gbench()
+    if gb is not None:
+        print('\n── Google Benchmark vs in-house, time per step (optimised, n_objects sweep) ──')
+        table = gb.set_index(['broad', 'n_objects'])[['time_per_step_us', 'gb_step_us', 'ratio',
+                                                       'cv_percent', 'gb_cv']]
+        table.columns = ['in-house µs', 'GBench µs', 'GBench/in-house', 'in-house CV%', 'GBench CV%']
+        print(table.to_string(float_format='{:.3f}'.format))
 
     if HAS_STEP:
         jittery = df[df['step_us_cv'] > 10]
@@ -501,6 +609,12 @@ plot_paths: list[Path | None] = [
     plot_broad_step_time_vs_nobjs(),
     plot_broad_gain_vs_nobjs(),
 ]
+
+# Google Benchmark comparison: figures in results_gbench/, next to the JSON files
+gbench = load_gbench()
+for path in (plot_gbench_step_time(gbench), plot_gbench_cv(gbench)):
+    if path:
+        print(f'  -> {path}')
 
 print_summary()
 

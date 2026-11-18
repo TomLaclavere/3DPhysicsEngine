@@ -150,7 +150,6 @@ See [`docs/benchmark.md`](benchmark.md) for more details.
   - [x] Compiler-optimised single-core
 - [x] **Add GitHub flag to keep the current status of software as reference**
 - [x] **Optimisation workflow:**
-  - [ ] Physics fingerprint in the benchmark output (final state checksum), to check two versions simulate the same thing
   - [x] Performance log (`docs/performance_logs.md`): one line per optimisation - before, after, gain, commit
 - [ ] **Bonus:** Create InfPlane object, to simplify creation of the ground
 - [x] **Quick wins (from the baseline profile):**
@@ -159,12 +158,17 @@ See [`docs/benchmark.md`](benchmark.md) for more details.
 - [x] **Broad-phase acceleration** *(algorithmic: O(N²) → ~O(N), largest gain at large N)*:
   - [x] Uniform spatial grid or sweep-and-prune instead of testing every pair
   - [x] Extend the benchmark sweep to N = 10³ - 10⁴
+- [ ] **Google Benchmark** *(next step; compared with the in-house benchmark, `scripts/benchmark.sh`)*:
+  - [x] Add it with CMake `FetchContent`, behind an option (`3DPE_BUILD_GBENCH`)
+  - [x] Benchmark one simulation step on the same random 3D cloud scene, per broad phase, N from 1 to 10⁴: both tools call the same functions (`benchmarks/performance/scenario.hpp`), including the timed one (`runSteps`), same points run by `scripts/benchmark.sh`
+  - [x] Compare with `scripts/benchmark.sh` at the same (solver, broad phase, dt, N): step time, run-to-run variation, total run duration; explain the differences (warm-up, number of iterations, timer, `DoNotOptimize`)
+  - [x] Decide which tool answers which question, and document it in `benchmarks/performance/BENCHMARK_TOOLS_GUIDE.md`
 - [ ] **Data layout optimisation** *(own branch; compare current pointers → contiguous AoS → SoA)*:
   - [ ] **Decide the scope:** spheres + static planes first, or every shape; impulse mode only, or contact forces too
   - [ ] **Safety net before refactoring:**
     - [x] Benchmark of the current layout (random 3D cloud, N up to 10⁴)
-    - [ ] Profile at N = 1000 (`profile.sh --n-objects 1000`) to know the share of integration vs collisions
-    - [ ] Test: Grid and SweepPrune return the same pairs as brute force
+    - [x] Profile at N = 1000 (`profile.sh --n-objects 1000`) to know the share of integration vs collisions
+    - [x] Test: Grid and SweepPrune return the same pairs as brute force
     - [ ] Physics regression test: fixed scene, K steps, final positions compared to a reference file
   - [ ] **Contiguous hot data (AoS):** `std::vector<Body>` (position, velocity, acceleration, inverse mass, radius, flags) in `PhysicsWorld`, behind accessors `pos(i)`, `vel(i)`...
     - [ ] `Object` becomes a handle (world + index) with the same getters/setters; `id → index` map for `removeObject`
@@ -343,9 +347,9 @@ See [`docs/benchmark.md`](benchmark.md) for more details.
   - [ ] VTK or HDF5 output (ParaView-compatible) alongside existing CSV
   - [ ] HDF5 for large-scale runs (> 10⁴ objects, long durations)
 - [ ] **Optional real-time rendering:**
-  - [ ] Choice of graphics layer: GLFW + OpenGL, Vulkan, or VTK / ParaView
-  - [ ] **Basic geometry:** spheres, boxes, planes
-  - [ ] **Basic shaders**
+  - [x] Choice of graphics layer: GLFW + OpenGL, Vulkan, or VTK / ParaView → raylib (CSV replay viewer, `src/viewer/`)
+  - [x] **Basic geometry:** spheres, boxes, planes
+  - [x] **Basic shaders**
   - [ ] **Physics–rendering synchronisation:** decouple simulation FPS from rendering FPS
   - [ ] **Camera control:** WASD + mouse
   - [ ] **Graphical interface:**

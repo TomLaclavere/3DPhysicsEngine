@@ -1,8 +1,10 @@
 # Performance Benchmark Binary
 
 `benchmark.cpp` builds `benchmarks/Performance`, the binary every benchmark and profiling
-script measures. This page is its reference (scene, options, CSV columns) and lists how to
-install the profiling tools. For how to run the benchmarks and read the results, see
+script measures. `gbench.cpp` builds `benchmarks/GBench`, the same benchmark timed by Google
+Benchmark. Both call the same functions of [`scenario.hpp`](scenario.hpp) (options, scene, and
+the timed function `runSteps`), so a change there applies to both. This page is their reference (scene, options, CSV columns) and lists how
+to install the profiling tools. For how to run the benchmarks and read the results, see
 [`BENCHMARK_TOOLS_GUIDE.md`](BENCHMARK_TOOLS_GUIDE.md).
 
 ## Scene
@@ -46,6 +48,9 @@ flowchart LR
     C --> A["benchmark_analysis.py"]
     A --> PN["plot_*_vs_nobjs<br/>plot_broad_*"]
     A --> PD["plot_*_vs_dt"]
+    N -. "optimised only" .-> G["GBench<br/>results_gbench/*.json"]
+    G --> A
+    A --> PG["results_gbench/plot_gbench_*"]
 ```
 
 | | n_objects sweep | dt sweep |
@@ -55,12 +60,26 @@ flowchart LR
 | Fixed | Solver Verlet, dt = 1e-3 s | Broad phase Brut, N = 100 |
 | Question answered | How does each broad phase scale with N? | How does each solver's step cost behave with dt? |
 | Options | `--broads`, `--n-solver`, `--n-objects`, `--dt`, `--brut-n-max` | `--solvers`, `--dt-broad`, `--n-fixed`, `--dt-min`, `--dt-max`, `--dt-n` |
-| Figures | `plot_*_vs_nobjs`, `plot_broad_*` | `plot_*_vs_dt` |
+| Figures | `plot_*_vs_nobjs`, `plot_broad_*`, `plot_gbench_*` | `plot_*_vs_dt` |
 
 Both sweeps simulate `--dur` = 1 s per point. The point they share (Verlet, Brut, N = 100,
 dt = 1e-3) is measured only once. Brut is the dt sweep's broad phase because its cost does not
 depend on where the objects are. In the n_objects sweep, Brut is skipped above `--brut-n-max`
 (default 2000) because its O(N²) cost makes N = 5000 and above take hours.
+
+## Google Benchmark comparison
+
+In the optimised profile, each point of the n_objects sweep is also run by `GBench`, right
+after `Performance`, with the same options. Both time the same call, `runSteps(world, dur / dt)`,
+on a freshly built scene (not timed): one Google Benchmark iteration is one timed run of
+`Performance` (`Iterations(1)`, `--n_runs` repetitions, wall-clock time). What differs is only
+the measurement around that call: Google Benchmark's own timer, and no warm-up run. Build option: `-D3DPE_BUILD_GBENCH=ON`
+(set by the script; downloads Google Benchmark). Skip it with `--skip-gbench`, or run it alone
+with `--gbench` (optimised profile, n_objects sweep; the comparison figures then use the existing
+`results/benchmark.csv`).
+
+`GBench` takes the scenario options below (not `--n_warmup`, `--out`, `--append`), plus the
+`--benchmark_*` options of Google Benchmark.
 
 ## Command-line options
 

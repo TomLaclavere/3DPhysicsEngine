@@ -27,6 +27,7 @@ coverage.sh delete or rebuild build/, which removes the binaries being measured)
 
 Output:
   benchmarks/performance/results/benchmark_report.pdf               benchmark sweep
+  benchmarks/performance/results_gbench/                            Google Benchmark comparison (figures + JSON)
   benchmarks/performance/profiling_report/profiling_report.pdf      profiling
 EOF
 }
@@ -57,6 +58,7 @@ echo "  benchmark sweep: $([[ $bench_status -eq 0 ]] && echo OK || echo "FAILED 
 echo "  profiling:       $([[ $profile_status -eq 0 ]] && echo OK || echo "FAILED (exit $profile_status)")"
 echo ""
 echo "  benchmarks/performance/results/benchmark_report.pdf"
+echo "  benchmarks/performance/results_gbench/"
 echo "  benchmarks/performance/profiling_report/profiling_report.pdf"
 
 (( bench_status == 0 && profile_status == 0 ))

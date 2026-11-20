@@ -62,7 +62,7 @@ bool BoundingSphereTest::isColliding(const SphereShape& sphere, const AABBShape&
  */
 bool BoundingSphereTest::isColliding(const SphereShape& sphere, const PlaneShape& plane)
 {
-    Vector3D n    = plane.normal.getNormalised();
+    Vector3D n    = plane.normal;
     decimal  dist = (sphere.center - plane.center).dotProduct(n);
     return commonMaths::approxSmallerOrEqualThan(commonMaths::absVal(dist),
                                                  sphere.radius + (plane.boundingHalfSize));
@@ -105,7 +105,7 @@ bool BoundingSphereTest::isColliding(const AABBShape& aabb1, const AABBShape& aa
  */
 bool BoundingSphereTest::isColliding(const AABBShape& aabb, const PlaneShape& plane)
 {
-    Vector3D n    = plane.normal.getNormalised();
+    Vector3D n    = plane.normal;
     Vector3D half = aabb.halfExtents;
 
     // Project AABB half-extents along the plane normal

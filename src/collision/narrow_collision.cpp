@@ -323,9 +323,9 @@ bool NarrowCollision::computeContact(const AABBShape& aabb, const PlaneShape& pl
     const Vector3D aabbPosition = aabb.center;
     const Vector3D aabbExtents  = aabb.halfExtents;
 
-    const Vector3D planeNormal = plane.normal.getNormalised();
-    const Vector3D planeAxisU  = plane.u.getNormalised();
-    const Vector3D planeAxisV  = plane.v.getNormalised();
+    const Vector3D planeNormal = plane.normal;
+    const Vector3D planeAxisU  = plane.u;
+    const Vector3D planeAxisV  = plane.v;
 
     // AABB vs infinite plane
     const decimal r = aabbExtents.dotProduct(planeNormal.getAbsolute());
@@ -383,8 +383,8 @@ bool NarrowCollision::computeContact(const AABBShape& aabb, const PlaneShape& pl
  */
 bool NarrowCollision::computeContact(const PlaneShape& p1, const PlaneShape& p2, Contact& contact)
 {
-    const Vector3D planeNormal1 = p1.normal.getNormalised();
-    const Vector3D planeNormal2 = p2.normal.getNormalised();
+    const Vector3D planeNormal1 = p1.normal;
+    const Vector3D planeNormal2 = p2.normal;
 
     const Vector3D dir  = planeNormal1.crossProduct(planeNormal2);
     const decimal  dir2 = dir.getNormSquare();
@@ -406,8 +406,7 @@ bool NarrowCollision::computeContact(const PlaneShape& p1, const PlaneShape& p2,
         std::array<Vector3D, 4> B = { corner(p2, -1_d, -1_d), corner(p2, 1_d, -1_d), corner(p2, 1_d, 1_d),
                                       corner(p2, -1_d, 1_d) };
 
-        std::array<Vector3D, 4> axes = { p1.u.getNormalised(), p1.v.getNormalised(), p2.u.getNormalised(),
-                                         p2.v.getNormalised() };
+        std::array<Vector3D, 4> axes = { p1.u, p1.v, p2.u, p2.v };
 
         auto project = [](const Vector3D& axis, const auto& verts)
         {
@@ -434,7 +433,7 @@ bool NarrowCollision::computeContact(const PlaneShape& p1, const PlaneShape& p2,
 
         // overlap confirmed
         contact.position = (p1.center + p2.center) * 0.5_d;
-        Vector3D normal  = p1.normal.getNormalised();
+        Vector3D normal  = p1.normal;
         if ((p1.center - p2.center).dotProduct(normal) < 0_d)
             normal = -normal;
         contact.normal      = normal;
@@ -452,8 +451,8 @@ bool NarrowCollision::computeContact(const PlaneShape& p1, const PlaneShape& p2,
     auto interval = [&](const PlaneShape& P) -> std::optional<std::pair<decimal, decimal>>
     {
         const Vector3D C = P.center;
-        const Vector3D u = P.u.getNormalised();
-        const Vector3D v = P.v.getNormalised();
+        const Vector3D u = P.u;
+        const Vector3D v = P.v;
 
         auto axis = [&](decimal s0, decimal s1, decimal h) -> std::optional<std::pair<decimal, decimal>>
         {

@@ -192,7 +192,7 @@ Steps marked *bit-identical* must leave the physics regression test exactly unch
 - [ ] **Data layout optimisation** *(own branch `feature/soa-layout`; compare current pointers → contiguous AoS → SoA)*:
   - [ ] **Narrow phase and response on indices:** free functions per shape pair instead of virtual calls *(bit-identical)*
     - [x] Pair tests and narrow phase on shape values (`SphereShape`, `AABBShape`, `PlaneShape`); the `Object` overloads become wrappers, so existing tests are unchanged
-    - [ ] Keep the redundant `getNormalised()` calls for now; remove them in a separate commit
+    - [x] Remove the redundant `getNormalised()` calls on `PlaneShape` (already unit vectors)
     - [x] Contact response (`computeContactForce`, `reboundCollision`, `positionCorrection`) on values instead of `Object&`
     - [x] Remove `Contact::A` / `Contact::B` (written, never read)
   - [ ] **Contiguous hot data (AoS):** `std::vector<Body>` (position, velocity, acceleration, inverse mass, radius, flags) in `PhysicsWorld`, behind accessors `pos(i)`, `vel(i)`...

@@ -44,10 +44,12 @@ message(STATUS "=> Using ${CMAKE_CXX_COMPILER_ID} (${CMAKE_CXX_COMPILER}) as com
 option(3DPE_USE_DOUBLE_PRECISION "Compile using double precision floating values" ON)
 option(3DPE_BUILD_EXAMPLES "Build example applications" ON)
 option(3DPE_BUILD_BENCHMARKS "Build benchmark applications" ON)
+option(3DPE_BUILD_GBENCH "Build the Google Benchmark version of the performance benchmark (downloads it)" OFF)
 option(3DPE_BUILD_TESTS "Build unit tests" ON)
 option(3DPE_ENABLE_COVERAGE "Enable coverage reporting" ON)
 option(3DPE_ENABLE_CLANG_TIDY "Enable clang-tidy static analysis" OFF)
 option(3DPE_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" ON)
+option(3DPE_BUILD_VIEWER "Build the raylib replay viewer (downloads raylib)" ON)
 
 # Advanced options
 set(3DPE_GCC_EXTRA_FLAGS "" CACHE STRING "Extra flags for GCC")
@@ -85,7 +87,10 @@ set(ENGINE_OBJECT_SOURCES
 )
 
 set(ENGINE_COLLISION_SOURCES
-    src/collision/broad_collision.cpp
+    src/collision/broad_collision_brut_force.cpp
+    src/collision/broad_collision_grid.cpp
+    src/collision/broad_collision_pairs.cpp
+    src/collision/broad_collision_sweep_prune.cpp
     src/collision/narrow_collision.cpp
     src/collision/collision_response.cpp
     )
@@ -232,9 +237,35 @@ else()
     message(STATUS "Qt6 not found — skipping PhysicsEngineGui")
 endif()
 
+# =============================================
+# Real-time 3D replay viewer
+# =============================================
+if(3DPE_BUILD_VIEWER)
+    include(FetchContent)
+    set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    FetchContent_Declare(
+        raylib
+        GIT_REPOSITORY https://github.com/raysan5/raylib.git
+        GIT_TAG 5.5
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(raylib)
+
+    add_executable(3DPhysicsViewer src/viewer/main_viewer.cpp)
+    target_link_libraries(3DPhysicsViewer PRIVATE raylib)
+
+    set(3DPE_VIEWER_CSV_DIR "${CMAKE_CURRENT_SOURCE_DIR}/output/CSV"
+        CACHE PATH "CSV directory opened by the Viewer target")
+    add_custom_target(Viewer
+        COMMAND $<TARGET_FILE:3DPhysicsViewer> ${3DPE_VIEWER_CSV_DIR}
+        DEPENDS 3DPhysicsViewer
+        COMMENT "Opening the 3D viewer on ${3DPE_VIEWER_CSV_DIR}"
+    )
+endif()
+
 add_custom_target(run
     COMMAND $<TARGET_FILE:PhysicsEngine>
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     DEPENDS PhysicsEngine
     COMMENT "Running PhysicsEngine..."
 )
@@ -259,7 +290,7 @@ if(3DPE_BUILD_EXAMPLES)
 
     add_custom_target(Free_Fall
         COMMAND $<TARGET_FILE:example_Free_Fall>
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         DEPENDS example_Free_Fall
         COMMENT "Running example: Free_Fall"
     )
@@ -278,7 +309,7 @@ if(3DPE_BUILD_EXAMPLES)
 
     add_custom_target(Projectiles
         COMMAND $<TARGET_FILE:example_Projectiles>
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         DEPENDS example_Projectiles
         COMMENT "Running example: Projectiles"
     )
@@ -297,7 +328,7 @@ if(3DPE_BUILD_EXAMPLES)
 
     add_custom_target(Bouncing
         COMMAND $<TARGET_FILE:example_Bouncing>
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         DEPENDS example_Bouncing
         COMMENT "Running example: Bouncing"
     )
@@ -316,7 +347,7 @@ if(3DPE_BUILD_EXAMPLES)
 
     add_custom_target(Bouncing_2
         COMMAND $<TARGET_FILE:example_Bouncing_2>
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         DEPENDS example_Bouncing_2
         COMMENT "Running example: Bouncing_2"
     )
@@ -335,9 +366,28 @@ if(3DPE_BUILD_EXAMPLES)
 
     add_custom_target(Rolling
         COMMAND $<TARGET_FILE:example_Rolling>
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         DEPENDS example_Rolling
         COMMENT "Running example: Rolling"
+    )
+
+    # ---------------------------------------------
+    # Example: Random Balls 2D Simulation
+    # ---------------------------------------------
+    add_executable(example_Random2D examples/Random_Balls_2D/main.cpp)
+    target_link_libraries(example_Random2D PRIVATE 3DPhysicsEngine)
+    target_include_directories(example_Random2D PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+    set_target_properties(example_Random2D PROPERTIES
+        OUTPUT_NAME "Random2D"
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/examples
+        FOLDER "Examples"
+    )
+
+    add_custom_target(Random2D
+        COMMAND $<TARGET_FILE:example_Random2D>
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        DEPENDS example_Random2D
+        COMMENT "Running example: Random2D"
     )
 endif()
 
@@ -364,10 +414,36 @@ if(3DPE_BUILD_BENCHMARKS)
 
     add_custom_target(Performance_Benchmark
         COMMAND $<TARGET_FILE:benchmark_Performance>
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         DEPENDS benchmark_Performance
         COMMENT "Running benchmark: Performance"
     )
+
+    # ---------------------------------------------
+    # Benchmark: Performance, timed by Google Benchmark (same scenario code: scenario.hpp)
+    # ---------------------------------------------
+    if(3DPE_BUILD_GBENCH)
+        include(FetchContent)
+        set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+        set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
+        set(BENCHMARK_ENABLE_WERROR OFF CACHE BOOL "" FORCE)
+        FetchContent_Declare(
+            googlebenchmark
+            GIT_REPOSITORY https://github.com/google/benchmark.git
+            GIT_TAG        v1.9.1
+            GIT_SHALLOW    TRUE
+        )
+        FetchContent_MakeAvailable(googlebenchmark)
+
+        add_executable(benchmark_GBench benchmarks/performance/gbench.cpp)
+        target_link_libraries(benchmark_GBench PRIVATE 3DPhysicsEngine benchmark::benchmark)
+        target_include_directories(benchmark_GBench PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+        set_target_properties(benchmark_GBench PROPERTIES
+            OUTPUT_NAME "GBench"
+            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/benchmarks
+            FOLDER "Benchmarks"
+        )
+    endif()
 
     # ---------------------------------------------
     # Benchmark: Free Fall
@@ -383,7 +459,7 @@ if(3DPE_BUILD_BENCHMARKS)
 
     add_custom_target(Free_Fall_Benchmark
         COMMAND $<TARGET_FILE:benchmark_Free_Fall>
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         DEPENDS benchmark_Free_Fall
         COMMENT "Running benchmark: Free_Fall"
     )
@@ -402,7 +478,7 @@ if(3DPE_BUILD_BENCHMARKS)
 
     add_custom_target(Bouncing_Benchmark
         COMMAND $<TARGET_FILE:benchmark_Bouncing>
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         DEPENDS benchmark_Bouncing
         COMMENT "Running benchmark: Bouncing"
     )
@@ -421,7 +497,7 @@ if(3DPE_BUILD_BENCHMARKS)
 
     add_custom_target(Bouncing_Conservative_Benchmark
         COMMAND $<TARGET_FILE:benchmark_Bouncing_Conservative>
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         DEPENDS benchmark_Bouncing_Conservative
         COMMENT "Running benchmark: Bouncing_Conservative"
     )
@@ -440,7 +516,7 @@ if(3DPE_BUILD_BENCHMARKS)
 
     add_custom_target(Contact_Forces_Benchmark
         COMMAND $<TARGET_FILE:benchmark_Contact_Forces>
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         DEPENDS benchmark_Contact_Forces
         COMMENT "Running benchmark: Contact_Forces"
     )

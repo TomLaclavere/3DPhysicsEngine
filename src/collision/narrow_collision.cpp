@@ -321,8 +321,8 @@ bool NarrowCollision::computeContact(const AABB& a1, const AABB& a2, Contact& co
 /**
  * @brief Check narrow collision between an aabb and a finite plane and compute contact properties.
  *
- * Collision occurs if the signed distance from the AABB to the plane is less than or equal to the projection
- * radius of the AABB onto the plane normal.
+ * Collision occurs if no separating axis exists between the AABB and the finite rectangle (separating axis
+ * theorem). Candidates: plane normal, rectangle axes, AABB face normals and the cross products of their edges.
  *
  * @param aabb AABB instance.
  * @param plane Plane instance.
@@ -345,23 +345,27 @@ bool NarrowCollision::computeContact(const AABB& aabb, const Plane& plane, Conta
     if (commonMaths::approxGreaterThan(commonMaths::absVal(dist), r))
         return false;
 
-    // Project AABB onto plane local axes
+    // Finite rectangle: look for a separating axis among the remaining candidates
     const Vector3D d = aabbPosition - plane.getPosition();
 
-    const decimal s0 = d.dotProduct(planeAxisU);
-    const decimal t0 = d.dotProduct(planeAxisV);
+    const auto isSeparatedAlong = [&](const Vector3D& axis)
+    {
+        const decimal aabbProj = aabbExtents.dotProduct(axis.getAbsolute());
+        const decimal rectProj = plane.getHalfWidth() * commonMaths::absVal(planeAxisU.dotProduct(axis)) +
+                                 plane.getHalfHeight() * commonMaths::absVal(planeAxisV.dotProduct(axis));
+        return commonMaths::approxGreaterThan(commonMaths::absVal(d.dotProduct(axis)), aabbProj + rectProj);
+    };
 
-    const decimal rs = aabbExtents[0] * commonMaths::absVal(planeAxisU[0]) +
-                       aabbExtents[1] * commonMaths::absVal(planeAxisU[1]) +
-                       aabbExtents[2] * commonMaths::absVal(planeAxisU[2]);
-
-    const decimal rt = aabbExtents[0] * commonMaths::absVal(planeAxisV[0]) +
-                       aabbExtents[1] * commonMaths::absVal(planeAxisV[1]) +
-                       aabbExtents[2] * commonMaths::absVal(planeAxisV[2]);
-
-    if (commonMaths::approxGreaterThan(commonMaths::absVal(s0), plane.getHalfWidth() + rs) ||
-        commonMaths::approxGreaterThan(commonMaths::absVal(t0), plane.getHalfHeight() + rt))
+    if (isSeparatedAlong(planeAxisU) || isSeparatedAlong(planeAxisV))
         return false;
+
+    for (const Vector3D& aabbAxis :
+         { Vector3D(1_d, 0_d, 0_d), Vector3D(0_d, 1_d, 0_d), Vector3D(0_d, 0_d, 1_d) })
+    {
+        if (isSeparatedAlong(aabbAxis) || isSeparatedAlong(aabbAxis.crossProduct(planeAxisU)) ||
+            isSeparatedAlong(aabbAxis.crossProduct(planeAxisV)))
+            return false;
+    }
 
     // Contact
     Vector3D normal = (dist < 0_d) ? planeNormal : -planeNormal;

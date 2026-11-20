@@ -16,25 +16,27 @@ VERBOSE=false
 # =====================================================================
 usage() {
     cat <<'EOF'
-Usage: $0 [options] [cmake-args...]
+Usage: ./scripts/tests.sh [options] [cmake-args...]
+
+Builds the project (incrementally), then runs the tests with ctest. Run from the repository root.
 
 Options:
-  --build-dir DIR      Build directory (default: ${BUILD_DIR})
-  --build-type TYPE    Build type (Debug|Release) (default: ${BUILD_TYPE})
-  --rebuild            Force rebuild before running tests
-  --gtest-filter STR   Run only GoogleTest tests matching filter
+  --build-dir DIR      Build directory (default: build, or $BUILD_DIR)
+  --build-type TYPE    Build type (Debug|Release) (default: Debug, or $BUILD_TYPE)
+  --rebuild            Reconfigure and rebuild before running the tests
+  --gtest-filter REGEX Run only the tests whose name (Suite.Test) matches REGEX (ctest -R)
   -v, --verbose        Enable verbose output
   -h, --help           Show this help
 
 Behavior:
-  - Unknown options starting with `-D` are forwarded to CMake.
-  - Uses `./scripts/build.sh` internally for consistency.
+  - Other arguments starting with "-" (e.g. -D3DPE_USE_CLANG=ON) are passed to CMake; they
+    trigger a reconfiguration through scripts/build.sh.
   - Exits non-zero on failed tests.
 
 Examples:
-  ./scripts/test.sh -DUSE_DOUBLE_PRECISION=ON
-  ./scripts/test.sh --rebuild --gtest-filter MySuite.*
-  ./scripts/test.sh -v -- -DUSE_CLANG=ON
+  ./scripts/tests.sh -D3DPE_USE_DOUBLE_PRECISION=OFF
+  ./scripts/tests.sh --rebuild --gtest-filter MySuite.*
+  ./scripts/tests.sh -v -D3DPE_USE_CLANG=ON
 EOF
 }
 
@@ -60,7 +62,7 @@ done
 [[ "$VERBOSE" == true ]] && echo "[TEST] Build dir = $BUILD_DIR, type = $BUILD_TYPE"
 [[ "$VERBOSE" == true ]] && echo "[TEST] Extra CMake args: ${CMAKE_ARGS[*]}"
 
-if [[ "$REBUILD" == true ]]; then
+if [[ "$REBUILD" == true || ${#CMAKE_ARGS[@]} -gt 0 ]]; then
     echo "[TEST] Rebuilding project..."
     ./scripts/build.sh --build-dir "$BUILD_DIR" --build-type "$BUILD_TYPE" "${CMAKE_ARGS[@]}"
 else

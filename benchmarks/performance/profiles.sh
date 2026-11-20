@@ -8,7 +8,7 @@
 SCALAR_PROFILE_FLAGS="-O2 -fno-tree-vectorize -fno-inline -DNDEBUG"
 OPTIMISED_PROFILE_FLAGS="-O3 -march=native -DNDEBUG"
 
-# build_profile <scalar|optimised> <build_dir>
+# build_profile <scalar|optimised> <build_dir> [extra CMake options...]
 #
 # Configures and builds the project (Release, tests/coverage/examples off) with the compiler
 # flags for the given profile. The build is incremental: CMake picks up both source changes
@@ -16,6 +16,7 @@ OPTIMISED_PROFILE_FLAGS="-O3 -march=native -DNDEBUG"
 # docs/benchmark.md for why these two flag sets are the reference baselines.
 build_profile() {
     local profile="$1" build_dir="$2" flags
+    shift 2
 
     case "$profile" in
         scalar)    flags="$SCALAR_PROFILE_FLAGS" ;;
@@ -32,7 +33,7 @@ build_profile() {
         -D3DPE_BUILD_TESTS=OFF \
         -D3DPE_BUILD_EXAMPLES=OFF \
         -D3DPE_ENABLE_COVERAGE=OFF \
-        "-DCMAKE_CXX_FLAGS_RELEASE=${flags}") || return 1
+        "-DCMAKE_CXX_FLAGS_RELEASE=${flags}" "$@") || return 1
 
     # Guard: a CMake cache reset silently drops these settings, and every number measured
     # afterwards would come from an unoptimised build. Refuse to continue if that happened.
@@ -54,6 +55,12 @@ build_dir_for() {
 # (built from benchmarks/performance/benchmark.cpp - see benchmarks/performance/README.md)
 performance_binary() {
     echo "$(build_dir_for "$1")/benchmarks/Performance"
+}
+
+# gbench_binary <scalar|optimised> -> path to the Google Benchmark version (gbench.cpp, built
+# with -D3DPE_BUILD_GBENCH=ON)
+gbench_binary() {
+    echo "$(build_dir_for "$1")/benchmarks/GBench"
 }
 
 # bench_cpu -> logical CPU id every measured run is pinned to (with taskset)
@@ -79,21 +86,32 @@ bench_cpu() {
     fi
 }
 
-# check_cpu_setup - warns (never changes anything) when the CPU frequency policy is likely to
-# add noise to the measurements.
-check_cpu_setup() {
+# set_performance_governor - switches every CPU to the 'performance' governor until the calling
+# script exits, then restores the previous one. With the default 'powersave' governor the clock
+# speed follows the load and the temperature, which adds noise between runs. Needs sudo; if the
+# governor is already 'performance', nothing is changed.
+set_performance_governor() {
     local gov_file=/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
-    if [[ -r "$gov_file" ]]; then
-        local gov
-        gov="$(cat "$gov_file")"
-        if [[ "$gov" != "performance" ]]; then
-            echo "[cpu] Warning: CPU governor is '${gov}', not 'performance' - the clock speed can"
-            echo "      vary between runs. For the most stable numbers, before benchmarking run:"
-            echo "        sudo cpupower frequency-set -g performance"
-            echo "      and afterwards restore it with:"
-            echo "        sudo cpupower frequency-set -g ${gov}"
-        fi
+    [[ -r "$gov_file" ]] || return 0
+    local gov
+    gov="$(cat "$gov_file")"
+    [[ "$gov" == "performance" ]] && return 0
+
+    echo "[cpu] Switching the CPU governor from '${gov}' to 'performance' (sudo), restored on exit"
+    if ! command -v cpupower >/dev/null 2>&1 \
+        || ! sudo cpupower frequency-set -g performance >/dev/null; then
+        echo "Error: could not set the 'performance' governor. Set it yourself, then run again:" >&2
+        echo "         sudo cpupower frequency-set -g performance" >&2
+        return 1
     fi
+    # The restore runs as root in the background, waiting for this script to end: the sudo
+    # password cache would have expired by the end of a long run, and it also covers a kill.
+    sudo -b sh -c "while kill -0 $$ 2>/dev/null; do sleep 2; done; cpupower frequency-set -g ${gov} >/dev/null"
+}
+
+# check_cpu_setup - sets the 'performance' governor and checks that runs can be pinned to a core.
+check_cpu_setup() {
+    set_performance_governor || return 1
     if ! command -v taskset >/dev/null 2>&1; then
         echo "Error: taskset not found (package util-linux) - needed to pin runs to one core." >&2
         return 1

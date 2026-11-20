@@ -250,6 +250,24 @@ TEST(NarrowCollisionTest, NarrowAABBPlaneCollision)
     EXPECT_TRUE(planeLeft.computeCollision(aabb, contact));
     EXPECT_TRUE(planeRight.computeCollision(aabb, contact));
 }
+// AABB vs tilted Plane: the rectangle is tested against the box faces, not only its own axes
+TEST(NarrowCollisionTest, NarrowAABBTiltedPlaneCollision)
+{
+    AABB           aabb(Vector3D(0_d, 0_d, 0_d), Vector3D(2_d, 2_d, 2_d));
+    const Vector3D size(1_d, 1_d, 0_d);
+    const Vector3D normal = Vector3D(1_d, 1_d, 1_d).getNormalised();
+    Contact        contact;
+
+    // The rectangle stays beyond x = 1.59, while the box stops at x = 1
+    Plane planeOutside(Vector3D(2_d, 0_d, 0_d), size, normal);
+    // One corner of the rectangle lies inside the box
+    Plane planeInside(Vector3D(1.2_d, 0_d, 0_d), size, normal);
+
+    EXPECT_FALSE(aabb.computeCollision(planeOutside, contact));
+    EXPECT_FALSE(planeOutside.computeCollision(aabb, contact));
+    EXPECT_TRUE(aabb.computeCollision(planeInside, contact));
+    EXPECT_TRUE(planeInside.computeCollision(aabb, contact));
+}
 
 // ----------------------- X vs Unknown Collisions -----------------------
 

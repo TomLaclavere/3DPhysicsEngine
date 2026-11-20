@@ -3,7 +3,7 @@
 Reference for [`profile_maqao.sh`](profile_maqao.sh) (verified with MAQAO 2025.1.0). What MAQAO
 measures and why the pipeline uses it:
 [guide §5.2](../BENCHMARK_TOOLS_GUIDE.md#52-maqao---is-the-code-vectorised).
-Install: [`README.md`](../README.md#maqao).
+Install: [`README.md`](../README.md#installation-profiling-tools).
 
 ## Commands
 
@@ -63,7 +63,7 @@ A loop can have several "paths" (branches inside the loop); each gets its own bl
 function, `Time w.r.t Walltime (s)` the corresponding time. Indented lines give the call
 chains.
 
-## Current numbers
+## Baseline numbers (tag `baseline`)
 
 Default workload, 2026-10-19:
 
@@ -74,7 +74,7 @@ Default workload, 2026-10-19:
 | CQA speedup estimate on the Verlet loops | 4.0× | 4.0× |
 
 The scalar build showing 0 vectorised loops confirms its flags are applied. Interpretation:
-[guide §7](../BENCHMARK_TOOLS_GUIDE.md#7-current-baseline).
+[guide §7](../BENCHMARK_TOOLS_GUIDE.md#7-baseline-results).
 
 ## Pitfalls
 

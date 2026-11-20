@@ -160,9 +160,7 @@ static std::vector<decimal> computeReferencePeaks(decimal totalTime)
         prevVz = vz;
     }
 
-    world.clearObjects();
-    delete sphere;
-    delete ground;
+    world.clearObjects(); // also deletes sphere and ground
     return peaks;
 }
 
@@ -278,9 +276,7 @@ static ConvResult runConvergence(const std::string& solver, decimal dt, size_t m
     }
 
     result.cpuUs = timer.elapsedMicroseconds();
-    world.clearObjects();
-    delete sphere;
-    delete ground;
+    world.clearObjects(); // also deletes sphere and ground
     return result;
 }
 
@@ -336,9 +332,7 @@ static StabResult runStability(const std::string& solver, decimal dt, decimal k,
         }
     }
 
-    world.clearObjects();
-    delete sphere;
-    delete ground;
+    world.clearObjects(); // also deletes sphere and ground
     return result;
 }
 

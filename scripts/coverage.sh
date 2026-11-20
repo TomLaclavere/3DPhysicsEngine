@@ -16,19 +16,22 @@ VERBOSE=false
 # =====================================================================
 usage() {
     cat <<'EOF'
-Usage: $0 [options] [cmake-args...]
+Usage: ./scripts/coverage.sh [options] [cmake-args...]
+
+Builds the project with coverage, runs the tests and prints or exports the coverage report.
+Run from the repository root.
 
 Options:
-  --build-dir DIR       Build directory (default: ${BUILD_DIR})
-  --build-type TYPE     Build type (Debug|Release) (default: ${BUILD_TYPE})
+  --build-dir DIR       Build directory (default: build, or $BUILD_DIR)
+  --build-type TYPE     Build type (Debug|Release) (default: Debug, or $BUILD_TYPE)
   --format html|console Output format (default: console)
   --open                If html, open report in default browser
   -v, --verbose         Enable verbose output
   -h, --help            Show this help
 
 Behavior:
-  - Coverage is automatically enabled unless explicitly disabled with `-DD3DPE_ENABLE_COVERAGE=OFF`.
-  - HTML reports are generated under: `build/coverage_report/coverage_report.html`.
+  - Coverage is automatically enabled unless explicitly disabled with `-D3DPE_ENABLE_COVERAGE=OFF`.
+  - The HTML report is written to <build-dir>/coverage_report/coverage_report.html.
   - The script will try to open the report automatically on Linux (`xdg-open`) or macOS (`open`) if `--open` is provided.
 
 Examples:

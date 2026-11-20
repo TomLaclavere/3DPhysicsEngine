@@ -92,14 +92,14 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, b
 
     // Scene setup
     PhysicsWorld world(config);
-    auto ground = std::make_unique<Plane>(Vector3D(0_d), Vector3D(50_d, 50_d, 0_d), Vector3D(0_d, 0_d, 1_d));
-    auto sphere =
-        std::make_unique<Sphere>(Vector3D(0_d, 0_d, 20_d), 2_d, 1_d); // radius=2, mass=1, v0=(0,0,0)
+    auto* ground = new Plane(Vector3D(0_d), Vector3D(50_d, 50_d, 0_d), Vector3D(0_d, 0_d, 1_d));
+    auto* sphere =
+        new Sphere(Vector3D(0_d, 0_d, 20_d), 2_d, 1_d); // radius=2, mass=1, v0=(0,0,0)
 
     sphere->setIsFixed(false);
     sphere->setRestitutionCst(0.9_d);
-    world.addObject(sphere.get());
-    world.addObject(ground.get());
+    world.addObject(sphere); // the world owns and deletes its objects
+    world.addObject(ground);
     world.start();
 
     // Analytical parameters (read from the actual sphere to stay consistent)

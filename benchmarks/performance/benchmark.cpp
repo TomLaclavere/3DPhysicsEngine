@@ -1,10 +1,9 @@
-#include "mathematics/vector.hpp"
 #include "objects/aabb.hpp"
-#include "objects/plane.hpp"
-#include "objects/sphere.hpp"
 #include "utilities/timer.hpp"
 #include "world/config.hpp"
 #include "world/physicsWorld.hpp"
+
+#include "scenario.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -14,7 +13,6 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <memory>
 #include <numeric>
 #include <string>
 #include <sys/resource.h>
@@ -50,74 +48,35 @@ struct SimResult
     long long peakRSS_kb; // peak resident set size at benchmark end (kilobytes)
 };
 
-// Analytical FLOP estimate.
-// Force phases scale as: gravity O(N), collision detection O(N²) with ~45 FLOPs/pair.
-// Integration scales as O(N). RK4 re-evaluates forces 4× per step.
-long long estimateFlopsPerStep(const std::string& solver, int nObjects)
+// Analytical FLOP estimate, impulse mode only.
+// Gravity O(N), collision detection O(N²) with ~45 FLOPs/pair, integration O(N).
+// Collisions are solved once per step whatever the solver; RK4 re-evaluates gravity 4× per step.
+// Not estimated (returns 0) for the other broad phases (they don't test every pair) or with contact
+// forces (the number of pair loops per step then depends on the solver).
+long long estimateFlopsPerStep(const std::string& solver, const std::string& broad, int nObjects,
+                               bool contactForces)
 {
+    if (broad != "Brut" || contactForces)
+        return 0;
     const auto      n               = static_cast<long long>(nObjects);
-    const long long gravity_flops   = 6LL * n;
+    const long long gravity_flops   = 6LL * n * ((solver == "RK4") ? 4LL : 1LL);
     const long long collision_flops = 45LL * n * (n - 1) / 2;
-    const long long force_flops     = gravity_flops + collision_flops;
     const long long integrate_flops = (solver == "Verlet") ? 18LL : 12LL;
-    if (solver == "RK4")
-        return force_flops * 4LL + integrate_flops * n;
-    return force_flops + integrate_flops * n;
+    return gravity_flops + collision_flops + integrate_flops * n;
 }
 
-SimResult simulation(const std::string& solver, decimal timestep, int maxiter, int nObjects, int nWarmup,
-                     int nTimingRuns, bool contactForces)
+SimResult simulation(const Scenario& sc, int nWarmup, int nTimingRuns)
 {
-    Config& config = Config::get();
-    config.setSolver(solver);
-    config.setTimeStep(timestep);
-    config.setMaxIterations(maxiter);
-    config.setSimplifiedCollision(!contactForces);
-
-    const auto    maxIter  = static_cast<size_t>(config.getMaxIterations());
+    configure(sc);
+    const auto maxIter = static_cast<size_t>(sc.steps());
+    const int  maxiter = sc.steps();
 
     SimResult              result {};
     std::vector<long long> timings;
     timings.reserve(static_cast<size_t>(nTimingRuns));
 
-    // Grid layout for N spheres.
-    // Spheres are arranged in a ceil(sqrt(N)) × ceil(N/cols) grid, spaced 3 radii apart
-    // so they do not overlap at t=0 and have room to fall independently.
-    const decimal sphRadius = 2_d;
-    const decimal spacing   = sphRadius * 3_d;
-    const int     ncols = std::max(1, static_cast<int>(std::ceil(std::sqrt(static_cast<double>(nObjects)))));
-    const int     nrows = (nObjects + ncols - 1) / ncols;
-    const decimal halfSize = std::max(50_d, static_cast<decimal>(ncols + 1) * spacing);
-
-    // Lambda that builds a fresh scene into `world` and returns the sphere handles.
-    auto buildScene = [&](PhysicsWorld& world)
-    {
-        auto ground = std::make_unique<Plane>(Vector3D(0_d), Vector3D(halfSize, halfSize, 0_d),
-                                              Vector3D(0_d, 0_d, 1_d));
-
-        std::vector<std::unique_ptr<Sphere>> spheres;
-        spheres.reserve(static_cast<size_t>(nObjects));
-        for (int obj = 0; obj < nObjects; ++obj)
-        {
-            const int     col = obj % ncols;
-            const int     row = obj / ncols;
-            const decimal x   = (static_cast<decimal>(col) - static_cast<decimal>(ncols - 1) / 2_d) * spacing;
-            const decimal y   = (static_cast<decimal>(row) - static_cast<decimal>(nrows - 1) / 2_d) * spacing;
-            auto          sph = std::make_unique<Sphere>(Vector3D(x, y, 20_d), sphRadius, 1_d);
-            sph->setIsFixed(false);
-            sph->setRestitutionCst(1_d);
-            // PhysicsWorld::addObject() takes ownership (deletes on clearObjects()/dtor),
-            // so release() rather than get() - passing get() here left both the world and
-            // this unique_ptr owning the same pointer, double-freeing it once the run ends.
-            world.addObject(sph.release());
-            spheres.push_back(std::move(sph));
-        }
-        world.addObject(ground.release());
-        world.start();
-        // ground/spheres are now empty (released to world); returned only so the caller's
-        // structured binding keeps compiling unchanged.
-        return std::make_pair(std::move(ground), std::move(spheres));
-    };
+    // Generated once: every run sees the same scene (scenario.hpp)
+    const Cloud cloud = makeCloud(sc.nObjects);
 
     const int totalRuns = nWarmup + nTimingRuns;
 
@@ -125,24 +84,14 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, i
     {
         const bool isWarmup = (run < nWarmup);
 
-        PhysicsWorld world(config);
-        auto [ground, spheres] = buildScene(world);
+        ScenarioWorld scenario(cloud);
 
-        size_t counter = 0;
-        Timer  runTimer;
-
-        while (counter < maxIter && world.getIsRunning())
-        {
-            world.integrate();
-            ++counter;
-        }
-
+        Timer runTimer;
+        runSteps(scenario.world, maxiter);
         const long long elapsed = runTimer.elapsedMicroseconds();
 
         if (!isWarmup)
             timings.push_back(elapsed);
-
-        world.clearObjects();
     }
 
     // ── Step-level profiling run ───────────────────────────────────────────
@@ -157,21 +106,18 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, i
         std::vector<decimal> stepTimings;
         stepTimings.reserve(static_cast<size_t>((maxiter + batchSize - 1) / batchSize));
 
-        PhysicsWorld world(config);
-        auto [ground, spheres] = buildScene(world);
+        ScenarioWorld run(cloud);
 
         size_t counter = 0;
-        while (counter < maxIter && world.getIsRunning())
+        while (counter < maxIter && run.world.getIsRunning())
         {
             const int  thisBatch  = std::min(batchSize, static_cast<int>(maxIter - counter));
             const auto batchStart = Clock::now();
-            for (int b = 0; b < thisBatch; ++b, ++counter)
-                world.integrate();
+            runSteps(run.world, thisBatch);
             const auto batchNs = std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - batchStart);
             stepTimings.push_back(static_cast<decimal>(batchNs.count()) * 1e-3_d / static_cast<decimal>(thisBatch));
+            counter += static_cast<size_t>(thisBatch);
         }
-
-        world.clearObjects();
 
         const decimal ssum = std::accumulate(stepTimings.begin(), stepTimings.end(), 0_d);
         const auto    sn   = static_cast<int>(stepTimings.size());
@@ -213,7 +159,7 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, i
     result.stepsPerSecond = (result.timePerStep_us > 0_d) ? 1'000'000.0_d / result.timePerStep_us : 0_d;
 
     // FLOP/s
-    result.flopsPerStep       = estimateFlopsPerStep(solver, nObjects);
+    result.flopsPerStep       = estimateFlopsPerStep(sc.solver, sc.broad, sc.nObjects, sc.contactForces);
     const decimal total_flops = static_cast<decimal>(result.flopsPerStep) * static_cast<decimal>(maxiter);
     result.gflops_per_second  = (result.wallTime_s > 0_d) ? total_flops / (result.wallTime_s * 1e9_d) : 0_d;
 
@@ -230,51 +176,43 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, i
 int main(int argc, char** argv)
 {
     // Defaults
-    const char* solver        = "Verlet";
-    double      timestep      = 1e-3;
-    double      duration      = 22.0;
-    bool        contactForces = false;
-    bool        appendMode    = false;
-    int         N_WARMUP      = 1;
-    int         N_RUN         = 5;
-    int         nObjects      = 1;
-    std::string outputPath    = "benchmarks/performance/results";
+    Scenario    sc;
+    bool        appendMode = false;
+    int         N_WARMUP   = 1;
+    int         N_RUN      = 5;
+    std::string outputPath = "benchmarks/performance/results";
 
-    // Argument parsing
+    // Argument parsing: scenario options are shared with gbench.cpp (scenario.hpp)
     for (int i = 1; i < argc; ++i)
     {
-        if (std::strcmp(argv[i], "--solver") == 0 && i + 1 < argc)
-            solver = argv[++i];
-        else if (std::strcmp(argv[i], "--dt") == 0 && i + 1 < argc)
-            timestep = std::atof(argv[++i]);
-        else if (std::strcmp(argv[i], "--dur") == 0 && i + 1 < argc)
-            duration = std::atof(argv[++i]);
-        else if (std::strcmp(argv[i], "--contact-forces") == 0)
-            contactForces = true;
-        else if (std::strcmp(argv[i], "--append") == 0)
+        if (parseScenarioOption(sc, i, argc, argv))
+            continue;
+        if (std::strcmp(argv[i], "--append") == 0)
             appendMode = true;
         else if (std::strcmp(argv[i], "--n_warmup") == 0 && i + 1 < argc)
             N_WARMUP = std::atoi(argv[++i]);
         else if (std::strcmp(argv[i], "--n_runs") == 0 && i + 1 < argc)
             N_RUN = std::atoi(argv[++i]);
-        else if (std::strcmp(argv[i], "--n_objects") == 0 && i + 1 < argc)
-            nObjects = std::atoi(argv[++i]);
         else if (std::strcmp(argv[i], "--out") == 0 && i + 1 < argc)
             outputPath = argv[++i];
     }
 
-    const int maxIterations = static_cast<int>(duration / timestep);
+    if (!isKnownBroad(sc.broad))
+    {
+        std::cerr << "Unknown broad phase: " << sc.broad << " (expected Brut, Grid or SweepPrune)\n";
+        return 1;
+    }
 
     // Results
     SimResult results;
 
     // Run benchmark
-    std::cout << "Solver: " << solver << "  n_objects=" << nObjects
-              << "  collisions=" << (contactForces ? "contact forces" : "impulse") << "\n";
+    std::cout << "Solver: " << sc.solver << "  broad=" << sc.broad << "  n_objects=" << sc.nObjects
+              << "  collisions=" << (sc.contactForces ? "contact forces" : "impulse") << "\n";
 
-    results = simulation(solver, timestep, maxIterations, nObjects, N_WARMUP, N_RUN, contactForces);
+    results = simulation(sc, N_WARMUP, N_RUN);
 
-    std::cout << "  dt=" << timestep << "  wall=" << results.wallTime_s << " s"
+    std::cout << "  dt=" << sc.dt << "  wall=" << results.wallTime_s << " s"
               << "  cpu_mean=" << results.cpuUs_mean << " µs"
               << "  stddev=" << results.cpuUs_stddev << " µs"
               << "  CV=" << results.cv_percent << "%"
@@ -298,7 +236,7 @@ int main(int argc, char** argv)
         }
 
         if (!appendMode)
-            file << "solver,dt,n_objects,"
+            file << "solver,broad,dt,n_objects,"
                     "cpu_us_mean,cpu_us_min,cpu_us_max,cpu_us_stddev,cv_percent,"
                     "wall_time_s,time_per_step_us,steps_per_second,"
                     "flops_per_step,gflops_per_second,"
@@ -307,7 +245,7 @@ int main(int argc, char** argv)
 
         const SimResult& r = results;
 
-        file << solver << "," << timestep << "," << nObjects << "," << r.cpuUs_mean << "," << r.cpuUs_min
+        file << sc.solver << "," << sc.broad << "," << sc.dt << "," << sc.nObjects << "," << r.cpuUs_mean << "," << r.cpuUs_min
              << "," << r.cpuUs_max << "," << r.cpuUs_stddev << "," << r.cv_percent << "," << r.wallTime_s
              << "," << r.timePerStep_us << "," << r.stepsPerSecond << "," << r.flopsPerStep << ","
              << r.gflops_per_second << "," << r.stepUs_mean << "," << r.stepUs_min << "," << r.stepUs_max

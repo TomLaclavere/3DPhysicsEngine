@@ -3,7 +3,7 @@
 Reference for [`profile_malt.sh`](profile_malt.sh) (verified with MALT 1.6.3). What MALT measures
 and why the pipeline uses it:
 [guide §5.3](../BENCHMARK_TOOLS_GUIDE.md#53-malt---does-the-code-allocate).
-Install: [`README.md`](../README.md#malt).
+Install: [`README.md`](../README.md#installation-profiling-tools).
 
 ## Commands
 
@@ -50,7 +50,7 @@ Symbol names come from MALT's own resolution, which names a frame after the inne
 caller. Cross-check with Lprof's `functions.txt` (call chain of `operator new`) or the perf
 hotspots, as the report does.
 
-## Current numbers
+## Baseline numbers (tag `baseline`)
 
 Default workload (`--dt 5e-5 --dur 30 --n-objects 10`: 1.8 million integration steps over the
 binary's 3 passes), 2026-10-19:
@@ -63,7 +63,7 @@ binary's 3 passes), 2026-10-19:
 | Peak heap in use | 84 KiB, flat over the run |
 | Blocks left at exit | 8 |
 
-Interpretation: [guide §7](../BENCHMARK_TOOLS_GUIDE.md#7-current-baseline).
+Interpretation: [guide §7](../BENCHMARK_TOOLS_GUIDE.md#7-baseline-results).
 
 ## Pitfalls
 

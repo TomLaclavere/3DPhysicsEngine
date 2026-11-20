@@ -7,7 +7,7 @@
  *   - Contact time error    : |t_contact_numerical - t_contact_analytical|
  *   - Max energy drift      : max( |E(t) - E0| / E0 )
  *   - Final energy drift    : |E(T) - E0| / E0
- *   - CPU time (ms)         : duration of the simulation loop
+ *   - CPU time (µs)         : duration of the simulation loop
  *
  * Two CSV files are produced:
  *   benchmark.csv      - one row per (solver, dt), all aggregated metrics
@@ -42,7 +42,7 @@ struct SimResult
     decimal contactTime;      // interpolated contact time (NaN if never reached)
     decimal maxEnergyDrift;   // max |E(t) - E0| / E0 over the whole simulation
     decimal finalEnergyDrift; // |E(T) - E0| / E0
-    decimal cpuMs;            // simulation loop duration (ms)
+    decimal cpuUs;            // simulation loop duration (microseconds)
 
     // Energy samples for E(t) plots - filled only if recordEnergy = true
     std::vector<decimal> energyTimes;
@@ -78,12 +78,12 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, b
 
     // Scene setup
     PhysicsWorld world(config);
-    auto ground = std::make_unique<Plane>(Vector3D(0_d), Vector3D(50_d, 50_d, 0_d), Vector3D(0_d, 0_d, 1_d));
-    auto sphere = std::make_unique<Sphere>(Vector3D(0_d, 0_d, 20_d), 0.2_d, Vector3D(0_d, 0_d, -1_d), 1_d);
+    auto* ground = new Plane(Vector3D(0_d), Vector3D(50_d, 50_d, 0_d), Vector3D(0_d, 0_d, 1_d));
+    auto* sphere = new Sphere(Vector3D(0_d, 0_d, 20_d), 0.2_d, Vector3D(0_d, 0_d, -1_d), 1_d);
 
     sphere->setIsFixed(false);
-    world.addObject(sphere.get());
-    world.addObject(ground.get());
+    world.addObject(sphere); // the world owns and deletes its objects
+    world.addObject(ground);
     world.start();
 
     // Initial energy reference
@@ -94,7 +94,7 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, b
     result.contactTime      = std::numeric_limits<decimal>::quiet_NaN();
     result.maxEnergyDrift   = 0_d;
     result.finalEnergyDrift = 0_d;
-    result.cpuMs            = 0_d;
+    result.cpuUs            = 0_d;
 
     const decimal timeStep = config.getTimeStep();
     const auto    maxIter  = static_cast<size_t>(config.getMaxIterations());
@@ -144,7 +144,7 @@ SimResult simulation(const std::string& solver, decimal timestep, int maxiter, b
         ++counter;
     }
 
-    result.cpuMs = simulationTimer.elapsedMicroseconds();
+    result.cpuUs = simulationTimer.elapsedMicroseconds();
 
     // Final energy drift - only meaningful if collision never occurred
     if (std::isnan(result.contactTime))
@@ -219,7 +219,7 @@ int main(int argc, char** argv)
 
             std::cout << "  dt=" << timesteps[jDt] << "  contact_error=" << contactErr
                       << "  max_energy_drift=" << results[iS][jDt].maxEnergyDrift
-                      << "  cpu=" << results[iS][jDt].cpuMs << " ms\n";
+                      << "  cpu=" << results[iS][jDt].cpuUs << " µs\n";
         }
     }
 
@@ -229,7 +229,7 @@ int main(int argc, char** argv)
     //--------------------------------------------------------------------
     // CSV 1: benchmark.csv
     // Columns: solver, dt, contact_error, max_energy_drift,
-    //          final_energy_drift, cpu_ms, ops_total
+    //          final_energy_drift, cpu_us, ops_total
     //--------------------------------------------------------------------
     {
         std::ofstream file(outputPath + "/benchmark.csv");
@@ -240,7 +240,7 @@ int main(int argc, char** argv)
         }
 
         file << "solver,dt,contact_error,max_energy_drift,"
-                "final_energy_drift,cpu_ms,ops_total\n";
+                "final_energy_drift,cpu_us,ops_total\n";
 
         // Force evaluations per step: Euler=1, Verlet=1, RK4=4
         const std::array<int, 3> opsPerStep { 1, 1, 4 };
@@ -259,7 +259,7 @@ int main(int argc, char** argv)
                 const long long opsTotal = static_cast<long long>(maxIterations[jDt]) * opsPerStep[iS];
 
                 file << solvers[iS] << "," << timesteps[jDt] << "," << contactErr << "," << r.maxEnergyDrift
-                     << "," << r.finalEnergyDrift << "," << r.cpuMs << "," << opsTotal << "\n";
+                     << "," << r.finalEnergyDrift << "," << r.cpuUs << "," << opsTotal << "\n";
             }
         }
     }

@@ -12,7 +12,13 @@
 #include "objects/plane.hpp"
 #include "objects/sphere.hpp"
 
-namespace BroadCollision {
+#include <cstddef>
+#include <unordered_map>
+#include <vector>
+
+namespace BoundingSphereTest {
+// Test if objects are overlapping if we condider them as Sphere build fromt their largest size. O(N²), but
+// more accurate.
 
 // Sphere vs Sphere
 bool isColliding(const Sphere&, const Sphere&);
@@ -39,4 +45,4 @@ inline bool isColliding(const AABB& a, const Sphere& b) { return isColliding(b, 
 
 inline bool isColliding(const Plane& a, const AABB& b) { return isColliding(b, a); }
 
-} // namespace BroadCollision
+} // namespace BoundingSphereTest

@@ -245,7 +245,8 @@ run_perf_record() {
     echo ""
     echo "[perf record] profile=${profile} -> ${data}"
 
-    pinned perf record -F "$FREQ" -g --call-graph "$CALL_GRAPH" -o "$data" -- \
+    # --user-callchains: with kernel.perf_event_paranoid=2, any call graph including kernel frames is refused
+    pinned perf record -F "$FREQ" -g --call-graph "$CALL_GRAPH" --user-callchains -o "$data" -- \
         "$bin" --solver "$SOLVER" --dt "$DT" --dur "$DUR" \
                --n_warmup 1 --n_runs 1 --n_objects "$N_OBJECTS" --out "$CSV_DIR"
 

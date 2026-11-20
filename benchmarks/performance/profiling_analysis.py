@@ -279,7 +279,7 @@ def fig_perf_overview(stat):
         ax.set_ylim(0, max(vals) * 1.2)
         ax.grid(axis='x', visible=False)
     fig.tight_layout()
-    how = 'Time is the mean of 5 repeated executions (perf stat -r 5). Fewer instructions means less work. IPC (instructions per cycle) shows how well the pipeline is fed, up to ~4-5 on this CPU; it says nothing about how much work each instruction does, so it does not show vectorisation.'
+    how = 'Time is the mean of the repeated executions (perf stat -r). Fewer instructions means less work. IPC (instructions per cycle) shows how well the pipeline is fed, bounded by the CPU\'s issue width; it says nothing about how much work each instruction does, so it does not show vectorisation.'
     return fig, 'perf - time, instructions and IPC', how
 
 
@@ -388,13 +388,13 @@ def fig_malt(malt):
         return None
     fig, (a1, a2) = plt.subplots(1, 2, figsize=(11, 3.8), gridspec_kw={'width_ratios': [3, 2]})
     sites = malt['sites'][:6][::-1]
-    bars = a1.barh([s for s, _ in sites], [c / 1e6 for _, c in sites], height=0.6,
+    bars = a1.barh([s for s, _ in sites], [c for _, c in sites], height=0.6,
                    color=PROFILE_COLOR['optimised'])
     for b in bars:
-        a1.text(b.get_width(), b.get_y() + b.get_height() / 2, f' {b.get_width():.2f} M',
+        a1.text(b.get_width(), b.get_y() + b.get_height() / 2, f' {int(b.get_width()):,}',
                 va='center', fontsize=8, color=TEXT)
-    a1.set_title('Allocations per call site (millions)', loc='left')
-    a1.set_xlim(0, max(c for _, c in sites) / 1e6 * 1.3)
+    a1.set_title('Allocations per call site', loc='left')
+    a1.set_xlim(0, max(c for _, c in sites) * 1.3)
     a1.tick_params(axis='y', labelsize=8.5)
     a1.grid(axis='y', visible=False)
 

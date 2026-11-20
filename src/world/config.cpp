@@ -22,6 +22,7 @@ decimal     Config::getTimeStep() const { return timeStep; }
 decimal     Config::getSimulationDuration() const { return simulationDuration; }
 std::size_t Config::getMaxIterations() const { return maxIterations; }
 std::string Config::getSolver() const { return solver; }
+std::string Config::getBroadCollision() const { return broadCollision; }
 bool        Config::getVerbose() const { return verbose; }
 bool        Config::getSave() const { return save; }
 bool        Config::getSimplifiedCollision() const { return useSimplifiedCollision; }
@@ -55,6 +56,8 @@ void Config::loadFromFile(const std::string& path)
             setSimulationDuration(node["duration"].as<decimal>());
         if (node["solver"])
             setSolver(node["solver"].as<std::string>());
+        if (node["broad"])
+            setBroadCollision(node["broad"].as<std::string>());
         if (node["verbose"])
             setVerbose(node["verbose"].as<bool>());
         if (node["save"])
@@ -64,10 +67,14 @@ void Config::loadFromFile(const std::string& path)
         if (node["material"])
         {
             const auto& m = node["material"];
-            if (m["stiffness"])   setDefaultStiffness(m["stiffness"].as<decimal>());
-            if (m["damping"])     setDefaultDamping(m["damping"].as<decimal>());
-            if (m["friction"])    setDefaultFriction(m["friction"].as<decimal>());
-            if (m["restitution"]) setDefaultRestitution(m["restitution"].as<decimal>());
+            if (m["stiffness"])
+                setDefaultStiffness(m["stiffness"].as<decimal>());
+            if (m["damping"])
+                setDefaultDamping(m["damping"].as<decimal>());
+            if (m["friction"])
+                setDefaultFriction(m["friction"].as<decimal>());
+            if (m["restitution"])
+                setDefaultRestitution(m["restitution"].as<decimal>());
         }
     }
     catch (const std::exception& e)
@@ -98,6 +105,8 @@ void Config::overrideFromCommandLine(int argc, char** argv)
             setMaxIterations(static_cast<std::size_t>(std::stoul(argv[++i])));
         else if (arg == "--solver" && i + 1 < argc)
             setSolver(std::string(argv[++i]));
+        else if (arg == "--broad" && i + 1 < argc)
+            setBroadCollision(std::string(argv[++i]));
         else if (arg == "--verbose" && i + 1 < argc)
         {
             std::string v = argv[++i];

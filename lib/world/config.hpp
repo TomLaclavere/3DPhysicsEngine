@@ -25,6 +25,7 @@ private:
     decimal     simulationDuration     = 10_d;   // simulation duration in seconds
     std::size_t maxIterations          = static_cast<std::size_t>(std::round(simulationDuration / timeStep));
     std::string solver                 = "Euler";
+    std::string broadCollision         = "Pairs";
     bool        verbose                = true;
     bool        save                   = false;
     bool        useSimplifiedCollision = true;
@@ -53,6 +54,7 @@ public:
     decimal        getSimulationDuration() const;
     std::size_t    getMaxIterations() const;
     std::string    getSolver() const;
+    std::string    getBroadCollision() const;
     bool           getVerbose() const;
     bool           getSave() const;
     bool           getSimplifiedCollision() const;
@@ -75,7 +77,7 @@ public:
     {
         if (dt <= 0)
             throw std::invalid_argument("Time step must be positive");
-        timeStep     = dt;
+        timeStep      = dt;
         maxIterations = static_cast<std::size_t>(std::round(simulationDuration / timeStep));
     }
 
@@ -104,6 +106,7 @@ public:
         simulationDuration = decimal(maxIterations) / timeStep;
     }
     void setSolver(const std::string& sol) { solver = sol; }
+    void setBroadCollision(const std::string& broad) { broadCollision = broad; }
     void setVerbose(bool verb) { verbose = verb; }
     void setSave(bool sav) { save = sav; }
     void setSimplifiedCollision(bool simpColl) { useSimplifiedCollision = simpColl; }

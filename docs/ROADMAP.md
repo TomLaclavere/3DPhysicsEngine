@@ -193,7 +193,7 @@ Steps marked *bit-identical* must leave the physics regression test exactly unch
   - [ ] **Narrow phase and response on indices:** free functions per shape pair instead of virtual calls *(bit-identical)*
     - [x] Pair tests and narrow phase on shape values (`SphereShape`, `AABBShape`, `PlaneShape`); the `Object` overloads become wrappers, so existing tests are unchanged
     - [ ] Keep the redundant `getNormalised()` calls for now; remove them in a separate commit
-    - [ ] Contact response (`computeContactForce`, `reboundCollision`, `positionCorrection`) on values instead of `Object&`
+    - [x] Contact response (`computeContactForce`, `reboundCollision`, `positionCorrection`) on values instead of `Object&`
     - [x] Remove `Contact::A` / `Contact::B` (written, never read)
   - [ ] **Contiguous hot data (AoS):** `std::vector<Body>` (position, velocity, acceleration, inverse mass, radius, flags) in `PhysicsWorld`, behind accessors `pos(i)`, `vel(i)`...
     - [ ] `Object` becomes a handle (world + index) with the same getters/setters; `id → index` map for `removeObject`

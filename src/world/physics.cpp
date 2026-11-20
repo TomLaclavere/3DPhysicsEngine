@@ -74,7 +74,7 @@ decimal Physics::effectiveFriction(decimal mu1, decimal mu2) { return std::sqrt(
  * @param g Gravitational constant (usually -9.81).
  * @return Gravity acceleration as a 3D vector (along Z-axis).
  */
-Vector3D Physics::computeGravityAcc(decimal g) { return Vector3D(0_d, 0_d, -g); }
+Vector3D Physics::computeGravityAcc(decimal g) { return { 0_d, 0_d, -g }; }
 
 /**
  * @brief Compute gravitational force on a given object.
@@ -82,9 +82,9 @@ Vector3D Physics::computeGravityAcc(decimal g) { return Vector3D(0_d, 0_d, -g); 
  * @param obj Target object.
  * @return Gravitational force vector.
  */
-Vector3D Physics::computeGravityForce(decimal g, const Object& obj)
+Vector3D Physics::computeGravityForce(decimal g, const ContactBody& obj)
 {
-    return { 0_d, 0_d, -obj.getMass() * g };
+    return { 0_d, 0_d, -obj.mass * g };
 }
 
 /**
@@ -99,18 +99,18 @@ Vector3D Physics::computeGravityForce(decimal g, const Object& obj)
  * @param obj2 Second object.
  * @return Spring force vector acting on obj1.
  */
-Vector3D Physics::computeSpringForce(const Object& obj1, const Object& obj2, Contact& contact)
+Vector3D Physics::computeSpringForce(const ContactBody& obj1, const ContactBody& obj2, const Contact& contact)
 {
     decimal r = contact.penetration;
     if (r <= 0_d)
         return Vector3D(0_d);
 
-    decimal k = effectiveStiffness(obj1.getStiffnessCst(), obj2.getStiffnessCst());
+    decimal k = effectiveStiffness(obj1.stiffness, obj2.stiffness);
     if (commonMaths::approxEqual(k, 0_d))
         return Vector3D(0_d);
 
     Vector3D n = contact.normal;
-    // if ((obj1.getPosition() - obj2.getPosition()).dotProduct(n) < 0_d)
+    // if ((obj1.position - obj2.position).dotProduct(n) < 0_d)
     //     n = -n;
 
     return k * r * n;
@@ -128,23 +128,24 @@ Vector3D Physics::computeSpringForce(const Object& obj1, const Object& obj2, Con
  * @param obj2 Second object.
  * @return Damping force acting on obj1.
  */
-Vector3D Physics::computeDampingForce(const Object& obj1, const Object& obj2, Contact& contact)
+Vector3D Physics::computeDampingForce(const ContactBody& obj1, const ContactBody& obj2,
+                                      const Contact& contact)
 {
     if (contact.penetration <= 0_d)
         return Vector3D(0_d);
 
-    decimal k_rel = effectiveStiffness(obj1.getStiffnessCst(), obj2.getStiffnessCst());
-    decimal mu    = reducedMass(obj1.getMass(), obj2.getMass());
+    decimal k_rel = effectiveStiffness(obj1.stiffness, obj2.stiffness);
+    decimal mu    = reducedMass(obj1.mass, obj2.mass);
     if (commonMaths::approxEqual(k_rel, 0_d) || commonMaths::approxEqual(mu, 0_d))
         return Vector3D(0_d);
 
-    decimal zeta = effectiveDamping(obj1.getDampingCst(), obj2.getDampingCst());
+    decimal zeta = effectiveDamping(obj1.damping, obj2.damping);
     decimal c    = 2_d * zeta * std::sqrt(k_rel * mu);
 
     Vector3D n = contact.normal;
-    // if ((obj1.getPosition() - obj2.getPosition()).dotProduct(n) < 0_d)
+    // if ((obj1.position - obj2.position).dotProduct(n) < 0_d)
     //     n = -n;
-    Vector3D v_rel  = obj2.getVelocity() - obj1.getVelocity();
+    Vector3D v_rel  = obj2.velocity - obj1.velocity;
     decimal  vn     = v_rel.dotProduct(n);
     decimal  F_damp = -c * std::min(vn, 0_d);
     return F_damp * n;
@@ -156,21 +157,22 @@ Vector3D Physics::computeDampingForce(const Object& obj1, const Object& obj2, Co
  * @param obj2 Second object.
  * @return Normal contact force.
  */
-Vector3D Physics::computeNormalForces(const Object& obj1, const Object& obj2, Contact& contact)
+Vector3D Physics::computeNormalForces(const ContactBody& obj1, const ContactBody& obj2,
+                                      const Contact& contact)
 {
     decimal delta = contact.penetration;
     if (delta <= 0_d)
         return Vector3D(0_d);
 
     Vector3D n = contact.normal;
-    if ((obj1.getPosition() - obj2.getPosition()).dotProduct(n) < 0_d)
+    if ((obj1.position - obj2.position).dotProduct(n) < 0_d)
         n = -n;
-    decimal k    = effectiveStiffness(obj1.getStiffnessCst(), obj2.getStiffnessCst());
-    decimal mu   = reducedMass(obj1.getMass(), obj2.getMass());
-    decimal zeta = effectiveDamping(obj1.getDampingCst(), obj2.getDampingCst());
+    decimal k    = effectiveStiffness(obj1.stiffness, obj2.stiffness);
+    decimal mu   = reducedMass(obj1.mass, obj2.mass);
+    decimal zeta = effectiveDamping(obj1.damping, obj2.damping);
     decimal c    = 2_d * zeta * std::sqrt(k * mu);
 
-    Vector3D v_rel = obj2.getVelocity() - obj1.getVelocity();
+    Vector3D v_rel = obj2.velocity - obj1.velocity;
     decimal  vn    = v_rel.dotProduct(n);
 
     decimal F_spring = k * delta;
@@ -193,18 +195,18 @@ Vector3D Physics::computeNormalForces(const Object& obj1, const Object& obj2, Co
  * @param obj2 Second object.
  * @return Frictional force acting on obj1.
  */
-Vector3D Physics::computeFrictionForce(const Object& obj1, const Object& obj2, Contact& contact,
-                                       decimal F_normal_mag)
+Vector3D Physics::computeFrictionForce(const ContactBody& obj1, const ContactBody& obj2,
+                                       const Contact& contact, decimal F_normal_mag)
 {
     if (commonMaths::approxEqual(F_normal_mag, 0_d))
         return Vector3D(0_d);
 
-    decimal mu   = effectiveFriction(obj1.getFrictionCst(), obj2.getFrictionCst());
+    decimal mu   = effectiveFriction(obj1.friction, obj2.friction);
     decimal mu_k = mu;         // Dynamic friction
     decimal mu_s = 1.1_d * mu; // Static friction ~ 10% higher than dynamic one
 
     Vector3D n         = contact.normal;
-    Vector3D v_rel     = obj2.getVelocity() - obj1.getVelocity();
+    Vector3D v_rel     = obj2.velocity - obj1.velocity;
     Vector3D v_tan     = v_rel - v_rel.dotProduct(n) * n;
     decimal  v_tan_mag = v_tan.getNorm();
 
@@ -230,7 +232,8 @@ Vector3D Physics::computeFrictionForce(const Object& obj1, const Object& obj2, C
  * @param obj2 Second object.
  * @return Contact force vector.
  */
-Vector3D Physics::computeContactForce(const Object& obj1, const Object& obj2, Contact& contact)
+Vector3D Physics::computeContactForce(const ContactBody& obj1, const ContactBody& obj2,
+                                      const Contact& contact)
 {
     Vector3D normal  = computeNormalForces(obj1, obj2, contact);
     Vector3D tangent = computeFrictionForce(obj1, obj2, contact, normal.getNorm());

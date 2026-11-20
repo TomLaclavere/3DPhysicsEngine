@@ -1,7 +1,22 @@
 # 3D Physics Engine - Roadmap
 
 > **Goal:** Build a credible technical showcase for numerical simulation and HPC roles.
-> Phases are ordered by : scientific rigour first, then CPU and GPU performance, then physics completeness, then distributed computing.
+> Phases are ordered by: scientific rigour first, then CPU and GPU performance, then physics completeness, then distributed computing.
+
+| Phase | Topic | Status |
+|---|---|---|
+| 1 | Setup and General Architecture | Done |
+| 2 | Maths Foundations | Done, except CI with Clang |
+| 3 | Rigid Body Dynamics & Physics World | Done |
+| 4 | Collisions | Done |
+| 5 | Scientific Validation & Benchmark Analysis | Done |
+| 6 | CPU Performance Engineering | **In progress** (6.4 Data layout) |
+| 7 | GPU Acceleration (CUDA / SYCL) | Planned |
+| 8 | Rotations & Angular Dynamics | Planned |
+| 9 | Constraint Solver (Sequential Impulse / LCP) | Planned |
+| 10 | Distributed Parallelism (MPI) | Planned |
+| 11 | Advanced Physics Features *(optional)* | Planned |
+| 12 | Visualisation | Started (raylib CSV replay viewer) |
 
 ---
 
@@ -14,7 +29,7 @@
 
 ---
 
-## Phase 2: Setup & Maths Foundations
+## Phase 2: Maths Foundations
 
 - [x] **Maths Library:** Implement or integrate 3D maths types: `vec3` for 3D vectors, matrices, and quaternion for rotation.
   - [x] **Vector3D:** Implement basic vector operations (addition, subtraction, scalar multiplication, dot product, cross product).
@@ -132,6 +147,8 @@
 
 See [`docs/benchmark.md`](benchmark.md) for more details.
 
+### 6.1 Method and tools
+
 - [x] **Brainstorm on ROADMAP**
 - [x] **Brainstorm on To-Do-List**
 - [x] **Tools implementation:** (see `benchmarks/performance/BENCHMARK_TOOLS_GUIDE.md`)
@@ -145,38 +162,59 @@ See [`docs/benchmark.md`](benchmark.md) for more details.
     - [x] malt
     - [x] maqao
   - [x] Plotting tools
-- [x] **Reference bencharks:**
+- [x] **Reference benchmarks:**
   - [x] Scalar reference case
   - [x] Compiler-optimised single-core
 - [x] **Add GitHub flag to keep the current status of software as reference**
 - [x] **Optimisation workflow:**
   - [x] Performance log (`docs/performance_logs.md`): one line per optimisation - before, after, gain, commit
 - [ ] **Bonus:** Create InfPlane object, to simplify creation of the ground
+
+### 6.2 Quick wins and broad phase
+
 - [x] **Quick wins (from the baseline profile):**
   - [x] Remove the per-step heap allocations (`prevAcc` / `nextAcc` in `PhysicsWorld::integrateVerlet`; check Euler and RK4)
   - [x] Let small accessors inline (`Sphere::getRadius`, `getCenter`, `Object::getPosition`): move them to headers or enable LTO (`-flto`)
 - [x] **Broad-phase acceleration** *(algorithmic: O(N²) → ~O(N), largest gain at large N)*:
   - [x] Uniform spatial grid or sweep-and-prune instead of testing every pair
   - [x] Extend the benchmark sweep to N = 10³ - 10⁴
-- [ ] **Google Benchmark** *(next step; compared with the in-house benchmark, `scripts/benchmark.sh`)*:
+### 6.3 Google Benchmark
+
+- [x] **Google Benchmark** *(next step; compared with the in-house benchmark, `scripts/benchmark.sh`)*:
   - [x] Add it with CMake `FetchContent`, behind an option (`3DPE_BUILD_GBENCH`)
   - [x] Benchmark one simulation step on the same random 3D cloud scene, per broad phase, N from 1 to 10⁴: both tools call the same functions (`benchmarks/performance/scenario.hpp`), including the timed one (`runSteps`), same points run by `scripts/benchmark.sh`
   - [x] Compare with `scripts/benchmark.sh` at the same (solver, broad phase, dt, N): step time, run-to-run variation, total run duration; explain the differences (warm-up, number of iterations, timer, `DoNotOptimize`)
   - [x] Decide which tool answers which question, and document it in `benchmarks/performance/BENCHMARK_TOOLS_GUIDE.md`
-- [ ] **Data layout optimisation** *(own branch; compare current pointers → contiguous AoS → SoA)*:
-  - [ ] **Decide the scope:** spheres + static planes first, or every shape; impulse mode only, or contact forces too
-  - [ ] **Safety net before refactoring:**
-    - [x] Benchmark of the current layout (random 3D cloud, N up to 10⁴)
-    - [x] Profile at N = 1000 (`profile.sh --n-objects 1000`) to know the share of integration vs collisions
-    - [x] Test: Grid and SweepPrune return the same pairs as brute force
-    - [ ] Physics regression test: fixed scene, K steps, final positions compared to a reference file
+### 6.4 Data layout
+
+Steps marked *bit-identical* must leave the physics regression test exactly unchanged.
+
+- [ ] **Data layout optimisation** *(own branch `feature/soa-layout`; compare current pointers → contiguous AoS → SoA)*:
+  - [ ] **Narrow phase and response on indices:** free functions per shape pair instead of virtual calls *(bit-identical)*
+    - [x] Pair tests and narrow phase on shape values (`SphereShape`, `AABBShape`, `PlaneShape`); the `Object` overloads become wrappers, so existing tests are unchanged
+    - [ ] Keep the redundant `getNormalised()` calls for now; remove them in a separate commit
+    - [ ] Contact response (`computeContactForce`, `reboundCollision`, `positionCorrection`) on values instead of `Object&`
+    - [x] Remove `Contact::A` / `Contact::B` (written, never read)
   - [ ] **Contiguous hot data (AoS):** `std::vector<Body>` (position, velocity, acceleration, inverse mass, radius, flags) in `PhysicsWorld`, behind accessors `pos(i)`, `vel(i)`...
     - [ ] `Object` becomes a handle (world + index) with the same getters/setters; `id → index` map for `removeObject`
+      - [ ] Handle first on the current storage *(bit-identical)*: `BodyId addObject(const Object&)`, `body(id)`; migrate GUI, CLI, `main.cpp`, examples, benchmarks, tests; remove `getObject()` returning `Object*`
     - [ ] Integrators (Euler, Verlet, RK4) loop over indices
+    - [ ] Pair loop in the same order (pairs i < j) *(bit-identical)*; CSV output keyed by id instead of `Object*`
+    - [ ] `removeObject` keeps the order of the other bodies; no add or remove during `run()`
+    - [ ] Benchmark: pointers vs AoS
   - [ ] **Broad phases** read arrays (positions, radii) instead of `std::vector<Object*>`
-  - [ ] **Narrow phase and response** on indices: free functions per shape pair instead of virtual calls
-  - [ ] **SoA:** same accessors, storage split into one array per field; benchmark AoS vs SoA
-  - [ ] **Split x / y / z** into aligned arrays, then check vectorisation (MAQAO, `-fopt-info-vec`)
+  - [ ] **SoA:** same accessors, storage split into one array per field; benchmark AoS vs SoA *(bit-identical)*
+  - [ ] **Split x / y / z** into aligned arrays, then check vectorisation (MAQAO, `-fopt-info-vec`) *(bit-identical)*
+    - [ ] Preallocated RK4 / Verlet buffers in SoA form (`integrateRK4` still allocates 5 vectors per step)
+    - [ ] Loops written with `std::span` + `__restrict`
+  - [ ] **Collisions per shape pair** *(results change: validate on the physics benchmarks, not bit for bit)*
+    - [ ] Two passes: detection per shape pair (vectorised sphere-sphere test) → contact list → sequential resolution
+    - [ ] Contact forces mode: each pair computed once, ±F (Newton's third law)
+    - [ ] Fixed bodies stored at the end of the arrays, so integrators loop without a test
+  - [ ] **Clean-up:** remove the virtual collision methods, `Object::integrate` and the unused `force` / `torque`
+
+### 6.5 SIMD and OpenMP
+
 - [ ] **SIMD Vectorisation:**
   - [ ] Vectorise `Vector3D` inner operations (AVX2 / SSE)
   - [ ] Evaluate auto-vectorisation via compiler reports (`-fopt-info-vec`)
@@ -189,6 +227,8 @@ See [`docs/benchmark.md`](benchmark.md) for more details.
   - [ ] Handle thread safety for shared state (contact list, Config)
   - [ ] **Strong scaling study:** fix total N, measure speed-up vs thread count (1 → max cores)
   - [ ] Amdahl's law analysis: estimate parallel fraction
+### 6.6 Benchmarks and release
+
 - [ ] **Benchmarks:**
   - [ ] Scalability: CPU time vs N objects (N = 10², 10³, 10⁴, 10⁵)
   - [ ] Comparison table: scalar vs SIMD vs OpenMP

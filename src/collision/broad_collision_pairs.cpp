@@ -3,6 +3,7 @@
  * @brief Implementation of broad-phase collision detection functions.
  */
 #include "collision/broad_collision_pairs.hpp"
+
 #include "mathematics/common.hpp"
 
 //  Sphere vs Sphere
@@ -17,10 +18,10 @@
  * @param sphere2
  * @return true if the spheres intersect, false otherwise.
  */
-bool BoundingSphereTest::isColliding(const Sphere& sphere1, const Sphere& sphere2)
+bool BoundingSphereTest::isColliding(const SphereShape& sphere1, const SphereShape& sphere2)
 {
-    Vector3D d = sphere2.getCenter() - sphere1.getCenter();
-    decimal  r = sphere1.getRadius() + sphere2.getRadius();
+    Vector3D d = sphere2.center - sphere1.center;
+    decimal  r = sphere1.radius + sphere2.radius;
     return commonMaths::approxSmallerOrEqualThan(d.getNormSquare(), r * r);
 }
 
@@ -36,11 +37,11 @@ bool BoundingSphereTest::isColliding(const Sphere& sphere1, const Sphere& sphere
  * @param aabb
  * @return true if the sphere and AABB intersect, false otherwise.
  */
-bool BoundingSphereTest::isColliding(const Sphere& sphere, const AABB& aabb)
+bool BoundingSphereTest::isColliding(const SphereShape& sphere, const AABBShape& aabb)
 {
-    decimal aabbRadius = aabb.getHalfExtents().getNorm(); // half-diagonal
-    decimal dist       = (sphere.getCenter() - aabb.getPosition()).getNorm();
-    return commonMaths::approxSmallerOrEqualThan(dist, aabbRadius + sphere.getRadius());
+    decimal aabbRadius = aabb.halfExtents.getNorm(); // half-diagonal
+    decimal dist       = (sphere.center - aabb.center).getNorm();
+    return commonMaths::approxSmallerOrEqualThan(dist, aabbRadius + sphere.radius);
 }
 
 //  Sphere vs Plane
@@ -59,12 +60,12 @@ bool BoundingSphereTest::isColliding(const Sphere& sphere, const AABB& aabb)
  * @param plane
  * @return true if the sphere and plane potentially intersect, false otherwise.
  */
-bool BoundingSphereTest::isColliding(const Sphere& sphere, const Plane& plane)
+bool BoundingSphereTest::isColliding(const SphereShape& sphere, const PlaneShape& plane)
 {
-    Vector3D n    = plane.getNormal().getNormalised();
-    decimal  dist = (sphere.getCenter() - plane.getPosition()).dotProduct(n);
+    Vector3D n    = plane.normal.getNormalised();
+    decimal  dist = (sphere.center - plane.center).dotProduct(n);
     return commonMaths::approxSmallerOrEqualThan(commonMaths::absVal(dist),
-                                                 sphere.getRadius() + (0.5 * plane.getSize()).getMax());
+                                                 sphere.radius + (plane.boundingHalfSize));
 }
 
 //  AABB vs AABB
@@ -82,7 +83,7 @@ bool BoundingSphereTest::isColliding(const Sphere& sphere, const Plane& plane)
  * @param aabb2
  * @return true if the AABBs intersect, false otherwise.
  */
-bool BoundingSphereTest::isColliding(const AABB& aabb1, const AABB& aabb2)
+bool BoundingSphereTest::isColliding(const AABBShape& aabb1, const AABBShape& aabb2)
 {
     return !(aabb1.getMax().getX() < aabb2.getMin().getX() || aabb1.getMin().getX() > aabb2.getMax().getX() ||
              aabb1.getMax().getY() < aabb2.getMin().getY() || aabb1.getMin().getY() > aabb2.getMax().getY() ||
@@ -102,17 +103,17 @@ bool BoundingSphereTest::isColliding(const AABB& aabb1, const AABB& aabb2)
  * @param plane The Plane to test.
  * @return true if the AABB and plane may intersect, false otherwise.
  */
-bool BoundingSphereTest::isColliding(const AABB& aabb, const Plane& plane)
+bool BoundingSphereTest::isColliding(const AABBShape& aabb, const PlaneShape& plane)
 {
-    Vector3D n    = plane.getNormal().getNormalised();
-    Vector3D half = aabb.getHalfExtents();
+    Vector3D n    = plane.normal.getNormalised();
+    Vector3D half = aabb.halfExtents;
 
     // Project AABB half-extents along the plane normal
     decimal aabbProj = half[0] * commonMaths::absVal(n[0]) + half[1] * commonMaths::absVal(n[1]) +
                        half[2] * commonMaths::absVal(n[2]);
 
     // Distance from AABB center to plane along the normal
-    decimal dist = (aabb.getPosition() - plane.getPosition()).dotProduct(n);
+    decimal dist = (aabb.center - plane.center).dotProduct(n);
 
     return commonMaths::approxSmallerOrEqualThan(commonMaths::absVal(dist), aabbProj);
 }
@@ -132,9 +133,9 @@ bool BoundingSphereTest::isColliding(const AABB& aabb, const Plane& plane)
  * @param plane2
  * @return true if the planes potentially intersect, false otherwise.
  */
-bool BoundingSphereTest::isColliding(const Plane& plane1, const Plane& plane2)
+bool BoundingSphereTest::isColliding(const PlaneShape& plane1, const PlaneShape& plane2)
 {
-    decimal dist = (plane1.getPosition() - plane2.getPosition()).getNorm();
-    return commonMaths::approxSmallerOrEqualThan(
-        commonMaths::absVal(dist), (0.5 * plane1.getSize()).getMax() + (0.5 * plane2.getSize()).getMax());
+    decimal dist = (plane1.center - plane2.center).getNorm();
+    return commonMaths::approxSmallerOrEqualThan(commonMaths::absVal(dist),
+                                                 plane1.boundingHalfSize + plane2.boundingHalfSize);
 }

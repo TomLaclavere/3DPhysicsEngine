@@ -10,44 +10,44 @@
 #pragma once
 
 #include "contact.hpp"
-#include "objects/aabb.hpp"
-#include "objects/plane.hpp"
-#include "objects/sphere.hpp"
+#include "shapes.hpp"
 
 namespace NarrowCollision {
 
 // Sphere vs Sphere
-bool computeContact(const Sphere&, const Sphere&, Contact& contact);
-
+bool computeContact(const SphereShape&, const SphereShape&, Contact& contact);
 // Sphere vs Plane
-bool computeContact(const Sphere&, const Plane&, Contact& contact);
-
+bool computeContact(const SphereShape&, const PlaneShape&, Contact& contact);
 // Sphere vs AABB
-bool computeContact(const Sphere&, const AABB&, Contact& contact);
-
+bool computeContact(const SphereShape&, const AABBShape&, Contact& contact);
 // AABB vs AABB
-bool computeContact(const AABB&, const AABB&, Contact& contact);
-
+bool computeContact(const AABBShape&, const AABBShape&, Contact& contact);
 // AABB vs Plane
-bool computeContact(const AABB&, const Plane&, Contact& contact);
-
+bool computeContact(const AABBShape&, const PlaneShape&, Contact& contact);
 // Plane vs Plane
-bool computeContact(const Plane&, const Plane&, Contact& contact);
+bool computeContact(const PlaneShape&, const PlaneShape&, Contact& contact);
 
 // Symmetric versions (defined in terms of the asymmetric ones)
-inline bool computeContact(const Plane& a, const Sphere& b, Contact& contact)
+inline bool computeContact(const PlaneShape& a, const SphereShape& b, Contact& contact)
+{
+    return computeContact(b, a, contact);
+}
+inline bool computeContact(const AABBShape& a, const SphereShape& b, Contact& contact)
+{
+    return computeContact(b, a, contact);
+}
+inline bool computeContact(const PlaneShape& a, const AABBShape& b, Contact& contact)
 {
     return computeContact(b, a, contact);
 }
 
-inline bool computeContact(const AABB& a, const Sphere& b, Contact& contact)
+template <typename A, typename B>
+    requires requires(const A& a, const B& b) {
+        shapeOf(a);
+        shapeOf(b);
+    }
+inline bool computeContact(const A& a, const B& b, Contact& contact)
 {
-    return computeContact(b, a, contact);
+    return computeContact(shapeOf(a), shapeOf(b), contact);
 }
-
-inline bool computeContact(const Plane& a, const AABB& b, Contact& contact)
-{
-    return computeContact(b, a, contact);
-}
-
 } // namespace NarrowCollision

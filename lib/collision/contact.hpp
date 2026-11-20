@@ -20,7 +20,4 @@ struct Contact
     Vector3D position;    /// World-space contact point.
     Vector3D normal;      /// Collision normal, pointing from B toward A.
     decimal  penetration; /// Depth of interpenetration (>0 when overlapping).
-
-    const Object* A; /// First object involved in the collision.
-    const Object* B; /// Second object involved in the collision.
 };
